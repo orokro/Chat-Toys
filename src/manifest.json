@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "YouTube Chat Toys",
-	"version": "1.0",
+	"version": "0.1",
 	"description": "Adds fun chat interactions and widgets.",
 	"permissions": [
 		"scripting"
@@ -31,5 +31,8 @@
 				"<all_urls>"
 			]
 		}
-	]
+	],
+	"icons": {
+		"128": "./assets/icon_128.png"
+	}
 }
