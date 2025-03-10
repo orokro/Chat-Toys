@@ -18,12 +18,17 @@ setTimeout(() => {
 			"popup",
 			"width=400,height=300"
 		);
-
-		setTimeout(() => {
-			popup.postMessage({ text: "from content script" }, "*");
-		}, 10000);
 	};
 
+	const settingsButton = document.createElement("button");
+	settingsButton.textContent = "Open Settings";
+	settingsButton.style.margin = "10px";
+	settingsButton.onclick = () => {
+		chrome.runtime.sendMessage({ action: "open_settings" });
+	};
+
+
 	target.appendChild(button);
-	console.log("Button added successfully!");
+	target.appendChild(settingsButton);
+	console.log("Buttons added successfully!");
 }, 2000);

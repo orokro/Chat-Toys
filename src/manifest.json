@@ -4,11 +4,16 @@
 	"version": "0.1",
 	"description": "Adds fun chat interactions and widgets.",
 	"permissions": [
-		"scripting"
+		"scripting",
+		"storage"
 	],
 	"host_permissions": [
 		"https://www.youtube.com/live_chat*"
 	],
+	"background": {
+		"service_worker": "background.js"
+	},
+	"options_page": "options.html",
 	"content_scripts": [
 		{
 			"matches": [
