@@ -12,8 +12,7 @@
 	"content_scripts": [
 		{
 			"matches": [
-				"https://www.youtube.com/live_chat*",
-				"https://www.youtube.com/live_chat?is_popout=1&v=CTTtBEOzSZI"
+				"https://www.youtube.com/live_chat*"
 			],
 			"js": [
 				"contentScript.js"

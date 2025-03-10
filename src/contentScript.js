@@ -10,7 +10,7 @@ setTimeout(() => {
 	}
 
 	const button = document.createElement("button");
-	button.textContent = "Open Popup";
+	button.textContent = "Open Chat Toys";
 	button.style.margin = "10px";
 	button.onclick = () => {
 		const popup = window.open(
