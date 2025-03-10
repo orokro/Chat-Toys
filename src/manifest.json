@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "YouTube Chat Toys",
 	"version": "1.0",
-	"description": "Adds a button to YouTube Live Chat.",
+	"description": "Adds fun chat interactions and widgets.",
 	"permissions": [
 		"scripting"
 	],
