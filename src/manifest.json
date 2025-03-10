@@ -1,0 +1,35 @@
+{
+	"manifest_version": 3,
+	"name": "YouTube Chat Toys",
+	"version": "1.0",
+	"description": "Adds a button to YouTube Live Chat.",
+	"permissions": [
+		"scripting"
+	],
+	"host_permissions": [
+		"https://www.youtube.com/live_chat*"
+	],
+	"content_scripts": [
+		{
+			"matches": [
+				"https://www.youtube.com/live_chat*",
+				"https://www.youtube.com/live_chat?is_popout=1&v=CTTtBEOzSZI"
+			],
+			"js": [
+				"contentScript.js"
+			],
+			"run_at": "document_end"
+		}
+	],
+	"web_accessible_resources": [
+		{
+			"resources": [
+				"popup.html",
+				"popup.js"
+			],
+			"matches": [
+				"<all_urls>"
+			]
+		}
+	]
+}
