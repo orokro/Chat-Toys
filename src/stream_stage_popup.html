@@ -1,0 +1,23 @@
+<!--
+	popup.html
+	----------
+
+	This is the window that will be captured by OBS and show the live interactions.
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Popup</title>
+	<link rel="stylesheet" href="/src/styles.css" />
+</head>
+
+<body>
+	<div id="app"></div>
+	<!-- Use an absolute path so the dev server finds /src/popup/main.js -->
+	<script type="module" src="/src/stream_stage_popup/main.js"></script>
+</body>
+
+</html>
