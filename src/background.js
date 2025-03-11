@@ -9,6 +9,12 @@
 	and send messages to the stream stage popup.
 */
 
+import { dropALog } from "./scripts/CSLogger";
+
+// for debug
+console.log("Background script injected!");
+dropALog();
+
 // fow now we just listen for this
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 

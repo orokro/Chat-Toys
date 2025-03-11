@@ -8,12 +8,16 @@
 	<div>
 		<h2>Extension Settings</h2>
 		<input type="color" v-model="bgColor" @input="saveColor" />
+		<Test title="Test Component" />
 	</div>
 </template>
 <script setup>
 
 // vue
 import { ref, onMounted } from 'vue'
+
+// components
+import Test from '../components/Test.vue'
 
 // the background color for the popup window
 const bgColor = ref('#ffffff')
