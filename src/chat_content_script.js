@@ -13,11 +13,8 @@
 	Note: This script is injected into the chat page and runs in the context of the chat page.
 */
 
-import { dropALog } from "./scripts/CSLogger";
-
 // for debug
 console.log("Content script injected!");
-dropALog();
 
 // Wait a bit to ensure elements exist
 setTimeout(() => {
