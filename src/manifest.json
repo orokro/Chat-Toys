@@ -11,7 +11,7 @@
 		"https://www.youtube.com/live_chat*"
 	],
 	"background": {
-		"service_worker": "background.js",
+		"service_worker": "src/background.js",
 		"type": "module"
 	},
 	"options_page": "src/options.html",
@@ -21,7 +21,7 @@
 				"https://www.youtube.com/live_chat*"
 			],
 			"js": [
-				"chat_content_script.js"
+				"src/chat_content_script.js"
 			],
 			"run_at": "document_end"
 		}
@@ -38,6 +38,6 @@
 		}
 	],
 	"icons": {
-		"128": "./icons/icon_128.png"
+		"128": "icons/icon_128.png"
 	}
 }
