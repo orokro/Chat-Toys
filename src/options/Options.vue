@@ -19,8 +19,10 @@
 		<!-- the tab pages will spawn in this container -->
 		<div class="tabPagesWrapper">
 
-			<input type="color" v-model="bgColor" @input="saveColor" />
-			<Test title="Test Component" />
+			<HelpPage v-if="activeTab === 0" />
+			<SettingsPage v-if="activeTab === 1" />
+			<ToyBoxPage v-if="activeTab === 2" />
+			<ButtonsPage v-if="activeTab === 3" />		
 
 		</div>
 
@@ -34,34 +36,24 @@ import { ref, onMounted } from 'vue'
 // components
 import Test from '../components/options/Test.vue'
 import TopTabBar from '../components/options/TopTabBar.vue'
+import HelpPage from '../components/options/HelpPage.vue'
+import SettingsPage from '../components/options/SettingsPage.vue'
+import ToyBoxPage from '../components/options/ToyBoxPage.vue'
+import ButtonsPage from '../components/options/ButtonsBoardPage.vue'
 
 // we'll define our tabs here
 const tabs = [
 	{ title: 'Help', icon: 'help', slug: 'help' },
-	{ title: 'Settings', icon: 'settings', slug: 'settings' },
-	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' }
+	{ title: 'General Settings', icon: 'settings', slug: 'settings' },
+	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
+	{ title: 'Showtime Buttons Board', icon: 'dialpad', slug: 'buttons' },
+	
 ];
 
 // the index of the active tab
 const activeTab = ref(0);
 
-// the background color for the popup window
-const bgColor = ref('#ffffff')
 
-// save the background color to storage
-const saveColor = () => {
-	chrome.storage.sync.set({ bgColor: bgColor.value })
-}
-
-// load the background color from storage when the component is mounted
-onMounted(() => {
-
-	chrome.storage.sync.get('bgColor', ({ bgColor: storedColor }) => {
-		if (storedColor) {
-			bgColor.value = storedColor
-		}
-	})
-});
 
 </script>
 <style lang="scss" scoped>
@@ -92,6 +84,8 @@ onMounted(() => {
 			inset: 42px 0px 0px 0px;
 			background: white;
 			padding: 10px;
+
+			overflow-y: scroll;
 
 		}// .tabPagesWrapper
 

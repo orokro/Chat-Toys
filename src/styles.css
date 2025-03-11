@@ -6,9 +6,20 @@
 */
 
 h2 {
-  color: #00ABAE;
+	color: #00ABAE;
 }
 
-body, * {
+/* Disable text selection app wide */
+body,
+* {
 	user-select: none;
+}
+
+/* reusable gray box */
+.grayBox {
+
+	background-color: #f0f0f0;
+	border-radius: 5px;
+	padding: 10px;
+	margin: 10px;
 }
