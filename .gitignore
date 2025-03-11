@@ -1,0 +1,40 @@
+# Node modules and dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Build output
+/dist
+/build
+
+# Vite cache and logs
+/.vite
+*.log
+
+# Local environment files
+.env
+.env.*.local
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE directories and settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# npm debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional: Ignore coverage reports if you use a test coverage tool
+coverage/
+
+# Misc
+*.bak
+*.tmp
