@@ -4,40 +4,39 @@
 	"version": "0.1",
 	"description": "Adds fun chat interactions and widgets.",
 	"permissions": [
-	  "scripting",
-	  "storage"
+		"scripting",
+		"storage"
 	],
 	"host_permissions": [
-	  "https://www.youtube.com/live_chat*"
+		"https://www.youtube.com/live_chat*"
 	],
 	"background": {
-	  "service_worker": "background.js"
+		"service_worker": "background.js"
 	},
 	"options_page": "src/options.html",
 	"content_scripts": [
-	  {
-		"matches": [
-		  "https://www.youtube.com/live_chat*"
-		],
-		"js": [
-		  "chat_content_script.js"
-		],
-		"run_at": "document_end"
-	  }
+		{
+			"matches": [
+				"https://www.youtube.com/live_chat*"
+			],
+			"js": [
+				"chat_content_script.js"
+			],
+			"run_at": "document_end"
+		}
 	],
 	"web_accessible_resources": [
-	  {
-		"resources": [
-		  "src/stream_stage_popup.html",
-		  "popup.js"
-		],
-		"matches": [
-		  "<all_urls>"
-		]
-	  }
+		{
+			"resources": [
+				"src/stream_stage_popup.html",
+				"popup.js"
+			],
+			"matches": [
+				"<all_urls>"
+			]
+		}
 	],
 	"icons": {
-	  "128": "./icons/icon_128.png"
+		"128": "./icons/icon_128.png"
 	}
-  }
-  
+}
