@@ -8,3 +8,7 @@
 h2 {
   color: #00ABAE;
 }
+
+body, * {
+	user-select: none;
+}

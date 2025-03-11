@@ -9,6 +9,7 @@
 // Import the createApp function from Vue
 import { createApp } from 'vue'
 import Options from './Options.vue'
+import 'material-icons/iconfont/material-icons.css';
 
 // Create a new Vue app and mount the Options component to the #app element
 createApp(Options).mount('#app')
