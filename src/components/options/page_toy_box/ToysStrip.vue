@@ -67,7 +67,7 @@ const emits = defineEmits(['selectToy', 'addToy']);
 
 		// make inner shadow coming from right side
 		// thats inside inside the shape
-		box-shadow: inset -15px 0px 15px -5px rgba(0, 0, 0, 0.75);
+		box-shadow: inset -15px 0px 15px -5px rgba(0, 0, 0, 0.25);
 
 		// the box that contains our add button
 		//(the other toyStripItems will be in the ToyStripItem component)
@@ -93,6 +93,9 @@ const emits = defineEmits(['selectToy', 'addToy']);
 				height: 60px;
 				border-radius: 25%;
 				background: #EFEFEF;
+
+				// add some nice shadow
+				box-shadow: 5px 5px 5px 0px rgba(0, 0, 0, 0.25);
 
 				// make the button look clickable
 				cursor: pointer;
