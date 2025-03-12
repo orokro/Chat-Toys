@@ -19,7 +19,10 @@
 		/>
 
 		<!-- always have the add button... -->
-		<div class="toyStripItem add">
+		<div
+			class="toyStripItem add"
+			@click="()=>emits('addToy')"
+		>
 			<div class="addButton">
 				<span class="material-icons">add</span>
 			</div>

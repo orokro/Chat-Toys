@@ -6,6 +6,9 @@
 -->
 <template>
 
+	<!-- via our "jenesius-vue-modal" modal library -->
+	<widget-container-modal/>
+
 	<div class="optionsWrapper">
 		
 		<!-- the tab strip along the top of the options page -->
@@ -40,6 +43,7 @@ import HelpPage from '../components/options/HelpPage.vue'
 import SettingsPage from '../components/options/SettingsPage.vue'
 import ToyBoxPage from '../components/options/page_toy_box/ToyBoxPage.vue'
 import ButtonsPage from '../components/options/ButtonsBoardPage.vue'
+import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
 
 // we'll define our tabs here
 const tabs = [
@@ -87,5 +91,12 @@ const activeTab = ref(2);
 		}// .tabPagesWrapper
 
 	}// .optionsWrapper
+
+	// styles for modal backdrop via the "jenesius-vue-modal" library
+	::v-deep .modal-container {
+		background-color: rgba(0, 0, 0, 0.5);
+		backdrop-filter: blur(5px);
+		z-index: 1000;
+	}
 
 </style>

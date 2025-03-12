@@ -6,12 +6,15 @@
 -->
 <template>
 	
+	
+
 	<!-- main page wrapper-->
 	<div class="page toyBoxPage">
 		 
 		<!-- the column on the left where toys can be added, removed, or selected to configue -->
 		<ToysStrip
 			class="toysStrip"
+			@addToy="handleAddToy"
 		/>
 
 		<!-- the main area where the selected toys appear -->
@@ -38,6 +41,10 @@ import { ref, shallowRef, onMounted } from 'vue';
 
 // components
 import ToysStrip from './ToysStrip.vue';
+import AddToyModal from './AddToyModal.vue';
+
+// lib/ misc
+import { openModal, promptModal } from "jenesius-vue-modal"
 
 // list of toys the user has added
 // TODO: move to state controller
@@ -51,6 +58,16 @@ onMounted(() => {
 		selectedToy.value = toys.value[0];
 	}
 });
+
+// handle when the add a toy button was clicked on the strip
+// (i.e. show the modal to add toys to our system)
+const handleAddToy = async () => {
+	console.log('add toy');
+
+	const result = await promptModal(AddToyModal);
+
+	console.log('result', result);
+};
 
 </script>
 <style lang="scss" scoped>
@@ -87,4 +104,5 @@ onMounted(() => {
 
 	}// .toyBoxPage
 
+	
 </style>
