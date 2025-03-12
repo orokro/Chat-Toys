@@ -36,5 +36,6 @@ yarn-error.log*
 coverage/
 
 # Misc
+/misc
 *.bak
 *.tmp
