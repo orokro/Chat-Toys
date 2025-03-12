@@ -14,11 +14,21 @@
 		:height="400"
 	>
 		<div class="modalContent">
-			<button @click="()=>select('a')">A</button>
-			<br>
-			<button @click="()=>select('b')">B</button>
-			<br>
-			<button @click="()=>select('c')">C</button>
+			
+			<!-- loop through the toys and display them -->
+			<button
+				v-for="toy in toysData"
+				:key="toy.slug"
+				@click="()=>select(toy)"
+			>
+				<img
+					:src="`/assets/icons/${toy.slug}.png`"
+					alt="toy.name"
+					width="80"
+					height="80"
+				/>
+			</button>
+
 		</div>
 	</ModalWindowFrame>
 
@@ -33,6 +43,7 @@ import ModalWindowFrame from '../ModalWindowFrame.vue';
 
 // lib misc
 import { closeModal, Modal } from 'jenesius-vue-modal';
+import { toysData } from '../../../scripts/ToysData';
 
 const emit = defineEmits([Modal.EVENT_PROMPT]);
 

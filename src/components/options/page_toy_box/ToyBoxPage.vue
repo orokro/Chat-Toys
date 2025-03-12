@@ -24,7 +24,7 @@
 			<template v-if="selectedToy==null">
 				<img
 					class="clickToAddFirstToy"
-					src="../../../assets/click_to_add_first_toy.png"
+					:src="'/assets/click_to_add_first_toy.png'" 
 					alt="arrow"
 				/>
 			</template>
