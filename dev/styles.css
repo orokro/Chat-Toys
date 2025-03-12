@@ -1,0 +1,78 @@
+/*
+	styles.css
+	----------
+
+	Global styles for the application windows.
+*/
+
+/* Import Open Sans from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
+
+/* CSS Reset and Defaults */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+/* Set default font for the page */
+body {
+	font-family: 'Open Sans', sans-serif;
+	line-height: 1.6;
+	background-color: #f9f9f9;
+	color: #333;
+}
+
+/* Remove default styles for main elements */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol {
+	margin-bottom: 1rem;
+}
+
+/* Clear default list styles (optional) */
+ul,
+ol {
+	list-style: none;
+}
+
+/* Set anchor tag default styles */
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+/* Basic container styles */
+.container {
+	width: 90%;
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 1rem;
+}
+
+h2 {
+	color: #00ABAE;
+}
+
+/* Disable text selection app wide */
+body,
+* {
+	user-select: none;
+}
+
+/* reusable gray box */
+.grayBox {
+
+	background-color: #f0f0f0;
+	border-radius: 5px;
+	padding: 10px;
+	margin: 10px;
+}

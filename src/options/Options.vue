@@ -38,7 +38,7 @@ import Test from '../components/options/Test.vue'
 import TopTabBar from '../components/options/TopTabBar.vue'
 import HelpPage from '../components/options/HelpPage.vue'
 import SettingsPage from '../components/options/SettingsPage.vue'
-import ToyBoxPage from '../components/options/ToyBoxPage.vue'
+import ToyBoxPage from '../components/options/page_toy_box/ToyBoxPage.vue'
 import ButtonsPage from '../components/options/ButtonsBoardPage.vue'
 
 // we'll define our tabs here
@@ -47,13 +47,10 @@ const tabs = [
 	{ title: 'General Settings', icon: 'settings', slug: 'settings' },
 	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
 	{ title: 'Showtime Buttons Board', icon: 'dialpad', slug: 'buttons' },
-	
 ];
 
 // the index of the active tab
-const activeTab = ref(0);
-
-
+const activeTab = ref(2);
 
 </script>
 <style lang="scss" scoped>

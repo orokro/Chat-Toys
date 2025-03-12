@@ -38,11 +38,11 @@ const saveColor = () => {
 // load the background color from storage when the component is mounted
 onMounted(() => {
 
-	chrome.storage.sync.get('bgColor', ({ bgColor: storedColor }) => {
-		if (storedColor) {
-			bgColor.value = storedColor
-		}
-	})
+	// chrome.storage.sync.get('bgColor', ({ bgColor: storedColor }) => {
+	// 	if (storedColor) {
+	// 		bgColor.value = storedColor
+	// 	}
+	// })
 });
 
 </script>
