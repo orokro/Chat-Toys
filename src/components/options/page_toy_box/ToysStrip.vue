@@ -9,25 +9,28 @@
 	<!-- the vertical strip of toys added -->
 	<div class="toyStrip">
 
-		<!-- loop through the toys and display them -->
-		<ToyStripItem
-			v-for="toy in toys"
-			:key="toy.slug"
-			:toy="toy"
-			:selected="toy.sug === selectedToy.slug"
-			@click="()=>emits('selectToy', toy)"
-		/>
+		<!-- this area scrolls, but we deliberately hide the scroll bar outside via CSS -->
+		<div class="scrollArea">
 
-		<!-- always have the add button... -->
-		<div
-			class="toyStripItem add"
-			@click="()=>emits('addToy')"
-		>
-			<div class="addButton">
-				<span class="material-icons">add</span>
+			<!-- loop through the toys and display them -->
+			<ToyStripItem
+				v-for="toy in toys"
+				:key="toy"
+				:slug="toy"
+				:selected="toy === selectedToy"
+				@click="()=>emits('selectToy', toy)"
+			/>
+
+			<!-- always have the add button... -->
+			<div
+				class="toyStripItemAdd add"
+				@click="()=>emits('addToy')"
+			>
+				<div class="addButton ">
+					<span class="material-icons">add</span>
+				</div>
 			</div>
 		</div>
-
 
 	</div>
 </template>
@@ -44,8 +47,8 @@ const props = defineProps({
 
 	// the currently selected toy, if any
 	selectedToy: {
-		type: Object,
-		default: null
+		type: String,
+		default: ''
 	},
 
 	// the list of toys to display
@@ -65,20 +68,36 @@ const emits = defineEmits(['selectToy', 'addToy']);
 	// fill toy strip on left side
 	.toyStrip {
 
+		// fixed size, allow nothing to escape
 		width: 100px;
-		background: rgb(128, 128, 128);
+		overflow: hidden;
 
+		// dark gray bg with inner shadow
 		// make inner shadow coming from right side
 		// thats inside inside the shape
+		background: rgb(128, 128, 128);
 		box-shadow: inset -15px 0px 15px -5px rgba(0, 0, 0, 0.25);
+
+		// the scrollable area that has hidden scroll bars
+		.scrollArea {
+
+			// fill the area
+			position: absolute;
+			inset: 0px -200px 0px 0px;
+			padding-top: 10px;
+
+			// scroll the box
+			overflow-y: auto;
+
+		}// .scrollArea
 
 		// the box that contains our add button
 		//(the other toyStripItems will be in the ToyStripItem component)
-		.toyStripItem {
+		.toyStripItemAdd {
 
 			// the strip is 100, so make the items 100% width, square
 			width: 100px;
-			height: 100px;
+			height: 80px;
 
 			// for debug
 			/* border: 1px solid red; */

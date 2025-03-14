@@ -24,6 +24,10 @@ export default class Options {
 		// this doesn't need to persist across tabs or even refreshes
 		this.selectedToy = ref(null);
 
+		// if we have at least one enabled toy, set the first one as the active toy
+		if (this.enabledToys.value.length > 0)
+			this.selectedToy.value = this.enabledToys.value[0];
+
 		this.somevalue = ref("hi");
 	}
 	
@@ -59,6 +63,10 @@ export default class Options {
 		
 		// add the toy to the list of enabled toys
 		this.enabledToys.value = [...this.enabledToys.value, slug];
+
+		// if this is the first toy added, set it as the active toy
+		if (this.selectedToy.value === null)
+			this.selectedToy.value = slug;
 	}
 
 

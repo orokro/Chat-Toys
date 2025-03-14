@@ -28,7 +28,8 @@
 				v-if="activeTab === 2"
 				:optionsApp="optionsApp"
 			/>
-			<ButtonsPage v-if="activeTab === 3" />		
+			<LayoutPage v-if="activeTab === 3" />
+			<ButtonsPage v-if="activeTab === 4" />		
 
 		</div>
 
@@ -45,6 +46,7 @@ import TopTabBar from '../components/options/TopTabBar.vue'
 import HelpPage from '../components/options/HelpPage.vue'
 import SettingsPage from '../components/options/SettingsPage.vue'
 import ToyBoxPage from '../components/options/page_toy_box/ToyBoxPage.vue'
+import LayoutPage from '../components/options/page_layout/LayoutPage.vue'
 import ButtonsPage from '../components/options/ButtonsBoardPage.vue'
 import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
 
@@ -57,6 +59,7 @@ const tabs = [
 	{ title: 'Help', icon: 'help', slug: 'help' },
 	{ title: 'General Settings', icon: 'settings', slug: 'settings' },
 	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
+	{ title: 'layout', icon: 'monitor', slug: 'layout' },
 	{ title: 'Showtime Buttons Board', icon: 'dialpad', slug: 'buttons' },
 ];
 
@@ -68,7 +71,7 @@ onBeforeMount(() => {
 	optionsApp = new Options();
 
 	window.optionsApp = optionsApp;
-	
+
 });
 
 

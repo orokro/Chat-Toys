@@ -65,3 +65,12 @@ export const toysData = [
 		constructor: DummyToy,
 	}
 ];
+
+// convert the array to an object for easier access
+toysData.asObject = {};
+toysData.forEach(toy => {
+	toysData.asObject[toy.slug] = toy;
+});
+
+// for debug also
+window.toysData = toysData;

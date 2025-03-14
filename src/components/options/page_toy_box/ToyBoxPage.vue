@@ -12,14 +12,17 @@
 		<!-- the column on the left where toys can be added, removed, or selected to configue -->
 		<ToysStrip
 			class="toysStrip"
+			:toys="optionsApp.enabledToys.value"
+			:selectedToy="optionsApp.selectedToy.value"
 			@addToy="handleAddToy"
+			@selectToy="(toy)=>optionsApp.selectToy(toy)"
 		/>
 
 		<!-- the main area where the selected toys appear -->
 		<div class="toyPageArea">
 
 			<!-- if no toy is selected, show arrow -->
-			<template v-if="optionsApp.selectedToy.value==null">
+			<template v-if="optionsApp.enabledToys.value.length<=0">
 				<img
 					class="clickToAddFirstToy"
 					:src="'/assets/click_to_add_first_toy.png'" 
@@ -27,6 +30,13 @@
 				/>
 			</template>
 			
+			<button
+				@click="handleTestConfirmModal"
+				:style="{
+					margin: '30px',
+					padding: '5px 10px',
+				}"
+			>Show ConfirmModal</button>
 		</div>
 	
 	</div>
@@ -40,6 +50,7 @@ import { chromeRef } from '../../../scripts/chromeRef';
 // components
 import ToysStrip from './ToysStrip.vue';
 import AddToyModal from './AddToyModal.vue';
+import ConfirmModal from '../ConfirmModal.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
@@ -54,6 +65,14 @@ const props = defineProps({
 	}
 });
 
+function handleTestConfirmModal(){
+	promptModal(ConfirmModal, {
+		title: 'Test of Confirm Modal',
+		prompt: 'U sure this is working?',
+		buttons: ['yes', 'no', 'unsure'],
+		icon: 'warning'
+	});
+}
 
 onMounted(() => {
 
@@ -75,8 +94,6 @@ const handleAddToy = async () => {
 	const toySlug = result.slug;
 	props.optionsApp.addToy(toySlug)
 };
-
-
 
 </script>
 <style lang="scss" scoped>
