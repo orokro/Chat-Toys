@@ -19,10 +19,12 @@
 				:slug="toy"
 				:selected="toy === selectedToy"
 				@click="()=>emits('selectToy', toy)"
+				@remove="()=>emits('removeToy', toy)"
 			/>
 
 			<!-- always have the add button... -->
 			<div
+				v-if="!allToysAdded"
 				class="toyStripItemAdd add"
 				@click="()=>emits('addToy')"
 			>
@@ -37,10 +39,13 @@
 <script setup>
 
 // vue
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 // components
 import ToyStripItem from './ToyStripItem.vue';
+
+// our app
+import { toysData } from '../../../scripts/ToysData';
 
 // define some props
 const props = defineProps({
@@ -60,7 +65,12 @@ const props = defineProps({
 });
 
 // emit events
-const emits = defineEmits(['selectToy', 'addToy']);
+const emits = defineEmits(['selectToy', 'addToy', 'removeToy']);
+
+// true when the user has added all the toys
+const allToysAdded = computed(() => {
+	return props.toys.length >= toysData.length;
+});
 
 </script>
 <style lang="scss" scoped>

@@ -16,6 +16,7 @@
 			:selectedToy="optionsApp.selectedToy.value"
 			@addToy="handleAddToy"
 			@selectToy="(toy)=>optionsApp.selectToy(toy)"
+			@removeToy="(toy)=>handleRemoveToy(toy)"
 		/>
 
 		<!-- the main area where the selected toys appear -->
@@ -29,14 +30,7 @@
 					alt="arrow"
 				/>
 			</template>
-			
-			<button
-				@click="handleTestConfirmModal"
-				:style="{
-					margin: '30px',
-					padding: '5px 10px',
-				}"
-			>Show ConfirmModal</button>
+
 		</div>
 	
 	</div>
@@ -54,6 +48,7 @@ import ConfirmModal from '../ConfirmModal.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
+import { toysData } from '../../../scripts/ToysData';
 
 // accept some props
 const props = defineProps({
@@ -65,18 +60,29 @@ const props = defineProps({
 	}
 });
 
-function handleTestConfirmModal(){
-	promptModal(ConfirmModal, {
-		title: 'Test of Confirm Modal',
-		prompt: 'U sure this is working?',
-		buttons: ['yes', 'no', 'unsure'],
+// handle when the remove toy button was clicked on the strip
+async function handleRemoveToy(toy){
+
+	const toyDetails = toysData.asObject[toy];
+	const response = await promptModal(ConfirmModal, {
+		title: 'Are you sure?',
+		prompt: `Are you sure you want to remove the toy: ${toyDetails.name}?`,
+		buttons: ['yes', 'nevermind'],
 		icon: 'warning'
 	});
+
+	// if the response was null, return
+	if(response==null)
+		return;
+
+	// otherwise, if the response was not {button: 'yes', index:0}, return
+	if(response.index!==0)
+		return;
+
+	// remove the toy
+	props.optionsApp.removeToy(toy);
 }
 
-onMounted(() => {
-
-});
 
 // handle when the add a toy button was clicked on the strip
 // (i.e. show the modal to add toys to our system)

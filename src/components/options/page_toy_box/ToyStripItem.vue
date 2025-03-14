@@ -24,11 +24,21 @@
 			<!-- the icon for the toy -->
 			<div class="icon">
 				<img
+					class="iconImage"
 					:src="toyIconPath"
 					:alt="toysData.asObject[slug]"
 					width="60"
 					height="60"
 				/>
+			</div>
+
+			<!-- the delete button -->
+			<div
+				class="deleteButton"
+				:title="`Remove ${toysData.asObject[slug].name}`"
+				@click="$emit('remove', slug)"
+			>
+				<span class="material-icons">delete</span>
 			</div>
 
 		</div>
@@ -62,14 +72,12 @@ const props = defineProps({
 });
 
 // emits
-const emits = defineEmits(['click']);
+const emits = defineEmits(['click', 'remove']);
 
 // the path to the icon
 const toyIconPath = computed(() => {
 	return `../assets/icons/${props.slug}.png`;
 });
-
-
 
 </script>
 <style lang="scss" scoped>
@@ -106,7 +114,55 @@ const toyIconPath = computed(() => {
 				position: relative;
 				top: 2px;
 				left: 10px;
+
+				.iconImage {
+					&:hover {
+						filter: drop-shadow(2px 4px 4px rgba(0, 0, 0, 0.5));
+					}
+				}
+			}// .icon 
+
+			&:hover {
+				.deleteButton {
+					scale: 1;
+				}
 			}
+
+			// the delete button
+			.deleteButton {
+				
+				// fixed on top-left corner
+				position: absolute;
+				left: -5px;
+				top: -5px;
+
+				// hidden by default
+				transition: 0.2s;
+				scale: 0;
+
+				// make it look clickable
+				cursor: pointer;
+
+				// nice red circle
+				border: 2px solid black;
+				border-radius: 100px;
+				width: 25px;
+				height: 25px;
+				background-color: rgb(185, 1, 1);
+
+				span {
+					position: relative;
+					top: 1px;
+					left: 1px;
+					font-size: 18px;
+					color: white;
+				}	
+
+				&:hover {
+					background: red;
+				}
+					
+			}// .deleteButton
 
 		}// .innerBox
 
