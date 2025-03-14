@@ -6,8 +6,6 @@
 -->
 <template>
 	
-	
-
 	<!-- main page wrapper-->
 	<div class="page toyBoxPage">
 		 
@@ -21,7 +19,7 @@
 		<div class="toyPageArea">
 
 			<!-- if no toy is selected, show arrow -->
-			<template v-if="selectedToy==null">
+			<template v-if="optionsApp.selectedToy.value==null">
 				<img
 					class="clickToAddFirstToy"
 					:src="'/assets/click_to_add_first_toy.png'" 
@@ -29,7 +27,6 @@
 				/>
 			</template>
 			
-
 		</div>
 	
 	</div>
@@ -37,7 +34,8 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, onMounted } from 'vue';
+import { ref, shallowRef, onMounted, markRaw } from 'vue';
+import { chromeRef } from '../../../scripts/chromeRef';
 
 // components
 import ToysStrip from './ToysStrip.vue';
@@ -46,28 +44,39 @@ import AddToyModal from './AddToyModal.vue';
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
 
-// list of toys the user has added
-// TODO: move to state controller
-const toys = shallowRef([]);
+// accept some props
+const props = defineProps({
+	
+	// reference to the state of the options page
+	optionsApp: {
+		type: Object,
+		default: null
+	}
+});
 
-// the currently selected toy, if any
-const selectedToy = ref(null);
 
 onMounted(() => {
-	if(toys.value.length > 0){
-		selectedToy.value = toys.value[0];
-	}
+
 });
 
 // handle when the add a toy button was clicked on the strip
 // (i.e. show the modal to add toys to our system)
 const handleAddToy = async () => {
-	console.log('add toy');
 
-	const result = await promptModal(AddToyModal);
+	const result = await promptModal(AddToyModal, {
+		optionsApp: markRaw(props.optionsApp),
+	});
+	
+	// if no toy was selected, return
+	if(result==null)
+		return;
 
-	console.log('result', result);
+	// add the toy to the toy box
+	const toySlug = result.slug;
+	props.optionsApp.addToy(toySlug)
 };
+
+
 
 </script>
 <style lang="scss" scoped>
@@ -79,7 +88,7 @@ const handleAddToy = async () => {
 		position: absolute;
 		inset: 0;
 
-		// force tool stip on left side
+		// force tool strip on left side
 		.toysStrip {
 			position: absolute;
 			inset: 0px auto 0px 0px;
@@ -90,6 +99,7 @@ const handleAddToy = async () => {
 		
 		// fill on right
 		.toyPageArea {
+
 			position: absolute;
 			inset: 0px 0px 0px 100px;
 
@@ -99,10 +109,9 @@ const handleAddToy = async () => {
 				top: 30px;
 				left: 30px;
 			}
+
 		}// .toyPageArea
 		
-
 	}// .toyBoxPage
 
-	
 </style>

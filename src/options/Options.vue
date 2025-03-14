@@ -24,7 +24,10 @@
 
 			<HelpPage v-if="activeTab === 0" />
 			<SettingsPage v-if="activeTab === 1" />
-			<ToyBoxPage v-if="activeTab === 2" />
+			<ToyBoxPage 
+				v-if="activeTab === 2"
+				:optionsApp="optionsApp"
+			/>
 			<ButtonsPage v-if="activeTab === 3" />		
 
 		</div>
@@ -34,7 +37,7 @@
 <script setup>
 
 // vue
-import { ref, onMounted } from 'vue'
+import { ref, onBeforeMount, onMounted } from 'vue'
 
 // components
 import Test from '../components/options/Test.vue'
@@ -44,6 +47,10 @@ import SettingsPage from '../components/options/SettingsPage.vue'
 import ToyBoxPage from '../components/options/page_toy_box/ToyBoxPage.vue'
 import ButtonsPage from '../components/options/ButtonsBoardPage.vue'
 import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
+
+// our app scripts
+import Options from '../scripts/options_state/Options';
+let optionsApp = null;
 
 // we'll define our tabs here
 const tabs = [
@@ -55,6 +62,16 @@ const tabs = [
 
 // the index of the active tab
 const activeTab = ref(2);
+
+// before we render first time, we need to instantiate our options state
+onBeforeMount(() => {
+	optionsApp = new Options();
+
+	window.optionsApp = optionsApp;
+	
+});
+
+
 
 </script>
 <style lang="scss" scoped>
