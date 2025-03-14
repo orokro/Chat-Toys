@@ -18,7 +18,13 @@
 	And when some of these happen, the user may be in the middle of a session.
 
 	So we need to recover quickly and accurately to the state the user was in.
-	
+
+	--- 
+
+	Another note to consider:
+
+	This class will be instantiated in the background script, and will be the main point of contact
+	for the content script, options page, and popup.	
 */
 
 // vue things
