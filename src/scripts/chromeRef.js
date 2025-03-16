@@ -24,8 +24,12 @@ const DEBUG = false;
 const isChromeExtension = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
 console.log(`Running in ${isChromeExtension ? "Chrome extension mode" : "localStorage mode"}`);
 
+// Global event target for intra-tab communication
+const localEventBus = new EventTarget();
+
 // map of listener functions that either listen to chrome.storage or localStorage changes
 const listeners = new Map();
+const localListeners = new Map();
 
 // Single registry for both chromeRef and chromeShallowRef
 // This will be used to cleanup listeners when the ref is garbage collected
@@ -43,8 +47,16 @@ const registry = new FinalizationRegistry(({ storageKey, stopWatch }) => {
         else 
             window.removeEventListener("storage", storageListener);
         
+		// only delete they key
         listeners.delete(storageKey);
     }
+
+	// Remove local storage listener (if any)
+	const localListener = localListeners.get(storageKey);
+	if (localListener) {
+		localEventBus.removeEventListener(storageKey, localListener);
+		localListeners.delete(storageKey);
+	}
 
     // Stop Vue watch associated with the ref
     stopWatch();
@@ -100,8 +112,12 @@ function createChromeStorageRef(refType, storageKey, initialValue) {
 		// save the new value to persistent storage
         if (isChromeExtension)
             chrome.storage.local.set({ [storageKey]: newValue });
-        else
+        else {
             localStorage.setItem(storageKey, JSON.stringify(newValue));
+
+			// Dispatch an event so all instances with the same storageKey can update
+            localEventBus.dispatchEvent(new CustomEvent(storageKey, { detail: newValue }));			
+		}
         
     });
 
@@ -110,72 +126,57 @@ function createChromeStorageRef(refType, storageKey, initialValue) {
 	// and update the ref accordingly. This way, the ref will always be in sync with storage.
     function storageListener(eventOrChanges, area) {
 
-		console.log('storageListener');
+		if (DEBUG)
+			console.log('storageListener');
 		
+		// first we get the new value, based on the environment
+        let newValue;
         if (isChromeExtension) {
-
-			// if we got an event but it wasn't for our key, or was for session or something else, gtfo
             if (area !== 'local' || !eventOrChanges[storageKey]) return;
-
-			// dereference the weak ref to get the actual ref so we can update it
-            const strongState = weakState.deref();
-
-			// if it was garbage collected, remove the listener and gtfo
-            if (!strongState) {
-				
-				if (DEBUG)
-					console.log(`State for "${storageKey}" has been garbage collected.`);
-                
-                chrome.storage.onChanged.removeListener(storageListener);
-                listeners.delete(storageKey);
-                return;
-            }
-
-			// only update the ref if the value has changed
-            if (eventOrChanges[storageKey].newValue !== strongState.value) {
-
-				// this boolean is to prevent infinite loops, ideally
-                isSettingValue = true;
-                strongState.value = eventOrChanges[storageKey].newValue;
-                isSettingValue = false;
-
-            }
-
-		// otherwise if it's not a chrome extension, we're listening for storage events
+            newValue = eventOrChanges[storageKey].newValue;
         } else {
-
-			// if the event wasn't for our key, gtfo
             if (eventOrChanges.key !== storageKey) return;
+            newValue = JSON.parse(eventOrChanges.newValue);
+        }
 
-			// deref & if it was garbage collected, remove the listener and gtfo
-			const strongState = weakState.deref();
-            if (!strongState) {
-                
-				if (DEBUG)
-					console.log(`State for "${storageKey}" has been garbage collected.`);
-				
-                window.removeEventListener("storage", storageListener);
-                listeners.delete(storageKey);
-                return;
-            }
+		// if the ref is garbage collected, we need to stop listening for storage changes & cleanup
+        const strongState = weakState.deref();
+        if (!strongState) {
+            if (isChromeExtension) chrome.storage.onChanged.removeListener(storageListener);
+            else window.removeEventListener("storage", storageListener);
+            listeners.delete(storageKey);
+            return;
+        }
 
-			// parse the new value from the event
-            const newValue = JSON.parse(eventOrChanges.newValue);
-
-			// only update the ref if the value has changed
-            if (newValue !== strongState.value) {
-                isSettingValue = true;
-                strongState.value = newValue;
-                isSettingValue = false;
-            }
+		// only update the ref, if the new value is different from the current value
+        if (newValue !== strongState.value) {
+            isSettingValue = true;
+            strongState.value = newValue;
+            isSettingValue = false;
         }
     }
+
+	// handle local event bus (for localStorage only)
+	function localListener(event) {
+
+		if (DEBUG)
+			console.log('localListener');
+
+		const strongState = weakState.deref();
+		if (strongState && event.detail !== strongState.value) {
+			isSettingValue = true;
+			strongState.value = event.detail;
+			isSettingValue = false;
+		}
+	}
 
     // Attach listener to either chrome.storage or localStorage
     if (isChromeExtension)
         chrome.storage.onChanged.addListener(storageListener);
     else{
         window.addEventListener("storage", storageListener);
+		localEventBus.addEventListener(storageKey, localListener);
+		localListeners.set(storageKey, localListener);
 	}
     
 	// Save listener to map, so we can unregister it later if the ref is garbage collected

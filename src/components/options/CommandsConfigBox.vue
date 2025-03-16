@@ -259,8 +259,8 @@ onMounted(()=>{
 // watch the commands ref for changes
 watch(commandsRef, ()=>{
 
-	console.log('commands ref changed');
-	console.log(commandsRef.value);
+	// console.log('commands ref changed');
+	// console.log(commandsRef.value);
 	// reconcile the commands list so our local array is up to date
 	reconcileCommandsList();
 });
@@ -275,7 +275,7 @@ window.setCost = function(cost, command){
 	command = (command===undefined) ? 'channel_points_give' : command;
 	const commandsList = commandsRef.value;
 	commandsList[command].cost = cost;
-	console.log(commandsList)
+	// console.log(commandsList)
 	commandsRef.value = {...commandsList};
 }
 
