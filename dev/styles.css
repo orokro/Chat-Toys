@@ -17,6 +17,17 @@
 	padding: 0;
 }
 
+ul,
+ol {
+	margin-left: 1.0rem;
+	padding-left: 1.0rem;
+}
+
+li {
+	margin-left: 1rem;
+}
+
+
 /* Set default font for the page */
 body {
 	font-family: 'Open Sans', sans-serif;
@@ -32,17 +43,10 @@ h3,
 h4,
 h5,
 h6,
-p,
-ul,
-ol {
+p {
 	margin-bottom: 1rem;
 }
 
-/* Clear default list styles (optional) */
-ul,
-ol {
-	list-style: none;
-}
 
 /* Set anchor tag default styles */
 a {
@@ -58,9 +62,6 @@ a {
 	padding: 1rem;
 }
 
-h2 {
-	color: #00ABAE;
-}
 
 /* Disable text selection app wide */
 body,
@@ -75,4 +76,13 @@ body,
 	border-radius: 5px;
 	padding: 10px;
 	margin: 10px;
+}
+
+span.cmd {
+	background: rgba(0, 0, 0, 0.7);
+	font-weight: bold;
+	color: white;
+	font-family: 'Courier New', Courier, monospace;
+	padding: 2px 5px;
+	border-radius: 5px;
 }

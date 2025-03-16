@@ -32,7 +32,6 @@
 					class="toyIconImage"
 					:src="`/assets/icons/${toy.slug}.png`"
 					alt="toy.name"
-					width="80"
 					height="80"
 				/>
 

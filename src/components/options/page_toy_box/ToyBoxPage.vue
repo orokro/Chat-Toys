@@ -31,6 +31,10 @@
 				/>
 			</template>
 
+			<template v-else>
+				<ChannelPointsPage/>
+			</template>
+
 		</div>
 	
 	</div>
@@ -45,6 +49,7 @@ import { chromeRef } from '../../../scripts/chromeRef';
 import ToysStrip from './ToysStrip.vue';
 import AddToyModal from './AddToyModal.vue';
 import ConfirmModal from '../ConfirmModal.vue';
+import ChannelPointsPage from './toy_pages/ChannelPointsPage.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
@@ -123,15 +128,22 @@ const handleAddToy = async () => {
 		// fill on right
 		.toyPageArea {
 
+			// fill right side of screen
 			position: absolute;
 			inset: 0px 0px 0px 100px;
+			overflow: hidden;
+			overflow-y: auto;
+			// padding for contents (which will always be a PageBox, etc)
+			padding: 10px 10px 0px 10px;
 
+			// image to guide user to add their first item
 			.clickToAddFirstToy{
 
 				position: relative;
 				top: 30px;
 				left: 30px;
-			}
+
+			}// .clickToAddFirstToy
 
 		}// .toyPageArea
 		

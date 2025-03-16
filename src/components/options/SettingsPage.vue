@@ -9,14 +9,18 @@
 <template>
 	
 	<div class="page settingsPage">
-		<div class="grayBox">
-			<h1>Settings</h1>
-		</div>
-		<div class="grayBox">
-			<input type="color" v-model="bgColor" @input="saveColor" />
-			<Test title="Test Component" />
-		</div>
-		
+
+		<PageBox
+			title="General Settings"
+			themeColor="lightblue"
+		>
+			<p>Configure generation plugin settings Here.</p>
+			<p>I.E. not toy-specific settings</p>
+
+			<div class="grayBox">
+				<input type="color" v-model="bgColor" @input="saveColor" />
+			</div>
+		</PageBox>
 	</div>
 </template>
 <script setup>
@@ -25,7 +29,7 @@
 import { ref, onMounted } from 'vue'
 
 // components
-import Test from './Test.vue';
+import PageBox from './PageBox.vue';
 
 // the background color for the popup window
 const bgColor = ref('#ffffff')

@@ -17,6 +17,9 @@ export default class Options {
 	 */
 	constructor() {
 
+		// our global list of commands
+		this.commands = chromeShallowRef('commands', {});
+		
 		// we will use a chromeRef to persist the list of enabled toys
 		this.enabledToys = chromeShallowRef('enabledToys', []);
 

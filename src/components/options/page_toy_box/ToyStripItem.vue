@@ -27,7 +27,6 @@
 					class="iconImage"
 					:src="toyIconPath"
 					:alt="toysData.asObject[slug]"
-					width="60"
 					height="60"
 				/>
 			</div>
@@ -113,9 +112,10 @@ const toyIconPath = computed(() => {
 				transition: left 0.5s;
 				position: relative;
 				top: 2px;
-				left: 10px;
+				left: 6px;
 
 				.iconImage {
+
 					&:hover {
 						filter: drop-shadow(2px 4px 4px rgba(0, 0, 0, 0.5));
 					}

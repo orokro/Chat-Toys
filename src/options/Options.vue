@@ -41,7 +41,6 @@
 import { ref, onBeforeMount, onMounted } from 'vue'
 
 // components
-import Test from '../components/options/Test.vue'
 import TopTabBar from '../components/options/TopTabBar.vue'
 import HelpPage from '../components/options/HelpPage.vue'
 import SettingsPage from '../components/options/SettingsPage.vue'
@@ -74,8 +73,6 @@ onBeforeMount(() => {
 
 });
 
-
-
 </script>
 <style lang="scss" scoped>
 
@@ -104,9 +101,14 @@ onBeforeMount(() => {
 			position: absolute;
 			inset: 42px 0px 0px 0px;
 			background: white;
-			padding: 10px;
+			padding: 10px 10px 0px 10px;
 
-			overflow-y: scroll;
+			overflow-y: auto;
+
+			//Ensures child elements respect height constraints
+			display: flex; 
+			flex-direction: column;
+			height: calc(100vh - 42px);
 
 		}// .tabPagesWrapper
 
@@ -118,5 +120,5 @@ onBeforeMount(() => {
 		backdrop-filter: blur(5px);
 		z-index: 1000;
 	}
-
+	
 </style>
