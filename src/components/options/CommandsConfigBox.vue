@@ -262,8 +262,23 @@ watch(commandsRef, ()=>{
 	console.log('commands ref changed');
 	console.log(commandsRef.value);
 	// reconcile the commands list so our local array is up to date
-	// reconcileCommandsList();
+	reconcileCommandsList();
 });
+
+function doEdit(command, field){
+
+	console.log('edit', command, field);
+
+}
+
+window.setCost = function(cost, command){
+	command = (command===undefined) ? 'channel_points_give' : command;
+	const commandsList = commandsRef.value;
+	commandsList[command].cost = cost;
+	console.log(commandsList)
+	commandsRef.value = {...commandsList};
+}
+
 
 
 </script>

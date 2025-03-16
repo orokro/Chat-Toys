@@ -110,6 +110,8 @@ function createChromeStorageRef(refType, storageKey, initialValue) {
 	// and update the ref accordingly. This way, the ref will always be in sync with storage.
     function storageListener(eventOrChanges, area) {
 
+		console.log('storageListener');
+		
         if (isChromeExtension) {
 
 			// if we got an event but it wasn't for our key, or was for session or something else, gtfo
@@ -145,9 +147,8 @@ function createChromeStorageRef(refType, storageKey, initialValue) {
 			// if the event wasn't for our key, gtfo
             if (eventOrChanges.key !== storageKey) return;
 
-            const strongState = weakState.deref();
-
-			// if it was garbage collected, remove the listener and gtfo
+			// deref & if it was garbage collected, remove the listener and gtfo
+			const strongState = weakState.deref();
             if (!strongState) {
                 
 				if (DEBUG)
@@ -173,8 +174,9 @@ function createChromeStorageRef(refType, storageKey, initialValue) {
     // Attach listener to either chrome.storage or localStorage
     if (isChromeExtension)
         chrome.storage.onChanged.addListener(storageListener);
-    else
+    else{
         window.addEventListener("storage", storageListener);
+	}
     
 	// Save listener to map, so we can unregister it later if the ref is garbage collected
     listeners.set(storageKey, storageListener);
