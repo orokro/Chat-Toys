@@ -119,7 +119,7 @@ function generateGradient(colorHex) {
 		}
 
 		// deep select .sectionHeader and make its background the props theme color
-		::v-deep .sectionHeader {
+		:deep(.sectionHeader) {
 			margin: 0px -20px;
 			padding: 0px 20px 0px 20px;
 			background-color: var(--tColor);
@@ -128,7 +128,7 @@ function generateGradient(colorHex) {
 			text-shadow: 2px 1px 0px rgba(0, 0, 0, 0.5);
 		}
 
-		::v-deep .infoBox {
+		:deep(.infoBox) {
 			background-color: var(--tColor);
 		}
 		
