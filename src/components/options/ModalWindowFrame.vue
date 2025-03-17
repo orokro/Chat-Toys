@@ -140,7 +140,7 @@ const props = defineProps({
 			// fill area under title
 			position: absolute;
 			inset: 30px 0px 0px 0px;
-			overflow: auto;
+			overflow: hidden;
 
 			// for debug
 			/* border: 1px solid red; */

@@ -72,7 +72,7 @@ const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 const commands = [
 	{
 		slug: slugify('get'),
-		command: '!get',
+		command: 'get',
 		params: null,
 		description: 'Claim points',
 		enabled: true,
@@ -83,7 +83,7 @@ const commands = [
 	},	
 	{
 		slug: slugify('show'),
-		command: '!me',
+		command: 'me',
 		params: null,
 		description: 'Have on screen text show your points',
 		enabled: true,
@@ -94,7 +94,7 @@ const commands = [
 	},
 	{
 		slug: slugify('give'),
-		command: '!give',
+		command: 'give',
 		params: [
 			{ name: 'user', type: 'username', optional: false, desc: 'The user to give points to' },
 			{ name: 'amount', type: 'number', optional: false, desc: 'The amount of points to give' }

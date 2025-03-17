@@ -64,7 +64,7 @@
 					</div>					
 					<div class="cellCmd cell">
 						<div class="cmdText">
-							{{ command.command }}
+							!{{ command.command }}
 						</div>
 						<div class="editButton" @click="(e)=>doEdit(command, 'command')">✏️</div>
 					</div>
@@ -119,6 +119,12 @@
 // vue
 import { ref, shallowRef, onMounted, watch } from 'vue'
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
+
+// components
+import EditCommandModal from './page_toy_box/EditCommandModal.vue';
+
+// lib/ misc
+import { openModal, promptModal } from "jenesius-vue-modal"
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
@@ -240,8 +246,7 @@ function reconcileCommandsList(){
 		// if the key starts with our toySlug_ prefix, then we should add it to the local list
 		// (if its not already there)
 		if(key.startsWith(`${props.toySlug}_`) && newSlugs.includes(key)==false)
-			newLocalCommandsList.push(commandsState[key]);
-		
+			newLocalCommandsList.push(commandsState[key]);		
 
 	}// next key
 
@@ -265,21 +270,57 @@ watch(commandsRef, ()=>{
 	reconcileCommandsList();
 });
 
-function doEdit(command, field){
 
-	console.log('edit', command, field);
+/**
+ * Get a list of unique commands from a data object
+ * 
+ * @param {Object} data the data object to search for commands
+ * @returns {Array<String>} an array of unique commands
+ */
+function getUniqueCommands(data) {
+    const commands = new Set();
+    
+    for (const key in data) {
 
+        if (data[key] && typeof data[key] === 'object' && 'command' in data[key])
+            commands.add(data[key].command);
+        
+    }// next key
+    
+    return Array.from(commands);
 }
 
-window.setCost = function(cost, command){
-	command = (command===undefined) ? 'channel_points_give' : command;
-	const commandsList = commandsRef.value;
-	commandsList[command].cost = cost;
-	// console.log(commandsList)
-	commandsRef.value = {...commandsList};
+
+/**
+ * Open the edit command modal to edit a specific field in a command
+ * 
+ * @param {Object} command the command object to edit
+ * @param {String} field the field to edit
+ */
+async function doEdit(command, field){
+
+	const response = await promptModal(EditCommandModal, {
+		commandDetails: command,
+		kind: field,
+		initialValue: command[field],
+		reservedCommands: getUniqueCommands(commandsRef.value)
+	});
+
+	// if response was cancel or closed, then we don't need to do anything
+	if(response==null || response.button==='cancel')
+		return;
+
+	// if response was save, then we need to update the command
+	if(response.button==='save'){
+
+		// update the command
+		command[field] = response.value;
+
+		// update the commands ref
+		commandsRef.value = { ...commandsRef.value, [command.slug]: command };
+	}
+
 }
-
-
 
 </script>
 <style lang="scss" scoped>
