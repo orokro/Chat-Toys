@@ -38,7 +38,7 @@
 					<div 
 						v-if="isChannelPointsEnabled==false"
 						class="costWarning"
-						title="Channel Points are not enabled"
+						v-tippy="'Channel Points are not enabled, costs will be ignored'"
 					>
 						⚠️
 					</div>
@@ -128,6 +128,8 @@
 // vue
 import { ref, shallowRef, onMounted, watch, computed } from 'vue'
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
+import { directive as VTippy } from 'vue-tippy';
+import 'tippy.js/dist/tippy.css';
 
 // components
 import EditCommandModal from './page_toy_box/EditCommandModal.vue';
@@ -549,5 +551,6 @@ async function doEdit(command, field){
 		}// .commandsList
 
 	}// .commandsConfigBox
+
 
 </style>
