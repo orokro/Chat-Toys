@@ -5,19 +5,28 @@
 	This component is a simple component that generates "Catsum Ipsum" text.
 -->
 <template>
-	<template
-		v-for="para, idx in paragraphs"
-	>
-		<!-- wrap in p tag if enaled -->
-		<p v-if="props.useP" :key="idx">{{ para }}</p>
 
-		<!-- otherwise, raw text -->
-		<template v-else>{{ para }}</template>
+	<!-- by default we'll show paragraphs of catsum ipsum-->
+	<template v-if="props.brOnly==false">		
+		<template
+			v-for="para, idx in paragraphs"
+		>
+			<!-- wrap in p tag if enaled -->
+			<p v-if="props.useP" :key="idx">{{ para }}</p>
 
-		<!-- show br bewtween paragraphs or blocks of text? -->
-		<br v-if="props.useBr" />
+			<!-- otherwise, raw text -->
+			<template v-else>{{ para }}</template>
+
+			<!-- show br bewtween paragraphs or blocks of text? -->
+			<br v-if="props.useBr" />
+		</template>
 	</template>
 
+	<!-- optional mode to just show empty space -->
+	<template v-else>
+		<!-- generate brs for paragraphs * sentences -->
+		<br v-for="i in props.paragraphs * props.sentences" :key="i" />
+	</template>
 </template>
 <script setup>
 
@@ -65,6 +74,12 @@ const props = defineProps({
 		type: Boolean,
 		default: false
 	},
+
+	// only use BRs instead of senetences
+	brOnly: {
+		type: Boolean,
+		default: false
+	}
 });
 
 // list of paragraphs to render in the UI

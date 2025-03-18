@@ -125,9 +125,22 @@
 			<p>Show the user names of successful claims near the graphic.</p>
 		</SettingsInputRow>
 
+
 		<SettingsInputRow
-			type="boolean"
-			v-model="showTextPrompt"
+			type="options"
+			:options="[
+				{ name: 'Default', value: '#00ABAE' },
+				{ name: 'Red', value: '#FF0000' },
+				{ name: 'Green', value: '#00FF00' },
+				{ name: 'Blue', value: '#0000FF' },
+				{ name: 'Purple', value: '#800080' },
+				{ name: 'Orange', value: '#FFA500' },
+				{ name: 'Yellow', value: '#FFFF00' },
+				{ name: 'Pink', value: '#FFC0CB' },
+				{ name: 'Black', value: '#000000' },
+				{ name: 'White', value: '#FFFFFF' },
+			]"
+			v-model="stuffs"
 		>
 			<h3>Show Text Prompt</h3>
 			<p>Should a prompt be shown on the screen to indicate how to claim?</p>
@@ -141,7 +154,7 @@
 			<p>What color should the widget be?</p>
 		</SettingsInputRow>
 
-		<SectionHeader title="WidgetPreview"/>
+		<SectionHeader title="Widget Preview"/>
 		<p>Below is an example of the points widget as it will appear on the stage.</p>
 		<div class="previewBox">
 
@@ -150,8 +163,7 @@
 			/>
 			
 		</div>
-		<SectionHeader title="CatsumIpsum"/>
-		<CatsumIpsum :paragraphs="5" :sentences="10"/>
+		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 
 </template>
@@ -159,6 +171,8 @@
 
 // vue
 import { ref, watch } from 'vue';
+import { chromeRef } from '../../../../scripts/chromeRef';
+import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -172,6 +186,11 @@ import ChannelPointsWidget from '../../../stage/widgets/ChannelPointsWidget.vue'
 // generate slug for command
 const toySlug = 'channel_points';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+
+// we'll use a chrome ref to aggregate all our settings
+const channelPointsSettings = chromeRef('channel-points-settings', {});
+
+const stuffs = ref(0);
 
 // our settings for this system
 const claimInterval = ref(300);
@@ -188,6 +207,21 @@ watch(maxClaims, (val) => {
 	console.log('maxClaims', val);
 });
 
+// aggregate all our refs
+const settingsAggregator = new RefAggregator(channelPointsSettings);
+settingsAggregator.register('claimInterval', claimInterval);
+settingsAggregator.register('claimRandomness', claimRandomness);
+settingsAggregator.register('claimDuration', claimDuration);
+settingsAggregator.register('pointsPerClaim', pointsPerClaim);
+settingsAggregator.register('maxClaims', maxClaims);
+settingsAggregator.register('showTimerBar', showTimerBar);
+settingsAggregator.register('showClaimsRemaining', showClaimsRemaining);
+settingsAggregator.register('showUserClaims', showUserClaims);
+settingsAggregator.register('showTextPrompt', showTextPrompt);
+settingsAggregator.register('widgetColorTheme', widgetColorTheme);
+settingsAggregator.register('stuffs', stuffs);
+
+// define some props
 const props = defineProps({
 	
 	// reference to the state of the options page

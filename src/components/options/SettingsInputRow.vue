@@ -90,6 +90,12 @@ const emit = defineEmits(['update', 'error']);
 const internalValue = ref(setting.value); 
 const errorMessage = ref('');
 
+// watch our model (setting) and copy the value to our internal value,
+// but only if the input box is not currently focused
+watch(setting, (value) => {
+	internalValue.value = value;
+});
+
 // Generate internal Yup schema based on type & min/max constraints
 const getSchema = () => {
 	let baseSchema;
@@ -164,7 +170,7 @@ watch(internalValue, validate);
 		padding: 10px;
 		border-bottom: 5px solid black;
 		max-width: 1200px;
-		
+
 		.desc {
 			font-weight: bold;
 		}
