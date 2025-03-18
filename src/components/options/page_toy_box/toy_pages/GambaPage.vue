@@ -11,8 +11,24 @@
 		themeColor="#458233"
 	>
 		<p>
-			Stuff
+			The Gamba system lets chatters gamble their points away!
+			<br>
+			Or, win big!
+			<br>
+			There can only be one active betting game at a time,
+			the actual bet conditions are set in the show time page, and also resolved there.
+			<br>
+			The bet commands will be ignored if there no bet is set in show time.
 		</p>
+
+		<InfoBox icon="lightbulb">
+			NOTE #1: Users specify the amount they want to bet, and the option they want to bet on.
+			If you add a cost to the bet command, the user will have to pay that cost to place a bet.
+		</InfoBox>
+		<InfoBox icon="lightbulb">
+			NOTE #2: If the user places multiple bets during the same game, their bets will be combined.
+			Using the cancel command will revoke all bets placed by the user.
+		</InfoBox>
 		
 		<SectionHeader title="Command Triggers"/>
 		<p>
@@ -58,19 +74,32 @@ const props = defineProps({
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [];
-const commandsOld = [
+const commands = [
 	{
-		slug: slugify('get'),
-		command: 'get',
-		params: null,
-		description: 'Claim points',
+		slug: slugify('bet'),
+		command: 'bet',
+		params: [
+			{ name: 'amount', type: 'number', optional: false, desc: 'How many points to wage.' },
+			{ name: 'option', type: 'string', optional: false, desc: 'Which option to gamble on' },
+		],
+		description: 'Gamble points on options set up by the Streamer',
 		enabled: true,
-		costEnabled: false,
+		costEnabled: true,
 		cost: 0,
 		coolDown: 0,
 		groupCoolDown: 0,
-	}];
+	},
+	{
+		slug: slugify('cancel_bet'),
+		command: 'cancel_bet',
+		description: 'Revokes bet before the game starts.',
+		enabled: true,
+		costEnabled: true,
+		cost: 0,
+		coolDown: 0,
+		groupCoolDown: 0,
+	},	
+];
 
 </script>
 <style lang="scss" scoped>	

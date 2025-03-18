@@ -11,7 +11,7 @@
 		themeColor="#E65A5A"
 	>
 		<p>
-			Stuff
+			The Tosser system lets chatters throw things at you, like tomatoes, pies, and more!
 		</p>
 		
 		<SectionHeader title="Command Triggers"/>
@@ -58,19 +58,21 @@ const props = defineProps({
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [];
-const commandsOld = [
+const commands = [
 	{
-		slug: slugify('get'),
-		command: 'get',
-		params: null,
-		description: 'Claim points',
+		slug: slugify('toss'),
+		command: 'toss',
+		params: [
+			{ name: 'item', type: 'string', optional: true, desc: 'Which item to toss' },
+		],
+		description: 'Lets the toss an item!',
 		enabled: true,
-		costEnabled: false,
+		costEnabled: true,
 		cost: 0,
 		coolDown: 0,
 		groupCoolDown: 0,
-	}];
+	},	
+];
 
 </script>
 <style lang="scss" scoped>	

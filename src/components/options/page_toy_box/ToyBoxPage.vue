@@ -20,7 +20,7 @@
 		/>
 
 		<!-- the main area where the selected toys appear -->
-		<div class="toyPageArea">
+		<div ref="toyPageArea" class="toyPageArea">
 
 			<!-- if no toy is selected, show arrow -->
 			<template v-if="optionsApp.enabledToys.value.length<=0">
@@ -78,7 +78,7 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, onMounted, markRaw } from 'vue';
+import { ref, shallowRef, onMounted, markRaw, watch } from 'vue';
 import { chromeRef } from '../../../scripts/chromeRef';
 
 // components
@@ -108,6 +108,9 @@ const props = defineProps({
 		default: null
 	}
 });
+
+// the container for the various pages
+const toyPageArea = ref(null);
 
 // handle when the remove toy button was clicked on the strip
 async function handleRemoveToy(toy){
@@ -149,6 +152,16 @@ const handleAddToy = async () => {
 	const toySlug = result.slug;
 	props.optionsApp.addToy(toySlug)
 };
+
+// when the current toy changes, reset the scroll of the toyPageArea container
+watch(() => props.optionsApp.selectedToy.value, (newVal, oldVal) => {
+	if(toyPageArea.value)
+		toyPageArea.value.scrollTop = 0;
+});
+
+window.resetCommands = () => {
+	props.optionsApp.commands.value = {};
+}
 
 </script>
 <style lang="scss" scoped>

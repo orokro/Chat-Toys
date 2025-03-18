@@ -11,19 +11,15 @@
 		themeColor="#60C5F1"
 	>
 		<p>
-			Stuff
+			The Chat Box system simply displays a customized chat capture on screen.
 		</p>
 		
 		<SectionHeader title="Command Triggers"/>
 		<p>
-			Below you can customize the commands that users can type to interact with the Chat Box system.
+			The Chat Box system simply displays a customized chat capture on screen.
+			<br>
+			Therefore, there are no chatter-commands to configure for this system.
 		</p>
-		<CommandsConfigBox
-			:optionsApp="optionsApp"
-			:toyName="'Chat Box'"
-			:toySlug="toySlug"
-			:commands="commands"
-		/>
 			
 		<SectionHeader title="CatsumIpsum"/>
 		<CatsumIpsum :paragraphs="5" :sentences="10"/>

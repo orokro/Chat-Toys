@@ -58,19 +58,32 @@ const props = defineProps({
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [];
-const commandsOld = [
+const commands = [
 	{
-		slug: slugify('get'),
-		command: 'get',
-		params: null,
-		description: 'Claim points',
+		slug: slugify('cast'),
+		command: 'cast',
+		params: [
+			{ name: 'x', type: 'number', optional: true, desc: 'where on x axis to cast line' },
+			{ name: 'y', type: 'number', optional: true, desc: 'where on y axis to cast line' }
+		],
+		description: 'Cast your fishing line, optionally specify x and y coordinates',
 		enabled: true,
-		costEnabled: false,
+		costEnabled: true,
 		cost: 0,
 		coolDown: 0,
 		groupCoolDown: 0,
-	}];
+	},
+	{
+		slug: slugify('reel'),
+		command: 'reel',
+		description: 'Attempt to reel in your fishing line',
+		enabled: true,
+		costEnabled: true,
+		cost: 0,
+		coolDown: 0,
+		groupCoolDown: 0,
+	}
+];
 
 </script>
 <style lang="scss" scoped>	

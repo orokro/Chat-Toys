@@ -11,7 +11,12 @@
 		themeColor="#FFAAC5"
 	>
 		<p>
-			Stuff
+			The Prize Wheel is a fun way to reward your viewers with points, prizes, and more!
+			<br>
+			On this page you can configure the settings for the Prize Wheel system.
+			<br>
+			You can either keep the prize wheel always active, available to be spun at any time, 
+			or you can toggle in on/off in the show time page.
 		</p>
 		
 		<SectionHeader title="Command Triggers"/>
@@ -58,45 +63,20 @@ const props = defineProps({
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [];
-const commandsOld = [
+const commands = [
 	{
-		slug: slugify('get'),
-		command: 'get',
-		params: null,
-		description: 'Claim points',
-		enabled: true,
-		costEnabled: false,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},	
-	{
-		slug: slugify('show'),
-		command: 'me',
-		params: null,
-		description: 'Have on screen text show your points',
-		enabled: true,
-		costEnabled: false,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},
-	{
-		slug: slugify('give'),
-		command: 'give',
+		slug: slugify('spin'),
+		command: 'spin',
 		params: [
-			{ name: 'user', type: 'username', optional: false, desc: 'The user to give points to' },
-			{ name: 'amount', type: 'number', optional: false, desc: 'The amount of points to give' }
+			{ name: 'strength', type: 'number', optional: true, desc: 'How hard to spin' },
 		],
-		description: 'One user can give points to another user',
+		description: 'Lets the chatter spin the wheel!',
 		enabled: true,
 		costEnabled: true,
 		cost: 0,
 		coolDown: 0,
 		groupCoolDown: 0,
-	},
-	
+	},	
 ];
 
 </script>

@@ -11,7 +11,9 @@
 		themeColor="#C6C37A"
 	>
 		<p>
-			Stuff
+			The Head Pats system lets chatters give you head pats!
+			<br>
+			Or, each other!
 		</p>
 		
 		<SectionHeader title="Command Triggers"/>
@@ -58,19 +60,21 @@ const props = defineProps({
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [];
-const commandsOld = [
+const commands = [
 	{
-		slug: slugify('get'),
-		command: 'get',
-		params: null,
-		description: 'Claim points',
+		slug: slugify('pat'),
+		command: 'pat',
+		params: [
+			{ name: 'user', type: 'username', optional: true, desc: 'Which chatter to head pat' },
+		],
+		description: 'Show head pat graphic on streamer, or optionally a chatter.!',
 		enabled: true,
-		costEnabled: false,
+		costEnabled: true,
 		cost: 0,
 		coolDown: 0,
 		groupCoolDown: 0,
-	}];
+	},	
+];
 
 </script>
 <style lang="scss" scoped>	

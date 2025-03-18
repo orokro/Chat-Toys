@@ -50,13 +50,14 @@ const props = defineProps({
 		// styled box w/ content
 		.infoBox {
 
+			overflow: hidden;
+
 			display: inline-block;
 			// solid pill shape
 			/* background: black; */
 			border-radius: 30px;
 			min-height: 50px;
 
-			padding-right: 10px;
 
 			// reset stacking context
 			position: relative;
@@ -70,8 +71,8 @@ const props = defineProps({
 				position: absolute;
 				left: 0px;
 				top: 0px;
-				width: 60px;
-				height: 50px;
+				bottom: 0px;
+				width: 60px;;
 				display: flex;
 				justify-content: center;
 				align-items: center;
@@ -80,16 +81,22 @@ const props = defineProps({
 
 				// icon
 				span {
-					width: 20px;
-					height: 30px;
 					font-size: 30px;
+					color: white;
+					
 				}
 
 			}// .icon
 
 			.content {
 				padding: 5px 10px;
-				opacity: 0.8;
+				min-height: 50px;
+				/* opacity: 0.8; */
+
+				// make the text the most opposite of the background
+				/* color: white; */
+				/* mix-blend-mode:luminosity; */
+				background: rgba(255, 255, 255, 0.8);
 			}
 
 		}// .infoBox

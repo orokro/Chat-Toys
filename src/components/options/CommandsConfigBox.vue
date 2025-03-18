@@ -542,8 +542,8 @@ async function doEdit(command, field){
 						width: 100%;
 						padding-left: 10px;
 						text-align: left;
-					}
-					
+						line-height: 14px;
+					}					
 				}
 
 			}// .commandRow

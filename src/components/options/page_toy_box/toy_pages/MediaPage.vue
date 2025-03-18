@@ -11,12 +11,17 @@
 		themeColor="#51547D"
 	>
 		<p>
-			Stuff
+			The Media system lets chatters trigger things such as images, gifs, or sounds, or both at the same time!
+			<br>
+			On this page you can configure the settings for the Media system.
 		</p>
 		
 		<SectionHeader title="Command Triggers"/>
 		<p>
-			Below you can customize the commands that users can type to interact with the Media system.
+			By default, there are no commands to configure for the Media system.
+			<br>
+			Click the "Add Command" button below to create a new command, and it can be used to trigger media, 
+			in the settings below
 		</p>
 		<CommandsConfigBox
 			:optionsApp="optionsApp"
