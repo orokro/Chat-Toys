@@ -32,7 +32,9 @@
 			</template>
 
 			<template v-else>
-				<ChannelPointsPage/>
+				<ChannelPointsPage
+					:optionsApp="optionsApp"
+				/>
 			</template>
 
 		</div>

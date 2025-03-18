@@ -34,7 +34,16 @@
 				<div
 					class="cellCost cell"
 					title="Optional User-Channel-Points Cost"
-				>Cost</div>
+				>
+					<div 
+						v-if="isChannelPointsEnabled==false"
+						class="costWarning"
+						title="Channel Points are not enabled"
+					>
+						⚠️
+					</div>
+					Cost
+			</div>
 				<div 
 					class="cellCoolDown cell"
 					title="How long in seconds before user can invoke this command again"
@@ -117,7 +126,7 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, onMounted, watch } from 'vue'
+import { ref, shallowRef, onMounted, watch, computed } from 'vue'
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 
 // components
@@ -131,6 +140,12 @@ const commandsRef = chromeShallowRef('commands', {});
 
 // props
 const props = defineProps({
+
+	// the options app
+	optionsApp: {
+		type: Object,
+		default: null
+	},
 
 	// title title of commands list
 	toyName: {
@@ -151,6 +166,10 @@ const props = defineProps({
 	}
 
 });
+
+// true if we have at 'channel_points' enabled in props.optionsApp.enabledToys.value
+const isChannelPointsEnabled = computed(()=>
+	props.optionsApp.enabledToys.value.includes('channel_points'));
 
 /*	
 	NOTE:
