@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Channel Points"
-		themeColor="rgb(255, 220, 170)"
+		themeColor="#EED43A"
 	>
 		<p>
 			While optional, the Channel Points system is the best way to leverage the various other toys in this system.

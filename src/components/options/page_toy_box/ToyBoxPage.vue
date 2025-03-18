@@ -9,7 +9,7 @@
 	<!-- main page wrapper-->
 	<div class="page toyBoxPage">
 		 
-		<!-- the column on the left where toys can be added, removed, or selected to configue -->
+		<!-- the column on the left where toys can be added, removed, or selected to configure -->
 		<ToysStrip
 			class="toysStrip"
 			:toys="optionsApp.enabledToys.value"
@@ -32,7 +32,41 @@
 			</template>
 
 			<template v-else>
-				<ChannelPointsPage
+
+				<ChannelPointsPage 
+					v-show="optionsApp.selectedToy.value === 'channel_points'" 
+					:optionsApp="optionsApp"
+				/>
+				<ChatBoxPage 
+					v-show="optionsApp.selectedToy.value === 'chat_box'" 
+					:optionsApp="optionsApp"
+				/>
+				<FishingPage 
+					v-show="optionsApp.selectedToy.value === 'fishing'" 
+					:optionsApp="optionsApp"
+				/>
+				<GambaPage 
+					v-show="optionsApp.selectedToy.value === 'gamba'" 
+					:optionsApp="optionsApp"
+				/>
+				<HeadPatsPage 
+					v-show="optionsApp.selectedToy.value === 'head_pats'" 
+					:optionsApp="optionsApp"
+				/>
+				<MediaPage 
+					v-show="optionsApp.selectedToy.value === 'media'" 
+					:optionsApp="optionsApp"
+				/>
+				<PrizeWheelPage 
+					v-show="optionsApp.selectedToy.value === 'prize_wheel'" 
+					:optionsApp="optionsApp"
+				/>
+				<StreamBuddiesPage 
+					v-show="optionsApp.selectedToy.value === 'stream_buddies'" 
+					:optionsApp="optionsApp"
+				/>
+				<TosserPage 
+					v-show="optionsApp.selectedToy.value === 'tosser'" 
 					:optionsApp="optionsApp"
 				/>
 			</template>
@@ -52,6 +86,14 @@ import ToysStrip from './ToysStrip.vue';
 import AddToyModal from './AddToyModal.vue';
 import ConfirmModal from '../ConfirmModal.vue';
 import ChannelPointsPage from './toy_pages/ChannelPointsPage.vue';
+import ChatBoxPage from './toy_pages/ChatBoxPage.vue';
+import FishingPage from './toy_pages/FishingPage.vue';
+import GambaPage from './toy_pages/GambaPage.vue';
+import HeadPatsPage from './toy_pages/HeadPatsPage.vue';
+import MediaPage from './toy_pages/MediaPage.vue';
+import PrizeWheelPage from './toy_pages/PrizeWheelPage.vue';
+import StreamBuddiesPage from './toy_pages/StreamBuddiesPage.vue';
+import TosserPage from './toy_pages/TosserPage.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
