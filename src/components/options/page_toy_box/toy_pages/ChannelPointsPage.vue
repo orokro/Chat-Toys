@@ -42,30 +42,73 @@
 			:toySlug="toySlug"
 			:commands="commands"
 		/>
-			
-		<p>
-			Terrorize the hundred-and-twenty-pound rottweiler and steal his bed, not sorry chew on cable, so floof tum, tickle bum, jellybean footies curly toes make muffins, for wack the mini furry mouse or groom forever, stretch tongue and leave it slightly out, blep. Cough hairball on conveniently placed pants. Always hungry. Touch water with paw then recoil in horror inspect anything brought into the house, so why dog in house? i'm the sole ruler of this home and its inhabitants smelly, stupid dogs, inferior furballs time for night-hunt, human freakout or somehow manage to catch a bird but have no idea what to do next, so play with it until it dies of shock, or stand with legs in litter box, but poop outside i hate cucumber pls dont throw it at me or trip on catnip. Purr meow loudly just to annoy owners eat my own ears, yet jump off balcony, onto stranger's head and eat from dog's food. I is not fat, i is fluffy sniff all the things and eat too much then proceed to regurgitate all over living room carpet while humans eat dinner. Is good you understand your place in my world stare at the wall, play with food and get confused by dust destroy dog make it to the carpet before i vomit mmmmmm yet see brother cat receive pets, attack out of jealousy. Hopped up on catnip i love cats i am one wake up scratch humans leg for food then purr then i have a and relax for nap all day, so hit you unexpectedly. Chase the pig around the house disappear for four days and return home with an expensive injury; bite the vet spread kitty litter all over house for litter box is life, so meow. Purr spend all night ensuring people don't sleep sleep all day eat and than sleep on your face yet run outside as soon as door open chew foot. Mewl for food at 4am wake up wander around the house making large amounts of noise jump on top of your human's bed and fall asleep again yet hate dog stare out cat door then go back inside and i shredded your linens for you but curl into a furry donut if human is on laptop sit on the keyboard. Fall asleep upside-down meow go back to sleep owner brings food and water tries to pet on head, so scratch get sprayed by water because bad cat. Sit on human relentlessly pursues moth sit on human chase laser. Poop in a handbag look delicious and drink the soapy mopping up water then puke giant foamy fur-balls sleep nap yet leave fur on owners clothes. Taco cat backwards spells taco cat make muffins, for jump around on couch, meow constantly until given food, . Scratch me now! stop scratching me! purr as loud as possible, be the most annoying cat that you can, and, knock everything off the table and break lamps and curl up into a ball or really likes hummus meow sit in box soft kitty warm kitty little ball of furr. Stare at ceiling light cats are a queer kind of folk behind the couch caticus cuteicus meow go back to sleep owner brings food and water tries to pet on head, so scratch get sprayed by water because bad cat.
-		</p>
-		<p>
-			Run outside as soon as door open dismember a mouse and then regurgitate parts of it on the family room floor get scared by sudden appearance of cucumber fight an alligator and win. Paw your face to wake you up in the morning mewl for food at 4am nap all day damn that dog but bite plants and where is my slave? I'm getting hungry yet sleep over your phone and make cute snoring noises. Attack the dog then pretend like nothing happened leave hair everywhere. Cough hairball on conveniently placed pants stare at ceiling, yet licks your face or i like big cats and i can not lie, yet please stop looking at your phone and pet me. Sitting in a box swat turds around the house cry louder at reflection. Cats woo enslave the hooman mice poop in the plant pot and swat at dog, for the dog smells bad. Push your water glass on the floor floof tum, tickle bum, jellybean footies curly toes for dream about hunting birds meow meow you are my owner so here is a dead bird spit up on light gray carpet instead of adjacent linoleum. Fall over dead (not really but gets sypathy) meow and walk away roll over and sun my belly for plan your travel. Purr when being pet purr when being pet sleep so make muffins, for jump off balcony, onto stranger's head.
-		</p>
+		
+		<SectionHeader title="Settings"/>
+
+		<SettingsInputRow
+			type="number"
+			:min="1"
+			v-model="claimInterval"
+		>
+			<h3>Claim Interval</h3>
+			<p>How often should the option to appear to collect channel points? This setting is in seconds.</p>
+			<p>(60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes, etc.)</p>
+			<p>If this value is set to 0, the optional is basically always available, not recommended.</p>
+		</SettingsInputRow>
+
+		<SettingsInputRow
+			type="number"
+			:min="10"
+			v-model="claimDuration"
+		>
+			<h3>Claim Duration</h3>
+			<p>How long should the claim-offer appear on screen for?</p>
+			<p>(60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes, etc.)</p>
+			<p>The default is 1 minute. The minimum is 10 seconds but keep in mind stream latency.</p>
+			<p><strong>NOTE: users can technically claim more than once, to prevent this make the user cool down longer than claim duration!</strong></p>		
+		</SettingsInputRow>
+
+		<SettingsInputRow
+			type="number"
+			:min="1"
+			v-model="pointsPerClaim"
+		>
+			<h3>Pay Out</h3>
+			<p>How many points should a chatter receive for a successful claim?</p>
+			<p>The default is 100, but you can make your your economy however you like.</p>		
+		</SettingsInputRow>
+
+		<SectionHeader title="CatsumIpsum"/>
+		<CatsumIpsum :paragraphs="5" :sentences="10"/>
 	</PageBox>
 
 </template>
 <script setup>
 
 // vue
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 // components
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
+import CatsumIpsum from '../../../CatsumIpsum.vue';
+import SettingsInputRow from '../../SettingsInputRow.vue';
 
 // generate slug for command
 const toySlug = 'channel_points';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+
+// our settings for this system
+const claimInterval = ref(5);
+const claimDuration = ref(60);
+const pointsPerClaim = ref(100);
+const maxClaims = ref(5);
+
+watch(claimInterval, (val) => {
+	console.log('claimInterval', val);
+});
 
 const props = defineProps({
 	

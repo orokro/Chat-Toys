@@ -113,7 +113,16 @@ function createChromeStorageRef(refType, storageKey, initialValue) {
         if (isChromeExtension)
             chrome.storage.local.set({ [storageKey]: newValue });
         else {
-            localStorage.setItem(storageKey, JSON.stringify(newValue));
+			// get the current local storage string
+			const currentStorage = localStorage.getItem(storageKey);
+			const newStorage = JSON.stringify(newValue);
+
+			// gtfo if the value hasn't changed
+			if (currentStorage === newStorage)
+				return;
+
+			console.log('localStorage.setItem', storageKey, newValue);
+            localStorage.setItem(storageKey, newStorage);
 
 			// Dispatch an event so all instances with the same storageKey can update
             localEventBus.dispatchEvent(new CustomEvent(storageKey, { detail: newValue }));			
