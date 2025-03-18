@@ -9,6 +9,7 @@
 	<PageBox
 		title="Channel Points"
 		themeColor="#EED43A"
+		class="channelPointsPage"
 	>
 		<p>
 			While optional, the Channel Points system is the best way to leverage the various other toys in this system.
@@ -124,6 +125,31 @@
 			<p>Show the user names of successful claims near the graphic.</p>
 		</SettingsInputRow>
 
+		<SettingsInputRow
+			type="boolean"
+			v-model="showTextPrompt"
+		>
+			<h3>Show Text Prompt</h3>
+			<p>Should a prompt be shown on the screen to indicate how to claim?</p>
+		</SettingsInputRow>
+
+		<SettingsInputRow
+			type="color"
+			v-model="widgetColorTheme"
+		>
+			<h3>Widget Color Theme</h3>
+			<p>What color should the widget be?</p>
+		</SettingsInputRow>
+
+		<SectionHeader title="WidgetPreview"/>
+		<p>Below is an example of the points widget as it will appear on the stage.</p>
+		<div class="previewBox">
+
+			<ChannelPointsWidget
+				:demoMode="true"
+			/>
+			
+		</div>
 		<SectionHeader title="CatsumIpsum"/>
 		<CatsumIpsum :paragraphs="5" :sentences="10"/>
 	</PageBox>
@@ -141,6 +167,7 @@ import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsInputRow from '../../SettingsInputRow.vue';
+import ChannelPointsWidget from '../../../stage/widgets/ChannelPointsWidget.vue';
 
 // generate slug for command
 const toySlug = 'channel_points';
@@ -155,7 +182,8 @@ const maxClaims = ref(0);
 const showTimerBar = ref(true);
 const showClaimsRemaining = ref(true);
 const showUserClaims = ref(true);
-
+const showTextPrompt = ref(true);
+const widgetColorTheme = ref('#00ABAE');
 watch(maxClaims, (val) => {
 	console.log('maxClaims', val);
 });
@@ -215,5 +243,26 @@ const commands = [
 </script>
 <style lang="scss" scoped>	
 
+	// main page scoping
+	.channelPointsPage {
+
+		// random area where we'll show the widget over a bg image
+		.previewBox {
+
+			width: 600px;
+			height: 400px;
+			border: 2px solid black;
+			border-radius: 10px;
+
+			background-image: url('/assets/channel_points/demo_bg.png');
+
+			// flex center
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
+		}// .previewBox
+
+	}// .chanelPointsPage
 
 </style>

@@ -22,6 +22,15 @@
 			class="settings-input"
 		/>
 
+		<!-- if color mode, also show color input -->
+		<div v-if="type === 'color'" class="colorWrapper">
+			<input 
+				type="color"
+				v-model="internalValue" @blur="handleBlur"
+				class="settings-input"
+			/>
+		</div>
+
 		<template v-else-if="type === 'boolean'">
 			<div align="left">
 				<input type="checkbox" v-model="setting">
@@ -154,7 +163,8 @@ watch(internalValue, validate);
 		gap: 5px;
 		padding: 10px;
 		border-bottom: 5px solid black;
-
+		max-width: 1200px;
+		
 		.desc {
 			font-weight: bold;
 		}
@@ -181,6 +191,25 @@ watch(internalValue, validate);
 		.error-message {
 			color: red;
 			font-size: 0.85em;
+		}
+
+		.colorWrapper {
+			width: 300px;
+			height: 40px;
+
+			border: 2px solid black;
+			border-radius: 10px;
+			overflow: hidden;
+			position: relative;
+
+			input[type="color"] {
+				position: absolute;
+				top: -10px;
+				left: -10px;
+				width: 400px !important;
+				max-width: 400px !important;
+				height: 200px;
+			}
 		}
 
 	}// .settings-row
