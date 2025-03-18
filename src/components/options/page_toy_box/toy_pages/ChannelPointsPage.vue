@@ -58,6 +58,17 @@
 
 		<SettingsInputRow
 			type="number"
+			:min="0"
+			v-model="claimRandomness"
+		>
+			<h3>Claim Randomness</h3>
+			<p>Add random time to prevent users attempting to set a timer and snipe the points opportunity.</p>
+			<p>Default is 0 (no randomness)</p>
+			<p>A random amount of seconds will be ADDED to the above Claim Interval setting.</p>
+		</SettingsInputRow>
+
+		<SettingsInputRow
+			type="number"
 			:min="10"
 			v-model="claimDuration"
 		>
@@ -76,6 +87,41 @@
 			<h3>Pay Out</h3>
 			<p>How many points should a chatter receive for a successful claim?</p>
 			<p>The default is 100, but you can make your your economy however you like.</p>		
+		</SettingsInputRow>
+
+		<SettingsInputRow
+			type="number"
+			:min="0"
+			v-model="maxClaims"
+		>
+			<h3>Max Claims</h3>
+			<p>When the claim opportunity appears, how many users can claim successfully before it goes away?</p>
+			<p>The default is set to '0' which means unlimited claims during the claim duration.</p>
+			<p><strong>NOTE: if claims run out, the graphic will disappear even if more time was available!</strong></p>
+		</SettingsInputRow>
+
+		<SettingsInputRow
+			type="boolean"
+			v-model="showTimerBar"
+		>
+			<h3>Show Timer Bar</h3>
+			<p>Should a timer bar be shown on the screen to indicate how much time is left to claim?</p>
+		</SettingsInputRow>
+
+		<SettingsInputRow
+			type="boolean"
+			v-model="showClaimsRemaining"
+		>
+			<h3>Show Claims Remaining</h3>
+			<p>Should a counter be shown on the screen to indicate how many claims are left?</p>
+		</SettingsInputRow>
+
+		<SettingsInputRow
+			type="boolean"
+			v-model="showUserClaims"
+		>
+			<h3>Show User Claims</h3>
+			<p>Show the user names of successful claims near the graphic.</p>
 		</SettingsInputRow>
 
 		<SectionHeader title="CatsumIpsum"/>
@@ -101,13 +147,17 @@ const toySlug = 'channel_points';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
 // our settings for this system
-const claimInterval = ref(5);
+const claimInterval = ref(300);
+const claimRandomness = ref(0);
 const claimDuration = ref(60);
 const pointsPerClaim = ref(100);
-const maxClaims = ref(5);
+const maxClaims = ref(0);
+const showTimerBar = ref(true);
+const showClaimsRemaining = ref(true);
+const showUserClaims = ref(true);
 
-watch(claimInterval, (val) => {
-	console.log('claimInterval', val);
+watch(maxClaims, (val) => {
+	console.log('maxClaims', val);
 });
 
 const props = defineProps({

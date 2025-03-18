@@ -16,17 +16,44 @@
 
 		<!-- Input Field -->
 		<input 
+			v-if="type !== 'boolean' && type !== 'options' && type !== 'radio'"
 			:type="type === 'color' ? 'text' : type"
 			v-model="internalValue" @blur="handleBlur"
 			class="settings-input"
 		/>
+
+		<template v-else-if="type === 'boolean'">
+			<div align="left">
+				<input type="checkbox" v-model="setting">
+			</div>
+		</template>
+		
+		<template v-else-if="type === 'options'">
+			<select v-model="setting">
+				<option v-for="option in options" :key="option.value" :value="option.value">
+					{{ option.name }}
+				</option>
+			</select>
+		</template>
+
+		<template v-else-if="type === 'radio'">
+			<div v-for="option in options" :key="option.value">
+				<label>
+					<input type="radio" v-model="setting" :value="option.value">
+					{{ option.name }}
+				</label>
+			</div>
+		</template>
 
 		<!-- Error Message -->
 		<div v-if="errorMessage" class="error-message">
 			{{ errorMessage }}
 		</div>
 	</div>
+
+    
 </template>
+
 <script setup>
 import { ref, watch, defineProps, defineEmits, defineModel, shallowRef } from 'vue';
 import * as yup from 'yup';
@@ -34,7 +61,10 @@ import * as yup from 'yup';
 // Define Props
 const props = defineProps({
 	desc: { type:String, default: null },
-	type: { type: String, required: true }, // 'number', 'string', 'color'
+
+	// 'number', 'string', 'color', 'boolean', 'options', 'radio'
+	type: { type: String, required: true }, 
+	options: { type: Array, required: false },
 	min: { type: Number, required: false },
 	max: { type: Number, required: false },
 	schema: { type: Object, required: false }, // Optional Yup schema
@@ -135,6 +165,17 @@ watch(internalValue, validate);
 			border-radius: 4px;
 			width: 100%;
 			max-width: 300px;
+		}
+
+		select {
+			width: 100%;
+			max-width: 300px;
+		}
+
+		input[type="checkbox"] {
+			width: 25px;
+			height: 25px;
+			accent-color: black;
 		}
 
 		.error-message {
