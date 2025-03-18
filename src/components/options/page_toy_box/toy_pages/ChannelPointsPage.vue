@@ -127,20 +127,8 @@
 
 
 		<SettingsInputRow
-			type="options"
-			:options="[
-				{ name: 'Default', value: '#00ABAE' },
-				{ name: 'Red', value: '#FF0000' },
-				{ name: 'Green', value: '#00FF00' },
-				{ name: 'Blue', value: '#0000FF' },
-				{ name: 'Purple', value: '#800080' },
-				{ name: 'Orange', value: '#FFA500' },
-				{ name: 'Yellow', value: '#FFFF00' },
-				{ name: 'Pink', value: '#FFC0CB' },
-				{ name: 'Black', value: '#000000' },
-				{ name: 'White', value: '#FFFFFF' },
-			]"
-			v-model="stuffs"
+			type="boolean"
+			v-model="showTextPrompt"
 		>
 			<h3>Show Text Prompt</h3>
 			<p>Should a prompt be shown on the screen to indicate how to claim?</p>
