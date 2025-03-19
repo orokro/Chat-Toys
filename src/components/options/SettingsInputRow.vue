@@ -154,6 +154,13 @@ watch(internalValue, validate);
 
 	// main container
 	.settings-row {
+		
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		padding: 10px 0px;
+		border-bottom: 5px solid black;
+		max-width: 1200px;
 
 		:deep(h3) {
 			margin-bottom: 0px;
@@ -163,13 +170,6 @@ watch(internalValue, validate);
 			margin-top: 0px;
 			margin-bottom: 0px;
 		}
-
-		display: flex;
-		flex-direction: column;
-		gap: 5px;
-		padding: 10px;
-		border-bottom: 5px solid black;
-		max-width: 1200px;
 
 		.desc {
 			font-weight: bold;

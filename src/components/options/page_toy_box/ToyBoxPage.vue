@@ -191,7 +191,7 @@ window.resetCommands = () => {
 			overflow: hidden;
 			overflow-y: auto;
 			// padding for contents (which will always be a PageBox, etc)
-			padding: 10px 10px 0px 10px;
+			padding: 20px 30px 0px 30px;
 
 			// image to guide user to add their first item
 			.clickToAddFirstToy{

@@ -45,6 +45,19 @@
 			/>
 		
 		</SettingsRow>
+
+		<SettingsRow>
+			<h3>Wheel Colors</h3>
+			<p>These will be repeated throughout the wheel based on the number of items you have above.</p>
+			
+			<ArrayEdit
+				v-model="wheelColors"
+				:component="ArrayColorInput"
+				:schema="colorSchema"
+				:createItem="() => '#00ABAE'"
+			/>
+		
+		</SettingsRow>
 		
 		<SectionHeader title="Widget Preview"/>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
@@ -67,6 +80,7 @@ import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsRow from '../../SettingsRow.vue';
 import ArrayEdit from '../../ArrayEdit.vue';
 import ArrayTextInput from '../../ArrayTextInput.vue';
+import ArrayColorInput from '../../ArrayColorInput.vue';
 
 // lib/misc
 import * as yup from 'yup';
@@ -75,8 +89,9 @@ import * as yup from 'yup';
 const toySlug = 'prize_wheel';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
-// make a yup scheme that disallows escape characters
+// make a yup schema that disallows escape characters, as well as one to validate color strings
 const itemSchema = yup.string().matches(/^[^\\]+$/, 'Escape characters are not allowed');
+const colorSchema = yup.string().matches(/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color');
 
 // we'll use a chrome ref to aggregate all our settings
 const prizeWheelSettings = chromeShallowRef('prize-wheel-settings', {});

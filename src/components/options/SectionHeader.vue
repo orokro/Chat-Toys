@@ -43,6 +43,7 @@ const props = defineProps({
 	.sectionHeader {
 		height: 33px;
 		margin-bottom: 10px !important;
+		margin-top: 100px !important;
 	}
 
 </style>

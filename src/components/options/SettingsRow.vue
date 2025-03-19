@@ -36,6 +36,14 @@ const props = defineProps({
 <style lang="scss" scoped>
 
 	.settings-row {
+		
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		padding: 10px 0px;
+		border-bottom: 5px solid black;
+		max-width: 1200px;
+		
 		:deep(h3) {
 			margin-bottom: 0px;
 			text-decoration: underline;
@@ -45,12 +53,5 @@ const props = defineProps({
 			margin-bottom: 0px;
 		}
 
-		display: flex;
-		flex-direction: column;
-		gap: 5px;
-		padding: 10px;
-		border-bottom: 5px solid black;
-		max-width: 1200px;
-		
 	}// .settings-row
 </style>

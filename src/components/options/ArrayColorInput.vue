@@ -1,15 +1,17 @@
 <!--
-	ArrayTextInput.vue
-	------------------
+	ArrayColorInput.vue
+	-------------------
 
-	This is a component to be used in conjunction with the ArrayEdit component.
+	This file is to be used in conjunction with the ArrayEdit component.
 
-	Basically, it's a text input that will be used to edit the items in the array.
+	This lets us edit an array of color values.
 -->
 <template>
 
-	<div class="arrayTextInput relative">
+	<!-- main outer wrapper -->
+	<div class="arrayColorInput relative">
 
+		<!-- text box version of the color value -->
 		<input
 			type="text"
 			v-model="inputValue"
@@ -18,14 +20,22 @@
 			:class="{'error': errorMessage}"
 			class="input"
 		/>
+
+		<!-- color picker version matching the same thing -->
+		<div class="colorPickerWrapper">
+			<input
+				type="color"
+				v-model="inputValue"
+				@input="validate"
+				class="color-picker"
+			/>
+		</div>
 		<span 
 			v-if="errorMessage"
 			class="error-icon material-icons"
-			v-tippy="{ content: errorMessage }"
-		>
+			v-tippy="{ content: errorMessage }">
 			error
 		</span>
-
 	</div>
 </template>
 <script setup>
@@ -41,10 +51,10 @@ import * as yup from 'yup';
 // props
 const props = defineProps({
 
-	// the value to edit
+	// the color value to edit
 	value: {
-		type: null,
-		default: null,
+		type: String,
+		default: '',
 	},
 
 	// optional schema for validation
@@ -57,24 +67,21 @@ const props = defineProps({
 // emits / events
 const emit = defineEmits(['change']);
 
-// temp local state for the inputs value
+// local state for the input value
 const inputValue = ref(props.value);
 
 // if we're using a schema, errors will be stored here
 const errorMessage = ref('');
 
 // watch the value prop and update the local state
-watch(
-	() => props.value,
-	(newValue) => {
-		inputValue.value = newValue;
-	}
-);
+watch(() => props.value, (newValue) => {
+	inputValue.value = newValue;
+});
 
-// validate on input
+// validate the input value
 const validate = async () => {
 
-	// run schema if we have one
+	// if we have a schema, validate the input
 	if (props.schema) {
 		try {
 			await props.schema.validate(inputValue.value);
@@ -88,7 +95,7 @@ const validate = async () => {
 	}
 };
 
-// reset our input and any error when we lose focus
+// clear the error message on blur
 const clearErrorOnBlur = () => {
 	errorMessage.value = '';
 	inputValue.value = props.value;
@@ -98,51 +105,86 @@ const clearErrorOnBlur = () => {
 <style lang="scss" scoped>
 
 	// main outer wrapper
-	.arrayTextInput {
+	.arrayColorInput {
 
 		// reset stacking context
 		position: relative;
 
 		// fixed size box
-		width: 500px;
+		/* width: 500px; */
 		height: 40px;
 		
 		padding: 6px 10px;
 
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		width: 400px;
+
+
 		// actual input box
-		input {
+		input.input {
+
+			flex-shrink: none;
+			flex-grow: none;
+
 			border: 1px solid black;
 			outline: 1px solid black;
 			border-radius: 5px;
 			padding: 5px 10px;
-			width: 500px;
-
-			// inset shadow
+			width: 100px;
 			box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
 
-			// error
 			&.error {
 				border-color: rgb(255, 8, 8);
 				outline: 1px solid rgb(255, 8, 8);
 			}
-		}// error
+
+		}// input.input
+		
+		// color picker
+		.colorPickerWrapper {
+
+			// reset stacking context
+			position: relative;
+
+			// fixed size box with nice round border
+			width: 50px;
+			height: 30px;
+			border: 2px solid black;
+			border-radius: 10px;;
+			overflow: hidden;
+
+			input.color-picker {
+				
+				position: absolute;
+				inset: -10px;
+				width: 100px;
+				height: 40px;
+				border: none;
+				cursor: pointer;
+
+			}// input.color-picker
+
+
+		}// .colorPickedWrapper
 
 		// error icon		
 		.material-icons {
 
 			position: absolute;
 			top: 8px;
-			left: 515px;
+			left: 175px;
 
 			font-size: 22px;
 			color: rgb(255, 8, 8);
 			
 			// use filter to make black outline
 			filter: drop-shadow(1px 1px 1px black);
-			
+
 		}// .material-icons
 
-	}// .arrayTextInput
+	}// .arrayColorInput
 	
-
 </style>
