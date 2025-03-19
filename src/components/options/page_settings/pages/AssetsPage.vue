@@ -18,6 +18,7 @@
 			<li>Sounds (.mp3 or .wav only)</li>
 			<li>3D Models (.glb only)</li>
 		</ul>
+		<br>
 		<p>
 			There are many assets built-in to the plugin, because some toys require at least
 			one of certain kinds to function. However, many of the toys allow you to load
@@ -40,12 +41,22 @@
 				"My Documents/StreamToysAssets/" or similar. This way you will not accidentally move
 				or delete them, and the plugin will always be able to find them.
 				<br><br>
-				Should a file end up missing, you can relace it in the list below, or reimport it
+				Should a file end up missing, you can replace it in the list below, or reimport it
 				and reassign it to the toy.
 			</strong>
 		</InfoBox>
+
 		<SectionHeader title="Assets Database"/>
-		<AssetsView	:data="data" />
+		<AssetsView
+			:data="data"
+			:selected_id="selectedRow"
+			:editableFields="['name', 'tags']"
+			:showDeleteColumn="true"
+			@rowClick="rowClick"
+			@cellClick="cellClick"
+			@cellEdit="cellEdit"
+			@deleteRow="deleteRow"
+		/>
 	</PageBox>
 
 </template>
@@ -61,6 +72,25 @@ import InfoBox from '../../InfoBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import AssetsView from '../CustomDataTable.vue';
 
+
+function rowClick({ id, data }){
+
+	selectedRow.value = id;
+	console.log('row clicked', id, data);
+}
+
+function cellClick({ id, key, value }){
+	console.log('cell clicked', id, key, value);
+}
+
+function cellEdit({ id, data, key, value }){
+	console.log('cell edit', id, key, value);
+}
+
+function deleteRow(id){
+	console.log('delete row', id);
+}
+
 const props = defineProps({
 	
 	// reference to the state of the options page
@@ -71,6 +101,8 @@ const props = defineProps({
 });
 
 const data = props.optionsApp.assetsMgr.assets.value;
+
+const selectedRow = ref(data[0].id);
 
 </script>
 <style lang="scss" scoped>	

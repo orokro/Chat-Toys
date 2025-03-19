@@ -3,7 +3,7 @@
 	-------------------
 
 	I tried primevue, vuetify and some others, but none of them worked.
-	Just errors. Completely useless trash.
+	Just errors. Completely trash.
 
 	So I asked ChatGPT to make me a custom table component, this is the result.
 -->
@@ -12,16 +12,24 @@
 		<table>
 			<thead>
 				<tr>
-					<th v-for="key in Object.keys(props.data[0])" :key="key" @click="sort(key)">
+					<th v-for="key in filteredKeys" :key="key" @click="sort(key)">
 						{{ key }}
 						<span v-if="sortKey === key">{{ sortOrder === 1 ? '▲' : '▼' }}</span>
 					</th>
+					<th v-if="showDeleteColumn"></th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="item in sortedData" :key="item.id">
-					<td v-for="key in Object.keys(item)" :key="key">
-						{{ item[key] }}
+				<tr v-for="item in sortedData" :key="item.id" @click="$emit('rowClick', { id: item.id, data: item })" :class="{ 'selected-row': item.id === selected_id }">
+					<td v-for="key in filteredKeys" :key="key" @click="$emit('cellClick', { id: item.id, key, value: item[key] })">
+						<span v-if="key === 'tags'">
+							<span class="tag" v-for="tagItem in item[key]" :key="tagItem">{{ tagItem }}</span>
+						</span>
+						<span v-else>{{ item[key] }}</span>
+						<button v-if="editableFields.includes(key)" class="edit-btn" @click.stop="$emit('cellEdit', { id: item.id, data: item, key, value: item[key] })">Edit</button>
+					</td>
+					<td v-if="showDeleteColumn" class="delete-column" @click.stop="$emit('deleteRow', item.id)">
+						<span class="material-icons">delete</span>
 					</td>
 				</tr>
 			</tbody>
@@ -34,10 +42,18 @@ import { ref, computed } from 'vue';
 
 const props = defineProps({
 	data: Array,
+	selected_id: Number,
+	editableFields: { type: Array, default: () => [] },
+	ignoreColumns: { type: Array, default: () => ['id'] },
+	showDeleteColumn: Boolean,
 });
 
 const sortKey = ref(null);
 const sortOrder = ref(1);
+
+const filteredKeys = computed(() => {
+	return Object.keys(props.data[0]).filter(key => !props.ignoreColumns.includes(key));
+});
 
 const sortedData = computed(() => {
 	if (!sortKey.value) return props.data;
@@ -78,6 +94,7 @@ thead {
 th, td {
 	padding: 8px;
 	border: 1px solid #ccc;
+	position: relative;
 }
 
 th {
@@ -86,5 +103,37 @@ th {
 
 th:hover {
 	background-color: #ddd;
+}
+
+.selected-row {
+	background-color: #e0f7fa;
+}
+
+.edit-btn {
+	margin-left: 8px;
+	padding: 2px 6px;
+	cursor: pointer;
+	background: #2196f3;
+	color: white;
+	border: none;
+	border-radius: 4px;
+}
+
+.delete-column {
+	text-align: center;
+	cursor: pointer;
+	color: red;
+}
+
+.material-icons {
+	font-size: 18px;
+}
+
+.tag {
+	display: inline-block;
+	padding: 2px 6px;
+	margin: 2px;
+	background: #eee;
+	border-radius: 4px;
 }
 </style>
