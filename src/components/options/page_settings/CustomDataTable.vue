@@ -8,36 +8,30 @@
 	So I asked ChatGPT to make me a custom table component, this is the result.
 -->
 <template>
-
-	<div class="p-4">
-		<table class="w-full border border-gray-300 rounded-lg">
-
+	<div class="table-container">
+		<table>
 			<thead>
-				<tr class="bg-gray-100 text-left">
-					<th v-for="key in Object.keys(props.data[0])" :key="key" class="p-2 cursor-pointer" @click="sort(key)">
+				<tr>
+					<th v-for="key in Object.keys(props.data[0])" :key="key" @click="sort(key)">
 						{{ key }}
 						<span v-if="sortKey === key">{{ sortOrder === 1 ? '▲' : '▼' }}</span>
 					</th>
 				</tr>
 			</thead>
-
 			<tbody>
-				<tr v-for="item in sortedData" :key="item.id" class="border-t">
-					<td v-for="key in Object.keys(item)" :key="key" class="p-2">
+				<tr v-for="item in sortedData" :key="item.id">
+					<td v-for="key in Object.keys(item)" :key="key">
 						{{ item[key] }}
 					</td>
 				</tr>
 			</tbody>
 		</table>
 	</div>
-
 </template>
-<script setup>
 
-// vue
+<script setup>
 import { ref, computed } from 'vue';
 
-// props
 const props = defineProps({
 	data: Array,
 });
@@ -63,10 +57,34 @@ const sort = (key) => {
 	}
 };
 </script>
-<style scoped>
 
-	th:hover {
-		background-color: #ddd;
-	}
-	
+<style scoped>
+.table-container {
+	padding: 16px;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+}
+
+thead {
+	background-color: #f3f3f3;
+	text-align: left;
+}
+
+th, td {
+	padding: 8px;
+	border: 1px solid #ccc;
+}
+
+th {
+	cursor: pointer;
+}
+
+th:hover {
+	background-color: #ddd;
+}
 </style>
