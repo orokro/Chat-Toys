@@ -10,13 +10,16 @@
 	<div class="page toyBoxPage">
 		 
 		<!-- the column on the left where toys can be added, removed, or selected to configure -->
-		<ToysStrip
-			class="toysStrip"
-			:toys="optionsApp.enabledToys.value"
-			:selectedToy="optionsApp.selectedToy.value"
-			@addToy="handleAddToy"
-			@selectToy="(toy)=>optionsApp.selectToy(toy)"
-			@removeToy="(toy)=>handleRemoveToy(toy)"
+		<VerticalItemStrip
+			class="vItemsStrip"
+			:vItems="verticalItems"
+			:selectedItemSlug="optionsApp.selectedToy.value"
+			:showAdd="!allToysAdded"
+			:showDelete="true"
+			:iconPath="'../assets/icons'"
+			@addItem="handleAddToy"
+			@selectItem="(toy)=>optionsApp.selectToy(toy.slug)"
+			@removeItem="(toy)=>handleRemoveToy(toy.slug)"
 		/>
 
 		<!-- the main area where the selected toys appear -->
@@ -78,11 +81,11 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, onMounted, markRaw, watch } from 'vue';
+import { ref, shallowRef, onMounted, markRaw, watch, computed } from 'vue';
 import { chromeRef } from '../../../scripts/chromeRef';
 
 // components
-import ToysStrip from './ToysStrip.vue';
+import VerticalItemStrip from '../VerticalItemStrip.vue';
 import AddToyModal from './AddToyModal.vue';
 import ConfirmModal from '../ConfirmModal.vue';
 import ChannelPointsPage from './toy_pages/ChannelPointsPage.vue';
@@ -98,6 +101,16 @@ import TosserPage from './toy_pages/TosserPage.vue';
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
 import { toysData } from '../../../scripts/ToysData';
+
+// list of items to show in the vertical strip
+const verticalItems = computed(() => {
+	return props.optionsApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
+});
+
+// true when the user has added all the toys
+const allToysAdded = computed(() => {
+	return props.optionsApp.enabledToys.value.length >= toysData.length;
+});
 
 // accept some props
 const props = defineProps({
@@ -174,7 +187,7 @@ window.resetCommands = () => {
 		inset: 0;
 
 		// force tool strip on left side
-		.toysStrip {
+		.vItemsStrip {
 			position: absolute;
 			inset: 0px auto 0px 0px;
 		}
@@ -190,8 +203,9 @@ window.resetCommands = () => {
 			inset: 0px 0px 0px 100px;
 			overflow: hidden;
 			overflow-y: auto;
+
 			// padding for contents (which will always be a PageBox, etc)
-			padding: 20px 30px 0px 30px;
+			padding: 20px 30px 30px 30px;
 
 			// image to guide user to add their first item
 			.clickToAddFirstToy{

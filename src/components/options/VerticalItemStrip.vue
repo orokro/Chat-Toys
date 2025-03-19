@@ -1,32 +1,36 @@
 <!--
-	ToysStrip.vue
-	-------------
+	VerticalItemStrip.vue
+	---------------------
 
-	This component is a vertical strip of toys that have been added to the toy box.
+	This component will show a vertical list of icon tabs.
+	Originally this component was designed just for the Toy Box page,
+	but has not been made generic to show tabs on the left side of any page.
 -->
 <template>
 
-	<!-- the vertical strip of toys added -->
-	<div class="toyStrip">
+	<!-- the vertical strip of items added -->
+	<div class="vStrip">
 
 		<!-- this area scrolls, but we deliberately hide the scroll bar outside via CSS -->
 		<div class="scrollArea">
 
-			<!-- loop through the toys and display them -->
-			<ToyStripItem
-				v-for="toy in toys"
-				:key="toy"
-				:slug="toy"
-				:selected="toy === selectedToy"
-				@click="()=>emits('selectToy', toy)"
-				@remove="()=>emits('removeToy', toy)"
+			<!-- loop through the items and display them -->
+			<VItem
+				v-for="item in vItems"
+				:key="item"
+				:item="item"
+				:selected="item.slug === selectedItemSlug"
+				:showDelete="showDelete"
+				:iconPath="iconPath"
+				@click="()=>emits('selectItem', item)"
+				@remove="()=>emits('removeItem', item)"
 			/>
 
 			<!-- always have the add button... -->
 			<div
-				v-if="!allToysAdded"
-				class="toyStripItemAdd add"
-				@click="()=>emits('addToy')"
+				v-if="showAdd"
+				class="vStripItemAdd add"
+				@click="()=>emits('addItem')"
 			>
 				<div class="addButton ">
 					<span class="material-icons">add</span>
@@ -42,41 +46,52 @@
 import { ref, computed } from 'vue';
 
 // components
-import ToyStripItem from './ToyStripItem.vue';
-
-// our app
-import { toysData } from '../../../scripts/ToysData';
+import VItem from './VItem.vue';
 
 // define some props
 const props = defineProps({
 
-	// the currently selected toy, if any
-	selectedToy: {
+	// the currently selected item, if any
+	selectedItemSlug: {
 		type: String,
 		default: ''
 	},
 
-	// the list of toys to display
-	toys: {
+	// the list of items to display
+	vItems: {
 		type: Array,
 		default: []
+	},
+
+	// path to resolve icons for this strip
+	iconPath: {
+		type: String,
+		default: ''
+	},
+
+	// true if we should show the add button
+	showAdd: {
+		type: Boolean,
+		default: false
+	},
+
+	// true if icons should show delete button
+	showDelete: {
+		type: Boolean,
+		default: false
 	},
 
 });
 
 // emit events
-const emits = defineEmits(['selectToy', 'addToy', 'removeToy']);
+const emits = defineEmits(['selectItem', 'addItem', 'removeItem']);
 
-// true when the user has added all the toys
-const allToysAdded = computed(() => {
-	return props.toys.length >= toysData.length;
-});
 
 </script>
 <style lang="scss" scoped>
 
-	// fill toy strip on left side
-	.toyStrip {
+	// fill item strip on left side
+	.vStrip {
 
 		// fixed size, allow nothing to escape
 		width: 100px;
@@ -102,8 +117,8 @@ const allToysAdded = computed(() => {
 		}// .scrollArea
 
 		// the box that contains our add button
-		//(the other toyStripItems will be in the ToyStripItem component)
-		.toyStripItemAdd {
+		//(the other v items will be in the VItem component)
+		.vStripItemAdd {
 
 			// the strip is 100, so make the items 100% width, square
 			width: 100px;
@@ -154,8 +169,8 @@ const allToysAdded = computed(() => {
 
 			}// .addButton
 
-		}// .toyStripItem
+		}// .vStripItemAdd
 
-	}// .toyStrip
+	}// .vStrip
 
 </style>

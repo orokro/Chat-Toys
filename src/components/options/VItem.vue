@@ -1,40 +1,42 @@
 <!--
-	ToyStripItem.vue
-	----------------
+	VItem.vue
+	---------
 
-	This is one of the "tabs" / "toy icons" that appear in the vertical ToyStrip
-	when the user has added various toys to the toy box / their set up.
+	This is one of the "tabs" / "vertical icons" that appear in the vertical item strip
+	Originally this was designed just to be a 'toy' but has been made generic to be used
+	on any page that needs a vertical strip of icons.
 
-	This by default shows just a chilling icon, but when that toy is selected,
+	This by default shows just a chilling icon, but when that item is selected,
 	it will be styled as a tab connecting to the main area to the right.
 -->
 <template>
 
 	<!-- the outermost container -->
 	<div
-		class="toyStripItem"
+		class="vItem"
 		:class="{ selected: selected }"
-		:title="toysData.asObject[slug].name"
+		:title="item.name"
 		@click="$emit('click')"
 	>
 		
 		<!-- the inner box that will be styled as a tab when active -->
 		<div class="innerBox">
 
-			<!-- the icon for the toy -->
+			<!-- the icon for the vertical strip item -->
 			<div class="icon">
 				<img
 					class="iconImage"
-					:src="toyIconPath"
-					:alt="toysData.asObject[slug]"
+					:src="itemIconPath"
+					:alt="item.name"
 					height="60"
 				/>
 			</div>
 
 			<!-- the delete button -->
 			<div
+				v-if="showDelete"
 				class="deleteButton"
-				:title="`Remove ${toysData.asObject[slug].name}`"
+				:title="`Remove ${item.name}`"
 				@click="$emit('remove', slug)"
 			>
 				<span class="material-icons">delete</span>
@@ -48,25 +50,34 @@
 <script setup>
 
 // vue
-import { ref, computed } from 'vue';
-
-// our app
-import { toysData } from '../../../scripts/ToysData';
+import { computed } from 'vue';
 
 // props
 const props = defineProps({
 
-	// the toy object
-	slug: {
+	// the vertical item object data
+	item: {
+		type: Object,
+		default: ''
+	},
+
+	// is this item currently selected?
+	selected: {
+		type: Boolean,
+		default: false
+	},
+
+	// the path to the icon
+	iconPath: {
 		type: String,
 		default: ''
 	},
 
-	// is this toy currently selected?
-	selected: {
+	// should we show the delete button?
+	showDelete: {
 		type: Boolean,
 		default: false
-	}
+	},
 
 });
 
@@ -74,15 +85,15 @@ const props = defineProps({
 const emits = defineEmits(['click', 'remove']);
 
 // the path to the icon
-const toyIconPath = computed(() => {
-	return `../assets/icons/${props.slug}.png`;
+const itemIconPath = computed(() => {
+	return `${props.iconPath}/${props.item.slug}.png`;
 });
 
 </script>
 <style lang="scss" scoped>
 
 	// the outermost container
-	.toyStripItem {
+	.vItem {
 
 		// reset stacking context
 		position: relative;
@@ -178,10 +189,12 @@ const toyIconPath = computed(() => {
 				.icon {
 					left: 15px;
 				}
-			}
+
+			}// .innerBox
 
 		}// &.selected
 
 
-	}// .toyStripItem
+	}// .vItem
+
 </style>

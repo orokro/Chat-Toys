@@ -71,6 +71,13 @@ function generateGradient(colorHex) {
 	const lightened3 = chroma.mix(baseColor, "#ffffff", 240 / 255).hex(); // Almost white
 	const white = 'white';
 
+	return `linear-gradient(to bottom, 
+        ${colorHex} 0px, 
+        ${colorHex} 54px,
+		${lightened1} 55px, 
+        ${lightened2} 85px, 
+        ${lightened2} 100%)`;
+
     // Construct the CSS gradient string
     return `linear-gradient(to bottom, 
         ${colorHex} 0px, 
@@ -96,7 +103,7 @@ function generateGradient(colorHex) {
 		height: min-content;
 
 		// rounded corners just on top
-		border-radius: 10px 10px 0 0 ;
+		border-radius: 10px 10px 10px 10px;
 
 		// header
 		.pageHeader {
