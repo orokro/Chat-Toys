@@ -9,6 +9,10 @@
 import { ref, shallowRef } from 'vue';
 import { chromeRef, chromeShallowRef } from '../chromeRef';
 
+// lib/misc
+import { toysData } from '../ToysData';
+import { AssetManager } from '../assets_state/AssetManager';
+
 // main export
 export default class Options {
 
@@ -31,7 +35,9 @@ export default class Options {
 		if (this.selectedToy.value==null && this.enabledToys.value.length > 0)
 			this.selectedToy.value = this.enabledToys.value[0];
 
-		this.somevalue = ref("hi");
+		// we'll load our assets from the AssetManager here in the Options class
+		// the popup will also have it's own assets manager ref
+		this.assetsMgr = new AssetManager();
 	}
 	
 
