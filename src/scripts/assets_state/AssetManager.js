@@ -35,8 +35,22 @@ export class AssetManager {
 	constructor() {
 
 		// w'll use chromeRef to store the assets in the chrome storage / local storage
-		this.assets = chromeShallowRef('assets', builtInAssets);
+		this.assets = chromeShallowRef('assets', this.preprocessAssets(builtInAssets));
 	}
+
+
+	preprocessAssets(assets) {
+
+		// map over the assets and add an internal flag to them
+		return assets.map(asset => (
+			{ 
+				...asset, 
+				internal: true,
+				file_path: null,
+			}));
+
+	}
+
 
 
 	/**

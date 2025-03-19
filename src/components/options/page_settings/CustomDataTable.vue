@@ -3,7 +3,7 @@
 	-------------------
 
 	I tried primevue, vuetify and some others, but none of them worked.
-	Just errors. Completely trash.
+	Just errors. Completely useless trash.
 
 	So I asked ChatGPT to make me a custom table component, this is the result.
 -->
