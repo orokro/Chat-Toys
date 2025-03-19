@@ -63,12 +63,16 @@
 				v-for="command in localCommandsList"
 				:key="command.slug"
 			>
-				<div class="commandRow">
+				<div
+					class="commandRow"
+					:class="{ 'disabled': !command.enabled }"
+				>
 					
 					<div class="cellEnabled cell">
 						<input
 							type="checkbox"
 							v-model="command.enabled"
+							@input="handleEnabledCheckbox(command)"
 						>
 					</div>					
 					<div class="cellCmd cell">
@@ -105,11 +109,11 @@
 						<div v-if="command.costEnabled" class="editButton" @click="(e)=>doEdit(command, 'cost')">✏️</div>
 					</div>
 					<div class="cellCoolDown cell">
-						🕒{{ command.coolDown }}<i>s</i>
+						<span class="clockIcon">🕒</span>{{ command.coolDown }}<i>s</i>
 						<div class="editButton" @click="(e)=>doEdit(command, 'coolDown')">✏️</div>
 					</div>
 					<div class="cellGroupCoolDown cell">
-						🕒{{ command.groupCoolDown }}<i>s</i>
+						<span class="clockIcon">🕒</span>{{ command.groupCoolDown }}<i>s</i>
 						<div class="editButton" @click="(e)=>doEdit(command, 'groupCoolDown')">✏️</div>
 					</div>
 					<div class="cellDesc cell">
@@ -282,6 +286,7 @@ onMounted(()=>{
 	reconcileCommandsList();
 });
 
+
 // watch the commands ref for changes
 watch(commandsRef, ()=>{
 
@@ -341,6 +346,18 @@ async function doEdit(command, field){
 		commandsRef.value = { ...commandsRef.value, [command.slug]: command };
 	}
 
+}
+
+/**
+ * Handle when the enabled checkbox is toggled
+ * 
+ * @param {Object} command the command object to update
+ */
+function handleEnabledCheckbox(command){
+	
+	// update the commands ref
+	command.enabled = !command.enabled;
+	commandsRef.value = { ...commandsRef.value, [command.slug]: command };
 }
 
 </script>
@@ -418,6 +435,20 @@ async function doEdit(command, field){
 				}
 
 				overflow: hidden;
+
+				// when the row is disabled
+				&.disabled {
+
+					color: gray;
+					
+					.paramText, .cmdText {
+						background-color: gray !important;
+					}
+
+					.clockIcon {
+						opacity: 0.5;
+					}
+				}
 
 				// takodatchi
 				.iNA {

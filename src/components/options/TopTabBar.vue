@@ -70,7 +70,7 @@ const emits = defineEmits(['changeTab']);
 	flex-direction: row;
 	
 	// make tabs stack from left to right
-	justify-content: flex-start;
+	justify-content: center;
 	
 }// .topTabBar
 
