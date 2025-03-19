@@ -13,34 +13,34 @@
 		<VerticalItemStrip
 			class="vItemsStrip"
 			:vItems="pageItems"
-			:selectedItemSlug="selectedHelpPage"
+			:selectedItemSlug="selectedPage"
 			:showAdd="false"
 			:showDelete="false"
 			:iconPath="'../assets/icons'"
-			@selectItem="(itemSlug)=>selectedHelpPage = itemSlug.slug"
+			@selectItem="(itemSlug)=>selectedPage = itemSlug.slug"
 		/>
 
 		<!-- the main area where the selected pages -->
 		<div ref="helpPageArea" class="pageArea">
 
 			<WelcomePage 
-				v-if="selectedHelpPage === 'help_welcome'" 
+				v-if="selectedPage === 'help_welcome'" 
 				:optionsApp="optionsApp"
 			/>
 			<HelpPage 
-				v-if="selectedHelpPage === 'help'" 
+				v-if="selectedPage === 'help'" 
 				:optionsApp="optionsApp"
 			/>
 			<VideoHelpPage 
-				v-if="selectedHelpPage === 'help_videos'" 
+				v-if="selectedPage === 'help_videos'" 
 				:optionsApp="optionsApp"
 			/>
 			<ContactPage 
-				v-if="selectedHelpPage === 'help_contact'" 
+				v-if="selectedPage === 'help_contact'" 
 				:optionsApp="optionsApp"
 			/>
 			<CreditsPage 
-				v-if="selectedHelpPage === 'credits'" 
+				v-if="selectedPage === 'credits'" 
 				:optionsApp="optionsApp"
 			/>
 
@@ -56,11 +56,11 @@ import { chromeRef } from '../../../scripts/chromeRef';
 
 // components
 import VerticalItemStrip from '../VerticalItemStrip.vue';
-import WelcomePage from './help_pages/WelcomePage.vue';
-import HelpPage from './help_pages/HelpPage.vue';
-import VideoHelpPage from './help_pages/VideoHelpPage.vue';
-import ContactPage from './help_pages/ContactPage.vue';
-import CreditsPage from './help_pages/CreditsPage.vue';
+import WelcomePage from './pages/WelcomePage.vue';
+import HelpPage from './pages/HelpPage.vue';
+import VideoHelpPage from './pages/VideoHelpPage.vue';
+import ContactPage from './pages/ContactPage.vue';
+import CreditsPage from './pages/CreditsPage.vue';
 
 // components
 import PageBox from '../PageBox.vue';
@@ -100,7 +100,7 @@ const pageItems = [
 ];
 
 // refs
-const selectedHelpPage = ref('help_welcome');
+const selectedPage = ref('help_welcome');
 
 </script>
 <style lang="scss" scoped>

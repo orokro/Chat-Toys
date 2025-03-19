@@ -7,7 +7,7 @@
 <template>
 	
 	<!-- main page wrapper-->
-	<div class="page helpPage">
+	<div class="page settingsPage">
 		 
 		<!-- the column on the left where toys can be added, removed, or selected to configure -->
 		<VerticalItemStrip
@@ -82,7 +82,7 @@ const pageItems = [
 ];
 
 // refs
-const selectedPage = ref('settings');
+const selectedPage = ref('assets_db');
 
 </script>
 <style lang="scss" scoped>

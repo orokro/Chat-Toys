@@ -88,15 +88,15 @@ import { chromeRef } from '../../../scripts/chromeRef';
 import VerticalItemStrip from '../VerticalItemStrip.vue';
 import AddToyModal from './AddToyModal.vue';
 import ConfirmModal from '../ConfirmModal.vue';
-import ChannelPointsPage from './toy_pages/ChannelPointsPage.vue';
-import ChatBoxPage from './toy_pages/ChatBoxPage.vue';
-import FishingPage from './toy_pages/FishingPage.vue';
-import GambaPage from './toy_pages/GambaPage.vue';
-import HeadPatsPage from './toy_pages/HeadPatsPage.vue';
-import MediaPage from './toy_pages/MediaPage.vue';
-import PrizeWheelPage from './toy_pages/PrizeWheelPage.vue';
-import StreamBuddiesPage from './toy_pages/StreamBuddiesPage.vue';
-import TosserPage from './toy_pages/TosserPage.vue';
+import ChannelPointsPage from './pages/ChannelPointsPage.vue';
+import ChatBoxPage from './pages/ChatBoxPage.vue';
+import FishingPage from './pages/FishingPage.vue';
+import GambaPage from './pages/GambaPage.vue';
+import HeadPatsPage from './pages/HeadPatsPage.vue';
+import MediaPage from './pages/MediaPage.vue';
+import PrizeWheelPage from './pages/PrizeWheelPage.vue';
+import StreamBuddiesPage from './pages/StreamBuddiesPage.vue';
+import TosserPage from './pages/TosserPage.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"

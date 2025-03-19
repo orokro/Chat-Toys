@@ -75,7 +75,7 @@ const tabs = [
 ];
 
 // the index of the active tab
-const activeTab = ref(2);
+const activeTab = ref(1);
 
 // before we render first time, we need to instantiate our options state
 onBeforeMount(() => {
