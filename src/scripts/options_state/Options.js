@@ -25,10 +25,10 @@ export default class Options {
 
 		// but a regular ref for the active toy (if any), since
 		// this doesn't need to persist across tabs or even refreshes
-		this.selectedToy = ref(null);
+		this.selectedToy = chromeRef('selectedToy', null);
 
 		// if we have at least one enabled toy, set the first one as the active toy
-		if (this.enabledToys.value.length > 0)
+		if (this.selectedToy.value==null && this.enabledToys.value.length > 0)
 			this.selectedToy.value = this.enabledToys.value[0];
 
 		this.somevalue = ref("hi");

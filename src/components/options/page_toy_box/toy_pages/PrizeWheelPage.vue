@@ -30,15 +30,33 @@
 			:commands="commands"
 		/>
 			
-		<SectionHeader title="CatsumIpsum"/>
-		<CatsumIpsum :paragraphs="5" :sentences="10"/>
+		<SectionHeader title="Settings"/>
+
+		<SettingsRow>
+			<h3>Item Slots</h3>
+			<p>Add Items to the wheel!</p>
+			<p><strong>NOTE: if no items are added, the spin command will not work in chat.</strong></p>
+			
+			<ArrayEdit
+				v-model="wheelItems"
+				:component="ArrayTextInput"
+				:schema="itemSchema"
+				:createItem="() => ''"
+			/>
+		
+		</SettingsRow>
+		
+		<SectionHeader title="Widget Preview"/>
+		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 
 </template>
 <script setup>
 
 // vue
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
+import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
+import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -46,11 +64,33 @@ import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
+import SettingsRow from '../../SettingsRow.vue';
+import ArrayEdit from '../../ArrayEdit.vue';
+import ArrayTextInput from '../../ArrayTextInput.vue';
+
+// lib/misc
+import * as yup from 'yup';
 
 // generate slug for command
 const toySlug = 'prize_wheel';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
+// make a yup scheme that disallows escape characters
+const itemSchema = yup.string().matches(/^[^\\]+$/, 'Escape characters are not allowed');
+
+// we'll use a chrome ref to aggregate all our settings
+const prizeWheelSettings = chromeShallowRef('prize-wheel-settings', {});
+
+// our settings for this system
+const wheelItems = ref([]);
+const wheelColors = ref(0);
+
+// aggregate all our refs
+const settingsAggregator = new RefAggregator(prizeWheelSettings);
+settingsAggregator.register('wheelItems', wheelItems);
+settingsAggregator.register('wheelColors', wheelColors);
+
+// props
 const props = defineProps({
 	
 	// reference to the state of the options page

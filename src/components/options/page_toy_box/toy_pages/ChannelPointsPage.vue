@@ -178,8 +178,6 @@ const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 // we'll use a chrome ref to aggregate all our settings
 const channelPointsSettings = chromeRef('channel-points-settings', {});
 
-const stuffs = ref(0);
-
 // our settings for this system
 const claimInterval = ref(300);
 const claimRandomness = ref(0);
@@ -191,9 +189,6 @@ const showClaimsRemaining = ref(true);
 const showUserClaims = ref(true);
 const showTextPrompt = ref(true);
 const widgetColorTheme = ref('#00ABAE');
-watch(maxClaims, (val) => {
-	console.log('maxClaims', val);
-});
 
 // aggregate all our refs
 const settingsAggregator = new RefAggregator(channelPointsSettings);
@@ -207,7 +202,6 @@ settingsAggregator.register('showClaimsRemaining', showClaimsRemaining);
 settingsAggregator.register('showUserClaims', showUserClaims);
 settingsAggregator.register('showTextPrompt', showTextPrompt);
 settingsAggregator.register('widgetColorTheme', widgetColorTheme);
-settingsAggregator.register('stuffs', stuffs);
 
 // define some props
 const props = defineProps({
