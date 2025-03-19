@@ -9,25 +9,50 @@
 -->
 <template>
 	<div class="table-container">
+
+		<!-- good 'ol tables - can't beat 'em -->
 		<table>
+
+			<!-- generate the head -->
 			<thead>
 				<tr>
-					<th v-for="key in filteredKeys" :key="key" @click="sort(key)">
+					<th
+						v-for="key in filteredKeys"
+						:key="key"
+						@click="sort(key)"
+					>
 						{{ key }}
 						<span v-if="sortKey === key">{{ sortOrder === 1 ? '▲' : '▼' }}</span>
 					</th>
 					<th v-if="showDeleteColumn"></th>
 				</tr>
 			</thead>
+
+			<!-- generate the body -->
 			<tbody>
-				<tr v-for="item in sortedData" :key="item.id" @click="$emit('rowClick', { id: item.id, data: item })" :class="{ 'selected-row': item.id === selected_id }">
-					<td v-for="key in filteredKeys" :key="key" @click="$emit('cellClick', { id: item.id, key, value: item[key] })">
+
+				<!-- generate the rows -->
+				<tr
+					v-for="item in sortedData"
+					:key="item.id"
+					@click="$emit('rowClick', { id: item.id, data: item })"
+					:class="{ 'selected-row': item.id === selected_id }"
+				>
+					<td 
+						v-for="key in filteredKeys"
+						:key="key"
+						@click="$emit('cellClick', { id: item.id, key, value: item[key] })"
+					>
+
+						<!-- special case for the tag column -->
 						<span v-if="key === 'tags'">
 							<span class="tag" v-for="tagItem in item[key]" :key="tagItem">{{ tagItem }}</span>
 						</span>
 						<span v-else>{{ item[key] }}</span>
 						<button v-if="editableFields.includes(key)" class="edit-btn" @click.stop="$emit('cellEdit', { id: item.id, data: item, key, value: item[key] })">Edit</button>
 					</td>
+
+					<!-- optional delete column -->
 					<td v-if="showDeleteColumn" class="delete-column" @click.stop="$emit('deleteRow', item.id)">
 						<span class="material-icons">delete</span>
 					</td>
@@ -36,10 +61,12 @@
 		</table>
 	</div>
 </template>
-
 <script setup>
+
+// vue
 import { ref, computed } from 'vue';
 
+// props
 const props = defineProps({
 	data: Array,
 	selected_id: Number,
@@ -73,7 +100,6 @@ const sort = (key) => {
 	}
 };
 </script>
-
 <style scoped>
 .table-container {
 	padding: 16px;
