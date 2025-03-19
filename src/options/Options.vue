@@ -22,14 +22,26 @@
 		<!-- the tab pages will spawn in this container -->
 		<div class="tabPagesWrapper">
 
-			<HelpPage v-if="activeTab === 0" />
-			<SettingsPage v-if="activeTab === 1" />
+			<HelpPage 
+				v-if="activeTab === 0" 
+				:optionsApp="optionsApp"
+			/>
+			<SettingsPage 
+				v-if="activeTab === 1"
+				:optionsApp="optionsApp"
+			/>
 			<ToyBoxPage 
 				v-if="activeTab === 2"
 				:optionsApp="optionsApp"
 			/>
-			<LayoutPage v-if="activeTab === 3" />
-			<ButtonsPage v-if="activeTab === 4" />		
+			<LayoutPage
+				v-if="activeTab === 3"
+				:optionsApp="optionsApp"
+			/>
+			<ButtonsPage
+				v-if="activeTab === 4"
+				:optionsApp="optionsApp"
+			/>		
 
 		</div>
 
@@ -42,8 +54,8 @@ import { ref, onBeforeMount, onMounted } from 'vue'
 
 // components
 import TopTabBar from '../components/options/TopTabBar.vue'
-import HelpPage from '../components/options/HelpPage.vue'
-import SettingsPage from '../components/options/SettingsPage.vue'
+import HelpPage from '../components/options/page_help/HelpPage.vue'
+import SettingsPage from '../components/options/page_settings/SettingsPage.vue'
 import ToyBoxPage from '../components/options/page_toy_box/ToyBoxPage.vue'
 import LayoutPage from '../components/options/page_layout/LayoutPage.vue'
 import ButtonsPage from '../components/options/ButtonsBoardPage.vue'
@@ -70,7 +82,6 @@ onBeforeMount(() => {
 	optionsApp = new Options();
 
 	window.optionsApp = optionsApp;
-
 });
 
 </script>
