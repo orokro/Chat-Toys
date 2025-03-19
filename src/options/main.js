@@ -11,5 +11,12 @@ import { createApp } from 'vue'
 import Options from './Options.vue'
 import 'material-icons/iconfont/material-icons.css';
 
+import { createVuetify } from 'vuetify';
+import 'vuetify/styles';
+
+const vuetify = createVuetify();
+
 // Create a new Vue app and mount the Options component to the #app element
-createApp(Options).mount('#app')
+const app = createApp(Options);
+app.use(vuetify);
+app.mount('#app');
