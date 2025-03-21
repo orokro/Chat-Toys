@@ -14,7 +14,6 @@
 		:height="690 - (allowCustomImports ? 0 : 75)"
 		:width="800"
 	>
-
 		<!-- main outer wrapper -->
 		<div class="modalContent">
 
@@ -46,9 +45,12 @@
 			<!-- along the top, optionally show bar to pick custom files -->
 			<div v-if="allowCustomImports" class="importCustom">
 				Not finding what you're looking for?
-				<button type="button" class="cmdImportCustom">Import Custom Assets</button>
+				<button
+					type="button"
+					class="cmdImportCustom"
+					@click="importCustomFiles"
+				>Import Custom Assets</button>
 			</div>
-
 
 			<!-- the buttons along hte bottom -->
 			<div 
@@ -76,7 +78,7 @@
 <script setup>
 
 // vue
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed } from 'vue';
 
 // components
 import ModalWindowFrame from './ModalWindowFrame.vue';
@@ -85,7 +87,6 @@ import FilePreview from './FilePreview.vue';
 
 // lib misc
 import { closeModal, Modal } from 'jenesius-vue-modal';
-import { all } from 'three/src/nodes/TSL.js';
 
 // props
 const props = defineProps({
@@ -145,8 +146,13 @@ const filteredSelectedRow = computed(() => {
 
 // handle when a row is clicked
 function rowClick({ id, data }){
-
 	selectedRow.value = id;
+}
+
+
+// handle when the import custom files button is clicked
+function importCustomFiles(){
+	props.assetManager.importFiles(props.kindFilter)
 }
 
 
