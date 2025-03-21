@@ -27,9 +27,7 @@
 			:toySlug="toySlug"
 			:commands="commands"
 		/>
-			
-		<SectionHeader title="CatsumIpsum"/>
-		<CatsumIpsum :paragraphs="5" :sentences="10"/>
+		
 	</PageBox>
 
 </template>

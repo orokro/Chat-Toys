@@ -11,7 +11,10 @@
 <template>
 
 	<!-- outermost wrapper -->
-	<div class="array-edit">
+	<div 
+		class="array-edit"
+		:class="{ 'noAdd': !allowNewItems }"
+	>
 
 		<!-- the box that contains the item rows -->
 		<div class="items">
@@ -43,6 +46,7 @@
 
 				<!-- delete item button -->
 				<button 
+					v-if="allowNewItems"
 					class="deleteButton"
 					@click="removeItem(index)"
 				>
@@ -53,7 +57,7 @@
 		</div>
 
 		<!-- one last row, for our add button -->
-		<div class="row buttonRow">
+		<div v-if="allowNewItems" class="row buttonRow">
 			<button @click="addItem" class="bg-blue-500 text-white px-4 py-2 rounded">Add Item</button>
 		</div>
 	</div>
@@ -79,6 +83,12 @@ const props = defineProps({
 	schema: {
 		type: Object,
 		default: null
+	},
+
+	// show button to add new items
+	allowNewItems: {
+		type: Boolean,
+		default: true
 	},
 
 	// optional props for row
@@ -129,6 +139,10 @@ const removeItem = (index) => {
 		// make room for fixed header on top:
 		padding: 0px 0px 40px 0px;
 
+		&.noAdd {
+			padding-bottom: 0px;
+		}
+		
 		// one of the rows to stack
 		.row {
 

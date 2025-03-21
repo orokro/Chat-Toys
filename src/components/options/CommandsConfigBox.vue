@@ -367,7 +367,6 @@ async function doEdit(command, field){
 		// update the commands ref
 		commandsRef.value = { ...commandsRef.value, [command.slug]: command };
 	}
-
 }
 
 

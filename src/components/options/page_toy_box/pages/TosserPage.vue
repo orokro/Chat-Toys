@@ -55,7 +55,6 @@
 		/>
 		
 		<SectionHeader title="Settings"/>
-
 		<SettingsInputRow
 			type="boolean"
 			v-model="randomTossMode"
@@ -109,8 +108,6 @@ import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsRow from '../../SettingsRow.vue';
 import SettingsInputRow from '../../SettingsInputRow.vue';
 import ArrayEdit from '../../ArrayEdit.vue';
-import ArrayTextInput from '../../ArrayTextInput.vue';
-import ArrayColorInput from '../../ArrayColorInput.vue';
 import ArrayTosserEdit from '../../ArrayTosserEdit.vue';
 
 // props

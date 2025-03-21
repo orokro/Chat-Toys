@@ -288,6 +288,7 @@ export class AssetManager {
 	 * @returns {Promise<File|null>} - The file, or null if not found
 	 */
 	async getFile(id) {
+		
 		const asset = this.assets.value.find(a => a.id === id);
 		if (!asset) return null;
 
