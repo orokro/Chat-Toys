@@ -37,6 +37,7 @@
 			:toyName="'Tosser'"
 			:toySlug="toySlug"
 			:commands="commands"
+			:enableCustomCommands="true"
 		/>
 		
 		<SectionHeader title="Settings"/>

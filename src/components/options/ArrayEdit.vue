@@ -199,8 +199,7 @@ const removeItem = (index) => {
 					
 					&:hover {
 						background: white;
-						border: 2px solid rgba(255, 255, 255, 1);
-					
+						border: 2px solid rgba(255, 255, 255, 1);					
 					}
 				}// button
 

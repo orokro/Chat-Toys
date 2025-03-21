@@ -12,6 +12,11 @@
 		<!-- the header -->
 		<div class="header">
 			<h2>{{ toyName }} Commands / Triggers:</h2>
+			<button 
+				v-if="enableCustomCommands"
+				class="addCommandButton"
+				@click="addCommand"
+			>Add Command</button>
 		</div>
 
 		<!-- the list of commands -->
@@ -43,7 +48,7 @@
 						⚠️
 					</div>
 					Cost
-			</div>
+				</div>
 				<div 
 					class="cellCoolDown cell"
 					title="How long in seconds before user can invoke this command again"
@@ -55,8 +60,7 @@
 				<div 
 					class="cellDesc cell"
 					title="Description of the command"
-				>Description</div>
-				
+				>Description</div>				
 			</div>
 
 			<template 
@@ -116,9 +120,17 @@
 						<span class="clockIcon">🕒</span>{{ command.groupCoolDown }}<i>s</i>
 						<div class="editButton" @click="(e)=>doEdit(command, 'groupCoolDown')">✏️</div>
 					</div>
-					<div class="cellDesc cell">
-						<div class="descText">
+					<div class="cellDesc cell" :class="{ 'custom': command.custom }">
+						<div v-if="!(command.custom)" class="descText">
 							{{ command.description }}
+						</div>
+						<div v-else class="descText">
+							<i>Custom. Check Toy Docs for info.</i>
+							<span
+								class="deleteButton material-icons"
+								@click="(e)=>deleteCustomCommand(command.slug)">
+								delete
+							</span>
 						</div>
 					</div>
 				</div>
@@ -137,6 +149,7 @@ import 'tippy.js/dist/tippy.css';
 
 // components
 import EditCommandModal from './page_toy_box/EditCommandModal.vue';
+import ConfirmModal from './ConfirmModal.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
@@ -169,6 +182,12 @@ const props = defineProps({
 	commands: {
 		type: Array,
 		default: []
+	},
+
+	// allow custom commands
+	enableCustomCommands: {
+		type: Boolean,
+		default: false
 	}
 
 });
@@ -360,6 +379,79 @@ function handleEnabledCheckbox(command){
 	commandsRef.value = { ...commandsRef.value, [command.slug]: command };
 }
 
+/**
+ * Add a new command to the list
+ */
+function addCommand(){
+
+	// first we need to get a list of all the current commands
+	const commands = commandsRef.value;
+	const currentCommands = getUniqueCommands(commandsRef.value);
+	
+	console.log(currentCommands);
+
+	// use props.toyslug as the prefix for the new command and increment number
+	// till we find one that's not in use
+	let newCommandIndex = 1;
+	let newCommandSlug = `${props.toySlug}_${newCommandIndex}`;
+	while(commands.hasOwnProperty(newCommandSlug))
+		newCommandSlug = `${props.toySlug}_${++newCommandIndex}`;
+	
+	// now that we got a slug, do the same for the actual command text
+	newCommandIndex = 1;
+	let newCommandText = `${props.toySlug}_${newCommandIndex}`;
+	while(currentCommands.includes(newCommandText))
+		newCommandText = `${props.toySlug}_${++newCommandIndex}`;
+
+	// create a new command object
+	const newCommand = {
+		slug: newCommandSlug,
+		command: newCommandText,
+		params: null,
+		description: '',
+		enabled: true,
+		costEnabled: true,
+		cost: 0,
+		coolDown: 0,
+		groupCoolDown: 0,
+		custom: true
+	};
+
+	// update the commands ref
+	commandsRef.value = { ...commandsRef.value, [newCommandSlug]: newCommand };
+}
+
+/**
+ * Delete a custom command
+ * 
+ * @param {String} slug the slug of the command to delete
+ */
+async function deleteCustomCommand(slug){
+	
+	// prompt the user to confirm the delete with our custom modal
+	const response = await promptModal(ConfirmModal, {
+		title: 'Are you sure?',
+		prompt: `Are you sure you want to delete command ${slug}?`,
+		buttons: ['yes', 'nevermind'],
+		icon: 'warning'
+	});
+
+	// if the response was null or not the 'yes' button, return
+	if(response==null)
+		return;
+	if(response.index!==0)
+		return;
+
+	// get the current commands
+	const currentCommands = { ...commandsRef.value };
+
+	// remove the command
+	delete currentCommands[slug];
+
+	// update the commands ref
+	commandsRef.value = currentCommands;
+}
+
 </script>
 <style lang="scss" scoped>
 
@@ -397,6 +489,31 @@ function handleEnabledCheckbox(command){
 			color: white;
 			font-size: 12px;
 			border-bottom: 2px solid black;
+
+			// optional button to add commands
+			.addCommandButton {
+				position: absolute;
+				top: 10px;
+				right: 10px;
+
+				// box styles
+				background: #EFEFEF;
+				border: none;
+				border-radius: 40px;
+				padding: 5px 10px;
+				cursor: pointer;
+				border: 2px solid black;
+
+				// text settings
+				color: black;
+				font-weight: bolder;
+				
+				&:hover {
+					background: white;
+					border: 2px solid rgba(255, 255, 255, 1);					
+				}
+
+			}// .addCommandButton
 
 		}// .header
 
@@ -575,8 +692,23 @@ function handleEnabledCheckbox(command){
 						padding-left: 10px;
 						text-align: left;
 						line-height: 14px;
-					}					
-				}
+					}		
+					
+					&.custom {
+
+						.deleteButton {
+							position: absolute;
+							right: 5px;
+							top: 50%;
+							transform: translateY(-50%);
+							cursor: pointer;
+
+							&:hover {
+								color: red;
+							}
+						}// .deleteButton
+					}
+				}// .cellDesc
 
 			}// .commandRow
 
