@@ -28,7 +28,7 @@
 
 			<!-- first row is the previews & text inputs -->
 			<tr>
-				<td width="150">
+				<td width="150" rowspan="2">
 					<FilePreview 
 						:fileId="value.model"
 						:assetManager="rowProps.assetManager"
@@ -41,7 +41,6 @@
 					<FilePreview 
 						:fileId="value.sound"
 						:assetManager="rowProps.assetManager"
-						:height="100"
 						:border="false"
 					/>
 				</td>
@@ -57,9 +56,13 @@
 			</tr>
 
 			<!-- second row is the buttons / sliders -->
-			<tr class="compact-row">
-				<td><button @click="handlePickModel">Pick Model</button></td>
-				<td><button @click="handlePickSound">Pick Sound</button></td>
+			<tr>
+				<td colspan="1">
+					<div class="buttonSpread">
+						<button @click="handlePickModel">Pick Model</button>
+						<button @click="handlePickSound">Pick Sound</button>
+					</div>
+				</td>
 				<td>
 					<input type="range" min="0.1" max="5" step="0.1" v-model.number="scaleInput" @input="validateScale" />
 				</td>
@@ -259,6 +262,36 @@ const handlePickSound = () => {
 		input[type="range"] {
 			accent-color: black;
 		}
+
+		// the buttons
+		.buttonSpread {
+
+			display: flex;
+			justify-content: space-around;
+			
+			// make the add button look nice
+			button {
+
+				// box styles
+				background: #EFEFEF;
+				border: none;
+				border-radius: 40px;
+				padding: 5px 10px;
+				cursor: pointer;
+				border: 2px solid black;
+
+				// text settings
+				color: black;
+				font-weight: bolder;
+
+				&:hover {
+					background: white;
+					border: 2px solid rgba(255, 255, 255, 1);
+
+				}
+			}// button
+		}// .buttonSpread
+
 
 	}// .arrayTosserEdit
 
