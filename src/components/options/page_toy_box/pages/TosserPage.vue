@@ -28,6 +28,20 @@
 			command name to use for each of the tossable items below.
 		</p>
 		
+		<InfoBox icon="lightbulb">
+			ON THE TOPIC OF CUSTOM COMMANDS:<br>
+			In order to add custom commands, first add the command in the "Command Triggers" section, below.<br>
+			Then, set the "command" field for specific 3D objects to match the custom command.<br>
+			<i>This is unrelated to the slug</i>
+		</InfoBox>
+
+		<InfoBox icon="lightbulb">
+			ON THE TOPIC OF SLUGS:<br>
+			"slugs" are optional and unrelated to custom commands.<br>
+			They are used to specify the item to toss when the user types the command.<br>
+			<span class="cmd">!{{ toss_command }} &lt;slug&gt;</span>
+		</InfoBox>
+
 		<SectionHeader title="Command Triggers"/>
 		<p>
 			Below you can customize the commands that users can type to interact with the Tosser system.
@@ -62,13 +76,20 @@
 				v-model="tosserAssets"
 				:component="ArrayTosserEdit"
 				:rowProps="{ assetManager: props.optionsApp.assetsMgr }"
-				:createItem="() => ''"
+				:createItem="() => {
+					return {
+						model: '16',
+						sound: '15',
+						scale: 1,
+						slug: '',
+						cmd: '',
+					};
+				}"
 			/>
 		
 		</SettingsRow>
 
-		<SectionHeader title="CatsumIpsum"/>
-		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+		<CatsumIpsum :paragraphs="1" :sentences="5" :brOnly="true"/>
 	</PageBox>
 
 </template>

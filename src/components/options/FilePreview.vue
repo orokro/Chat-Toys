@@ -31,6 +31,7 @@
 			v-if="isAudio"
 			:src="previewSrc"
 			controls
+			:autoplay="props.autoPlay"
 			:style="{
 				width: props.width ? props.width + 'px' : '100%'
 			}">
@@ -58,6 +59,12 @@ const props = defineProps({
 	// optional width and height
 	width: Number,
 	height: Number,
+
+	// optional autoplay (for audio)
+	autoPlay: {
+		type: Boolean,
+		default: false
+	},
 
 	// true if we should show a border
 	border: {

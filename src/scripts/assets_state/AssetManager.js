@@ -271,6 +271,17 @@ export class AssetManager {
 
 
 	/**
+	 * Retrieves the data for a given asset ID.
+	 * 
+	 * @param {string} id - The asset ID
+	 * @returns {Object|null} - The asset data, or null if not found
+	 */
+	getFileData(id){
+		return this.assets.value.find(asset => asset.id === id);			
+	}
+
+
+	/**
 	 * Retrieves a file for a given asset ID.
 	 * 
 	 * @param {string} id - The asset ID

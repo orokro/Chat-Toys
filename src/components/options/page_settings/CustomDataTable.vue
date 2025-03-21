@@ -36,7 +36,7 @@
 					v-for="item in sortedData"
 					:key="item.id"
 					@click="$emit('rowClick', { id: item.id, data: item })"
-					:class="{ 'selected-row': item.id === selected_id }"
+					:class="{ 'selected-row': item.id === filteredSelectedId }"
 				>
 					<td 
 						v-for="key in filteredKeys"
@@ -68,10 +68,26 @@ import { ref, computed } from 'vue';
 
 // props
 const props = defineProps({
+
+	// the raw data
 	data: Array,
+
+	// optional filter for the data
+	filter: {
+		type: Function,
+		default: (item) => item
+	},
+
+	// the currently selected row
 	selected_id: String,
+
+	// allow editing for some fields
 	editableFields: { type: Array, default: () => [] },
+
+	// filter columns (fields)
 	ignoreColumns: { type: Array, default: () => ['id'] },
+
+	// optional column to enable deleting rows
 	showDeleteColumn: Boolean,
 });
 
@@ -79,19 +95,40 @@ const props = defineProps({
 const sortKey = ref(null);
 const sortOrder = ref(1);
 
+
+// the keys will be columns - but we'll filter out the ones we don't want
 const filteredKeys = computed(() => {
 	return Object.keys(props.data[0]).filter(key => !props.ignoreColumns.includes(key));
 });
 
+
+// the sort will determine order in column, but also, optional filter
 const sortedData = computed(() => {
-	if (!sortKey.value) return props.data;
-	return [...props.data].sort((a, b) => {
+
+	const filteredData = [...props.data.filter(props.filter)];
+
+	if (!sortKey.value) return filteredData;
+	return [...filteredData].sort((a, b) => {
 		if (a[sortKey.value] < b[sortKey.value]) return -1 * sortOrder.value;
 		if (a[sortKey.value] > b[sortKey.value]) return 1 * sortOrder.value;
 		return 0;
 	});
 });
 
+
+// the selected id must be valid based on filter
+const filteredSelectedId = computed(() => {
+	
+	// check if sorted data has the selected id & if so return it
+	if (sortedData.value.find(item => item.id === props.selected_id))
+		return props.selected_id;
+	
+	// otherwise return the first item
+	return sortedData.value[0].id;
+});
+
+
+// generic sorting function
 const sort = (key) => {
 	if (sortKey.value === key) {
 		sortOrder.value *= -1;
@@ -100,69 +137,77 @@ const sort = (key) => {
 		sortOrder.value = 1;
 	}
 };
+
 </script>
-<style scoped>
+<style lang="scss" scoped>
 
-.table-container {
-	padding: 16px;
-}
+	.table-container {
 
-table {
-	width: 100%;
-	border-collapse: collapse;
-	border: 1px solid #ccc;
-	border-radius: 8px;
-}
+		padding: 16px;
 
-thead {
-	background-color: #f3f3f3;
-	text-align: left;
-}
+		table {
 
-th, td {
-	padding: 8px;
-	border: 1px solid #ccc;
-	position: relative;
-}
+			width: 100%;
+			border-collapse: collapse;
+			border: 1px solid #ccc;
+			border-radius: 8px;
+		
+			thead {
+				background-color: #f3f3f3;
+				text-align: left;
+			}// thead
 
-th {
-	cursor: pointer;
-}
+			th, td {
+				padding: 8px;
+				border: 1px solid #ccc;
+				position: relative;
+			}
 
-th:hover {
-	background-color: #ddd;
-}
+			th {
+				cursor: pointer;
+			}
 
-.selected-row {
-	background-color: #e0f7fa;
-}
+			th:hover {
+				background-color: #ddd;
+			}
 
-.edit-btn {
-	margin-left: 8px;
-	padding: 2px 6px;
-	cursor: pointer;
-	background: #2196f3;
-	color: white;
-	border: none;
-	border-radius: 4px;
-}
+			.selected-row {
+				background-color: #e0f7fa;
+			}
 
-.delete-column {
-	text-align: center;
-	cursor: pointer;
-	color: red;
-}
+			.edit-btn {
+				margin-left: 8px;
+				padding: 2px 6px;
+				cursor: pointer;
+				background: #2196f3;
+				color: white;
+				border: none;
+				border-radius: 4px;
 
-.material-icons {
-	font-size: 18px;
-}
+			}// .edit-btn
 
-.tag {
-	display: inline-block;
-	padding: 2px 6px;
-	margin: 2px;
-	background: #eee;
-	border-radius: 4px;
-}
+			.delete-column {
+				text-align: center;
+				cursor: pointer;
+				color: red;
+
+			}// .delete-column
+
+			.material-icons {
+				font-size: 18px;
+			}
+
+			.tag {
+				display: inline-block;
+				padding: 2px 6px;
+				margin: 2px;
+				background: #eee;
+				border-radius: 4px;
+			
+			}// tag
+
+		}// table
+
+	}// table-container
 
 </style>

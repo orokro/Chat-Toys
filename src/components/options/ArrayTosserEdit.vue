@@ -38,6 +38,7 @@
 					/>
 				</td>
 				<td width="350">
+					{{ rowProps.assetManager.getFileData(value.sound)?.name }}
 					<FilePreview 
 						:fileId="value.sound"
 						:assetManager="rowProps.assetManager"
@@ -76,15 +77,17 @@
 <script setup>
 
 // vue
-import { ref, watch } from 'vue';
+import { ref, watch, markRaw } from 'vue';
 import { directive as VTippy } from 'vue-tippy';
 import 'tippy.js/dist/tippy.css';
 
 // components
 import FilePreview from './FilePreview.vue';
+import AssetPickerModal from './AssetPickerModal.vue';
 
 // lib/misc
 import * as yup from 'yup';
+import { promptModal } from 'jenesius-vue-modal';
 
 const slugTippyText = `
 	Slug is the "item" in "!toss <item>".
@@ -98,9 +101,6 @@ const slugCommandText = `
 
 // props
 const props = defineProps({
-
-	// the asset manager so we can render previews
-	assetManager: Object,
 
 	// the color value to edit
 	value: {
@@ -182,25 +182,61 @@ watch(() => props.value, (newValue) => {
 	inputValue.value = newValue;
 });
 
-const handlePickModel = () => {
-	console.log('Picking model...');
+
+// handle when the user clicks the pick model button
+const handlePickModel = async () => {
+
+	// prompt the user to confirm the delete with our custom modal
+	const response = await promptModal(AssetPickerModal, {
+		title: 'Pick a 3D model to toss',
+		assetManager: markRaw(props.rowProps.assetManager),
+		allowCustomImports: true,
+		kindFilter: '3d',
+	});
+
+	// if the response was null or not the 'yes' button, return
+	if(response==null)
+		return;
+	if(response.index!==0)
+		return;
+
+	// set the model id
+	props.value.model = response.value.id;
+	emitChange();
 };
 
-const handlePickSound = () => {
-	console.log('Picking sound...');
+
+// handle when the user clicks the pick sound button
+const handlePickSound = async () => {
+
+	// prompt the user to confirm the delete with our custom modal
+	const response = await promptModal(AssetPickerModal, {
+		title: 'Pick a Sound Effect for impact',
+		assetManager: markRaw(props.rowProps.assetManager),
+		allowCustomImports: true,
+		kindFilter: 'sound',
+	});
+
+	// if the response was null or not the 'yes' button, return
+	if(response==null)
+		return;
+	if(response.index!==0)
+		return;
+
+	// set the sound id
+	props.value.sound = response.value.id;
+	emitChange();
 };
 
 
 </script>
 <style lang="scss" scoped>
 
-
 	// .arrayTosserItem
 	.arrayTosserEdit {
 
 		width: 100%;
 		border-collapse: collapse;
-
 		
 		thead {
 			background-color: #535353;
@@ -287,11 +323,11 @@ const handlePickSound = () => {
 				&:hover {
 					background: white;
 					border: 2px solid rgba(255, 255, 255, 1);
-
 				}
-			}// button
-		}// .buttonSpread
 
+			}// button
+
+		}// .buttonSpread
 
 	}// .arrayTosserEdit
 

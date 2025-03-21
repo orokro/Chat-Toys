@@ -221,7 +221,6 @@ function buttonClicked(button, index){
 	// ignore 'save' if the value is not valid
 	if (button === 'save' && validValue.value !== true)
 		return;
-	
 
 	// emit the event that closes the prompt-type modal with the value
 	emit(Modal.EVENT_PROMPT, {button, index, value: editValue.value});

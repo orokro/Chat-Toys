@@ -192,9 +192,11 @@ const props = defineProps({
 
 });
 
+
 // true if we have at 'channel_points' enabled in props.optionsApp.enabledToys.value
 const isChannelPointsEnabled = computed(()=>
 	props.optionsApp.enabledToys.value.includes('channel_points'));
+
 
 /*	
 	NOTE:
@@ -231,6 +233,7 @@ const isChannelPointsEnabled = computed(()=>
 
 // the array mentioned above - the local scope ref to display in the component
 const localCommandsList = shallowRef([]);
+
 
 /**
  * Whenever we mount, our props change, or the chrome ref changes, we need to reconcile
@@ -367,6 +370,7 @@ async function doEdit(command, field){
 
 }
 
+
 /**
  * Handle when the enabled checkbox is toggled
  * 
@@ -379,6 +383,7 @@ function handleEnabledCheckbox(command){
 	commandsRef.value = { ...commandsRef.value, [command.slug]: command };
 }
 
+
 /**
  * Add a new command to the list
  */
@@ -387,8 +392,6 @@ function addCommand(){
 	// first we need to get a list of all the current commands
 	const commands = commandsRef.value;
 	const currentCommands = getUniqueCommands(commandsRef.value);
-	
-	console.log(currentCommands);
 
 	// use props.toyslug as the prefix for the new command and increment number
 	// till we find one that's not in use
@@ -420,6 +423,7 @@ function addCommand(){
 	// update the commands ref
 	commandsRef.value = { ...commandsRef.value, [newCommandSlug]: newCommand };
 }
+
 
 /**
  * Delete a custom command
