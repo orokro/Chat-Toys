@@ -28,8 +28,10 @@
 			
 			<div class="icon">
 				<img
-					:src="'/assets/channel_points/point_icon.png'"
+					:src="'/builtin/point_icon_1.png'"
 					alt="channel points icon"
+					width="60"
+					height="60"
 				/>
 			</div>
 

@@ -39,6 +39,12 @@ export class AssetManager {
 	}
 
 
+	/**
+	 * Adds some default values to the hard-coded assets list
+	 * 
+	 * @param {Array<Object>} assets - the hard coded assets list
+	 * @returns {Array<Object>} - the preprocessed assets list
+	 */
 	preprocessAssets(assets) {
 
 		// map over the assets and add an internal flag to them
@@ -189,7 +195,13 @@ const builtInAssets = [
 	},
 	{
 		id: 3,
-		name: 'chat_frame',
+		name: 'chat_frame_1',
+		kind: 'image',
+		tags: ['chat'],
+	},
+	{
+		id: 19,
+		name: 'chat_frame_2',
 		kind: 'image',
 		tags: ['chat'],
 	},
