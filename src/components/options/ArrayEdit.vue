@@ -37,6 +37,7 @@
 					:index="index"
 					:key="index"
 					:schema="props.schema"
+					:rowProps="props.rowProps"
 					@change="(newValue) => updateItem(index, newValue)"
 				/>
 
@@ -78,7 +79,14 @@ const props = defineProps({
 	schema: {
 		type: Object,
 		default: null
+	},
+
+	// optional props for row
+	rowProps: {
+		type: Object,
+		default: () => ({})
 	}
+
 });
 
 // the array we'll be editing

@@ -85,6 +85,16 @@ import ArrayColorInput from '../../ArrayColorInput.vue';
 // lib/misc
 import * as yup from 'yup';
 
+// props
+const props = defineProps({
+	
+	// reference to the state of the options page
+	optionsApp: {
+		type: Object,
+		default: null
+	}
+});
+
 // generate slug for command
 const toySlug = 'prize_wheel';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
@@ -98,22 +108,13 @@ const prizeWheelSettings = chromeShallowRef('prize-wheel-settings', {});
 
 // our settings for this system
 const wheelItems = ref([]);
-const wheelColors = ref(0);
+const wheelColors = ref([]);
 
 // aggregate all our refs
 const settingsAggregator = new RefAggregator(prizeWheelSettings);
 settingsAggregator.register('wheelItems', wheelItems);
 settingsAggregator.register('wheelColors', wheelColors);
 
-// props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

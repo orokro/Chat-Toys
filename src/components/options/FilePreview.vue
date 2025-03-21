@@ -8,6 +8,8 @@
 
 	<div 
 		v-if="previewSrc" 
+		class="filePreview"
+		:class="{ border: props.border }"
 		:style="{
 			width: props.width ? props.width + 'px' : 'auto',
 			height: props.height ? props.height + 'px' : 'auto' 
@@ -46,10 +48,22 @@ import { getThumb } from '../../scripts/threeThumb';
 
 // props
 const props = defineProps({
+
+	// the id of the file to preview
 	fileId: String,
+
+	// reference to the asset manager
 	assetManager: Object,
+
+	// optional width and height
 	width: Number,
-	height: Number
+	height: Number,
+
+	// true if we should show a border
+	border: {
+		type: Boolean,
+		default: true
+	}
 });
 
 // our local state
@@ -71,9 +85,10 @@ const generatePreview = async () => {
 	if (!props.fileId || !props.assetManager) return;
 
 	// gets a JavaScript File object representing the file
-	const file = await props.assetManager.getFile(props.fileId);
+	const file = await props.assetManager.getFile(props.fileId);	
 	if (!file) return;
 
+	
 	// get the file type & generate a preview
 	const fileType = file.type;
 	if (fileType.startsWith('image/')) {
@@ -99,14 +114,19 @@ watch(() => props.fileId, generatePreview);
 </script>
 <style lang="scss" scoped>
 
-	div {
+	// outer wrapper
+	.filePreview {
+
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		overflow: hidden;
 
-		border: 2px solid black;
-		border-radius: 5px;
-	}
+		&.border {
+			border: 2px solid black;
+			border-radius: 5px;
+		}// &.border
+
+	}// .filePreview
 
 </style>

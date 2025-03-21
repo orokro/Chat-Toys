@@ -29,6 +29,10 @@
 			NOTE #2: If the user places multiple bets during the same game, their bets will be combined.
 			Using the cancel command will revoke all bets placed by the user.
 		</InfoBox>
+		<InfoBox icon="lightbulb">
+			NOTE #3: If there are multiple options, a user can hedge bets by betting on more than one.
+			(Insert: always sunny "I'm playing both sides" meme)
+		</InfoBox>
 		
 		<SectionHeader title="Command Triggers"/>
 		<p>
@@ -40,9 +44,7 @@
 			:toySlug="toySlug"
 			:commands="commands"
 		/>
-			
-		<SectionHeader title="CatsumIpsum"/>
-		<CatsumIpsum :paragraphs="5" :sentences="10"/>
+		
 	</PageBox>
 
 </template>
