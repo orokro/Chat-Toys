@@ -57,6 +57,7 @@ export class AssetManager {
 		return assets.map(asset => (
 			{
 				...asset,
+				id: asset.id.toString(),
 				internal: true,
 				file_path: null,
 			}));

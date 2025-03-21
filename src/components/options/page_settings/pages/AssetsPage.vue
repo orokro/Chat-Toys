@@ -45,7 +45,14 @@
 				and reassign it to the toy.
 			</strong>
 		</InfoBox>
-
+		<template v-if="selectedRow">
+			<SectionHeader title="Preview"/>
+			<FilePreview
+				:fileId="selectedRow"
+				:height="100"
+				:assetManager="props.optionsApp.assetsMgr"
+			/>
+		</template>
 		<SectionHeader title="Assets Database"/>
 		<button 
 			type="button"
@@ -54,8 +61,8 @@
 		>Import Assets</button>
 		<AssetsView
 			:data="props.optionsApp.assetsMgr.assets.value"
-			:selected_id="selectedRow"
-			
+			:selected_id="selectedRow"			
+			:ignoreColumns="['id', 'file_path']"
 			:showDeleteColumn="true"
 			@rowClick="rowClick"
 			@cellClick="cellClick"
@@ -78,46 +85,12 @@ import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import AssetsView from '../CustomDataTable.vue';
+import FilePreview from '../../FilePreview.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
 
-function rowClick({ id, data }){
-
-	selectedRow.value = id;
-	console.log('row clicked', id, data);
-}
-
-function cellClick({ id, key, value }){
-	console.log('cell clicked', id, key, value);
-}
-
-function cellEdit({ id, data, key, value }){
-	console.log('cell edit', id, key, value);
-}
-
-async function deleteRow(id){
-	console.log('delete row', id);
-
-	const response = await promptModal(ConfirmModal, {
-		title: 'Are you sure?',
-		prompt: `Are you sure you want to delete file id ${id}?`,
-		buttons: ['yes', 'nevermind'],
-		icon: 'warning'
-	});
-
-	// if the response was null, return
-	if(response==null)
-		return;
-
-	// otherwise, if the response was not {button: 'yes', index:0}, return
-	if(response.index!==0)
-		return;
-
-	// remove the file
-	props.optionsApp.assetsMgr.remove(id);
-}
-
+// props
 const props = defineProps({
 	
 	// reference to the state of the options page
@@ -127,22 +100,63 @@ const props = defineProps({
 	}
 });
 
+// the currently selected row
+const selectedRow = ref(props.optionsApp.assetsMgr.assets.value[0].id);
 
-const data = props.optionsApp.assetsMgr.assets.value;
+// handle when a row is clicked
+function rowClick({ id, data }){
 
-const selectedRow = ref(data[0].id);
+	selectedRow.value = id;
+	console.log('row clicked', id, data);
+}
 
+// handle when a cell is clicked
+function cellClick({ id, key, value }){
+
+	// currently for debug only
+	// console.log('cell clicked', id, key, value);
+}
+
+// handle when a cell edit is requested
+function cellEdit({ id, data, key, value }){
+
+	// currently for debug only
+	// console.log('cell edit', id, key, value);
+}
+
+// handle when a row delete is requested
+async function deleteRow(id){
+
+	// prompt the user to confirm the delete with our custom modal
+	const response = await promptModal(ConfirmModal, {
+		title: 'Are you sure?',
+		prompt: `Are you sure you want to delete file id ${id}?`,
+		buttons: ['yes', 'nevermind'],
+		icon: 'warning'
+	});
+
+	// if the response was null or not the 'yes' button, return
+	if(response==null)
+		return;
+	if(response.index!==0)
+		return;
+
+	// remove the file
+	props.optionsApp.assetsMgr.remove(id);
+	if(selectedRow.value===id)
+		selectedRow.value = null;
+}
+
+// handle when the import assets button is clicked
 async function handleImportAssets(){
 
-	
+	// open the modal to import assets
 	const optionsApp = props.optionsApp;
 	const assetsMgr = optionsApp.assetsMgr;
-
-	console.log(assetsMgr);
 	const imports = await assetsMgr.importFiles('any', true);
 
+	// show list of imported IDs (for debug)
 	console.log('imported assets', imports);
-	
 }
 
 </script>

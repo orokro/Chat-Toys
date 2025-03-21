@@ -3,9 +3,9 @@
 	-------------------
 
 	I tried primevue, vuetify and some others, but none of them worked.
-	Just errors. Completely trash.
+	Just errors.
 
-	So I asked ChatGPT to make me a custom table component, this is the result.
+	So here's a custom solution for a sortable / customizable table.
 -->
 <template>
 	<div class="table-container">
@@ -69,12 +69,13 @@ import { ref, computed } from 'vue';
 // props
 const props = defineProps({
 	data: Array,
-	selected_id: Number,
+	selected_id: String,
 	editableFields: { type: Array, default: () => [] },
 	ignoreColumns: { type: Array, default: () => ['id'] },
 	showDeleteColumn: Boolean,
 });
 
+// state
 const sortKey = ref(null);
 const sortOrder = ref(1);
 
@@ -101,6 +102,7 @@ const sort = (key) => {
 };
 </script>
 <style scoped>
+
 .table-container {
 	padding: 16px;
 }
@@ -162,4 +164,5 @@ th:hover {
 	background: #eee;
 	border-radius: 4px;
 }
+
 </style>
