@@ -13,6 +13,20 @@
 		<p>
 			The Tosser system lets chatters throw things at you, like tomatoes, pies, and more!
 		</p>
+		<p>
+			Users optionally can use the <span class="cmd">!{{ toss_command }}</span> command to throw the first item in the list..
+		</p>
+		<p>
+			Or, if the items have a "slug" set, such as "tomato" they can specify the item to throw,
+			like <span class="cmd">!{{ toss_command }} tomato</span>.
+		</p>
+		<p>
+			You can also enable a random toss mode, where the system will randomly select an item to toss if no item is specified.
+		</p>
+		<p>
+			Lastly, with this Toy, you can actually add custom commands. If you do, you must specify the 
+			command name to use for each of the tossable items below.
+		</p>
 		
 		<SectionHeader title="Command Triggers"/>
 		<p>
@@ -26,11 +40,23 @@
 		/>
 		
 		<SectionHeader title="Settings"/>
+
+		<SettingsInputRow
+			type="boolean"
+			v-model="randomTossMode"
+		>
+			<h3>Random Toss Mode</h3>
+			<p>If no item is tossed with the <span class="cmd">!{{ toss_command }} &lt;item&gt;</span>
+				command, a random will be picked if this is mode is enabled.
+			</p>
+		</SettingsInputRow>
+
 		<SettingsRow>
 			<h3>Tossable Objects</h3>
 			<p>Add/Edit 3d Models to Toss!</p>
 			<p><strong>NOTE: if no items are added, the toss command will not work in chat.</strong></p>
-			
+			<p>You with the Asset Picker dialog, you can also import custom models from your computer.</p>
+			<br>
 			<ArrayEdit
 				v-model="tosserAssets"
 				:component="ArrayTosserEdit"
@@ -48,7 +74,7 @@
 <script setup>
 
 // vue
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
@@ -59,6 +85,7 @@ import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsRow from '../../SettingsRow.vue';
+import SettingsInputRow from '../../SettingsInputRow.vue';
 import ArrayEdit from '../../ArrayEdit.vue';
 import ArrayTextInput from '../../ArrayTextInput.vue';
 import ArrayColorInput from '../../ArrayColorInput.vue';
@@ -123,6 +150,14 @@ const commands = [
 		groupCoolDown: 0,
 	},	
 ];
+
+// all of the commands system wide are stored in this chrome shallow ref
+const commandsRef = chromeShallowRef('commands', {});
+
+// get the command used for tossing items
+const toss_command = computed(() => {
+	return commandsRef.value.tosser_toss?.command || '';
+});
 
 </script>
 <style lang="scss" scoped>	

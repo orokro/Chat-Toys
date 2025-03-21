@@ -22,7 +22,7 @@
 			<br/><br/>
 			This plugin works entirely on the streamer's <i>(i.e. your)</i> computer.
 			<br/><br/>
-			So instead, we can periodically show a graphic on the browser-capture window that indicates it's time for users to collect points. When it's visible users can type a command such as <span class="cmd">!get</span> to have points added to their profile. Again, because we cannot store stuff in the cloud and display points on each chatters screen, instead we can show the current points via a ticker in the browser-capture window. Depending on the settings below, you can control the behavior of this system to make it more or less competitive.
+			So instead, we can periodically show a graphic on the browser-capture window that indicates it's time for users to collect points. When it's visible users can type a command such as <span class="cmd">!{{ claimCommand }}</span> to have points added to their profile. Again, because we cannot store stuff in the cloud and display points on each chatters screen, instead we can show the current points via a ticker in the browser-capture window. Depending on the settings below, you can control the behavior of this system to make it more or less competitive.
 			<br/><br/>
 			For example, you can control:
 		</p>
@@ -158,8 +158,8 @@
 <script setup>
 
 // vue
-import { ref, watch } from 'vue';
-import { chromeRef } from '../../../../scripts/chromeRef';
+import { ref, watch, computed } from 'vue';
+import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
@@ -255,6 +255,14 @@ const commands = [
 	},
 	
 ];
+
+// all of the commands system wide are stored in this chrome shallow ref
+const commandsRef = chromeShallowRef('commands', {});
+
+// get the command used for claiming points
+const claimCommand = computed(() => {
+	return commandsRef.value.channel_points_get?.command || '';
+});
 
 </script>
 <style lang="scss" scoped>	

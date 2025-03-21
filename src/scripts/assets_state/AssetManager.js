@@ -395,6 +395,12 @@ const builtInAssets = [
 		tags: ['media'],
 	},
 	{
+		id: 20,
+		name: 'headpat-hand.gif',
+		kind: 'image',
+		tags: ['media'],
+	},
+	{
 		id: 8,
 		name: 'fish_big.png',
 		kind: 'image',

@@ -12,9 +12,11 @@
 	>
 		<p>
 			The Prize Wheel is a fun way to reward your viewers with points, prizes, and more!
-			<br>
+		</p>
+		<p>
 			On this page you can configure the settings for the Prize Wheel system.
-			<br>
+		</p>
+		<p>
 			You can either keep the prize wheel always active, available to be spun at any time, 
 			or you can toggle in on/off in the show time page.
 		</p>
