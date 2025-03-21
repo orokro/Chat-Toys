@@ -41,7 +41,7 @@
 <script setup>
 
 // vue
-import { defineProps, defineEmits, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { directive as VTippy } from 'vue-tippy';
 import 'tippy.js/dist/tippy.css';
 

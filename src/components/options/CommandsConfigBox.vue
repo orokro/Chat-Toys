@@ -373,7 +373,7 @@ function handleEnabledCheckbox(command){
 		// thicc round border, and since this element is a predictable table, let's hard-code it's width
 		border: 2px solid black;
 		border-radius: 10px;
-		width: 1200px;
+		width: 1000px;
 		overflow: hidden;
 
 		// this element will be in dark theme just to contrast it against everything else, since it's an important element
@@ -434,6 +434,7 @@ function handleEnabledCheckbox(command){
 					border-bottom: none;
 				}
 
+				font-size: 12px;
 				overflow: hidden;
 
 				// when the row is disabled
@@ -521,7 +522,7 @@ function handleEnabledCheckbox(command){
 				}
 				.cellCmd {
 					left: 50px;
-					width: 200px;
+					width: 150px;
 
 					.cmdText {
 						display: inline-block;
@@ -534,8 +535,8 @@ function handleEnabledCheckbox(command){
 					}// .cmdText
 				}
 				.cellParams {
-					left: 250px;
-					width: 200px;
+					left: 200px;
+					width: 150px;
 
 					.paramText {
 
@@ -554,19 +555,19 @@ function handleEnabledCheckbox(command){
 
 				}
 				.cellCost {
-					left: 450px;
-					width: 100px;
+					left: 350px;
+					width: 70px;
 				}
 				.cellCoolDown {
-					left: 550px;
+					left: 420px;
 					width: 100px;
 				}
 				.cellGroupCoolDown {
-					left: 650px;
+					left: 520px;
 					width: 100px;
 				}
 				.cellDesc {
-					left: 750px;
+					left: 620px;
 					right: 0px;
 
 					.descText {

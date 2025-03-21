@@ -61,7 +61,6 @@
 
 // vue
 import { ref } from 'vue';
-import { defineModel } from 'vue';
 
 // props
 const props = defineProps({
@@ -109,6 +108,7 @@ const removeItem = (index) => {
 		// reset stacking context
 		position: relative;
 		min-width: 550px;
+		max-width: 1000px;
 		// box settings
 		// thicc round border, and since this element is a predictable table, let's hard-code it's width
 		border: 2px solid black;

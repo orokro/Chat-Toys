@@ -19,7 +19,7 @@
 <script setup>
 
 // vue
-import { ref, defineProps } from 'vue';
+import { ref } from 'vue';
 
 // props
 const props = defineProps({

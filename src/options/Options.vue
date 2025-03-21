@@ -126,7 +126,7 @@ onBeforeMount(() => {
 	}// .optionsWrapper
 
 	// styles for modal backdrop via the "jenesius-vue-modal" library
-	::v-deep .modal-container {
+	:deep(.modal-container) {
 		background-color: rgba(0, 0, 0, 0.5);
 		backdrop-filter: blur(5px);
 		z-index: 1000;
