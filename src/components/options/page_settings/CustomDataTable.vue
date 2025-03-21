@@ -54,7 +54,7 @@
 
 					<!-- optional delete column -->
 					<td v-if="showDeleteColumn" class="delete-column" @click.stop="$emit('deleteRow', item.id)">
-						<span class="material-icons">delete</span>
+						<span v-if="item.internal==false" class="material-icons">delete</span>
 					</td>
 				</tr>
 			</tbody>

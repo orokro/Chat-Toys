@@ -26,6 +26,10 @@
 // vue
 import { chromeRef, chromeShallowRef } from "../chromeRef";
 
+// lib/misc
+import { v4 as uuidv4 } from 'uuid';
+import { openDB } from 'idb';
+
 // AssetManager class
 export class AssetManager {
 
@@ -36,6 +40,8 @@ export class AssetManager {
 
 		// w'll use chromeRef to store the assets in the chrome storage / local storage
 		this.assets = chromeShallowRef('assets', this.preprocessAssets(builtInAssets));
+
+		window.am = this;
 	}
 
 
@@ -49,14 +55,12 @@ export class AssetManager {
 
 		// map over the assets and add an internal flag to them
 		return assets.map(asset => (
-			{ 
-				...asset, 
+			{
+				...asset,
 				internal: true,
 				file_path: null,
 			}));
-
 	}
-
 
 
 	/**
@@ -74,18 +78,18 @@ export class AssetManager {
 		if (typeof options === 'string') {
 			results = results.filter(asset => asset.name.includes(options));
 
-		// otherwise, run a gauntlet of filters based on the various options
+			// otherwise, run a gauntlet of filters based on the various options
 		} else {
 			if (options.query)
 				results = results.filter(asset => asset.name.includes(options.query));
-			
+
 			if (options.tag)
 				results = results.filter(asset => asset.tags.includes(options.tag));
-			
+
 			if (options.kind)
 				results = results.filter(asset => asset.kind === options.kind);
-			
-			if (options.sortKey){
+
+			if (options.sortKey) {
 				results.sort((a, b) => (a[options.sortKey] > b[options.sortKey] ? 1 : -1));
 				if (options.desc) results.reverse();
 			}
@@ -133,51 +137,217 @@ export class AssetManager {
 
 
 	/**
-	 * Gets File for a specific asset ID
-	 * 
-	 * @param {Any} id - the ID of the asset to get the file for
-	 * @returns {Any} - the file, if found
-	 */
-	getFile(id) {
-
-		const asset = this.assets.value.find(asset => asset.id === id);
-		if (!asset) return null;
-		
-		if (asset.internal) {
-			return `/assets/${asset.kind}/${asset.name}.${asset.kind === 'sound' ? 'mp3' : asset.kind === 'image' ? 'png' : 'glb'}`;
-		}
-		
-		if (asset.file_path) {
-			return this._getPersistentFileHandle(asset.file_path);
-		}
-		
-		return null;
-	}
-	
-
-	/**
 	 * gets a persistent file handle
 	 * 
 	 * @param {Any} filePath - the path to the file
 	 * @returns {Any|null} - the file handle, or null if not found
-	 */	
+	 */
 	async _getPersistentFileHandle(filePath) {
 
 		// Fallback for browsers that don't support it
 		if (!window.showOpenFilePicker)
-			return null; 
+			return null;
 
 		try {
 			const [fileHandle] = await window.showOpenFilePicker();
 			return await fileHandle.getFile();
-		
+
 		} catch (error) {
 			console.error('Error retrieving file handle:', error);
 			return null;
 		}
 	}
 
+
+	/**
+	 * For debug, reset the files to the built-in assets
+	 */
+	resetFiles() {
+		this.assets.value = this.preprocessAssets(builtInAssets);
+	}
+
+
+	/**
+	 * Stores file handle to DB
+	 * 
+	 * @param {String} id - the ID of the file handle to store	
+	 * @param {*} fileHandle - the file handle to store
+	 */
+	async storeFileHandle(id, fileHandle) {
+		const db = await this.openDB();
+		const tx = db.transaction("fileHandles", "readwrite");
+		tx.objectStore("fileHandles").put(fileHandle, id);
+		await tx.done;
+	}
+
+
+	/**
+	 * IndexedDB utility function to retrieve file handles
+	 * 
+	 * @param {String} id - ID of file to recover
+	 * @returns File handle
+	 */
+	async getFileHandle(id) {
+		const db = await this.openDB();
+		const tx = db.transaction("fileHandles", "readonly");
+		return await tx.objectStore("fileHandles").get(id);
+	}
+
+
+	/**
+	 * Opens database for files
+	 * 
+	 * @returns {Promise<IDBDatabase>} - the opened database
+	 */
+	async openDB() {
+		return await openDB("AssetManagerDB", 1, {
+			upgrade(db) {
+				if (!db.objectStoreNames.contains("fileHandles")) {
+					db.createObjectStore("fileHandles");
+				}
+			},
+		});
+	}
+
+
+	/**
+	 * Imports files from the user's system.
+	 * 
+	 * @param {string} kind - One of 'image', '3d', 'sound', or 'any'
+	 * @param {boolean} [multi=false] - Whether multiple files can be selected
+	 * @returns {Promise<Array<string>|null>} - Array of new asset IDs, or null if cancelled
+	 */
+	async importFiles(kind, multi = false) {
+
+		if (!window.showOpenFilePicker) {
+			console.error('File picker API not supported.');
+			return null;
+		}
+
+		const fileTypes = {
+			'image': ['image/png', 'image/gif'],
+			'3d': ['model/gltf-binary'],
+			'sound': ['audio/mpeg', 'audio/wav'],
+			'any': ['image/png', 'image/gif', 'model/gltf-binary', 'audio/mpeg', 'audio/wav']
+		};
+
+
+		const options = {
+			types: [{
+				description: kind.charAt(0).toUpperCase() + kind.slice(1) + ' Files',
+				accept: fileTypes[kind] ? fileTypes[kind].reduce((acc, type) => { acc[type] = []; return acc; }, {}) : {}
+			}],
+			multiple: multi
+		};
+
+
+		try {
+			const fileHandles = await window.showOpenFilePicker(options);
+			const newAssets = await Promise.all(fileHandles.map(async fileHandle => {
+				const file = await fileHandle.getFile();
+				const id = uuidv4();
+
+				// Store file handle in IndexedDB
+				await this.storeFileHandle(id, fileHandle);
+
+				return {
+					id,
+					name: file.name,
+					kind: kind,
+					tags: [],
+					internal: false,
+					file_path: id // Store only the ID reference in localStorage
+				};
+			}));
+
+			this.assets.value = [...this.assets.value, ...newAssets];
+			return newAssets.map(asset => asset.id);
+		} catch (error) {
+			console.error('File selection cancelled or failed:', error);
+			return null;
+		}
+	}
+
+
+	/**
+	 * Retrieves a file for a given asset ID.
+	 * 
+	 * @param {string} id - The asset ID
+	 * @returns {Promise<File|null>} - The file, or null if not found
+	 */
+	async getFile(id) {
+		const asset = this.assets.value.find(a => a.id === id);
+		if (!asset) return null;
+
+		// If asset is internal, fetch it from the public folder
+		if (asset.internal) {
+			const fileUrl = `/builtin/${asset.name}`;
+			try {
+				const response = await fetch(fileUrl);
+				if (!response.ok) throw new Error(`Failed to fetch file: ${response.statusText}`);
+
+				const blob = await response.blob();
+				return new File([blob], asset.name, { type: blob.type });
+			} catch (error) {
+				console.error(`Error fetching internal asset: ${error}`);
+				return null;
+			}
+		}
+
+		// Otherwise, proceed with retrieving a file handle for external assets
+		let fileHandle = await this.getFileHandle(id);
+		if (!fileHandle) return null;
+
+		try {
+			return await fileHandle.getFile();
+		} catch (error) {
+			console.warn('Failed to retrieve file:', error);
+
+			// If permission is denied, request the user to reselect the file
+			if (error.name === "NotAllowedError") {
+				try {
+					const options = {
+						types: [{
+							description: `${asset.kind.charAt(0).toUpperCase() + asset.kind.slice(1)} Files`,
+							accept: { [`${this.getMimeType(asset.kind)}`]: [] }
+						}],
+						multiple: false
+					};
+
+					[fileHandle] = await window.showOpenFilePicker(options);
+					await this.storeFileHandle(id, fileHandle);
+					return await fileHandle.getFile();
+				} catch (pickerError) {
+					console.error('User did not reauthorize file access:', pickerError);
+					return null;
+				}
+			}
+
+			return null;
+		}
+	}
+
+
+	/**
+	 * Maps asset kind to MIME types
+	 * 
+	 * @param {string} kind - The asset kind
+	 * @returns {string} - Corresponding MIME type
+	 */
+	getMimeType(kind) {
+
+		const mimeTypes = {
+			'image': 'image/png',
+			'3d': 'model/gltf-binary',
+			'sound': 'audio/mpeg',
+			'any': '*/*'
+		};
+
+		return mimeTypes[kind] || '*/*';
+	}
+
 }
+
 
 // built-in assets for the extension
 const builtInAssets = [
@@ -222,7 +392,7 @@ const builtInAssets = [
 		name: 'sad.gif',
 		kind: 'image',
 		tags: ['media'],
-	},	
+	},
 	{
 		id: 8,
 		name: 'fish_big.png',
@@ -291,10 +461,8 @@ const builtInAssets = [
 	},
 	{
 		id: 19,
-		name: 'buddy.glb',
+		name: 'buddy.fbx',
 		kind: '3d',
 		tags: ['buddies'],
 	},
 ];
-
-export default AssetManager;

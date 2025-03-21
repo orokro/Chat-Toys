@@ -47,10 +47,15 @@
 		</InfoBox>
 
 		<SectionHeader title="Assets Database"/>
+		<button 
+			type="button"
+			class="importButton"
+			@click="handleImportAssets"
+		>Import Assets</button>
 		<AssetsView
-			:data="data"
+			:data="props.optionsApp.assetsMgr.assets.value"
 			:selected_id="selectedRow"
-			:editableFields="['name', 'tags']"
+			
 			:showDeleteColumn="true"
 			@rowClick="rowClick"
 			@cellClick="cellClick"
@@ -62,16 +67,20 @@
 </template>
 <script setup>
 
+//:editableFields="['name', 'tags']"
+
 // vue
 import { ref } from 'vue';
 
 // components
+import ConfirmModal from '../../ConfirmModal.vue';
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
-import CatsumIpsum from '../../../CatsumIpsum.vue';
 import AssetsView from '../CustomDataTable.vue';
 
+// lib/ misc
+import { openModal, promptModal } from "jenesius-vue-modal"
 
 function rowClick({ id, data }){
 
@@ -87,8 +96,26 @@ function cellEdit({ id, data, key, value }){
 	console.log('cell edit', id, key, value);
 }
 
-function deleteRow(id){
+async function deleteRow(id){
 	console.log('delete row', id);
+
+	const response = await promptModal(ConfirmModal, {
+		title: 'Are you sure?',
+		prompt: `Are you sure you want to delete file id ${id}?`,
+		buttons: ['yes', 'nevermind'],
+		icon: 'warning'
+	});
+
+	// if the response was null, return
+	if(response==null)
+		return;
+
+	// otherwise, if the response was not {button: 'yes', index:0}, return
+	if(response.index!==0)
+		return;
+
+	// remove the file
+	props.optionsApp.assetsMgr.remove(id);
 }
 
 const props = defineProps({
@@ -100,9 +127,23 @@ const props = defineProps({
 	}
 });
 
+
 const data = props.optionsApp.assetsMgr.assets.value;
 
 const selectedRow = ref(data[0].id);
+
+async function handleImportAssets(){
+
+	
+	const optionsApp = props.optionsApp;
+	const assetsMgr = optionsApp.assetsMgr;
+
+	console.log(assetsMgr);
+	const imports = await assetsMgr.importFiles('any', true);
+
+	console.log('imported assets', imports);
+	
+}
 
 </script>
 <style lang="scss" scoped>	
