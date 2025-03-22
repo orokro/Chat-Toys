@@ -14,28 +14,31 @@
 			
 			<!-- area with the file preview and the button to pick.-->
 			<table class="settings-asset-row" width="100%">
-				<tr>
-					<td 
-						class="file-preview-cell"
-						rowspan="2"
-						:width="kindFilter==='image' ? 200 : 300"
-					>
-						<FilePreview 
-							:fileId="assetValue"
-							:assetManager="optionsApp.assetsMgr"
-							:border="false"
-							:height="kindFilter==='image' ? 200 : 70"
-						/>
-					</td>
-					<td class="name-cell" align="center">
-						{{ optionsApp.assetsMgr.getFileData(assetValue)?.name }}
-					</td>
-				</tr>
-				<tr>
-					<td align="center">
-						<button @click="handlePickAsset">{{ pickButtonName }}</button>
-					</td>
-				</tr>
+				
+				<tbody>
+					<tr>
+						<td 
+							class="file-preview-cell"
+							rowspan="2"
+							:width="kindFilter==='image' ? 200 : 300"
+						>
+							<FilePreview 
+								:fileId="assetValue"
+								:assetManager="optionsApp.assetsMgr"
+								:border="false"
+								:height="kindFilter==='image' ? 200 : 70"
+							/>
+						</td>
+						<td class="name-cell" align="center">
+							{{ optionsApp.assetsMgr.getFileData(assetValue)?.name }}
+						</td>
+					</tr>
+					<tr>
+						<td align="center">
+							<button @click="handlePickAsset">{{ pickButtonName }}</button>
+						</td>
+					</tr>
+				</tbody>
 
 			</table>
 		

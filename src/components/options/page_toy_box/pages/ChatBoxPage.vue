@@ -16,13 +16,13 @@
 		</p>
 		<ul>
 			<li>
-				<span class="cmd">!{{ 'shout' }}</span> - similar to SuperChat but spends channel points.
+				<span class="cmd">!{{ shout_command }}</span> - similar to SuperChat but spends channel points.
 				Allows a chat message to be played on screen with a sound.
 			</li>
 			<li>
-				<span class="cmd">!{{ 'swarm' }} &lt;message&gt;</span> - By itself, does nothing.
+				<span class="cmd">!{{ swarm_command }} &lt;message&gt;</span> - By itself, does nothing.
 				But if a critical number of chatters all start typing 
-				<span class="cmd">!{{ 'swarm' }} &lt;message&gt;</span> at the same time,
+				<span class="cmd">!{{ swarm_command }} &lt;message&gt;</span> at the same time,
 				then the messages will appear randomly on screen, like a swarm of chat.
 			</li>
 		</ul>
@@ -94,7 +94,7 @@
 			:kind-filter="'sound'"
 		>
 			<h3>Shout Sound</h3>
-			<p>What sound effect should play when <span class="cmd">!shout</span> command is used.</p>
+			<p>What sound effect should play when <span class="cmd">!{{ shout_command }}</span> command is used.</p>
 		</SettingsAssetRow>
 		<SettingsInputRow
 			type="number"
@@ -103,7 +103,7 @@
 		>
 			<h3>Swarm Size</h3>
 			<p>
-				If the swarm command is enabled, how many users need to use it
+				If the <span class="cmd">!{{ swarm_command }}</span> command is enabled, how many users need to use it
 				in a short period of time for a swarm to start?
 			</p>
 			<p>The time period can be customized below...</p>
@@ -116,7 +116,7 @@
 			<h3>Swarm Time Window</h3>
 			<p>
 				Used with the above setting, how long of window should be used to
-				count the number of users using the swarm command?
+				count the number of users using the <span class="cmd">!{{ swarm_command }}</span> command?
 			</p>
 			<p>The number of users can be customized above...</p>
 		</SettingsInputRow>
@@ -127,7 +127,7 @@
 <script setup>
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, computed } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
@@ -210,6 +210,18 @@ const commands = [
 		groupCoolDown: 0,
 	}
 ];
+
+// all of the commands system wide are stored in this chrome shallow ref
+const commandsRef = chromeShallowRef('commands', {});
+
+// get the command used for tossing items
+const shout_command = computed(() => {
+	return commandsRef.value.chat_box_shout?.command || '';
+});
+const swarm_command = computed(() => {
+	return commandsRef.value.chat_box_swarm?.command || '';
+});
+
 
 </script>
 <style lang="scss" scoped>	
