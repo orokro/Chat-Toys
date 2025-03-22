@@ -53,6 +53,10 @@ import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
+import SettingsRow from '../../SettingsRow.vue';
+import SettingsInputRow from '../../SettingsInputRow.vue';
+import SettingsAssetRow from '../../SettingsAssetRow.vue';
+
 
 // generate slug for command
 const toySlug = 'chat_box';

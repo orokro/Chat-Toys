@@ -28,7 +28,7 @@
 			
 			<div class="icon">
 				<img
-					:src="'/builtin/point_icon_1.png'"
+					:src="widgetIconPath"
 					alt="channel points icon"
 					width="60"
 					height="60"
@@ -68,6 +68,8 @@ const showClaimsRemaining = ref(true);
 const showUserClaims = ref(true);
 const showTextPrompt = ref(true);
 const widgetColorTheme = ref('#00ABAE');
+const widgetIconId = ref('1');
+const widgetIconPath = ref('');
 
 // aggregate all our refs
 const settingsAggregator = new RefAggregator(channelPointsSettings);
@@ -81,9 +83,17 @@ settingsAggregator.register('showClaimsRemaining', showClaimsRemaining);
 settingsAggregator.register('showUserClaims', showUserClaims);
 settingsAggregator.register('showTextPrompt', showTextPrompt);
 settingsAggregator.register('widgetColorTheme', widgetColorTheme);
+settingsAggregator.register('widgetIconId', widgetIconId);
+settingsAggregator.register('widgetIconPath', widgetIconPath);
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
+
+// icon file path to use based on the asset
+const iconPath = computed(() => {
+	const fileData = assetsMgr.getFileData(widgetIconId.value);
+	return `/assets/channel_points/icon_${widgetIconId.value}.png`;
+});
 
 // get the command used for claiming points
 const claimCommand = computed(() => {

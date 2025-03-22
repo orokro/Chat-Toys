@@ -142,6 +142,15 @@
 			<p>What color should the widget be?</p>
 		</SettingsInputRow>
 
+		<SettingsAssetRow
+			v-model="widgetIconId"
+			:optionsApp="optionsApp"
+			:kind-filter="'image'"
+		>
+			<h3>Channel Points Icon Image</h3>
+			<p>Choose an icon to show on the widget.</p>
+		</SettingsAssetRow>
+
 		<SectionHeader title="Widget Preview"/>
 		<p>Below is an example of the points widget as it will appear on the stage.</p>
 		<div class="previewBox">
@@ -169,6 +178,7 @@ import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsInputRow from '../../SettingsInputRow.vue';
+import SettingsAssetRow from '../../SettingsAssetRow.vue';
 import ChannelPointsWidget from '../../../stage/widgets/ChannelPointsWidget.vue';
 
 // generate slug for command
@@ -189,6 +199,8 @@ const showClaimsRemaining = ref(true);
 const showUserClaims = ref(true);
 const showTextPrompt = ref(true);
 const widgetColorTheme = ref('#00ABAE');
+const widgetIconId = ref('1');
+const widgetIconPath = ref('');
 
 // aggregate all our refs
 const settingsAggregator = new RefAggregator(channelPointsSettings);
@@ -202,6 +214,9 @@ settingsAggregator.register('showClaimsRemaining', showClaimsRemaining);
 settingsAggregator.register('showUserClaims', showUserClaims);
 settingsAggregator.register('showTextPrompt', showTextPrompt);
 settingsAggregator.register('widgetColorTheme', widgetColorTheme);
+settingsAggregator.register('widgetIconId', widgetIconId);
+settingsAggregator.register('widgetIconPath', widgetIconPath);
+
 
 // define some props
 const props = defineProps({
@@ -212,6 +227,7 @@ const props = defineProps({
 		default: null
 	}
 });
+
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
@@ -255,6 +271,16 @@ const commands = [
 	},
 	
 ];
+
+
+// update the icon path dynamically when the asset ID changes
+watch (widgetIconId, (newVal) => {
+	const fileData = props.optionsApp.assetsMgr.getFileData(newVal);
+	setTimeout(()=>{
+		widgetIconPath.value = `builtin/${fileData.name}`;
+	});
+});
+
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});

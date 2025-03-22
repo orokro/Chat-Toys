@@ -15,11 +15,6 @@
 			<!-- area with the file preview and the button to pick.-->
 			<table class="settings-asset-row" width="100%">
 				<tr>
-					<td colspan="2">
-						
-					</td>
-				</tr>
-				<tr>
 					<td 
 						class="file-preview-cell"
 						rowspan="2"
