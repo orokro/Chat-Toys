@@ -161,7 +161,7 @@ const fixDurationOnBlur = async ()=>{
 
 // handle picking an image
 const handlePickImage = async () => {
-	
+
 	// prompt the user to confirm the delete with our custom modal
 	const response = await promptModal(AssetPickerModal, {
 		title: 'Pick an Image File to display',
@@ -209,6 +209,7 @@ const handlePickSound = async () => {
 
 	// main table
 	.arrayMediaEdit {
+		
 		width: 100%;
 		border-collapse: collapse;
 

@@ -38,14 +38,98 @@
 		/>
 			
 		<SectionHeader title="Settings"/>
-		
+		<SettingsInputRow
+			type="boolean"
+			v-model="enableChatBox"
+		>
+			<h3>Enable Onscreen Chat Box</h3>
+			<p>Show chat box on screen mirroring live chat (as opposed to other streaming services)</p>
+		</SettingsInputRow>
+		<SettingsInputRow
+			type="boolean"
+			v-model="enableChatBox"
+		>
+			<h3>Enable Onscreen Chat Box</h3>
+			<p>Show chat box on screen mirroring live chat (as opposed to other streaming services)</p>
+		</SettingsInputRow>
+		<SettingsAssetRow
+			v-model="chatBoxImage"
+			:optionsApp="optionsApp"
+			:kind-filter="'image'"
+		>
+			<h3>Image Frame</h3>
+			<p>Choose Image frame (sliceable in 3x3) for chat box.</p>
+		</SettingsAssetRow>
+		<SettingsInputRow
+			type="boolean"
+			v-model="filterCommands"
+		>
+			<h3>Filter !commands from Chat</h3>
+			<p>If using the custom streaming box, filter out the <span class="cmd">!Commands</span>.</p>
+		</SettingsInputRow>
+		<SettingsInputRow
+			type="boolean"
+			v-model="showChatterNames"
+		>
+			<h3>Show Chatter Names</h3>
+			<p>Disable to show messages only.</p>
+		</SettingsInputRow>
+		<SettingsInputRow
+			type="color"
+			v-model="chatNameColor"
+		>
+			<h3>User Name Chat Color</h3>
+			<p>What color to use for chat's user names?</p>
+		</SettingsInputRow>
+		<SettingsInputRow
+			type="color"
+			v-model="chatTextColor"
+		>
+			<h3>Chat Text Color.</h3>
+			<p>What color to use for message text?</p>
+		</SettingsInputRow>
+		<SettingsAssetRow
+			v-model="shoutSoundId"
+			:optionsApp="optionsApp"
+			:kind-filter="'sound'"
+		>
+			<h3>Shout Sound</h3>
+			<p>What sound effect should play when <span class="cmd">!shout</span> command is used.</p>
+		</SettingsAssetRow>
+		<SettingsInputRow
+			type="number"
+			:min="1"
+			v-model="swarmSize"
+		>
+			<h3>Swarm Size</h3>
+			<p>
+				If the swarm command is enabled, how many users need to use it
+				in a short period of time for a swarm to start?
+			</p>
+			<p>The time period can be customized below...</p>
+		</SettingsInputRow>
+		<SettingsInputRow
+			type="number"
+			:min="1"
+			v-model="swarmDuration"
+		>
+			<h3>Swarm Time Window</h3>
+			<p>
+				Used with the above setting, how long of window should be used to
+				count the number of users using the swarm command?
+			</p>
+			<p>The number of users can be customized above...</p>
+		</SettingsInputRow>
+
 	</PageBox>
 
 </template>
 <script setup>
 
 // vue
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
+import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
+import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -57,11 +141,7 @@ import SettingsRow from '../../SettingsRow.vue';
 import SettingsInputRow from '../../SettingsInputRow.vue';
 import SettingsAssetRow from '../../SettingsAssetRow.vue';
 
-
-// generate slug for command
-const toySlug = 'chat_box';
-const slugify = (text) => (toySlug + '_' + text.toLowerCase());
-
+// props
 const props = defineProps({
 	
 	// reference to the state of the options page
@@ -70,6 +150,34 @@ const props = defineProps({
 		default: null
 	}
 });
+
+// generate slug for command
+const toySlug = 'chat_box';
+const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+
+// our local state
+const enableChatBox = ref(false);
+const chatBoxImage = ref('3');
+const filterCommands = ref(true);
+const showChatterNames = ref(true);
+const chatNameColor = ref('#00ABAE');
+const chatTextColor = ref('#000000');
+const shoutSoundId = ref('11');
+const swarmSize = ref(5);
+const swarmDuration = ref(10);
+
+// aggregate all our refs
+const chatBoxSettings = chromeShallowRef('chat-box-settings', {});
+const settingsAggregator = new RefAggregator(chatBoxSettings);
+settingsAggregator.register('enableChatBox', enableChatBox);
+settingsAggregator.register('chatBoxImage', chatBoxImage);
+settingsAggregator.register('filterCommands', filterCommands);
+settingsAggregator.register('showChatterNames', showChatterNames);
+settingsAggregator.register('chatNameColor', chatNameColor);
+settingsAggregator.register('chatTextColor', chatTextColor);
+settingsAggregator.register('shoutSoundId', shoutSoundId);
+settingsAggregator.register('swarmSize', swarmSize);
+settingsAggregator.register('swarmDuration', swarmDuration);
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
