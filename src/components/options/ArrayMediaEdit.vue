@@ -50,16 +50,26 @@
 					<button 
 						@click="handlePickImage"
 						:disabled="!hasImageInput"
-					>Pick Image</button>
+					>
+						Pick Image
+					</button>
 				</td>
 				<td>
 					<button
 						@click="handlePickSound"
 						:disabled="!hasSoundInput"
-					>Pick Sound</button>
+					>
+						Pick Sound
+					</button>
 				</td>
 				<td>
-					<input type="number" v-model.number="durationInput" @input="validateDuration" class="input" />
+					<input 
+						type="number"
+						v-model.number="durationInput"
+						@input="validateDuration"
+						@blur="fixDurationOnBlur"
+						class="input"
+					/>
 				</td>
 			</tr>
 		</tbody>
@@ -69,7 +79,7 @@
 <script setup>
 
 // vue
-import { defineProps, defineEmits, ref, watch, markRaw } from 'vue';
+import { ref, watch, markRaw } from 'vue';
 
 // components
 import FilePreview from './FilePreview.vue';
@@ -98,17 +108,14 @@ const props = defineProps({
 // events
 const emit = defineEmits(['change']);
 
-// prepare a schema for the duration
-const durationSchema = yup.number().min(120).max(300);
-
 // handle state locally
 const hasImageInput = ref(props.value.hasImage);
 const hasSoundInput = ref(props.value.hasSound);
-const durationInput = ref(props.value.duration);
+const durationInput = ref(parseInt(props.value.duration, 10));
 watch(() => props.value, (newValue) => {
 	hasImageInput.value = newValue.hasImage;
 	hasSoundInput.value = newValue.hasSound;
-	durationInput.value = newValue.duration;
+	durationInput.value = parseInt(newValue.duration, 10);
 });
 
 
@@ -127,14 +134,29 @@ const emitChange = () => {
 
 
 // validate the duration input box
+const durationSchema = yup.number().nullable().min(5).max(300);
 const validateDuration = async () => {
+	try {
+		await durationSchema.validate(durationInput.value);
+		emitChange();
+	} catch (err) {
+
+		if(durationInput.value=='')
+			return;
+	}
+};
+
+
+// fix the duration on blur (if necessary)
+const fixDurationOnBlur = async ()=>{
+	
 	try {
 		await durationSchema.validate(durationInput.value);
 		emitChange();
 	} catch (err) {
 		durationInput.value = props.value.duration;
 	}
-};
+}
 
 
 // handle picking an image
@@ -179,7 +201,6 @@ const handlePickSound = async () => {
 	// set the sound id
 	props.value.soundId = response.value.id;
 	emitChange();
-
 };
 
 </script>

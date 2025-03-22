@@ -65,7 +65,7 @@
 <script setup>
 
 // vue
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, shallowRef } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
@@ -97,7 +97,7 @@ const props = defineProps({
 
 // we'll use a chrome ref to aggregate all our settings
 const mediaSettings = chromeShallowRef('media-settings', {});
-const mediaAssets = ref([]);
+const mediaAssets = shallowRef([]);
 const settingsAggregator = new RefAggregator(mediaSettings);
 settingsAggregator.register('mediaAssets', mediaAssets);
 
@@ -154,8 +154,18 @@ function reconcileMediaAssets(currentCommands){
 		return currentCommands.includes(asset.commandSlug);
 	});
 
+	// mix into new array
+	const newMediaAssetsArray = [...filteredMediaAssets, ...newMediaAssets];
+
+	// make sure the commands are up-to-date even if the slugs diddnt change
+	// this is because the commands themselves could have changed
+	newMediaAssetsArray.forEach((asset) => {
+		const command = commandsRef.value[asset.commandSlug];
+		asset.commandName = command.command;
+	});
+
 	// add the new media assets to the existing, remaining ones
-	mediaAssets.value = [...filteredMediaAssets, ...newMediaAssets];	
+	mediaAssets.value = newMediaAssetsArray;	
 }
 
 
