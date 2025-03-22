@@ -10,10 +10,16 @@
 		title="Fishing Settings"
 		themeColor="#A4704C"
 	>
-		<p>
-			Stuff
-		</p>
-		
+		<p>The Fishing Toy is a mini game your viewers can play in chat.</p>
+		<p>You can customize the list of fish, including:</p>
+		<ul>
+			<li>Fish Names</li>
+			<li>Images</li>
+			<li>Rarity</li>
+			<li>Channel Point Reward Value</li>
+		</ul>
+		<p>This way, you can customize the fishing experience to your channels theme.</p>
+
 		<SectionHeader title="Command Triggers"/>
 		<p>
 			Below you can customize the commands that users can type to interact with the Fishing system.
@@ -25,27 +31,61 @@
 			:commands="commands"
 		/>
 			
-		<SectionHeader title="CatsumIpsum"/>
-		<CatsumIpsum :paragraphs="5" :sentences="10"/>
+		<SectionHeader title="Settings"/>
+		<SettingsInputRow
+			type="number"
+			:min="1"
+			v-model="fishSpawnInterval"
+		>
+			<h3>Fish Spawn Interval</h3>
+			<p>The Maximum time in seconds to wait before another fish should spawn after one was caught.</p>
+			<p>A random number will be picked, this is the maximum wait time.</p>
+		</SettingsInputRow>
+
+		<SettingsRow>
+			<h1>Fish List</h1>
+			<p>Customize the list of fish that can be caught.</p>
+			<ArrayEdit
+				v-model="fishList"
+				:component="ArrayFishEdit"
+				:rowProps="{ 
+					assetManager: props.optionsApp.assetsMgr,
+					allFish: fishList.value,
+				}"
+				:allow-new-items="true"
+				:createItem="() => {
+					return {
+						name: 'boot',
+						image: '21',
+						scale: 1,
+						points: 0,
+						rarity: 1
+					};
+				}"				
+			/>
+		</SettingsRow>
+
 	</PageBox>
 
 </template>
 <script setup>
 
 // vue
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
+import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
+import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
-import CatsumIpsum from '../../../CatsumIpsum.vue';
+import SettingsRow from '../../SettingsRow.vue';
+import SettingsInputRow from '../../SettingsInputRow.vue';
+import ArrayEdit from '../../ArrayEdit.vue';
+import ArrayFishEdit from '../../ArrayFishEdit.vue';
 
-// generate slug for command
-const toySlug = 'fishing';
-const slugify = (text) => (toySlug + '_' + text.toLowerCase());
-
+// props
 const props = defineProps({
 	
 	// reference to the state of the options page
@@ -54,6 +94,50 @@ const props = defineProps({
 		default: null
 	}
 });
+
+// generate slug for command
+const toySlug = 'fishing';
+const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+
+// built in fish list
+const defaultFishList = [
+	{
+		name: 'runt',
+		image: '10',
+		scale: 1,
+		points: 10,
+		rarity: 10
+	},
+	{
+		name: 'common',
+		image: '9',
+		scale: 1,
+		points: 30,
+		rarity: 5
+	},
+	{
+		name: 'lunker',
+		image: '8',
+		scale: 1,
+		points: 100,
+		rarity: 1
+	},
+	{
+		name: 'boot',
+		image: '21',
+		scale: 1,
+		points: 0,
+		rarity: 1
+	},
+];
+
+// our local settings
+const fishSpawnInterval = ref(120);
+const fishList = shallowRef(defaultFishList); 
+const fishingSettings = chromeShallowRef('fishing-settings', {});
+const settingsAggregator = new RefAggregator(fishingSettings);
+settingsAggregator.register('fishSpawnInterval', fishSpawnInterval);
+settingsAggregator.register('fishList', fishList);
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

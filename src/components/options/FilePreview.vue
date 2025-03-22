@@ -9,7 +9,12 @@
 	<div 
 		v-if="previewSrc" 
 		class="filePreview"
-		:class="{ border: props.border }"
+		:class="{ 
+			border: props.border,
+			audio: isAudio,
+			image: isImage,
+			model: is3DModel
+		 }"
 		:style="{
 			width: props.width ? props.width + 'px' : 'auto',
 			height: props.height ? props.height + 'px' : 'auto' 
@@ -133,6 +138,11 @@ watch(() => props.fileId, generatePreview);
 			border: 2px solid black;
 			border-radius: 5px;
 		}// &.border
+
+		&.image {
+			background: url('/assets/alpha_checkers.png');
+			background-size: 10px;
+		}// &.image
 
 	}// .filePreview
 

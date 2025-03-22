@@ -1,24 +1,23 @@
 <!--
-	ArrayTosserEdit.vue
-	-------------------
+	ArrayFishEdit.vue
+	-----------------
 
-	This file is to be used in conjunction with the ArrayEdit component.
-
-	This lets us edit the array of tossable objects in the Tosser system.
+	This component is for editing the array of fish objects,
+	which are part of the Fishing system / toy.
 -->
 <template>
 
 	<!-- good 'ol tables, gotta love 'em -->
-	<table class="arrayTosserEdit">
+	<table class="arrayFishEdit">
 
 		<!-- table headers -->
 		<thead>
 			<tr>
-				<th>Model</th>
-				<th>Sound</th>
+				<th>Fish Image</th>
+				<th>Fish Name</th>
 				<th>Scale</th>
-				<th>Slug <span class="tippySpan" v-tippy="slugTippyText">ℹ️</span></th>
-				<th>Command <span class="tippySpan" v-tippy="slugCommandText">ℹ️</span></th>
+				<th>Points <span class="tippySpan" v-tippy="pointsTippyText">ℹ️</span></th>
+				<th>Rarity <span class="tippySpan" v-tippy="rarityCommandText">ℹ️</span></th>
 				<th>&nbsp;</th>
 			</tr>
 		</thead>
@@ -30,29 +29,24 @@
 			<tr>
 				<td width="150" rowspan="2">
 					<FilePreview 
-						:fileId="value.model"
+						:fileId="value.image"
 						:assetManager="rowProps.assetManager"
 						:height="150"
 						:width="150"
 						:border="true"
 					/>
 				</td>
-				<td width="350">
-					{{ rowProps.assetManager.getFileData(value.sound)?.name }}
-					<FilePreview 
-						:fileId="value.sound"
-						:assetManager="rowProps.assetManager"
-						:border="false"
-					/>
+				<td>
+					<input type="text" v-model="nameInput" @input="validateName" />
 				</td>
 				<td>
 					<input type="number" step="0.1" v-model="scaleInput" @input="validateScale" />
 				</td>
 				<td>
-					<input type="text" v-model="slugInput" @input="validateSlug" />
+					<input type="text" v-model="pointsInput" @input="validatePoints" />
 				</td>
 				<td>
-					<input type="text" v-model="cmdInput" @input="validateCmd" />
+					<input type="text" v-model="rarityInput" @input="validateRarity" />
 				</td>
 			</tr>
 
@@ -60,12 +54,18 @@
 			<tr>
 				<td colspan="1">
 					<div class="buttonSpread">
-						<button @click="handlePickModel">Pick Model</button>
-						<button @click="handlePickSound">Pick Sound</button>
+						<button @click="handlePickImage">Pick Image</button>
 					</div>
 				</td>
 				<td>
-					<input type="range" min="0.1" max="5" step="0.1" v-model.number="scaleInput" @input="validateScale" />
+					<input
+						type="range"
+						min="0.1"
+						max="5"
+						step="0.1"
+						v-model.number="scaleInput"
+						@input="validateScale"
+					/>
 				</td>
 				<td></td>
 				<td></td>
@@ -89,14 +89,12 @@ import AssetPickerModal from './AssetPickerModal.vue';
 import * as yup from 'yup';
 import { promptModal } from 'jenesius-vue-modal';
 
-const slugTippyText = `
-	Slug is the "item" in "!toss <item>".
-	Leave black to explicitly disable the tossing this item by name.
+const pointsTippyText = `
+	How many channel points should be rewarded for catching this fish?
+	You can set this to 0 if you don't want to reward points.
 `;
-const slugCommandText = `
-	If you added a custom command above in the Command Triggers section, name it here.
-	This will allow users to toss this item by typing the command in chat.
-	Technically you could bind this to a completely unrelated command as well, like "!bet".
+const rarityCommandText = `
+	Higher is more common. The calculated percentage will be displayed as you change this value.
 `;
 
 // props
@@ -123,27 +121,39 @@ const errorMessage = ref('');
 
 // yup schemas
 const scaleSchema = yup.number().min(0.1).max(5);
-const textSchema = yup.string().matches(/^[a-z0-9]*$/, 'Invalid characters');
+const numberSchema = yup.number().min(0);
+const textSchema = yup.string().trim().required();
 
 // local state for the input values, copied from props
+const nameInput = ref(props.value.name);
 const scaleInput = ref(props.value.scale);
-const slugInput = ref(props.value.slug);
-const cmdInput = ref(props.value.cmd);
+const pointsInput = ref(props.value.points);
+const rarityInput = ref(props.value.rarity);
 watch(() => props.value, (newValue) => {
+	nameInput.value = newValue.name;
 	scaleInput.value = newValue.scale;
-	slugInput.value = newValue.slug;
-	cmdInput.value = newValue.cmd;
+	pointsInput.value = newValue.points;
+	rarityInput.value = newValue.rarity;
 });
 
 // emit the entire object when any of the inputs change
 const emitChange = () => {
 	emit('change', {
-		model: props.value.model,
-		sound: props.value.sound,
+		name: nameInput.value,
 		scale: scaleInput.value,
-		slug: slugInput.value,
-		cmd: cmdInput.value,
+		points: pointsInput.value,
+		rarity: rarityInput.value,
+		image: props.value.image,
 	});
+};
+
+const validateName = async () => {
+	try {
+		await textSchema.validate(nameInput.value);
+		emitChange();
+	} catch (err) {
+		nameInput.value = props.value.name;
+	}
 };
 
 const validateScale = async () => {
@@ -155,34 +165,34 @@ const validateScale = async () => {
 	}
 };
 
-const validateSlug = async () => {
+const validatePoints = async () => {
 	try {
-		await textSchema.validate(slugInput.value);
+		await textSchema.validate(pointsInput.value);
 		emitChange();
 	} catch (err) {
-		slugInput.value = props.value.slug;
+		numberSchema.value = props.value.points;
 	}
 };
 
-const validateCmd = async () => {
+const validateRarity = async () => {
 	try {
-		await textSchema.validate(cmdInput.value);
+		await numberSchema.validate(rarityInput.value);
 		emitChange();
 	} catch (err) {
-		cmdInput.value = props.value.cmd;
+		rarityInput.value = props.value.rarity;
 	}
 };
 
 
-// handle when the user clicks the pick model button
-const handlePickModel = async () => {
+// handle when the user clicks the pick image button
+const handlePickImage = async () => {
 
 	// prompt the user to confirm the delete with our custom modal
 	const response = await promptModal(AssetPickerModal, {
-		title: 'Pick a 3D model to toss',
+		title: 'Pick an Image for this fish',
 		assetManager: markRaw(props.rowProps.assetManager),
 		allowCustomImports: true,
-		kindFilter: '3d',
+		kindFilter: 'image',
 	});
 
 	// if the response was null or not the 'yes' button, return
@@ -192,30 +202,7 @@ const handlePickModel = async () => {
 		return;
 
 	// set the model id
-	props.value.model = response.value.id;
-	emitChange();
-};
-
-
-// handle when the user clicks the pick sound button
-const handlePickSound = async () => {
-
-	// prompt the user to confirm the delete with our custom modal
-	const response = await promptModal(AssetPickerModal, {
-		title: 'Pick a Sound Effect for impact',
-		assetManager: markRaw(props.rowProps.assetManager),
-		allowCustomImports: true,
-		kindFilter: 'sound',
-	});
-
-	// if the response was null or not the 'yes' button, return
-	if(response==null)
-		return;
-	if(response.index!==0)
-		return;
-
-	// set the sound id
-	props.value.sound = response.value.id;
+	props.value.image = response.value.id;
 	emitChange();
 };
 
@@ -224,7 +211,7 @@ const handlePickSound = async () => {
 <style lang="scss" scoped>
 
 	// .arrayTosserItem
-	.arrayTosserEdit {
+	.arrayFishEdit {
 
 		width: 100%;
 		border-collapse: collapse;
@@ -268,7 +255,7 @@ const handlePickSound = async () => {
 		input[type="text"], input[type="number"] {
 			
 			// fixed size
-			width: 100px;
+			width: 150px;
 			
 				
 			// thick box w/ nice inner shadow
@@ -320,6 +307,6 @@ const handlePickSound = async () => {
 
 		}// .buttonSpread
 
-	}// .arrayTosserEdit
+	}// .arrayFishEdit
 
 </style>

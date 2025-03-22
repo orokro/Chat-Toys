@@ -44,7 +44,7 @@ export async function getThumb(file, width = 300, height = 200) {
 
 	// if we've seen this file before, return the cached thumbnail & GTFO	
 	if (cache.has(hash)) {
-		console.log(`found in cache for ${file.name}`);
+		// console.log(`found in cache for ${file.name}`);
 		return cache.get(hash);
 	}
 

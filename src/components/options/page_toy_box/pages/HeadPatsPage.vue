@@ -61,7 +61,7 @@ const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
 // we'll use a chrome ref to aggregate all our settings
 const headPatsSettings = chromeShallowRef('head-pat-settings', {});
-const allowUserPats = chromeShallowRef(true);
+const allowUserPats = ref(true);
 const settingsAggregator = new RefAggregator(headPatsSettings);
 settingsAggregator.register('allowUserPats', allowUserPats);
 

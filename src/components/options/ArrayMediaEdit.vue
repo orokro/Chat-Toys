@@ -18,7 +18,9 @@
 		<tbody>
 			<tr>
 				<td>
-					<input type="checkbox" v-model="hasImageInput" @change="emitChange" /> Show Media?
+					<label>
+						<input type="checkbox" v-model="hasImageInput" @change="emitChange" /> Show Media?
+					</label>
 				</td>
 				<td rowspan="2">
 					<FilePreview 
@@ -29,7 +31,9 @@
 					/>
 				</td>
 				<td>
-					<input type="checkbox" v-model="hasSoundInput" @change="emitChange" /> Play Sound?
+					<label>
+						<input type="checkbox" v-model="hasSoundInput" @change="emitChange" /> Play Sound?
+					</label>
 				</td>
 				<td rowspan="2" width="300">
 					{{ rowProps.assetManager.getFileData(value.soundId)?.name }}
@@ -250,6 +254,14 @@ const handlePickSound = async () => {
 				outline: 1px solid rgb(255, 8, 8);
 			}
 		}// input[type="text"], input[type="number"]
+
+		input[type="checkbox"] {
+			position: relative;
+			top: 6px;
+			width: 25px;
+			height: 25px;
+			accent-color: black;
+		}
 
 		// make the add button look nice
 		button {

@@ -431,6 +431,12 @@ const builtInAssets = [
 		tags: ['fish'],
 	},
 	{
+		id: 21,
+		name: 'fish_boot.png',
+		kind: 'image',
+		tags: ['fish'],
+	},
+	{
 		id: 11,
 		name: 'pop.mp3',
 		kind: 'sound',
