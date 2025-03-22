@@ -60,7 +60,25 @@
 			/>
 		
 		</SettingsRow>
+
+		<SettingsAssetRow
+			v-model="wheelImageId"
+			:kind-filter="'image'"
+			:optionsApp="props.optionsApp"
+		>
+			<h3>Image File for Wheel</h3>
+			<p>You can Photoshop or commission a custom theme to use for the wheel.</p>
+		</SettingsAssetRow>
 		
+		<SettingsAssetRow
+			v-model="wheelSoundId"
+			:kind-filter="'sound'"
+			:optionsApp="props.optionsApp"
+		>
+			<h3>Click Sound for Wheel</h3>
+			<p>What sound to use for the spinning clicks.</p>
+		</SettingsAssetRow>
+
 		<SectionHeader title="Widget Preview"/>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
@@ -80,6 +98,7 @@ import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsRow from '../../SettingsRow.vue';
+import SettingsAssetRow from '../../SettingsAssetRow.vue';
 import ArrayEdit from '../../ArrayEdit.vue';
 import ArrayTextInput from '../../ArrayTextInput.vue';
 import ArrayColorInput from '../../ArrayColorInput.vue';
@@ -111,11 +130,15 @@ const prizeWheelSettings = chromeShallowRef('prize-wheel-settings', {});
 // our settings for this system
 const wheelItems = ref([]);
 const wheelColors = ref([]);
+const wheelImageId = ref('5');
+const wheelSoundId = ref('12');
 
 // aggregate all our refs
 const settingsAggregator = new RefAggregator(prizeWheelSettings);
 settingsAggregator.register('wheelItems', wheelItems);
 settingsAggregator.register('wheelColors', wheelColors);
+settingsAggregator.register('wheelImageId', wheelImageId);
+settingsAggregator.register('wheelSoundId', wheelSoundId);
 
 
 // we'll define our commands here

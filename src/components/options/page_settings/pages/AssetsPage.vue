@@ -107,7 +107,7 @@ const selectedRow = ref(props.optionsApp.assetsMgr.assets.value[0].id);
 function rowClick({ id, data }){
 
 	selectedRow.value = id;
-	console.log('row clicked', id, data);
+	// console.log('row clicked', id, data);
 }
 
 // handle when a cell is clicked
