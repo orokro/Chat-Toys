@@ -39,16 +39,26 @@
 			<div class="handle left" @mousedown="e=>handleResizeDrag(e, ['l'])"></div>
 		</div>
 
-		<div class="children">
+		<!-- the children of this box -->
+		<div 
+			class="children"
+			:class="{ empty: booleanThatsTrueWhenSlotIsEmpty }"
+		>
 			<slot></slot>
 		</div>
+
+		<!-- message to show when empty (no children)-->
+		<div class="emptyMsg" v-if="booleanThatsTrueWhenSlotIsEmpty">{{ slug }}</div>
 	</div>
 
 </template>
 <script setup>
 
 // vue
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, useSlots} from 'vue'
+
+// yup, we're using slots
+const slots = useSlots();
 
 // accept some props
 const props = defineProps({
@@ -120,6 +130,26 @@ const dh = props.optionsApp.dragHelper;
 
 // aspect ratio
 let aspectRatio = width.value / height.value;
+
+
+// used to render box if it's empty
+const booleanThatsTrueWhenSlotIsEmpty = computed(() => {
+
+	// if we have no default slot, return true
+	const defaultSlot = slots.default?.();
+	if (!defaultSlot || defaultSlot.length === 0)
+		return true;
+	
+	// Check if all slot nodes are just whitespace
+	return defaultSlot.every(node => {
+
+		// If the node is a text node, check if it's just whitespace
+		if (typeof node.children === "string")
+			return node.children.trim() === "";
+		
+		return false;
+	});
+});
 
 
 /**
@@ -300,12 +330,44 @@ function computeAspectMins(aspectRatio, minEdgeSide) {
 		
 		// disable pointer events on children
 		.children {
+
+			// fill parent
+			position: absolute;
+			inset: 0;
+			
+			// disable pointer events for children
 			pointer-events: none;
-		}
+
+			// make it transparent color when no children
+			&.empty {
+				background-color: var(--borderColor);
+				opacity: 0.25;
+
+			}// &.empty
+
+			
+		}// .children
+
+		// message to show when empty
+		.emptyMsg {
+			
+			// box settings
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+
+			// text settings
+			font-size: 1.2em;
+			font-weight: bold;
+			color: white;
+
+		}// .emptyMsg
 
 		// resize handles
 		.resizeHandles {
 
+			// individual handle
 			.handle {
 				
 				// fixed on corners & side

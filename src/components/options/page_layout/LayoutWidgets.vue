@@ -19,7 +19,7 @@
 			:allowResize="true"
 			:maintainAspectRatio="false"
 			color="red"
-		></LayoutBox>
+		/>
 
 	</div>
 
