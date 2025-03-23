@@ -29,7 +29,7 @@
 		<ul>
 			<li>How often the opportunity to gain points is shown</li>
 			<li>How long it stays on screen (regardless of users attempt to get them)</li>
-			<li>How many points are given per "!points"</li>
+			<li>How many points are given per <span class="cmd">!{{ claimCommand }}</span></li>
 			<li>How many users can claim the points before it disappears</li>
 		</ul>
 		

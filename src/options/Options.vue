@@ -75,7 +75,7 @@ const tabs = [
 ];
 
 // the index of the active tab
-const activeTab = ref(2);
+const activeTab = ref(3);
 
 // before we render first time, we need to instantiate our options state
 onBeforeMount(() => {
@@ -96,6 +96,7 @@ onBeforeMount(() => {
 
 		// default bg
 		background: black;
+		background: #808080;
 
 		// top tab bar forced to top
 		.topTabBar {
@@ -110,9 +111,11 @@ onBeforeMount(() => {
 
 			// fill bottom under top tabs
 			position: absolute;
-			inset: 42px 0px 0px 0px;
+			inset: 42px auto 0px 50%;
+			width: 1200px;
 			background: white;
 			padding: 10px 10px 0px 10px;
+			translate: -50% 0px;
 
 			overflow-y: auto;
 
