@@ -34,12 +34,12 @@
 
 				<SectionHeader title="About Layout Configuration"/>
 				<p>
-					Below you will find a screen full of widgets for the Chat Toy's you've enabled
+					Above you will find a screen full of widgets for the Chat Toy's you've enabled
 					and configured in the Toy Box tab.
 				</p>
 				<p>
 					The screen is not to scale, but the aspect ratio is correct based on the resolution
-					of the stage you've set in the settings below. Note that, this is not where you capture,
+					of the stage you've set in the settings above the screen box. Note that, this is not where you capture,
 					a separate popup window will be used for that.
 				</p>
 				<p>
@@ -47,8 +47,7 @@
 				</p>
 				<p>
 					Click the tabs on the left to enable-editing of a specific toy's widgets.
-					Keep in mind that not all widgets will be on screen all the time.					
-					
+					Keep in mind that not all widgets will be on screen all the time:
 				</p>
 				<table>
 					<tbody>
@@ -78,7 +77,7 @@
 				</table>
 				<p>
 					<br>
-					Therefore, you can uncheck "Show All" to see only the item you're working on.
+					Therefore, you can uncheck "Show All Widgets" to see only the item you're working on.
 				</p>
 
 			</PageBox>
