@@ -283,7 +283,8 @@ const handlePickSound = async () => {
 				border-color: rgb(255, 8, 8);
 				outline: 1px solid rgb(255, 8, 8);
 			}
-		}
+			
+		}// input[type="text"], input[type="number"]
 
 		// the slider
 		input[type="range"] {

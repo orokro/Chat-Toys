@@ -12,6 +12,7 @@ import { chromeRef, chromeShallowRef } from '../chromeRef';
 // lib/misc
 import { toysData } from '../ToysData';
 import { AssetManager } from '../assets_state/AssetManager';
+import DragHelper from 'gdraghelper';
 
 // main export
 export default class Options {
@@ -38,6 +39,9 @@ export default class Options {
 		// we'll load our assets from the AssetManager here in the Options class
 		// the popup will also have it's own assets manager ref
 		this.assetsMgr = new AssetManager();
+
+		// reusable drag helper
+		this.dragHelper = new DragHelper();
 	}
 	
 

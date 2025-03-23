@@ -10,14 +10,28 @@
 	<!-- this container will 100% fill the LayoutScreen component -->
 	<div class="layoutWidgetsSpawnContainer">
 
-		
+		<LayoutBox
+			:optionsApp="props.optionsApp"
+			:editing="true"
+			:scale="scale"
+			slug="slug"
+			:boxData="boxData"
+			:allowResize="true"
+			:maintainAspectRatio="true"
+			color="red"
+		></LayoutBox>
+
 	</div>
 
 </template>
 <script setup>
 
 // vue
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, shallowRef } from 'vue'
+
+// components
+import LayoutBox from './LayoutBox.vue';
+import ChannelPointsWidget from '../../stage/widgets/ChannelPointsWidget.vue';
 
 // accept some props
 const props = defineProps({
@@ -28,6 +42,12 @@ const props = defineProps({
 		default: null
 	},
 
+	// the scale of the layout screen
+	scale: {
+		type: Number,
+		default: 1
+	},
+
 	// the currently active widget tab
 	activeTab: {
 		type: String,
@@ -35,6 +55,12 @@ const props = defineProps({
 	}
 });
 
+const boxData = shallowRef({
+	x: 0,
+	y: 0,
+	width: 300,
+	height: 200
+});
 
 /**
  * Determines if a widget should be shown in the layout
@@ -75,7 +101,7 @@ const props = defineProps({
 
 		// for debug
 		border: 1px solid red;
-		
+
 	}// .layoutWidgetsSpawnContainer
 
 </style>

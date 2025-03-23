@@ -63,6 +63,7 @@
 				<LayoutWidgets
 					:optionsApp="props.optionsApp"
 					:activeTab="props.activeTab"
+					:scale="scale"
 				/>
 
 			</div>
