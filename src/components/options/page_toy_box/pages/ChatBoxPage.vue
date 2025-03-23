@@ -166,15 +166,15 @@ const shoutSoundId = ref('11');
 const swarmSize = ref(5);
 const swarmDuration = ref(10);
 const chatWidgetBox = shallowRef({
-	x: 1280-200,
+	x: 1280-300,
 	y: 0,
-	width: 200,
+	width: 300,
 	height: 400
 });
 const shoutWidgetBox = shallowRef({
 	x: 20,
-	y: 50,
-	width: 200,
+	y: 20,
+	width: 400,
 	height: 100
 });
 

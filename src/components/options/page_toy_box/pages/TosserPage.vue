@@ -146,9 +146,9 @@ const tosserAssets = ref([
 ]);
 const randomTossMode = ref(false);
 const targetWidgetBox = ref({
-	x: (1280/2) - (150/2),
+	x: (1280/2) - (200/2),
 	y: 720-400,
-	width: 150,
+	width: 200,
 	height: 400
 });
 

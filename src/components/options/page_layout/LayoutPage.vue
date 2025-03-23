@@ -29,7 +29,7 @@
 				<!-- the main money -->
 				<LayoutScreen
 					:optionsApp="props.optionsApp"
-					:selectedTab="selectedTab"
+					:activeTab="selectedTab"
 				/>
 
 				<SectionHeader title="About Layout Configuration"/>

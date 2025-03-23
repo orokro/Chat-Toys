@@ -61,9 +61,10 @@
 				
 				<!-- actual editable widgets will be in here -->
 				<LayoutWidgets
-					:optionsApp="props.optionsApp"
-					:activeTab="props.activeTab"
+					:optionsApp="optionsApp"
+					:activeTab="activeTab"
 					:scale="scale"
+					:showAllWidgets="showAllWidgets"
 				/>
 
 			</div>

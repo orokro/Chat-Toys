@@ -42,20 +42,20 @@
 		<!-- the children of this box -->
 		<div 
 			class="children"
-			:class="{ empty: booleanThatsTrueWhenSlotIsEmpty }"
+			:class="{ empty: !booleanThatsTrueWhenSlotIsEmpty }"
 		>
 			<slot></slot>
 		</div>
 
 		<!-- message to show when empty (no children)-->
-		<div class="emptyMsg" v-if="booleanThatsTrueWhenSlotIsEmpty">{{ slug }}</div>
+		<div class="emptyMsg" v-if="!booleanThatsTrueWhenSlotIsEmpty">{{ slug }}</div>
 	</div>
 
 </template>
 <script setup>
 
 // vue
-import { ref, onMounted, computed, useSlots} from 'vue'
+import { ref, onMounted, computed, useSlots, watch} from 'vue'
 
 // yup, we're using slots
 const slots = useSlots();
@@ -67,6 +67,12 @@ const props = defineProps({
 	optionsApp: {
 		type: Object,
 		default: null
+	},
+
+	// the box data key
+	boxDataKey: {
+		type: String,
+		default: ''
 	},
 
 	// true when this box has editing enabled
@@ -113,11 +119,11 @@ const props = defineProps({
 	}
 });
 
+// define some emits
+const emit = defineEmits(['boxChange']);
+
 // useful inverse scale for moving / resizing / etc
 const invScale = computed(() => 1/props.scale);
-
-// emit events
-const emit = defineEmits(['change']);
 
 // local refs
 const left = ref(props.boxData.x);
@@ -132,21 +138,41 @@ const dh = props.optionsApp.dragHelper;
 let aspectRatio = width.value / height.value;
 
 
+// watch for changes to the box data & update local refs & vice versa
+watch(() => props.boxData, (newData) => {
+	left.value = newData.x;
+	top.value = newData.y;
+	width.value = newData.width;
+	height.value = newData.height;
+	aspectRatio = width.value / height.value;
+});
+watch([left, top, width, height], () => {
+	emit('boxChange', {
+		x: left.value,
+		y: top.value,
+		width: width.value,
+		height: height.value
+	});
+});
+
+
 // used to render box if it's empty
 const booleanThatsTrueWhenSlotIsEmpty = computed(() => {
 
-	// if we have no default slot, return true
 	const defaultSlot = slots.default?.();
-	if (!defaultSlot || defaultSlot.length === 0)
-		return true;
-	
-	// Check if all slot nodes are just whitespace
+	if (!defaultSlot || defaultSlot.length === 0) return true;
+
+	// Ensure it filters out false-rendering elements like <component v-if="false" />
 	return defaultSlot.every(node => {
 
-		// If the node is a text node, check if it's just whitespace
-		if (typeof node.children === "string")
-			return node.children.trim() === "";
+		// Completely empty
+		if (!node.children) return true; 
+
+		// Just whitespace
+		if (typeof node.children === "string") return node.children.trim() === "";
 		
+		// Ignore comment nodes
+		if (node.type === Comment) return true;
 		return false;
 	});
 });
@@ -319,9 +345,15 @@ function computeAspectMins(aspectRatio, minEdgeSide) {
 		// layout boxes are positioned abso-lutely
 		position: absolute;
 
+		// no pointer events if not editing
+		pointer-events: none;
+
 		// make box look draggable if editing
 		&.editing {
 
+			// allow pointer events
+			pointer-events: auto;
+			
 			// dashed color border
 			border: var(--borderSize) dashed var(--borderColor);
 

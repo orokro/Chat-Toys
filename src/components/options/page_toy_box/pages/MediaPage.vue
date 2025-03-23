@@ -100,7 +100,7 @@ const mediaSettings = chromeShallowRef('media-settings', {});
 const mediaAssets = shallowRef([]);
 const widgetBox = shallowRef({
 	x: 20,
-	y: 50,
+	y: 20,
 	width: 400,
 	height: 200
 });
