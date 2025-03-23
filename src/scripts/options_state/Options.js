@@ -42,6 +42,9 @@ export default class Options {
 
 		// reusable drag helper
 		this.dragHelper = new DragHelper();
+
+		this.layoutWidth = chromeRef('layoutWidth', 1280);
+		this.layoutHeight = chromeRef('layoutHeight', 720);
 	}
 	
 

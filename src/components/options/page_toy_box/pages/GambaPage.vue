@@ -51,7 +51,9 @@
 <script setup>
 
 // vue
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
+import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
+import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -64,6 +66,7 @@ import CatsumIpsum from '../../../CatsumIpsum.vue';
 const toySlug = 'gamba';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
+// props
 const props = defineProps({
 	
 	// reference to the state of the options page
@@ -72,6 +75,32 @@ const props = defineProps({
 		default: null
 	}
 });
+
+
+// gamba settings
+const gambaStateMode = shallowRef('off');
+const gambaPrompt = shallowRef('Streamer will beat the boss?');
+const gambaOptions = shallowRef(['Yes', 'No']);
+const resultsWidgetBox = shallowRef({
+	x: (1280/2) - (500/2),
+	y: (720/2) - (600/2),
+	width: 500,
+	height: 600
+});
+const widgetBox = shallowRef({
+	x: (1280/2) - (400/2),
+	y: 720-220,
+	width: 400,
+	height: 200
+});
+const gambaSettings = chromeShallowRef('gamba-settings', {});
+const settingsAggregator = new RefAggregator(gambaSettings);
+settingsAggregator.register('gambaStateMode', gambaStateMode);
+settingsAggregator.register('gambaPrompt', gambaPrompt);
+settingsAggregator.register('gambaOptions', gambaOptions);
+settingsAggregator.register('resultsWidgetBox', resultsWidgetBox);
+settingsAggregator.register('widgetBox', widgetBox);
+
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

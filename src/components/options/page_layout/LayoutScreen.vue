@@ -76,6 +76,7 @@
 
 // vue
 import { ref, onMounted, onBeforeUnmount, watch, mergeProps } from 'vue'
+import { chromeRef } from '../../../scripts/chromeRef';
 
 // components
 import LayoutWidgets from './LayoutWidgets.vue';
@@ -84,8 +85,8 @@ import LayoutWidgets from './LayoutWidgets.vue';
 const autoSizeDiv = ref(null);
 
 // data
-const stageWidth = ref(1920);
-const stageHeight = ref(1080);
+const stageWidth = chromeRef('layoutWidth', 1280);
+const stageHeight = chromeRef('layoutHeight', 720);
 const stageColor = ref('#000000');
 const showAllWidgets = ref(false);
 

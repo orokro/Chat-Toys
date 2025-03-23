@@ -134,10 +134,17 @@ const defaultFishList = [
 // our local settings
 const fishSpawnInterval = ref(120);
 const fishList = shallowRef(defaultFishList); 
+const widgetBox = shallowRef({
+	x: 0,
+	y: 720-300,
+	width: 300,
+	height: 300
+});
 const fishingSettings = chromeShallowRef('fishing-settings', {});
 const settingsAggregator = new RefAggregator(fishingSettings);
 settingsAggregator.register('fishSpawnInterval', fishSpawnInterval);
 settingsAggregator.register('fishList', fishList);
+settingsAggregator.register('widgetBox', widgetBox);
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

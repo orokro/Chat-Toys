@@ -145,11 +145,18 @@ const tosserAssets = ref([
 	}
 ]);
 const randomTossMode = ref(false);
+const targetWidgetBox = ref({
+	x: (1280/2) - (150/2),
+	y: 720-400,
+	width: 150,
+	height: 400
+});
 
 // aggregate all our refs
 const settingsAggregator = new RefAggregator(tosserSettings);
 settingsAggregator.register('tosserAssets', tosserAssets);
 settingsAggregator.register('randomTossMode', randomTossMode);
+settingsAggregator.register('targetWidgetBox', targetWidgetBox);
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

@@ -405,13 +405,7 @@ const builtInAssets = [
 		name: 'sad.gif',
 		kind: 'image',
 		tags: ['media'],
-	},
-	{
-		id: 20,
-		name: 'headpat-hand.gif',
-		kind: 'image',
-		tags: ['media'],
-	},
+	},	
 	{
 		id: 8,
 		name: 'fish_big.png',
@@ -429,13 +423,7 @@ const builtInAssets = [
 		name: 'fish_small.png',
 		kind: 'image',
 		tags: ['fish'],
-	},
-	{
-		id: 21,
-		name: 'fish_boot.png',
-		kind: 'image',
-		tags: ['fish'],
-	},
+	},	
 	{
 		id: 11,
 		name: 'pop.mp3',
@@ -490,4 +478,22 @@ const builtInAssets = [
 		kind: '3d',
 		tags: ['buddies'],
 	},
+	{
+		id: 20,
+		name: 'headpat-hand.gif',
+		kind: 'image',
+		tags: ['media'],
+	},
+	{
+		id: 21,
+		name: 'fish_boot.png',
+		kind: 'image',
+		tags: ['fish'],
+	},
+	{
+		id: 22,
+		name: 'generic_chat.png',
+		kind: 'image',
+		tags: ['chat'],
+	}
 ];

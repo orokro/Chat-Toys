@@ -165,6 +165,18 @@ const chatTextColor = ref('#000000');
 const shoutSoundId = ref('11');
 const swarmSize = ref(5);
 const swarmDuration = ref(10);
+const chatWidgetBox = shallowRef({
+	x: 1280-200,
+	y: 0,
+	width: 200,
+	height: 400
+});
+const shoutWidgetBox = shallowRef({
+	x: 20,
+	y: 50,
+	width: 200,
+	height: 100
+});
 
 // aggregate all our refs
 const chatBoxSettings = chromeShallowRef('chat-box-settings', {});
@@ -178,6 +190,8 @@ settingsAggregator.register('chatTextColor', chatTextColor);
 settingsAggregator.register('shoutSoundId', shoutSoundId);
 settingsAggregator.register('swarmSize', swarmSize);
 settingsAggregator.register('swarmDuration', swarmDuration);
+settingsAggregator.register('chatWidgetBox', chatWidgetBox);
+settingsAggregator.register('shoutWidgetBox', shoutWidgetBox);
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

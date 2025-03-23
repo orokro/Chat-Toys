@@ -37,13 +37,21 @@
 				<span class="cmd">!{{ pat_command }} &lt;user&gt;</span> </p>
 		</SettingsInputRow>
 
+		<SettingsAssetRow
+			v-model="headPatChatterImage"
+			:optionsApp="optionsApp"
+			:kind-filter="'image'"
+		>
+			<h3>Chatter Image</h3>
+			<p>Image to use for the head patting chatter</p>
+		</SettingsAssetRow>
 	</PageBox>
 
 </template>
 <script setup>
 
 // vue
-import { ref, computed } from 'vue';
+import { ref, shallowRef, computed } from 'vue';
 import { chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
@@ -54,6 +62,7 @@ import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsInputRow from '../../SettingsInputRow.vue';
+import SettingsAssetRow from '../../SettingsAssetRow.vue';
 
 // generate slug for command
 const toySlug = 'head_pats';
@@ -62,9 +71,25 @@ const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 // we'll use a chrome ref to aggregate all our settings
 const headPatsSettings = chromeShallowRef('head-pat-settings', {});
 const allowUserPats = ref(true);
+const headPatChatterImage = ref('22');
+const streamerWidgetBox = shallowRef({
+	x: 1280 - 200,
+	y: 200,
+	width: 200,
+	height: 200
+});
+const chatterWidgetBox = shallowRef({
+	x: (1280/2) - 100,
+	y: 720 - 400,
+	width: 200,
+	height: 200
+});
+
 const settingsAggregator = new RefAggregator(headPatsSettings);
 settingsAggregator.register('allowUserPats', allowUserPats);
-
+settingsAggregator.register('headPatChatterImage', headPatChatterImage);
+settingsAggregator.register('streamerWidgetBox', streamerWidgetBox);
+settingsAggregator.register('chatterWidgetBox', chatterWidgetBox);
 
 // props
 const props = defineProps({

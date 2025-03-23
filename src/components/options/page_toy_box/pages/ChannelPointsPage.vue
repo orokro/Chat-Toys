@@ -167,7 +167,7 @@
 <script setup>
 
 // vue
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, shallowRef } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
@@ -201,6 +201,12 @@ const showTextPrompt = ref(true);
 const widgetColorTheme = ref('#00ABAE');
 const widgetIconId = ref('1');
 const widgetIconPath = ref('');
+const widgetBox = shallowRef({
+	x: 1280-150,
+	y: 720-150,
+	width: 150,
+	height: 150
+});
 
 // aggregate all our refs
 const settingsAggregator = new RefAggregator(channelPointsSettings);
@@ -216,7 +222,7 @@ settingsAggregator.register('showTextPrompt', showTextPrompt);
 settingsAggregator.register('widgetColorTheme', widgetColorTheme);
 settingsAggregator.register('widgetIconId', widgetIconId);
 settingsAggregator.register('widgetIconPath', widgetIconPath);
-
+settingsAggregator.register('widgetBox', widgetBox);
 
 // define some props
 const props = defineProps({

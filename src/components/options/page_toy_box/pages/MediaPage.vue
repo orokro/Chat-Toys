@@ -98,9 +98,15 @@ const props = defineProps({
 // we'll use a chrome ref to aggregate all our settings
 const mediaSettings = chromeShallowRef('media-settings', {});
 const mediaAssets = shallowRef([]);
+const widgetBox = shallowRef({
+	x: 20,
+	y: 50,
+	width: 400,
+	height: 200
+});
 const settingsAggregator = new RefAggregator(mediaSettings);
 settingsAggregator.register('mediaAssets', mediaAssets);
-
+settingsAggregator.register('widgetBox', widgetBox);
 
 // this toy always starts empty!
 // all commands are user defined

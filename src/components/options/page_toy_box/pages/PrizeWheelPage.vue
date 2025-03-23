@@ -79,6 +79,15 @@
 			<p>What sound to use for the spinning clicks.</p>
 		</SettingsAssetRow>
 
+		<SettingsInputRow
+			type="boolean"
+			v-model="alwaysShowWheel"
+		>
+			<h3>Always Show Wheel</h3>
+			<p>If enabled, the wheel widget will always be visible.</p>
+			<p>If not enabled (default), the wheel will only appear when spun.</p>
+		</SettingsInputRow>
+
 		<SectionHeader title="Widget Preview"/>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
@@ -98,6 +107,7 @@ import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsRow from '../../SettingsRow.vue';
+import SettingsInputRow from '../../SettingsInputRow.vue';
 import SettingsAssetRow from '../../SettingsAssetRow.vue';
 import ArrayEdit from '../../ArrayEdit.vue';
 import ArrayTextInput from '../../ArrayTextInput.vue';
@@ -132,6 +142,13 @@ const wheelItems = ref([]);
 const wheelColors = ref([]);
 const wheelImageId = ref('5');
 const wheelSoundId = ref('12');
+const alwaysShowWheel = ref(false);
+const widgetBox = shallowRef({
+	x: (1280/2) - (420/2),
+	y: (720/2) - (466/2),
+	width: 420,
+	height: 466
+});
 
 // aggregate all our refs
 const settingsAggregator = new RefAggregator(prizeWheelSettings);
@@ -139,7 +156,8 @@ settingsAggregator.register('wheelItems', wheelItems);
 settingsAggregator.register('wheelColors', wheelColors);
 settingsAggregator.register('wheelImageId', wheelImageId);
 settingsAggregator.register('wheelSoundId', wheelSoundId);
-
+settingsAggregator.register('alwaysShowWheel', alwaysShowWheel);
+settingsAggregator.register('widgetBox', widgetBox);
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
