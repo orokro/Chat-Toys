@@ -90,7 +90,7 @@ const props = defineProps({
 		default: false
 	},
 
-	// true if aspect ratio should be maintained
+	// true if we should maintain aspect ratio
 	maintainAspectRatio: {
 		type: Boolean,
 		default: false
@@ -118,6 +118,9 @@ const height = ref(props.boxData.height);
 // grab local ref to drag helper
 const dh = props.optionsApp.dragHelper;
 
+// aspect ratio
+let aspectRatio = width.value / height.value;
+
 
 /**
  * When mouse is down over the box, allow it to be dragged
@@ -125,6 +128,10 @@ const dh = props.optionsApp.dragHelper;
  * @param event {MouseEvent} - the mousedown event
  */
 function handleDragStart(event) {
+
+	// gtfo if we're not editing
+	if(!props.editing)
+		return;
 
 	// save initial position
 	const startPos = {
@@ -160,6 +167,10 @@ function handleDragStart(event) {
  */
 function handleResizeDrag(event, handles) {
 
+	// gtfo if we're not editing
+	if(!props.editing)
+		return;
+
 	// stop event propagation so we don't drag the box
 	event.stopPropagation();
 	event.cancelBubble = true;
@@ -190,6 +201,7 @@ function handleResizeDrag(event, handles) {
 
 	// minimum size for the box on either axis
 	const minSize = 50;
+	const aspectMins = computeAspectMins(aspectRatio, minSize);
 
 	// start the drag
 	dh.dragStart(
@@ -200,15 +212,21 @@ function handleResizeDrag(event, handles) {
 			dx *= invScale.value;
 			dy *= invScale.value;
 
-			if(isHorizontal)
-				width.value = Math.max(minSize, startPos.width - (dx * wMult));
+			if(isHorizontal){
+				width.value = Math.max(aspectMins.minWidth, startPos.width - (dx * wMult));
+				if(props.maintainAspectRatio)
+					height.value = aspectMins.getHeight(width.value);
+			}
 			if(moveHorizontal)
-				left.value = Math.min(startPos.left + startPos.width - minSize, startPos.left + (dx * wMult));
+				left.value = Math.min(startPos.left + startPos.width - aspectMins.minWidth, startPos.left + (dx * wMult));
 
-			if(izVertical)
-				height.value = Math.max(minSize, startPos.height - (dy * hMult));
+			if(izVertical){
+				height.value = Math.max(aspectMins.minHeight, startPos.height - (dy * hMult));
+				if(props.maintainAspectRatio)
+					width.value = aspectMins.getWidth(height.value);
+			}
 			if(moveVertical)
-				top.value = Math.min(startPos.top + startPos.height - minSize, startPos.top + (dy * hMult));
+				top.value = Math.min(startPos.top + startPos.height - aspectMins.minHeight, startPos.top + (dy * hMult));
 		},
 
 		// upon complete
@@ -216,6 +234,50 @@ function handleResizeDrag(event, handles) {
 
 		}
 	);
+}
+
+
+/**
+ * Computes the min sizes for the edges while maintaining aspect ratio
+ * 
+ * @param aspectRatio {number} - the aspect ratio of the box
+ * @param minEdgeSide {number} - the minimum size of the box on either edge
+ * @returns {Object} - like {minWidth: number, minHeight: number, getWidth: Function, getHeight: Function}
+ */
+function computeAspectMins(aspectRatio, minEdgeSide) {
+
+	// return minimum if we're not maintaining aspect ratio
+	if(props.maintainAspectRatio==false){
+		return {
+			minWidth: minEdgeSide,
+			minHeight: minEdgeSide,
+			getWidth: (newHeight) => newHeight * aspectRatio,
+			getHeight: (newWidth) => newWidth / aspectRatio,
+		};	
+	}
+
+	// compute the minimum width and height based on the aspect ratio
+    let minWidth, minHeight;
+
+    // Compute minWidth first assuming it's set to minEdgeSide
+    let potentialHeight = minEdgeSide / aspectRatio;
+    if (potentialHeight >= minEdgeSide) {
+
+        minWidth = minEdgeSide;
+        minHeight = potentialHeight;
+
+    } else {
+        // Otherwise, compute the minHeight first
+        minHeight = minEdgeSide;
+        minWidth = minHeight * aspectRatio;
+    }
+
+    return {
+        minWidth,
+        minHeight,
+        getWidth: (newHeight) => Math.max(newHeight * aspectRatio, minWidth),
+        getHeight: (newWidth) => Math.max(newWidth / aspectRatio, minHeight),
+    };
 }
 
 </script>
@@ -227,11 +289,12 @@ function handleResizeDrag(event, handles) {
 		// layout boxes are positioned abso-lutely
 		position: absolute;
 
-		// dashed color border
-		border: var(--borderSize) dashed var(--borderColor);
-
 		// make box look draggable if editing
 		&.editing {
+
+			// dashed color border
+			border: var(--borderSize) dashed var(--borderColor);
+
 			cursor: move;
 		}
 		

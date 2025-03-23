@@ -17,7 +17,7 @@
 			slug="slug"
 			:boxData="boxData"
 			:allowResize="true"
-			:maintainAspectRatio="true"
+			:maintainAspectRatio="false"
 			color="red"
 		></LayoutBox>
 
@@ -58,7 +58,7 @@ const props = defineProps({
 const boxData = shallowRef({
 	x: 0,
 	y: 0,
-	width: 300,
+	width: 600,
 	height: 200
 });
 
