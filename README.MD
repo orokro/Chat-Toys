@@ -4,7 +4,7 @@ This project will provide some integrations with chat for YouTube streamers.
 
 It will be based on parsing keywords from chat to do various things.
 
-**UPDATE**: at time of writing, this project has been converted from a chrome-plugin to a full Electron app, so we can run local server so OBS can capture that page.
+**UPDATE 3/24/25**: at time of writing, this project has been converted from a chrome-plugin to a full Electron app, so we can run local server so OBS can capture that page.
 
 **NOTE**: at the time of writing, this project is just a bare-bones plugin and it will be several commits into the future of this repo before this README.MD is updated to match the set up and working version of the plugin as described.
 
