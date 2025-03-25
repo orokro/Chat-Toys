@@ -32,12 +32,11 @@ import ChannelPointsWidget from '../components/stage/widgets/ChannelPointsWidget
 		// fill area
 		position: absolute;
 		inset: 0px;
-		background: black;
+		/* background: black; */
 
 		h1 {
-			color: white;
+			color: black;
 		}
-
 
 	}// .pageContainer
 

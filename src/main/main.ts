@@ -25,12 +25,30 @@ function startServer() {
 
 	// Serve /live.html in production
 	if (process.env.NODE_ENV !== 'development') {
-		expressApp.use('/live', express.static(join(app.getAppPath(), 'renderer')));
+
+		// path to our electron renderer folder where BOTH the electron UI lives,
+		// but ALSO the live page we're about to server to OBS via express
+		const rendererPath = join(app.getAppPath(), 'renderer');
+
+		// Block direct access to index.html
+		expressApp.use('/live/index.html', (req, res) => {
+			console.warn(`Blocked attempt to access: ${req.url}`);
+			res.status(403).send('Access to this file is forbidden');
+		});
+
+		// Serve live.html manually when accessing /live/
+		expressApp.get('/live/', (req, res) => {
+			res.sendFile('live.html', { root: rendererPath });
+		});
+
+		// Serve static assets, but disable default index.html serving
+		expressApp.use('/live', express.static(rendererPath, {
+			index: false,
+		}));
 	}
 
 	// Example WebSocket echo
 	wss.on('connection', (socket) => {
-
 		console.log('WebSocket connected');
 		socket.on('message', (msg) => {
 			console.log('Received:', msg);

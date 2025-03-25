@@ -17,8 +17,7 @@
 	padding: 0;
 }
 
-ul,
-ol {
+ul, ol {
 	margin-left: 1.0rem;
 	padding-left: 1.0rem;
 }
@@ -32,27 +31,20 @@ li {
 body {
 	font-family: 'Open Sans', sans-serif;
 	line-height: 1.6;
-	background-color: #f9f9f9;
 	color: #333;
 }
 
 /* Remove default styles for main elements */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p {
+h1, h2, h3, h4, h5, h6, p {
 	margin-bottom: 1rem;
 }
-
 
 /* Set anchor tag default styles */
 a {
 	color: inherit;
 	text-decoration: none;
 }
+
 
 /* Basic container styles */
 .container {
@@ -69,6 +61,7 @@ body,
 	user-select: none;
 }
 
+
 /* reusable gray box */
 .grayBox {
 
@@ -77,6 +70,7 @@ body,
 	padding: 10px;
 	margin: 10px;
 }
+
 
 span.cmd {
 	background: rgba(0, 0, 0, 0.7);
