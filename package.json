@@ -1,43 +1,43 @@
 {
-  "name": "electron-vue-template",
-  "version": "0.1.0",
-  "description": "A minimal Electron + Vue application",
-  "main": "main/main.js",
-  "scripts": {
-    "dev": "node scripts/dev-server.js",
-    "build": "node scripts/build.js && electron-builder",
-    "build:win": "node scripts/build.js && electron-builder --win",
-    "build:mac": "node scripts/build.js && electron-builder --mac",
-    "build:linux": "node scripts/build.js && electron-builder --linux"
-  },
-  "repository": "https://github.com/deluze/electron-vue-template",
-  "author": {
-    "name": "Deluze",
-    "url": "https://github.com/Deluze"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^4.4.1",
-    "chalk": "^4.1.2",
-    "chokidar": "^3.5.3",
-    "electron": "^32.1.2",
-    "electron-builder": "^25.1.6",
-    "typescript": "^5.2.2",
-    "vite": "^4.5.0"
-  },
-  "dependencies": {
-    "@types/three": "^0.174.0",
-    "chroma-js": "^3.1.2",
-    "examples": "^0.1.0",
-    "gdraghelper": "^1.0.2",
-    "idb": "^8.0.2",
-    "jenesius-vue-modal": "^1.11.9",
-    "material-icons": "^1.13.14",
-    "sass": "^1.86.0",
-    "seedrandom": "^3.0.5",
-    "three": "^0.174.0",
-    "uuid": "^11.1.0",
-    "vue": "^3.3.8",
-    "vue-tippy": "^6.7.0",
-    "yup": "^1.6.1"
-  }
+	"name": "YouTube Chat Toys",
+	"version": "0.0.1",
+	"description": "A simple Electron app to play with YouTube chat messages",
+	"main": "main/main.js",
+	"scripts": {
+		"dev": "node scripts/dev-server.js",
+		"build": "node scripts/build.js && electron-builder",
+		"build:win": "node scripts/build.js && electron-builder --win",
+		"build:mac": "node scripts/build.js && electron-builder --mac",
+		"build:linux": "node scripts/build.js && electron-builder --linux"
+	},
+	"repository": "https://github.com/orokro/YouTube-Chat-Toys",
+	"author": {
+		"name": "Greg Miller",
+		"url": "https://github.com/Orokro"
+	},
+	"devDependencies": {
+		"@vitejs/plugin-vue": "^4.4.1",
+		"chalk": "^4.1.2",
+		"chokidar": "^3.5.3",
+		"electron": "^32.1.2",
+		"electron-builder": "^25.1.6",
+		"typescript": "^5.2.2",
+		"vite": "^4.5.0"
+	},
+	"dependencies": {
+		"@types/three": "^0.174.0",
+		"chroma-js": "^3.1.2",
+		"examples": "^0.1.0",
+		"gdraghelper": "^1.0.2",
+		"idb": "^8.0.2",
+		"jenesius-vue-modal": "^1.11.9",
+		"material-icons": "^1.13.14",
+		"sass": "^1.86.0",
+		"seedrandom": "^3.0.5",
+		"three": "^0.174.0",
+		"uuid": "^11.1.0",
+		"vue": "^3.3.8",
+		"vue-tippy": "^6.7.0",
+		"yup": "^1.6.1"
+	}
 }
