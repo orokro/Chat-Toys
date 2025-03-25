@@ -1,6 +1,5 @@
 const Path = require('path');
-const vuePlugin = require('@vitejs/plugin-vue')
-
+const vuePlugin = require('@vitejs/plugin-vue');
 const { defineConfig } = require('vite');
 
 /**
@@ -16,6 +15,12 @@ const config = defineConfig({
     build: {
         outDir: Path.join(__dirname, 'build', 'renderer'),
         emptyOutDir: true,
+        rollupOptions: {
+            input: {
+                main: Path.join(__dirname, 'src', 'renderer', 'index.html'),
+                live: Path.join(__dirname, 'src', 'renderer', 'live.html'),
+            },
+        },
     },
     plugins: [vuePlugin()],
 });

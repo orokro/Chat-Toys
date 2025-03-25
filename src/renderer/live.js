@@ -1,11 +1,11 @@
 /*
-	main.js
+	live.js
 	-------
 
 	Basic JS file to bootstrap the dev page.
 */
 import { createApp } from 'vue'
-import TestApp from './pages/Options.vue'
+import Live from './pages/Live.vue'
 import 'material-icons/iconfont/material-icons.css';
 
-createApp(TestApp).mount('#app');
+createApp(Live).mount('#app');
