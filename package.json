@@ -1,5 +1,5 @@
 {
-	"name": "YouTube Chat Toys",
+	"name": "YouTube-Chat-Toys",
 	"version": "0.0.1",
 	"description": "A simple Electron app to play with YouTube chat messages",
 	"main": "main/main.js",
@@ -32,6 +32,7 @@
 		"idb": "^8.0.2",
 		"jenesius-vue-modal": "^1.11.9",
 		"material-icons": "^1.13.14",
+		"node-gyp": "^11.1.0",
 		"sass": "^1.86.0",
 		"seedrandom": "^3.0.5",
 		"three": "^0.174.0",
