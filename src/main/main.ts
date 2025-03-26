@@ -24,7 +24,7 @@ function startServer() {
 	const wss = new Server({ server });
 
 	// Serve /live.html in production
-	if (process.env.NODE_ENV !== 'development') {
+	if (true || process.env.NODE_ENV !== 'development') {
 
 		// path to our electron renderer folder where BOTH the electron UI lives,
 		// but ALSO the live page we're about to server to OBS via express
