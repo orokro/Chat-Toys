@@ -110,18 +110,21 @@ onBeforeMount(() => {
 		.tabPagesWrapper {
 
 			/* border: 1px solid red; */
-			min-width: 990px;
+			/* min-width: 990px; */
+			/* border: 1px solid red; */
 
 			// fill bottom under top tabs
 			position: absolute;
-			inset: 42px 0px 0px 0px;
-			/* background: white; */
+			inset: 42px 0px 0px calc(50vw - 800px);
+			
 			padding: 10px 10px 0px 10px;
 
+			/* translate: -50% 0px; */
+			/* width: 1500px; */
 			border-style: 15px;
 
 			overflow-y: auto;
-
+			overflow-x: hidden;
 			//Ensures child elements respect height constraints
 			display: flex; 
 			flex-direction: column;
@@ -138,4 +141,21 @@ onBeforeMount(() => {
 		z-index: 1000;
 	}
 	
+	// for smaller widths, we need to adjust the layout
+	@media (max-width: 1599px) {
+
+		.optionsWrapper {
+
+			// for debug, make it obvious
+			/* background: #00abae !important; */
+
+			.tabPagesWrapper {
+				position: absolute;
+				inset: 42px 0px 0px 0px !important;
+			
+			}// .tabPagesWrapper
+
+		}// .optionsWrapper
+	}
+
 </style>

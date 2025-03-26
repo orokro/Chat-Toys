@@ -18,14 +18,16 @@
 		}"
 	>
 
-		<div class="pageHeader">
+		<div class="pageHeader" align="center">
 			<h2 class="title">
 				{{ title }}
 			</h2>
 		</div>
 
 		<div class="pageContent">
-			<slot/>
+			<div :class="{ limitWidth }">
+				<slot/>
+			</div>
 		</div>
 
 	</div>
@@ -54,6 +56,12 @@ const props = defineProps({
 		default: 'rgb(199, 199, 199)'
 	},
 
+	// limit the width of the content
+	limitWidth: {
+		type: Boolean,
+		default: true
+	}
+
 });
 
 // compute the gradient CSS once
@@ -77,14 +85,6 @@ function generateGradient(colorHex) {
 		${lightened1} 55px, 
         ${lightened2} 85px, 
         ${lightened2} 100%)`;
-
-    // Construct the CSS gradient string
-    return `linear-gradient(to bottom, 
-        ${colorHex} 0px, 
-        ${colorHex} 54px,
-		${lightened1} 55px, 
-        ${lightened2} 85px, 
-        ${white} 100%)`;
 }
 
 
@@ -97,7 +97,7 @@ function generateGradient(colorHex) {
 		// fill the screen
 		height: 100%;
 		width: 100%;
-		width: 1440px;
+
 		// At least full height of parent, but can expand
 		min-height: 100%; 
 		height: min-content;
@@ -123,11 +123,22 @@ function generateGradient(colorHex) {
 		// content
 		.pageContent {
 			padding: 20px;
+
+			overflow-x: hidden;
+			.limitWidth {
+
+				/* border: 1px solid blue; */
+				width: 1000px;
+
+				position: relative;
+				left: 50%;
+				transform: translateX(-50%);
+			}
 		}
 
 		// deep select .sectionHeader and make its background the props theme color
 		:deep(.sectionHeader) {
-			margin: 0px -20px;
+			margin: 0px -200px;
 			padding: 0px 20px 0px 20px;
 			background-color: var(--tColor);
 

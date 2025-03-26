@@ -10,6 +10,7 @@
 	<PageBox
 		title="Assets"
 		themeColor="lightblue"
+		:limitWidth="true"
 	>
 		<p>The various toys will require types of assets to function, such as sounds to play or images to show.</p>
 		<p>The types of assets include:</p>

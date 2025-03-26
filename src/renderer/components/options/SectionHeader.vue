@@ -10,6 +10,7 @@
 	<div
 		class="sectionHeader"
 		:style="{ marginTop: autoTopMargin + 'px' }"
+		align="center"
 	>
 		<h3 class="title">
 			{{ title }}
@@ -40,10 +41,18 @@ const props = defineProps({
 </script>
 <style lang="scss" scoped>
 
+	
 	.sectionHeader {
+
 		height: 33px;
 		margin-bottom: 10px !important;
 		margin-top: 100px !important;
-	}
+
+		h3 {
+			width: 1000px;
+			text-align: left;
+		}
+
+	}// .sectionHeader
 
 </style>

@@ -94,19 +94,33 @@ const emit = defineEmits(['changeTab', 'addItem', 'removeItem']);
 
 			.actualContent {
 
-				width: 1500px;
+				width: 1450px;
+				min-width: 1100px;
+				max-width: 1500px;
 				min-height: 100%;
+
 				/* display: none; */
 				background: white;
-				/* border-top-left-radius: 10px; */
 
 				// padding for contents (which will always be a PageBox, etc)
 				padding: 20px 30px 30px 30px;
 
 			}// .actualContent
-			
+
 		}// .contentPageArea
 
 	}// .verticalItemsPage
+
+	@media (max-width: 1599px) {
+		
+		.contentPageArea {
+
+			.actualContent {
+				width: auto !important;
+			
+			}// .actualContent
+
+		}// .contentPageArea
+	}
 
 </style>
