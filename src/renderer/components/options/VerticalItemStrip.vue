@@ -101,7 +101,7 @@ const emits = defineEmits(['selectItem', 'addItem', 'removeItem']);
 		// make inner shadow coming from right side
 		// thats inside inside the shape
 		background: linear-gradient(90deg, #808080 0%, #808080 80%, #555 100%);
-		
+		background: #4d4d4d;
 
 		// the scrollable area that has hidden scroll bars
 		.scrollArea {

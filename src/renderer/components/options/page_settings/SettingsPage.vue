@@ -21,7 +21,7 @@
 		/>
 
 		<!-- the main area where the selected pages -->
-		<div ref="helpPageArea" class="pageArea">
+		<div ref="helpPageArea" class="contentPageArea">
 
 			<GeneralSettingsPage 
 				v-if="selectedPage === 'settings'" 
@@ -102,29 +102,6 @@ const selectedPage = ref('assets_db');
 
 		// for debug
 		/* border: 2px solid red; */
-
-		// fill on right
-		.pageArea {
-
-			// fill right side of screen
-			position: absolute;
-			inset: 0px 0px 0px 100px;
-			overflow: hidden;
-			overflow-y: auto;
-
-			// padding for contents (which will always be a PageBox, etc)
-			padding: 20px 30px 30px 30px;
-
-			// image to guide user to add their first item
-			.clickToAddFirstToy{
-
-				position: relative;
-				top: 30px;
-				left: 30px;
-
-			}// .clickToAddFirstToy
-
-		}// .pageArea
 
 	}// .page
 

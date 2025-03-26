@@ -21,29 +21,30 @@
 		/>
 
 		<!-- the main area where the selected pages -->
-		<div ref="helpPageArea" class="pageArea">
+		<div ref="helpPageArea" class="contentPageArea">
 
-			<WelcomePage 
-				v-if="selectedPage === 'help_welcome'" 
-				:optionsApp="optionsApp"
-			/>
-			<HelpPage 
-				v-if="selectedPage === 'help'" 
-				:optionsApp="optionsApp"
-			/>
-			<VideoHelpPage 
-				v-if="selectedPage === 'help_videos'" 
-				:optionsApp="optionsApp"
-			/>
-			<ContactPage 
-				v-if="selectedPage === 'help_contact'" 
-				:optionsApp="optionsApp"
-			/>
-			<CreditsPage 
-				v-if="selectedPage === 'credits'" 
-				:optionsApp="optionsApp"
-			/>
-
+			<div class="pageContentZ">
+				<WelcomePage 
+					v-if="selectedPage === 'help_welcome'" 
+					:optionsApp="optionsApp"
+				/>
+				<HelpPage 
+					v-if="selectedPage === 'help'" 
+					:optionsApp="optionsApp"
+				/>
+				<VideoHelpPage 
+					v-if="selectedPage === 'help_videos'" 
+					:optionsApp="optionsApp"
+				/>
+				<ContactPage 
+					v-if="selectedPage === 'help_contact'" 
+					:optionsApp="optionsApp"
+				/>
+				<CreditsPage 
+					v-if="selectedPage === 'credits'" 
+					:optionsApp="optionsApp"
+				/>
+			</div>
 		</div>
 	
 	</div>
@@ -117,32 +118,6 @@ const selectedPage = ref('help_welcome');
 			position: absolute;
 			inset: 0px auto 0px 0px;
 		}
-
-		// for debug
-		/* border: 2px solid red; */
-
-		// fill on right
-		.pageArea {
-
-			// fill right side of screen
-			position: absolute;
-			inset: 0px 0px 0px 100px;
-			overflow: hidden;
-			overflow-y: auto;
-
-			// padding for contents (which will always be a PageBox, etc)
-			padding: 20px 30px 30px 30px;
-
-			// image to guide user to add their first item
-			.clickToAddFirstToy{
-
-				position: relative;
-				top: 30px;
-				left: 30px;
-
-			}// .clickToAddFirstToy
-
-		}// .pageArea
 
 	}// .page
 

@@ -97,7 +97,7 @@ function generateGradient(colorHex) {
 		// fill the screen
 		height: 100%;
 		width: 100%;
-		width: 1040px;
+		width: 1440px;
 		// At least full height of parent, but can expand
 		min-height: 100%; 
 		height: min-content;

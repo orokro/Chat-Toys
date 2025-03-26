@@ -95,8 +95,7 @@ onBeforeMount(() => {
 		inset: 0px 0px 0px 0px;
 
 		// default bg
-		background: black;
-		background: #808080;
+		background: #4d4d4d;
 
 		// top tab bar forced to top
 		.topTabBar {
@@ -111,11 +110,11 @@ onBeforeMount(() => {
 
 			// fill bottom under top tabs
 			position: absolute;
-			inset: 42px auto 0px 50%;
-			width: 1200px;
-			background: white;
+			inset: 42px 0px 0px 0px;
+			/* background: white; */
 			padding: 10px 10px 0px 10px;
-			translate: -50% 0px;
+
+			border-style: 15px;
 
 			overflow-y: auto;
 
@@ -123,6 +122,28 @@ onBeforeMount(() => {
 			display: flex; 
 			flex-direction: column;
 			height: calc(100vh - 42px);
+
+			:deep(.contentPageArea){
+				
+				// fill right side of screen
+				position: absolute;
+				inset: 0px 0px 0px 100px;
+				overflow: hidden;
+				overflow-y: auto;
+
+				.pageContentZ {
+
+					width: 1500px;
+					/* display: none; */
+					background: white;
+					border-top-left-radius: 10px;
+
+					// padding for contents (which will always be a PageBox, etc)
+					padding: 20px 30px 30px 30px;
+
+				}// .page
+
+			}// .contentPageArea
 
 		}// .tabPagesWrapper
 

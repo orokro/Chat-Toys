@@ -19,7 +19,7 @@
 		/>
 
 		<!-- the main area where the selected toys appear -->
-		<div ref="mainArea" class="mainArea">
+		<div ref="mainArea" class="contentPageArea">
 
 			<PageBox
 				title="Layout"
@@ -145,25 +145,6 @@ const selectedTab = ref('settings');
 		// fill on right
 		.mainArea {
 
-			// fill right side of screen
-			position: absolute;
-			inset: 0px 0px 0px 100px;
-			overflow: hidden;
-			overflow-y: auto;
-
-			// padding for contents (which will always be a PageBox, etc)
-			padding: 20px 30px 30px 30px;
-
-			// image to guide user to add their first item
-			.clickToAddFirstToy{
-
-				position: relative;
-				top: 30px;
-				left: 30px;
-
-			}// .clickToAddFirstToy
-
-
 			// make 1px border for table items
 			table {
 				border-collapse: collapse;
@@ -173,6 +154,7 @@ const selectedTab = ref('settings');
 				border: 1px solid #555;
 				padding: 5px;
 			}
+			
 		}// .mainArea
 
 	}// .layoutPage

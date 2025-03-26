@@ -23,7 +23,7 @@
 		/>
 
 		<!-- the main area where the selected toys appear -->
-		<div ref="toyPageArea" class="toyPageArea">
+		<div ref="toyPageArea" class="contentPageArea">
 
 			<!-- if no toy is selected, show arrow -->
 			<template v-if="optionsApp.enabledToys.value.length<=0">
@@ -194,29 +194,14 @@ window.resetCommands = () => {
 
 		// for debug
 		/* border: 2px solid red; */
-		
-		// fill on right
-		.toyPageArea {
+		// image to guide user to add their first item
+		.clickToAddFirstToy{
 
-			// fill right side of screen
-			position: absolute;
-			inset: 0px 0px 0px 100px;
-			overflow: hidden;
-			overflow-y: auto;
+			position: relative;
+			top: 30px;
+			left: 30px;
 
-			// padding for contents (which will always be a PageBox, etc)
-			padding: 20px 30px 30px 30px;
-
-			// image to guide user to add their first item
-			.clickToAddFirstToy{
-
-				position: relative;
-				top: 30px;
-				left: 30px;
-
-			}// .clickToAddFirstToy
-
-		}// .toyPageArea
+		}// .clickToAddFirstToy
 		
 	}// .toyBoxPage
 

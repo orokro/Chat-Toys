@@ -62,8 +62,9 @@ const emits = defineEmits(['changeTab']);
 
 	// box styles
 	background: rgb(104, 96, 112);
+	background: #4d4d4d;
 	height: 40px;
-	border-bottom: 2px solid #333;
+	/* border-bottom: 2px solid #333; */
 
 	// stack the children from left to right via flex
 	display: flex;
