@@ -16,7 +16,7 @@
 			:selectedItemSlug="selectedPage"
 			:showAdd="false"
 			:showDelete="false"
-			:iconPath="'../assets/icons'"
+			:iconPath="'assets/icons'"
 			@selectItem="(itemSlug)=>selectedPage = itemSlug.slug"
 		/>
 

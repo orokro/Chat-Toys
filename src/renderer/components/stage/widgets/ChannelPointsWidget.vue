@@ -89,12 +89,6 @@ settingsAggregator.register('widgetIconPath', widgetIconPath);
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
 
-// icon file path to use based on the asset
-const iconPath = computed(() => {
-	const fileData = assetsMgr.getFileData(widgetIconId.value);
-	return `/assets/channel_points/icon_${widgetIconId.value}.png`;
-});
-
 // get the command used for claiming points
 const claimCommand = computed(() => {
 	return commandsRef.value.channel_points_get?.command || '';

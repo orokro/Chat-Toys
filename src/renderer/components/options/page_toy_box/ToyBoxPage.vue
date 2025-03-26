@@ -16,7 +16,7 @@
 			:selectedItemSlug="optionsApp.selectedToy.value"
 			:showAdd="!allToysAdded"
 			:showDelete="true"
-			:iconPath="'../assets/icons'"
+			:iconPath="'assets/icons'"
 			@addItem="handleAddToy"
 			@selectItem="(toy)=>optionsApp.selectToy(toy.slug)"
 			@removeItem="(toy)=>handleRemoveToy(toy.slug)"
@@ -29,7 +29,7 @@
 			<template v-if="optionsApp.enabledToys.value.length<=0">
 				<img
 					class="clickToAddFirstToy"
-					:src="'/assets/click_to_add_first_toy.png'" 
+					:src="'assets/click_to_add_first_toy.png'" 
 					alt="arrow"
 				/>
 			</template>

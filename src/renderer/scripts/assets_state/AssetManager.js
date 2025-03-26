@@ -294,7 +294,7 @@ export class AssetManager {
 
 		// If asset is internal, fetch it from the public folder
 		if (asset.internal) {
-			const fileUrl = `/builtin/${asset.name}`;
+			const fileUrl = `builtin/${asset.name}`;
 			try {
 				const response = await fetch(fileUrl);
 				if (!response.ok) throw new Error(`Failed to fetch file: ${response.statusText}`);

@@ -14,7 +14,7 @@
 			:vItems="verticalItems"
 			:selectedItemSlug="selectedTab"
 			:showAdd="false"
-			:iconPath="'../assets/icons'"
+			:iconPath="'assets/icons'"
 			@selectItem="(tab)=>selectedTab = tab.slug"
 		/>
 

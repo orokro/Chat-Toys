@@ -30,7 +30,7 @@
 				<!-- the icon for the toy -->
 				<img
 					class="toyIconImage"
-					:src="`/assets/icons/${toy.slug}.png`"
+					:src="`assets/icons/${toy.slug}.png`"
 					alt="toy.name"
 					height="80"
 				/>

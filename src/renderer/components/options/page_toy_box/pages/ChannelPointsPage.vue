@@ -181,6 +181,16 @@ import SettingsInputRow from '../../SettingsInputRow.vue';
 import SettingsAssetRow from '../../SettingsAssetRow.vue';
 import ChannelPointsWidget from '../../../stage/widgets/ChannelPointsWidget.vue';
 
+// define some props
+const props = defineProps({
+	
+	// reference to the state of the options page
+	optionsApp: {
+		type: Object,
+		default: null
+	}
+});
+
 // generate slug for command
 const toySlug = 'channel_points';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
@@ -200,7 +210,7 @@ const showUserClaims = ref(true);
 const showTextPrompt = ref(true);
 const widgetColorTheme = ref('#00ABAE');
 const widgetIconId = ref('1');
-const widgetIconPath = ref('');
+const widgetIconPath = ref('builtin/' + props.optionsApp.assetsMgr.getFileData(widgetIconId.value).name);
 const widgetBox = shallowRef({
 	x: 1280-150,
 	y: 720-150,
@@ -223,16 +233,6 @@ settingsAggregator.register('widgetColorTheme', widgetColorTheme);
 settingsAggregator.register('widgetIconId', widgetIconId);
 settingsAggregator.register('widgetIconPath', widgetIconPath);
 settingsAggregator.register('widgetBox', widgetBox);
-
-// define some props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
 
 
 // we'll define our commands here
@@ -310,7 +310,7 @@ const claimCommand = computed(() => {
 			border: 2px solid black;
 			border-radius: 10px;
 
-			background-image: url('/assets/channel_points/demo_bg.png');
+			background-image: url('../assets/channel_points/demo_bg.png');
 
 			// flex center
 			display: flex;
