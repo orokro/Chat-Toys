@@ -6,85 +6,74 @@
 -->
 <template>
 	
-	<div class="page layoutPage">
-		
-		<!-- the column on the left where toys can be added, removed, or selected to configure -->
-		<VerticalItemStrip
-			class="vItemsStrip"
-			:vItems="verticalItems"
-			:selectedItemSlug="selectedTab"
-			:showAdd="false"
-			:iconPath="'assets/icons'"
-			@selectItem="(tab)=>selectedTab = tab.slug"
-		/>
+	<VerticalItemsPage
+		class="mainArea layoutPage"
+		:verticalItems="verticalItems"
+		:selectedTab="selectedTab"
+		@changeTab="(tab)=>selectedTab = tab"
+	>
+		<PageBox
+			title="Layout"
+			theme="#777"
+			class="layoutPageBox"
+		>
+			<!-- the main money -->
+			<LayoutScreen
+				:optionsApp="props.optionsApp"
+				:activeTab="selectedTab"
+			/>
 
-		<!-- the main area where the selected toys appear -->
-		<div ref="mainArea" class="contentPageArea">
+			<SectionHeader title="About Layout Configuration"/>
+			<p>
+				Above you will find a screen full of widgets for the Chat Toy's you've enabled
+				and configured in the Toy Box tab.
+			</p>
+			<p>
+				The screen is not to scale, but the aspect ratio is correct based on the resolution
+				of the stage you've set in the settings above the screen box. Note that, this is not where you capture,
+				a separate popup window will be used for that.
+			</p>
+			<p>
+				This screen is simply for laying out the widgets.
+			</p>
+			<p>
+				Click the tabs on the left to enable-editing of a specific toy's widgets.
+				Keep in mind that not all widgets will be on screen all the time:
+			</p>
+			<table>
+				<tbody>
+					<tr>
+						<td width="50%">The following items will only appear when they're triggered, for instance:</td>
+						<td width="50%">Meanwhile, others like the following will be on screen as long as they're enabled:</td>
+					</tr>
+					<tr>
+						<td>
+							<ul>
+								<li>Head Pats</li>
+								<li>Media</li>
+								<li>Shouts</li>
+								<li>Channel Points</li>
+							</ul>
+						</td>
+						<td>
+							<ul>
+								<li>System Output</li>
+								<li>Chat Box</li>
+								<li>Fishing</li>
+								<li>Gamba</li>
+							</ul>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<p>
+				<br>
+				Therefore, you can uncheck "Show All Widgets" to see only the item you're working on.
+			</p>
 
-			<PageBox
-				title="Layout"
-				theme="#777"
-				class="layoutPageBox"
-			>
-				<!-- the main money -->
-				<LayoutScreen
-					:optionsApp="props.optionsApp"
-					:activeTab="selectedTab"
-				/>
+		</PageBox>
+	</VerticalItemsPage>
 
-				<SectionHeader title="About Layout Configuration"/>
-				<p>
-					Above you will find a screen full of widgets for the Chat Toy's you've enabled
-					and configured in the Toy Box tab.
-				</p>
-				<p>
-					The screen is not to scale, but the aspect ratio is correct based on the resolution
-					of the stage you've set in the settings above the screen box. Note that, this is not where you capture,
-					a separate popup window will be used for that.
-				</p>
-				<p>
-					This screen is simply for laying out the widgets.
-				</p>
-				<p>
-					Click the tabs on the left to enable-editing of a specific toy's widgets.
-					Keep in mind that not all widgets will be on screen all the time:
-				</p>
-				<table>
-					<tbody>
-						<tr>
-							<td width="50%">The following items will only appear when they're triggered, for instance:</td>
-							<td width="50%">Meanwhile, others like the following will be on screen as long as they're enabled:</td>
-						</tr>
-						<tr>
-							<td>
-								<ul>
-									<li>Head Pats</li>
-									<li>Media</li>
-									<li>Shouts</li>
-									<li>Channel Points</li>
-								</ul>
-							</td>
-							<td>
-								<ul>
-									<li>System Output</li>
-									<li>Chat Box</li>
-									<li>Fishing</li>
-									<li>Gamba</li>
-								</ul>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<p>
-					<br>
-					Therefore, you can uncheck "Show All Widgets" to see only the item you're working on.
-				</p>
-
-			</PageBox>
-
-		</div>
-
-	</div>
 </template>
 <script setup>
 
@@ -92,7 +81,7 @@
 import { ref, shallowRef, markRaw, watch, computed } from 'vue';
 
 // components
-import VerticalItemStrip from '../VerticalItemStrip.vue';
+import VerticalItemsPage from '../VerticalItemsPage.vue';
 import LayoutScreen from './LayoutScreen.vue';
 import PageBox from '../PageBox.vue';
 import InfoBox from '../InfoBox.vue';
@@ -132,30 +121,17 @@ const selectedTab = ref('settings');
 	// the main page wrapper
 	.layoutPage {
 
-		// fill page area
-		position: absolute;
-		inset: 0;
 
-		// force tool strip on left side
-		.vItemsStrip {
-			position: absolute;
-			inset: 0px auto 0px 0px;
+		// make 1px border for table items
+		table {
+			border-collapse: collapse;
+			width: 100%;
 		}
-
-		// fill on right
-		.mainArea {
-
-			// make 1px border for table items
-			table {
-				border-collapse: collapse;
-				width: 100%;
-			}
-			td {
-				border: 1px solid #555;
-				padding: 5px;
-			}
+		td {
+			border: 1px solid #555;
+			padding: 5px;
+		}
 			
-		}// .mainArea
 
 	}// .layoutPage
 

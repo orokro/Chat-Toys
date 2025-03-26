@@ -6,48 +6,33 @@
 -->
 <template>
 	
-	<!-- main page wrapper-->
-	<div class="page helpPage">
-		 
-		<!-- the column on the left where toys can be added, removed, or selected to configure -->
-		<VerticalItemStrip
-			class="vItemsStrip"
-			:vItems="pageItems"
-			:selectedItemSlug="selectedPage"
-			:showAdd="false"
-			:showDelete="false"
-			:iconPath="'assets/icons'"
-			@selectItem="(itemSlug)=>selectedPage = itemSlug.slug"
+	<VerticalItemsPage
+		:verticalItems="pageItems"
+		:selectedTab="selectedPage"
+		@changeTab="(tab)=>selectedPage = tab"
+	>
+		<WelcomePage 
+			v-if="selectedPage === 'help_welcome'" 
+			:optionsApp="optionsApp"
 		/>
-
-		<!-- the main area where the selected pages -->
-		<div ref="helpPageArea" class="contentPageArea">
-
-			<div class="pageContentZ">
-				<WelcomePage 
-					v-if="selectedPage === 'help_welcome'" 
-					:optionsApp="optionsApp"
-				/>
-				<HelpPage 
-					v-if="selectedPage === 'help'" 
-					:optionsApp="optionsApp"
-				/>
-				<VideoHelpPage 
-					v-if="selectedPage === 'help_videos'" 
-					:optionsApp="optionsApp"
-				/>
-				<ContactPage 
-					v-if="selectedPage === 'help_contact'" 
-					:optionsApp="optionsApp"
-				/>
-				<CreditsPage 
-					v-if="selectedPage === 'credits'" 
-					:optionsApp="optionsApp"
-				/>
-			</div>
-		</div>
+		<HelpPage 
+			v-if="selectedPage === 'help'" 
+			:optionsApp="optionsApp"
+		/>
+		<VideoHelpPage 
+			v-if="selectedPage === 'help_videos'" 
+			:optionsApp="optionsApp"
+		/>
+		<ContactPage 
+			v-if="selectedPage === 'help_contact'" 
+			:optionsApp="optionsApp"
+		/>
+		<CreditsPage 
+			v-if="selectedPage === 'credits'" 
+			:optionsApp="optionsApp"
+		/>
 	
-	</div>
+	</VerticalItemsPage>
 </template>
 <script setup>
 
@@ -56,7 +41,7 @@ import { ref, shallowRef, onMounted, markRaw, watch, computed } from 'vue';
 import { chromeRef } from '../../../scripts/chromeRef';
 
 // components
-import VerticalItemStrip from '../VerticalItemStrip.vue';
+import VerticalItemsPage from '../VerticalItemsPage.vue';
 import WelcomePage from './pages/WelcomePage.vue';
 import HelpPage from './pages/HelpPage.vue';
 import VideoHelpPage from './pages/VideoHelpPage.vue';
@@ -106,19 +91,5 @@ const selectedPage = ref('help_welcome');
 </script>
 <style lang="scss" scoped>
 
-	// the main page wrapper
-	.page {
-
-		// fill page area
-		position: absolute;
-		inset: 0;
-
-		// force tool strip on left side
-		.vItemsStrip {
-			position: absolute;
-			inset: 0px auto 0px 0px;
-		}
-
-	}// .page
 
 </style>

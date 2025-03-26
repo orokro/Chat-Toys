@@ -6,39 +6,26 @@
 -->
 <template>
 	
-	<!-- main page wrapper-->
-	<div class="page settingsPage">
-		 
-		<!-- the column on the left where toys can be added, removed, or selected to configure -->
-		<VerticalItemStrip
-			class="vItemsStrip"
-			:vItems="pageItems"
-			:selectedItemSlug="selectedPage"
-			:showAdd="false"
-			:showDelete="false"
-			:iconPath="'assets/icons'"
-			@selectItem="(itemSlug)=>selectedPage = itemSlug.slug"
+	<VerticalItemsPage
+		:verticalItems="pageItems"
+		:selectedTab="selectedPage"
+		@changeTab="(tab)=>selectedPage = tab"
+	>	
+		<GeneralSettingsPage 
+			v-if="selectedPage === 'settings'" 
+			:optionsApp="optionsApp"
+		/>
+		<AssetsPage 
+			v-if="selectedPage === 'assets_db'" 
+			:optionsApp="optionsApp"
+		/>
+		<UsersPage 
+			v-if="selectedPage === 'users_db'" 
+			:optionsApp="optionsApp"
 		/>
 
-		<!-- the main area where the selected pages -->
-		<div ref="helpPageArea" class="contentPageArea">
+	</VerticalItemsPage>
 
-			<GeneralSettingsPage 
-				v-if="selectedPage === 'settings'" 
-				:optionsApp="optionsApp"
-			/>
-			<AssetsPage 
-				v-if="selectedPage === 'assets_db'" 
-				:optionsApp="optionsApp"
-			/>
-			<UsersPage 
-				v-if="selectedPage === 'users_db'" 
-				:optionsApp="optionsApp"
-			/>
-
-		</div>
-	
-	</div>
 </template>
 <script setup>
 
@@ -47,7 +34,7 @@ import { ref, shallowRef, onMounted, markRaw, watch, computed } from 'vue';
 import { chromeRef } from '../../../scripts/chromeRef';
 
 // components
-import VerticalItemStrip from '../VerticalItemStrip.vue';
+import VerticalItemsPage from '../VerticalItemsPage.vue';
 import GeneralSettingsPage from './pages/GeneralSettingsPage.vue';
 import AssetsPage from './pages/AssetsPage.vue';
 import UsersPage from './pages/UsersPage.vue';
@@ -87,22 +74,5 @@ const selectedPage = ref('assets_db');
 </script>
 <style lang="scss" scoped>
 
-	// the main page wrapper
-	.page {
-
-		// fill page area
-		position: absolute;
-		inset: 0;
-
-		// force tool strip on left side
-		.vItemsStrip {
-			position: absolute;
-			inset: 0px auto 0px 0px;
-		}
-
-		// for debug
-		/* border: 2px solid red; */
-
-	}// .page
 
 </style>

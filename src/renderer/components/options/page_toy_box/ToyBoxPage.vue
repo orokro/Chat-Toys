@@ -6,77 +6,65 @@
 -->
 <template>
 	
-	<!-- main page wrapper-->
-	<div class="page toyBoxPage">
-		 
-		<!-- the column on the left where toys can be added, removed, or selected to configure -->
-		<VerticalItemStrip
-			class="vItemsStrip"
-			:vItems="verticalItems"
-			:selectedItemSlug="optionsApp.selectedToy.value"
-			:showAdd="!allToysAdded"
-			:showDelete="true"
-			:iconPath="'assets/icons'"
-			@addItem="handleAddToy"
-			@selectItem="(toy)=>optionsApp.selectToy(toy.slug)"
-			@removeItem="(toy)=>handleRemoveToy(toy.slug)"
-		/>
+	<VerticalItemsPage
+		:verticalItems="verticalItems"
+		:selectedTab="optionsApp.selectedToy.value"
+		:showAddButton="true"
+		:showDeleteButton="true"
+		@changeTab="(tab)=>optionsApp.selectToy(tab)"
+		@addItem="handleAddToy"			
+		@removeItem="(toy)=>handleRemoveToy(toy)"
+	>
 
-		<!-- the main area where the selected toys appear -->
-		<div ref="toyPageArea" class="contentPageArea">
+		<!-- if no toy is selected, show arrow -->
+		<template v-if="optionsApp.enabledToys.value.length<=0">
+			<img
+				class="clickToAddFirstToy"
+				:src="'assets/click_to_add_first_toy.png'" 
+				alt="arrow"
+			/>
+		</template>
 
-			<!-- if no toy is selected, show arrow -->
-			<template v-if="optionsApp.enabledToys.value.length<=0">
-				<img
-					class="clickToAddFirstToy"
-					:src="'assets/click_to_add_first_toy.png'" 
-					alt="arrow"
-				/>
-			</template>
+		<template v-else>
 
-			<template v-else>
-
-				<ChannelPointsPage 
-					v-show="optionsApp.selectedToy.value === 'channel_points'" 
-					:optionsApp="optionsApp"
-				/>
-				<ChatBoxPage 
-					v-show="optionsApp.selectedToy.value === 'chat_box'" 
-					:optionsApp="optionsApp"
-				/>
-				<FishingPage 
-					v-show="optionsApp.selectedToy.value === 'fishing'" 
-					:optionsApp="optionsApp"
-				/>
-				<GambaPage 
-					v-show="optionsApp.selectedToy.value === 'gamba'" 
-					:optionsApp="optionsApp"
-				/>
-				<HeadPatsPage 
-					v-show="optionsApp.selectedToy.value === 'head_pats'" 
-					:optionsApp="optionsApp"
-				/>
-				<MediaPage 
-					v-show="optionsApp.selectedToy.value === 'media'" 
-					:optionsApp="optionsApp"
-				/>
-				<PrizeWheelPage 
-					v-show="optionsApp.selectedToy.value === 'prize_wheel'" 
-					:optionsApp="optionsApp"
-				/>
-				<StreamBuddiesPage 
-					v-show="optionsApp.selectedToy.value === 'stream_buddies'" 
-					:optionsApp="optionsApp"
-				/>
-				<TosserPage 
-					v-show="optionsApp.selectedToy.value === 'tosser'" 
-					:optionsApp="optionsApp"
-				/>
-			</template>
-
-		</div>
-	
-	</div>
+			<ChannelPointsPage 
+				v-show="optionsApp.selectedToy.value === 'channel_points'" 
+				:optionsApp="optionsApp"
+			/>
+			<ChatBoxPage 
+				v-show="optionsApp.selectedToy.value === 'chat_box'" 
+				:optionsApp="optionsApp"
+			/>
+			<FishingPage 
+				v-show="optionsApp.selectedToy.value === 'fishing'" 
+				:optionsApp="optionsApp"
+			/>
+			<GambaPage 
+				v-show="optionsApp.selectedToy.value === 'gamba'" 
+				:optionsApp="optionsApp"
+			/>
+			<HeadPatsPage 
+				v-show="optionsApp.selectedToy.value === 'head_pats'" 
+				:optionsApp="optionsApp"
+			/>
+			<MediaPage 
+				v-show="optionsApp.selectedToy.value === 'media'" 
+				:optionsApp="optionsApp"
+			/>
+			<PrizeWheelPage 
+				v-show="optionsApp.selectedToy.value === 'prize_wheel'" 
+				:optionsApp="optionsApp"
+			/>
+			<StreamBuddiesPage 
+				v-show="optionsApp.selectedToy.value === 'stream_buddies'" 
+				:optionsApp="optionsApp"
+			/>
+			<TosserPage 
+				v-show="optionsApp.selectedToy.value === 'tosser'" 
+				:optionsApp="optionsApp"
+			/>
+		</template>
+	</VerticalItemsPage>
 </template>
 <script setup>
 
@@ -85,7 +73,7 @@ import { ref, shallowRef, onMounted, markRaw, watch, computed } from 'vue';
 import { chromeRef } from '../../../scripts/chromeRef';
 
 // components
-import VerticalItemStrip from '../VerticalItemStrip.vue';
+import VerticalItemsPage from '../VerticalItemsPage.vue';
 import AddToyModal from './AddToyModal.vue';
 import ConfirmModal from '../ConfirmModal.vue';
 import ChannelPointsPage from './pages/ChannelPointsPage.vue';
@@ -166,15 +154,18 @@ const handleAddToy = async () => {
 	props.optionsApp.addToy(toySlug)
 };
 
+
 // when the current toy changes, reset the scroll of the toyPageArea container
 watch(() => props.optionsApp.selectedToy.value, (newVal, oldVal) => {
 	if(toyPageArea.value)
 		toyPageArea.value.scrollTop = 0;
 });
 
+
 window.resetCommands = () => {
 	props.optionsApp.commands.value = {};
 }
+
 
 </script>
 <style lang="scss" scoped>

@@ -41,7 +41,7 @@ const props = defineProps({
 		flex-direction: column;
 		gap: 5px;
 		padding: 10px 0px;
-		border-bottom: 5px solid black;
+		/* border-bottom: 5px solid black; */
 		max-width: 1200px;
 		
 		:deep(h3) {
@@ -54,4 +54,5 @@ const props = defineProps({
 		}
 
 	}// .settings-row
+	
 </style>

@@ -58,7 +58,7 @@ import HelpPage from '../components/options/page_help/HelpPage.vue'
 import SettingsPage from '../components/options/page_settings/SettingsPage.vue'
 import ToyBoxPage from '../components/options/page_toy_box/ToyBoxPage.vue'
 import LayoutPage from '../components/options/page_layout/LayoutPage.vue'
-import ButtonsPage from '../components/options/ButtonsBoardPage.vue'
+import ButtonsPage from '../components/options/page_buttons/ButtonsBoardPage.vue'
 import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
 
 // our app scripts
@@ -95,7 +95,8 @@ onBeforeMount(() => {
 		inset: 0px 0px 0px 0px;
 
 		// default bg
-		background: #4d4d4d;
+		background: #424242;
+		/* background: #00abae; */
 
 		// top tab bar forced to top
 		.topTabBar {
@@ -107,6 +108,9 @@ onBeforeMount(() => {
 
 		// the tab pages will spawn in this container
 		.tabPagesWrapper {
+
+			/* border: 1px solid red; */
+			min-width: 990px;
 
 			// fill bottom under top tabs
 			position: absolute;
@@ -122,28 +126,6 @@ onBeforeMount(() => {
 			display: flex; 
 			flex-direction: column;
 			height: calc(100vh - 42px);
-
-			:deep(.contentPageArea){
-				
-				// fill right side of screen
-				position: absolute;
-				inset: 0px 0px 0px 100px;
-				overflow: hidden;
-				overflow-y: auto;
-
-				.pageContentZ {
-
-					width: 1500px;
-					/* display: none; */
-					background: white;
-					border-top-left-radius: 10px;
-
-					// padding for contents (which will always be a PageBox, etc)
-					padding: 20px 30px 30px 30px;
-
-				}// .page
-
-			}// .contentPageArea
 
 		}// .tabPagesWrapper
 
