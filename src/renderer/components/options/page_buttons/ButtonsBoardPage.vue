@@ -12,12 +12,14 @@
 		@changeTab="(tab)=>selectedPage = tab"
 	>
 		buttons
+		<input type="text" v-model="myTestSocket"/>
 	</VerticalItemsPage>
 </template>
 <script setup>
 
 // vue
 import { ref, computed } from 'vue';
+import { socketRef } from '../../../../common/socketRefClient';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
@@ -50,6 +52,7 @@ const verticalItems = computed(() => {
 // what's the selected tab?
 const selectedPage = ref('settings');
 
+const myTestSocket = socketRef('test', 'bar');
 
 </script>
 <style lang="scss" scoped>

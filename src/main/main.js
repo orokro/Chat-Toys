@@ -4,61 +4,70 @@
 
 	Main file for kicking off & setting up the Electron side of things.
 */
-
+ 
 // node/electron imports
 import { app, BrowserWindow, ipcMain, session } from 'electron';
 import { join } from 'path';
 import express from 'express';
 import http from 'http';
 import { Server } from 'ws';
+import { socketRefServer } from './socketRefServer';
 
+// for debugging
+process.on('uncaughtException', console.error);
+process.on('unhandledRejection', console.error);
 
 /**
  * Start a server on port 3001 that listens for WebSocket connections.
  */
 function startServer() {
 
-	// set up a basic express server and a WebSocket server
-	const expressApp = express();
-	const server = http.createServer(expressApp);
-	const wss = new Server({ server });
+	try {
+		// set up a basic express server and a WebSocket server
+		const expressApp = express();
+		const server = http.createServer(expressApp);
+		const wss = socketRefServer({ server });
 
-	// Serve /live.html in production
-	if (true || process.env.NODE_ENV !== 'development') {
+		// Serve /live.html in production
+		if (true || process.env.NODE_ENV !== 'development') {
 
-		// path to our electron renderer folder where BOTH the electron UI lives,
-		// but ALSO the live page we're about to server to OBS via express
-		const rendererPath = join(app.getAppPath(), 'renderer');
+			// path to our electron renderer folder where BOTH the electron UI lives,
+			// but ALSO the live page we're about to server to OBS via express
+			const rendererPath = join(app.getAppPath(), 'renderer');
 
-		// Block direct access to index.html
-		expressApp.use('/live/index.html', (req, res) => {
-			console.warn(`Blocked attempt to access: ${req.url}`);
-			res.status(403).send('Access to this file is forbidden');
+			// Block direct access to index.html
+			expressApp.use('/live/index.html', (req, res) => {
+				console.warn(`Blocked attempt to access: ${req.url}`);
+				res.status(403).send('Access to this file is forbidden');
+			});
+
+			// Serve live.html manually when accessing /live/
+			expressApp.get('/live/', (req, res) => {
+				res.sendFile('live.html', { root: rendererPath });
+			});
+
+			// Serve static assets, but disable default index.html serving
+			expressApp.use('/live', express.static(rendererPath, {
+				index: false,
+			}));
+		}
+
+		// Example WebSocket echo
+		// wss.on('connection', (socket) => {
+		// 	console.log('WebSocket connectedz');
+		// 	socket.on('message', (msg) => {
+		// 		console.log('Received:', msg);
+		// 		socket.send(`Echo: ${msg}`);
+		// 	});
+		// });
+
+		server.listen(3001, () => {
+			console.log('Server listening at http://127.0.0.1:3001');
 		});
 
-		// Serve live.html manually when accessing /live/
-		expressApp.get('/live/', (req, res) => {
-			res.sendFile('live.html', { root: rendererPath });
-		});
-
-		// Serve static assets, but disable default index.html serving
-		expressApp.use('/live', express.static(rendererPath, {
-			index: false,
-		}));
+	}catch(e){
+		console.error(e);
 	}
-
-	// Example WebSocket echo
-	wss.on('connection', (socket) => {
-		console.log('WebSocket connected');
-		socket.on('message', (msg) => {
-			console.log('Received:', msg);
-			socket.send(`Echo: ${msg}`);
-		});
-	});
-
-	server.listen(3001, () => {
-		console.log('Server listening at http://127.0.0.1:3001');
-	});
 }
 
 

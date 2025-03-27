@@ -8,7 +8,7 @@
 <template>
 
 	<div class="pageContainer">
-		<h1>Live</h1>
+		<h1>Live {{ socketTest }}</h1>
 
 		<ChannelPointsWidget
 
@@ -19,9 +19,14 @@
 
 // vue
 import { ref } from 'vue';
+import { socketRef, socketShallowRef } from '../../common/socketRefClient';
 
 // include the demo channel points widget
 import ChannelPointsWidget from '../components/stage/widgets/ChannelPointsWidget.vue';
+
+const socketTest = socketRef('test', 'foo');
+
+window.st = socketTest;
 
 </script>
 <style lang="scss" scoped>

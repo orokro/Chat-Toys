@@ -1,6 +1,4 @@
 // socketRefClient.js
-// Client-side socketRef module (safe for browser usage)
-
 import { ref, shallowRef, watch } from 'vue';
 
 const registry = new FinalizationRegistry(({ socketRefState }) => {
@@ -18,7 +16,7 @@ export function socketShallowRef(keyOrObj, defaultValue) {
 function createSocketRef(refType, keyOrObj, initialValue) {
 	const options = typeof keyOrObj === 'string' ? { key: keyOrObj } : keyOrObj;
 	const key = options.key;
-	const ip = options.ip || '127.0.0.1';
+	const ip = options.ip || 'localhost';
 	const port = options.port || 3001;
 	const state = refType(initialValue);
 	const weakState = new WeakRef(state);
@@ -26,7 +24,9 @@ function createSocketRef(refType, keyOrObj, initialValue) {
 	const socketRefState = new SocketRefState(weakState, key, initialValue, ip, port);
 
 	socketRefState.stopWatch = watch(state, (newVal) => {
-		socketRefState.write(newVal);
+		if (socketRefState.ready) {
+			socketRefState.write(newVal);
+		}
 	});
 
 	registry.register(state, { socketRefState });
@@ -39,31 +39,47 @@ class SocketRefState {
 		this.weakState = weakState;
 		this.key = key;
 		this.defaultValue = defaultValue;
-		this.timestamp = Date.now();
+		this.timestamp = 0;
 		this.url = `ws://${ip}:${port}`;
 		this.stopWatch = null;
+		this.ready = false;
 		this.connect();
 	}
 
 	connect() {
 		this.socket = new WebSocket(this.url);
+
 		this.socket.onopen = () => {
-			this.sendCurrentValue();
+			this.socket.send(JSON.stringify({
+				type: 'init',
+				key: this.key
+			}));
 		};
 
 		this.socket.onmessage = (event) => {
 			const msg = JSON.parse(event.data);
 			if (msg.key !== this.key) return;
-			if (msg.timestamp <= this.timestamp) return;
 
 			const state = this.weakState.deref();
 			if (!state) return;
+
+			// Handle init response
+			if (msg.type === 'init') {
+				this.timestamp = msg.timestamp || Date.now();
+				state.value = msg.value;
+				this.ready = true;
+				return;
+			}
+
+			// Normal update
+			if (msg.timestamp <= this.timestamp) return;
 
 			this.timestamp = msg.timestamp;
 			state.value = msg.value;
 		};
 
 		this.socket.onclose = () => {
+			this.ready = false;
 			setTimeout(() => this.connect(), 1000);
 		};
 
@@ -72,21 +88,14 @@ class SocketRefState {
 		};
 	}
 
-	sendCurrentValue() {
-		const state = this.weakState.deref();
-		if (!state) return;
-		this.socket.send(JSON.stringify({
-			key: this.key,
-			value: state.value,
-		}));
-	}
-
 	write(newValue) {
 		this.timestamp = Date.now();
 		if (this.socket && this.socket.readyState === WebSocket.OPEN) {
 			this.socket.send(JSON.stringify({
+				type: 'update',
 				key: this.key,
 				value: newValue,
+				timestamp: this.timestamp
 			}));
 		}
 	}
