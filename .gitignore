@@ -39,3 +39,5 @@ coverage/
 /misc
 *.bak
 *.tmp
+install_socket_ref.sh
+

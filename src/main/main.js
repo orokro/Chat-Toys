@@ -11,7 +11,7 @@ import { join } from 'path';
 import express from 'express';
 import http from 'http';
 import { Server } from 'ws';
-import { socketRefServer } from './socketRefServer';
+const { socketRefServer } = require('socket-ref/server');
 
 // for debugging
 process.on('uncaughtException', console.error);
@@ -54,7 +54,7 @@ function startServer() {
 
 		// Example WebSocket echo
 		// wss.on('connection', (socket) => {
-		// 	console.log('WebSocket connectedz');
+		// 	console.log('WebSocket connected');
 		// 	socket.on('message', (msg) => {
 		// 		console.log('Received:', msg);
 		// 		socket.send(`Echo: ${msg}`);
