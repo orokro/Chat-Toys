@@ -9,10 +9,13 @@
 import { ref, shallowRef } from 'vue';
 import { chromeRef, chromeShallowRef } from './chromeRef';
 
-// lib/misc
+// our app
 import { toysData } from './ToysData';
 import { ToySettings } from './ToySettings';
 import { AssetManager } from './assets_state/AssetManager';
+import { ChatProcessor } from './ChatProcessor';
+
+// lib/misc
 import DragHelper from 'gdraghelper';
 
 // main export
@@ -45,6 +48,16 @@ export default class ChatToysApp {
 		// they're stored from localStorage, so this will init them or repopulate them
 		this.toySettings = new ToySettings(this);
 		
+		// make a new chat processor to handle all incoming chats from outside
+		// note: this will handle messages coming from IPC messages from the electron
+		// main process. The main process gets them from a WebSocket server from
+		// a chrome plugin.
+		this.chatProcessor = new ChatProcessor();
+
+		this.chatProcessor.onNewChats((messages) => {
+			console.log('ChatProcessor received new messages:', messages);
+		});
+
 		// reusable drag helper
 		this.dragHelper = new DragHelper();
 
@@ -129,4 +142,5 @@ export default class ChatToysApp {
 	resetCommands() {
 		this.commands.value = {};
 	}
+	
 }

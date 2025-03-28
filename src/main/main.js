@@ -14,6 +14,7 @@ import { createChatTesterWindow } from './windows/ChatTesterWindow.js';
 import { OBSViewServer } from './system/OBSViewServer.js';
 import { createSystemTray } from './system/SystemTray.js';
 import { createAppMenu } from './system/MainAppMenu.js';
+import { chatForward } from './system/chatForward.js';
 
 // global vars
 let mainWindow = null;
@@ -56,6 +57,8 @@ app.whenReady().then(() => {
 	// Create the OBSViewServer.
 	obsViewServer = new OBSViewServer(mainWindow);
 
+	chatForward(obsViewServer.wss, mainWindow);
+	
 	// Set up the CSP all windows
 	session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
 		callback({

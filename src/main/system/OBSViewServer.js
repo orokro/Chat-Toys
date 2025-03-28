@@ -50,7 +50,7 @@ class OBSViewServer {
 			const server = http.createServer(expressApp);
 
 			// using our socket-ref server, that syncs socketRefs
-			const wss = socketRefServer({ server });
+			this.wss = socketRefServer({ server });
 	
 			// Serve /live.html in production
 			if (true || process.env.NODE_ENV !== 'development') {
