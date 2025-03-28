@@ -12,6 +12,7 @@ import { app, BrowserWindow, ipcMain, session } from 'electron';
 import { createMainWindow } from './windows/MainWindow.js';
 import { OBSViewServer } from './system/OBSViewServer.js';
 import { createSystemTray } from './system/SystemTray.js';
+import { createAppMenu } from './system/MainAppMenu.js';
 
 // global vars
 let mainWindow = null;
@@ -28,6 +29,9 @@ app.whenReady().then(() => {
 	// Create the window.
 	mainWindow = createMainWindow();
 
+	// Create the app menu.
+	createAppMenu(mainWindow);
+	
 	// make system tray icon so our main window can be hidden and shown
 	tray = createSystemTray(mainWindow);
 

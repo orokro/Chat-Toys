@@ -188,7 +188,7 @@ export class ToySettings {
 			buddySize: ref(1.0),
 		});
 
-		// build settings for the fishing minigame
+		// build settings for the fishing mini game
 		this.buildSettingsBlock('fishing', {
 
 			// our local settings
