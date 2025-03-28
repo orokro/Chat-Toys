@@ -10,9 +10,11 @@ const { app, Menu, shell, ipcMain, BrowserWindow } = require('electron');
 
 /**
  * Builds our main menus for the app
- * @param {BrowserWindow} mainWindow - main applicaiton window
+ * @param {BrowserWindow} mainWindow - main application window
+ * @param {BrowserWindow} chatTesterWindow - chat tester window
+ * @param {function} destroyAllWindows - function to destroy all windows
  */
-function createAppMenu(mainWindow) {
+function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 
 	// true if we're in dev mode
 	const isDev = process.env.NODE_ENV === 'development';
@@ -25,7 +27,7 @@ function createAppMenu(mainWindow) {
 				{
 					label: 'Quit',
 					click: () => {
-						mainWindow.destroy();
+						destroyAllWindows();
 						app.quit();
 					}
 				}
@@ -69,7 +71,7 @@ function createAppMenu(mainWindow) {
 				{
 					label: 'Open Chat Tester',
 					click: () => {
-						mainWindow.webContents.send('show-chat-tester');
+						chatTesterWindow.show();
 					}
 				}
 			]
