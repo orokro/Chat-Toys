@@ -46,7 +46,7 @@ const ctApp = inject('ctApp');
 
 // generate slug for command
 const toySlug = 'stream_buddies';
-const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // our local ref settings for this system
 const { 

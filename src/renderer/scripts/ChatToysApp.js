@@ -55,7 +55,7 @@ export default class ChatToysApp {
 		this.chatProcessor = new ChatProcessor();
 
 		this.chatProcessor.onNewChats((messages) => {
-			console.log('ChatProcessor received new messages:', messages);
+			// console.log('ChatProcessor received new messages:', messages);
 		});
 
 		// reusable drag helper
@@ -142,5 +142,5 @@ export default class ChatToysApp {
 	resetCommands() {
 		this.commands.value = {};
 	}
-	
+
 }

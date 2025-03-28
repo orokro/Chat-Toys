@@ -65,7 +65,7 @@ const ctApp = inject('ctApp');
 
 // generate slug for command
 const toySlug = 'head_pats';
-const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // local settings refs
 const { 

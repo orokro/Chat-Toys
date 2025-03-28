@@ -110,7 +110,7 @@ import ArrayTosserEdit from '../../ArrayTosserEdit.vue';
 
 // generate slug for command
 const toySlug = 'tosser';
-const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // fetch the main app state context
 const ctApp = inject('ctApp');

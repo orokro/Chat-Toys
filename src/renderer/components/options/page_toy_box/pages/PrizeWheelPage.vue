@@ -116,7 +116,7 @@ const ctApp = inject('ctApp');
 
 // generate slug for command
 const toySlug = 'prize_wheel';
-const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // make a yup schema that disallows escape characters, as well as one to validate color strings
 const itemSchema = yup.string().matches(/^[^\\]+$/, 'Escape characters are not allowed');

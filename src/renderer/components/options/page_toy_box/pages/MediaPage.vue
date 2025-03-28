@@ -79,7 +79,7 @@ import ArrayMediaEdit from '../../ArrayMediaEdit.vue';
 
 // generate slug for command
 const toySlug = 'media';
-const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
@@ -121,7 +121,7 @@ function reconcileMediaAssets(currentCommands){
 
 			// create a new media asset object
 			newMediaAssets.push({
-				commandSlug: slug,
+				commandSlug: slugify(slug),
 				commandName: command.command,
 				hasImage: true,
 				imageId: "6",

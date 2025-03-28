@@ -141,7 +141,7 @@ const ctApp = inject('ctApp');
 
 // generate slug for command
 const toySlug = 'chat_box';
-const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // our local refs state
 const {

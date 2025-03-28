@@ -88,7 +88,7 @@ const ctApp = inject('ctApp');
 
 // generate slug for command
 const toySlug = 'fishing';
-const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // our local ref settings
 const {
