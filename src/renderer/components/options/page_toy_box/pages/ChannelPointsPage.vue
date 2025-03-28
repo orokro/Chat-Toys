@@ -38,7 +38,6 @@
 			Below you can customize the commands that users can type to interact with the Channel Points system.
 		</p>
 		<CommandsConfigBox
-			:optionsApp="optionsApp"
 			:toyName="'Channel Points'"
 			:toySlug="toySlug"
 			:commands="commands"
@@ -144,7 +143,6 @@
 
 		<SettingsAssetRow
 			v-model="widgetIconId"
-			:optionsApp="optionsApp"
 			:kind-filter="'image'"
 		>
 			<h3>Channel Points Icon Image</h3>
@@ -167,7 +165,7 @@
 <script setup>
 
 // vue
-import { ref, watch, computed, shallowRef } from 'vue';
+import { ref, watch, computed, shallowRef, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
@@ -181,15 +179,8 @@ import SettingsInputRow from '../../SettingsInputRow.vue';
 import SettingsAssetRow from '../../SettingsAssetRow.vue';
 import ChannelPointsWidget from '../../../stage/widgets/ChannelPointsWidget.vue';
 
-// define some props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // generate slug for command
 const toySlug = 'channel_points';
@@ -210,7 +201,7 @@ const showUserClaims = ref(true);
 const showTextPrompt = ref(true);
 const widgetColorTheme = ref('#00ABAE');
 const widgetIconId = ref('1');
-const widgetIconPath = ref('builtin/' + props.optionsApp.assetsMgr.getFileData(widgetIconId.value).name);
+const widgetIconPath = ref('builtin/' + ctApp.assetsMgr.getFileData(widgetIconId.value).name);
 const widgetBox = shallowRef({
 	x: 1280-150,
 	y: 720-150,
@@ -281,7 +272,7 @@ const commands = [
 
 // update the icon path dynamically when the asset ID changes
 watch (widgetIconId, (newVal) => {
-	const fileData = props.optionsApp.assetsMgr.getFileData(newVal);
+	const fileData = ctApp.assetsMgr.getFileData(newVal);
 	setTimeout(()=>{
 		widgetIconPath.value = `builtin/${fileData.name}`;
 	});

@@ -11,34 +11,18 @@
 		:selectedTab="selectedPage"
 		@changeTab="(tab)=>selectedPage = tab"
 	>
-		<WelcomePage 
-			v-if="selectedPage === 'help_welcome'" 
-			:optionsApp="optionsApp"
-		/>
-		<HelpPage 
-			v-if="selectedPage === 'help'" 
-			:optionsApp="optionsApp"
-		/>
-		<VideoHelpPage 
-			v-if="selectedPage === 'help_videos'" 
-			:optionsApp="optionsApp"
-		/>
-		<ContactPage 
-			v-if="selectedPage === 'help_contact'" 
-			:optionsApp="optionsApp"
-		/>
-		<CreditsPage 
-			v-if="selectedPage === 'credits'" 
-			:optionsApp="optionsApp"
-		/>
+		<WelcomePage v-if="selectedPage === 'help_welcome'" />
+		<HelpPage v-if="selectedPage === 'help'" />
+		<VideoHelpPage v-if="selectedPage === 'help_videos'" />
+		<ContactPage v-if="selectedPage === 'help_contact'" />
+		<CreditsPage v-if="selectedPage === 'credits'" />
 	
 	</VerticalItemsPage>
 </template>
 <script setup>
 
 // vue
-import { ref, shallowRef, onMounted, markRaw, watch, computed } from 'vue';
-import { chromeRef } from '../../../scripts/chromeRef';
+import { ref } from 'vue';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
@@ -48,20 +32,7 @@ import VideoHelpPage from './pages/VideoHelpPage.vue';
 import ContactPage from './pages/ContactPage.vue';
 import CreditsPage from './pages/CreditsPage.vue';
 
-// components
-import PageBox from '../PageBox.vue';
-import SectionHeader from '../SectionHeader.vue';
-
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
-
-// pages
+// pages (this will generate the icons for the vertical strip items)
 const pageItems = [
 	{
 		slug: 'help_welcome',

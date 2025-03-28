@@ -25,7 +25,6 @@
 			Below you can customize the commands that users can type to interact with the Fishing system.
 		</p>
 		<CommandsConfigBox
-			:optionsApp="optionsApp"
 			:toyName="'Fishing'"
 			:toySlug="toySlug"
 			:commands="commands"
@@ -49,7 +48,7 @@
 				v-model="fishList"
 				:component="ArrayFishEdit"
 				:rowProps="{ 
-					assetManager: props.optionsApp.assetsMgr,
+					assetManager: ctApp.assetsMgr,
 					allFish: fishList.value,
 				}"
 				:allow-new-items="true"
@@ -71,7 +70,7 @@
 <script setup>
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
@@ -85,15 +84,8 @@ import SettingsInputRow from '../../SettingsInputRow.vue';
 import ArrayEdit from '../../ArrayEdit.vue';
 import ArrayFishEdit from '../../ArrayFishEdit.vue';
 
-// props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // generate slug for command
 const toySlug = 'fishing';

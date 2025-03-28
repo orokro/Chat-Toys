@@ -39,7 +39,6 @@
 			Below you can customize the commands that users can type to interact with the Gamba system.
 		</p>
 		<CommandsConfigBox
-			:optionsApp="optionsApp"
 			:toyName="'Gamba'"
 			:toySlug="toySlug"
 			:commands="commands"
@@ -60,22 +59,10 @@ import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
-import CatsumIpsum from '../../../CatsumIpsum.vue';
 
 // generate slug for command
 const toySlug = 'gamba';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
-
-// props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
-
 
 // gamba settings
 const gambaStateMode = shallowRef('off');

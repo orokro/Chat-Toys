@@ -20,7 +20,7 @@
 <script setup>
 
 // vue
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import { chromeRef } from '../../../scripts/chromeRef';
 import { socketRef, socketShallowRef, bindRef, bindRefs } from 'socket-ref';
 
@@ -31,15 +31,8 @@ import VerticalItemsPage from '../VerticalItemsPage.vue';
 import { openModal, promptModal } from "jenesius-vue-modal"
 import { toysData } from '../../../scripts/ToysData';
 
-// accept some props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // list of items to show in the vertical strip
 const verticalItems = computed(() => {
@@ -48,7 +41,7 @@ const verticalItems = computed(() => {
 		slug: "settings",
 		desc: "System Widget.",
 	}
-	const toys = props.optionsApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
+	const toys = ctApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
 	return [system, ...toys];
 });
 
@@ -61,8 +54,6 @@ const myTestSocket = socketRef('test', 'foo');
 setTimeout(()=>{
 	bindRef(myTestSocket).to(syncRef);
 }, 1000);
-
-
 
 const myTestSocket2 = socketRef('test2', 'bar');
 

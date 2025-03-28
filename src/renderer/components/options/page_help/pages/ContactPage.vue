@@ -27,17 +27,8 @@ import { ref } from 'vue';
 // components
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
-import InfoBox from '../../InfoBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
 
 </script>
 <style lang="scss" scoped>	

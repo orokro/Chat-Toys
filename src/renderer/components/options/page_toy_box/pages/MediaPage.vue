@@ -29,7 +29,6 @@
 			in the settings below
 		</p>
 		<CommandsConfigBox
-			:optionsApp="optionsApp"
 			:toyName="'Media'"
 			:toySlug="toySlug"
 			:enable-custom-commands="true"
@@ -54,7 +53,7 @@
 			<ArrayEdit
 				v-model="mediaAssets"
 				:component="ArrayMediaEdit"
-				:rowProps="{ assetManager: props.optionsApp.assetsMgr }"
+				:rowProps="{ assetManager: ctApp.assetsMgr }"
 				:allow-new-items="false"
 			/>
 		
@@ -65,7 +64,7 @@
 <script setup>
 
 // vue
-import { ref, computed, watch, onMounted, shallowRef } from 'vue';
+import { ref, computed, watch, onMounted, shallowRef, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
@@ -83,17 +82,8 @@ import ArrayMediaEdit from '../../ArrayMediaEdit.vue';
 const toySlug = 'media';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
-
-// props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
-
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // we'll use a chrome ref to aggregate all our settings
 const mediaSettings = chromeShallowRef('media-settings', {});

@@ -47,7 +47,6 @@
 			Below you can customize the commands that users can type to interact with the Tosser system.
 		</p>
 		<CommandsConfigBox
-			:optionsApp="optionsApp"
 			:toyName="'Tosser'"
 			:toySlug="toySlug"
 			:commands="commands"
@@ -74,7 +73,7 @@
 			<ArrayEdit
 				v-model="tosserAssets"
 				:component="ArrayTosserEdit"
-				:rowProps="{ assetManager: props.optionsApp.assetsMgr }"
+				:rowProps="{ assetManager: ctApp.assetsMgr }"
 				:createItem="() => {
 					return {
 						model: '16',
@@ -95,7 +94,7 @@
 <script setup>
 
 // vue
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 import { RefAggregator } from '../../../../scripts/RefAggregator';
 
@@ -110,19 +109,12 @@ import SettingsInputRow from '../../SettingsInputRow.vue';
 import ArrayEdit from '../../ArrayEdit.vue';
 import ArrayTosserEdit from '../../ArrayTosserEdit.vue';
 
-// props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
-
 // generate slug for command
 const toySlug = 'tosser';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
+
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // we'll use a chrome ref to aggregate all our settings
 const tosserSettings = chromeShallowRef('tosser-settings', {});

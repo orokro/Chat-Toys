@@ -18,10 +18,7 @@
 			class="layoutPageBox"
 		>
 			<!-- the main money -->
-			<LayoutScreen
-				:optionsApp="props.optionsApp"
-				:activeTab="selectedTab"
-			/>
+			<LayoutScreen :activeTab="selectedTab" />
 
 			<SectionHeader title="About Layout Configuration"/>
 			<p>
@@ -78,28 +75,19 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, markRaw, watch, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
 import LayoutScreen from './LayoutScreen.vue';
 import PageBox from '../PageBox.vue';
-import InfoBox from '../InfoBox.vue';
 import SectionHeader from '../SectionHeader.vue';
 
 // lib/ misc
-import { openModal, promptModal } from "jenesius-vue-modal"
 import { toysData } from '../../../scripts/ToysData';
 
-// accept some props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // list of items to show in the vertical strip
 const verticalItems = computed(() => {
@@ -108,7 +96,7 @@ const verticalItems = computed(() => {
 		slug: "settings",
 		desc: "System Widget.",
 	}
-	const toys = props.optionsApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
+	const toys = ctApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
 	return [system, ...toys];
 });
 

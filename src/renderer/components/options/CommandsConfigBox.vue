@@ -142,8 +142,8 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, onMounted, watch, computed } from 'vue'
-import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
+import { shallowRef, onMounted, watch, computed, inject } from 'vue'
+import { chromeShallowRef } from '../../scripts/chromeRef';
 import { directive as VTippy } from 'vue-tippy';
 import 'tippy.js/dist/tippy.css';
 
@@ -157,14 +157,11 @@ import { openModal, promptModal } from "jenesius-vue-modal"
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
 
+// fetch the main app state context
+const ctApp = inject('ctApp');
+
 // props
 const props = defineProps({
-
-	// the options app
-	optionsApp: {
-		type: Object,
-		default: null
-	},
 
 	// title title of commands list
 	toyName: {
@@ -193,9 +190,9 @@ const props = defineProps({
 });
 
 
-// true if we have at 'channel_points' enabled in props.optionsApp.enabledToys.value
+// true if we have at 'channel_points' enabled in ctApp.enabledToys.value
 const isChannelPointsEnabled = computed(()=>
-	props.optionsApp.enabledToys.value.includes('channel_points'));
+	ctApp.enabledToys.value.includes('channel_points'));
 
 
 /*	

@@ -24,13 +24,13 @@
 						>
 							<FilePreview 
 								:fileId="assetValue"
-								:assetManager="optionsApp.assetsMgr"
+								:assetManager="ctApp.assetsMgr"
 								:border="false"
 								:height="kindFilter==='image' ? 200 : 70"
 							/>
 						</td>
 						<td class="name-cell" align="center">
-							{{ optionsApp.assetsMgr.getFileData(assetValue)?.name }}
+							{{ ctApp.assetsMgr.getFileData(assetValue)?.name }}
 						</td>
 					</tr>
 					<tr>
@@ -50,7 +50,7 @@
 <script setup>
 
 // vue
-import { ref, markRaw, watch, computed } from 'vue';
+import { markRaw, computed, inject } from 'vue';
 
 // components
 import SettingsRow from './SettingsRow.vue';
@@ -63,6 +63,9 @@ import { promptModal } from 'jenesius-vue-modal';
 // v-model binding (expects a ref/shallowRef)
 const assetValue = defineModel();
 
+// fetch the main app state context
+const ctApp = inject('ctApp');
+
 // props
 const props = defineProps({
 	
@@ -71,13 +74,6 @@ const props = defineProps({
 		type: String,
 		default: null
 	},
-
-	// options app reference
-	optionsApp: {
-		type: Object,
-		default: null
-	},
-
 	// the description of the setting
 	desc: {
 		type: String,
@@ -120,7 +116,7 @@ async function handlePickAsset(){
 	const kindName = getKindName(props.kindFilter);
 	const response = await promptModal(AssetPickerModal, {
 		title: `Pick an ${kindName} File`,
-		assetManager: markRaw(props.optionsApp.assetsMgr),
+		assetManager: markRaw(ctApp.assetsMgr),
 		allowCustomImports: true,
 		kindFilter: props.kindFilter,
 	});

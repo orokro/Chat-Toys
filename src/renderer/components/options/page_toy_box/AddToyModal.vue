@@ -71,7 +71,7 @@
 <script setup>
 
 // vue
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, inject } from 'vue';
 
 // components
 import ModalWindowFrame from '../ModalWindowFrame.vue';
@@ -83,15 +83,8 @@ import { toysData } from '../../../scripts/ToysData';
 // which item is hovered
 const hoveredToySlug = ref(null);
 
-// some props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // so we can close the modal using the jenesius-vue-modal event and return a value
 const emit = defineEmits([Modal.EVENT_PROMPT]);
@@ -101,7 +94,7 @@ const includedToys = computed(() => {
 
 	const data = {};	
 	toysData.map(toy => {
-		data[toy.slug] = props.optionsApp.enabledToys.value.includes(toy.slug);
+		data[toy.slug] = ctApp.enabledToys.value.includes(toy.slug);
 	});
 	return data;
 });

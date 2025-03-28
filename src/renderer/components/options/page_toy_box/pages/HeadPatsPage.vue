@@ -21,7 +21,6 @@
 			Below you can customize the commands that users can type to interact with the Head Pats system.
 		</p>
 		<CommandsConfigBox
-			:optionsApp="optionsApp"
 			:toyName="'Head Pats'"
 			:toySlug="toySlug"
 			:commands="commands"
@@ -39,7 +38,6 @@
 
 		<SettingsAssetRow
 			v-model="headPatChatterImage"
-			:optionsApp="optionsApp"
 			:kind-filter="'image'"
 		>
 			<h3>Chatter Image</h3>
@@ -60,7 +58,6 @@ import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
-import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsInputRow from '../../SettingsInputRow.vue';
 import SettingsAssetRow from '../../SettingsAssetRow.vue';
 
@@ -90,16 +87,6 @@ settingsAggregator.register('allowUserPats', allowUserPats);
 settingsAggregator.register('headPatChatterImage', headPatChatterImage);
 settingsAggregator.register('streamerWidgetBox', streamerWidgetBox);
 settingsAggregator.register('chatterWidgetBox', chatterWidgetBox);
-
-// props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
 
 
 // we'll define our commands here

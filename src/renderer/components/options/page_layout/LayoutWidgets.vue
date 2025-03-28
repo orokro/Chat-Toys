@@ -17,7 +17,6 @@
 		>
 			<LayoutBox
 				v-if="shouldShowInLayout(widget.slug)"
-				:optionsApp="optionsApp"
 				:editing="activeTab === widget.slug"
 				:scale="scale"
 				:slug="widget.slug"
@@ -40,7 +39,7 @@
 <script setup>
 
 // vue
-import { ref, onMounted, shallowRef, watch } from 'vue'
+import { shallowRef, inject } from 'vue'
 import { chromeRef, chromeShallowRef } from '../../../scripts/chromeRef';
 import { RefAggregator } from '../../../scripts/RefAggregator';
 
@@ -48,14 +47,11 @@ import { RefAggregator } from '../../../scripts/RefAggregator';
 import LayoutBox from './LayoutBox.vue';
 import ChannelPointsWidget from '../../stage/widgets/ChannelPointsWidget.vue';
 
+// fetch the main app state context
+const ctApp = inject('ctApp');
+
 // accept some props
 const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	},
 
 	// the scale of the layout screen
 	scale: {
@@ -222,7 +218,7 @@ const widgets = [
 	// check if the slug is in our list of enabled toys
 	const isEnabled = [
 		'settings',
-		...props.optionsApp.enabledToys.value].includes(slug);
+		...ctApp.enabledToys.value].includes(slug);
 
 	// if the item isn't enabled, we don't care if we are showing all widgets
 	if (!isEnabled)

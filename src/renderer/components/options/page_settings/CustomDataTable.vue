@@ -2,9 +2,8 @@
 	CustomDataTable.vue
 	-------------------
 
-	I tried primevue, vuetify and some others, but none of them worked.
-	Just errors.
-
+	I tried a couple existing table components for Vue, but had errors.
+	Decided to get down to business and just roll this custom solution for now.
 	So here's a custom solution for a sortable / customizable table.
 -->
 <template>

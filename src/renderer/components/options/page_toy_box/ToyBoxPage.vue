@@ -8,16 +8,16 @@
 	
 	<VerticalItemsPage
 		:verticalItems="verticalItems"
-		:selectedTab="optionsApp.selectedToy.value"
-		:showAddButton="true"
+		:selectedTab="ctApp.selectedToy.value"
+		:showAddButton="allToysAdded===false"
 		:showDeleteButton="true"
-		@changeTab="(tab)=>optionsApp.selectToy(tab)"
+		@changeTab="(tab)=>ctApp.selectToy(tab)"
 		@addItem="handleAddToy"			
 		@removeItem="(toy)=>handleRemoveToy(toy)"
 	>
 
 		<!-- if no toy is selected, show arrow -->
-		<template v-if="optionsApp.enabledToys.value.length<=0">
+		<template v-if="ctApp.enabledToys.value.length<=0">
 			<img
 				class="clickToAddFirstToy"
 				:src="'assets/click_to_add_first_toy.png'" 
@@ -27,50 +27,23 @@
 
 		<template v-else>
 
-			<ChannelPointsPage 
-				v-show="optionsApp.selectedToy.value === 'channel_points'" 
-				:optionsApp="optionsApp"
-			/>
-			<ChatBoxPage 
-				v-show="optionsApp.selectedToy.value === 'chat_box'" 
-				:optionsApp="optionsApp"
-			/>
-			<FishingPage 
-				v-show="optionsApp.selectedToy.value === 'fishing'" 
-				:optionsApp="optionsApp"
-			/>
-			<GambaPage 
-				v-show="optionsApp.selectedToy.value === 'gamba'" 
-				:optionsApp="optionsApp"
-			/>
-			<HeadPatsPage 
-				v-show="optionsApp.selectedToy.value === 'head_pats'" 
-				:optionsApp="optionsApp"
-			/>
-			<MediaPage 
-				v-show="optionsApp.selectedToy.value === 'media'" 
-				:optionsApp="optionsApp"
-			/>
-			<PrizeWheelPage 
-				v-show="optionsApp.selectedToy.value === 'prize_wheel'" 
-				:optionsApp="optionsApp"
-			/>
-			<StreamBuddiesPage 
-				v-show="optionsApp.selectedToy.value === 'stream_buddies'" 
-				:optionsApp="optionsApp"
-			/>
-			<TosserPage 
-				v-show="optionsApp.selectedToy.value === 'tosser'" 
-				:optionsApp="optionsApp"
-			/>
+			<ChannelPointsPage v-show="ctApp.selectedToy.value === 'channel_points'" />
+			<ChatBoxPage v-show="ctApp.selectedToy.value === 'chat_box'" />
+			<FishingPage v-show="ctApp.selectedToy.value === 'fishing'" />
+			<GambaPage v-show="ctApp.selectedToy.value === 'gamba'" />
+			<HeadPatsPage v-show="ctApp.selectedToy.value === 'head_pats'" />
+			<MediaPage v-show="ctApp.selectedToy.value === 'media'" />
+			<PrizeWheelPage v-show="ctApp.selectedToy.value === 'prize_wheel'" />
+			<StreamBuddiesPage v-show="ctApp.selectedToy.value === 'stream_buddies'" />
+			<TosserPage v-show="ctApp.selectedToy.value === 'tosser'" />
+
 		</template>
 	</VerticalItemsPage>
 </template>
 <script setup>
 
 // vue
-import { ref, shallowRef, onMounted, markRaw, watch, computed } from 'vue';
-import { chromeRef } from '../../../scripts/chromeRef';
+import { ref, markRaw, watch, computed, inject } from 'vue';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
@@ -90,28 +63,26 @@ import TosserPage from './pages/TosserPage.vue';
 import { openModal, promptModal } from "jenesius-vue-modal"
 import { toysData } from '../../../scripts/ToysData';
 
+
+// fetch the main app state context
+const ctApp = inject('ctApp');
+
+
 // list of items to show in the vertical strip
 const verticalItems = computed(() => {
-	return props.optionsApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
+	return ctApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
 });
+
 
 // true when the user has added all the toys
 const allToysAdded = computed(() => {
-	return props.optionsApp.enabledToys.value.length >= toysData.length;
+	return ctApp.enabledToys.value.length >= toysData.length;
 });
 
-// accept some props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
 
 // the container for the various pages
 const toyPageArea = ref(null);
+
 
 // handle when the remove toy button was clicked on the strip
 async function handleRemoveToy(toy){
@@ -133,7 +104,7 @@ async function handleRemoveToy(toy){
 		return;
 
 	// remove the toy
-	props.optionsApp.removeToy(toy);
+	ctApp.removeToy(toy);
 }
 
 
@@ -141,9 +112,7 @@ async function handleRemoveToy(toy){
 // (i.e. show the modal to add toys to our system)
 const handleAddToy = async () => {
 
-	const result = await promptModal(AddToyModal, {
-		optionsApp: markRaw(props.optionsApp),
-	});
+	const result = await promptModal(AddToyModal);
 	
 	// if no toy was selected, return
 	if(result==null)
@@ -151,20 +120,15 @@ const handleAddToy = async () => {
 
 	// add the toy to the toy box
 	const toySlug = result.slug;
-	props.optionsApp.addToy(toySlug)
+	ctApp.addToy(toySlug)
 };
 
 
 // when the current toy changes, reset the scroll of the toyPageArea container
-watch(() => props.optionsApp.selectedToy.value, (newVal, oldVal) => {
+watch(() => ctApp.selectedToy.value, (newVal, oldVal) => {
 	if(toyPageArea.value)
 		toyPageArea.value.scrollTop = 0;
 });
-
-
-window.resetCommands = () => {
-	props.optionsApp.commands.value = {};
-}
 
 
 </script>

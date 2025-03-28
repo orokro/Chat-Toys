@@ -31,7 +31,6 @@
 			Below you can customize the commands that users can type to interact with the Chat system.
 		</p>
 		<CommandsConfigBox
-			:optionsApp="optionsApp"
 			:toyName="'Chat'"
 			:toySlug="toySlug"
 			:commands="commands"
@@ -54,7 +53,6 @@
 		</SettingsInputRow>
 		<SettingsAssetRow
 			v-model="chatBoxImage"
-			:optionsApp="optionsApp"
 			:kind-filter="'image'"
 		>
 			<h3>Image Frame</h3>
@@ -90,7 +88,6 @@
 		</SettingsInputRow>
 		<SettingsAssetRow
 			v-model="shoutSoundId"
-			:optionsApp="optionsApp"
 			:kind-filter="'sound'"
 		>
 			<h3>Shout Sound</h3>
@@ -140,16 +137,6 @@ import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsRow from '../../SettingsRow.vue';
 import SettingsInputRow from '../../SettingsInputRow.vue';
 import SettingsAssetRow from '../../SettingsAssetRow.vue';
-
-// props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
 
 // generate slug for command
 const toySlug = 'chat_box';

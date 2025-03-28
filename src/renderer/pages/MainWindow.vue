@@ -1,17 +1,24 @@
 <!--
-	Options.vue
-	-----------
+	MainWindow.vue
+	--------------
 
-	This is the main component for the options page.
+	This is the root component for the main electron window.
+
+	Historical note - originally this file was called 'Options.vue',
+	because it was the options page for a chrome-plugin, before the project
+	was converted to an electron app.
+
+	This main window will primarily set up the main view's tabs, and
+	create the instance of the ChatToysApp, which will be the main state.
 -->
 <template>
 
 	<!-- via our "jenesius-vue-modal" modal library -->
 	<widget-container-modal/>
 
-	<div class="optionsWrapper">
+	<div class="mainWindowWrapper">
 		
-		<!-- the tab strip along the top of the options page -->
+		<!-- the tab strip along the top of the main window page -->
 		<TopTabBar
 			class="topTabBar"
 			:tabs="tabs"
@@ -22,26 +29,11 @@
 		<!-- the tab pages will spawn in this container -->
 		<div class="tabPagesWrapper">
 
-			<HelpPage 
-				v-if="activeTab === 0" 
-				:optionsApp="optionsApp"
-			/>
-			<SettingsPage 
-				v-if="activeTab === 1"
-				:optionsApp="optionsApp"
-			/>
-			<ToyBoxPage 
-				v-if="activeTab === 2"
-				:optionsApp="optionsApp"
-			/>
-			<LayoutPage
-				v-if="activeTab === 3"
-				:optionsApp="optionsApp"
-			/>
-			<ButtonsPage
-				v-if="activeTab === 4"
-				:optionsApp="optionsApp"
-			/>		
+			<HelpPage v-if="activeTab === 0" />
+			<SettingsPage v-if="activeTab === 1" />
+			<ToyBoxPage v-if="activeTab === 2" />
+			<LayoutPage v-if="activeTab === 3" />
+			<ButtonsPage v-if="activeTab === 4" />		
 
 		</div>
 
@@ -50,7 +42,7 @@
 <script setup>
 
 // vue
-import { ref, onBeforeMount, onMounted } from 'vue'
+import { ref, provide, onBeforeMount } from 'vue'
 
 // components
 import TopTabBar from '../components/options/TopTabBar.vue'
@@ -62,8 +54,8 @@ import ButtonsPage from '../components/options/page_buttons/ButtonsBoardPage.vue
 import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
 
 // our app scripts
-import Options from '../scripts/options_state/Options';
-let optionsApp = null;
+import ChatToysApp from '../scripts/ChatToysApp';
+let ctApp = null;
 
 // we'll define our tabs here
 const tabs = [
@@ -77,18 +69,24 @@ const tabs = [
 // the index of the active tab
 const activeTab = ref(3);
 
-// before we render first time, we need to instantiate our options state
+// before we render first time, we need to instantiate our main state
 onBeforeMount(() => {
-	optionsApp = new Options();
 
-	window.optionsApp = optionsApp;
+	// create the app, which will be the main state manager for the app
+	ctApp = new ChatToysApp();
+
+	// since we're using vue3, we can provide the app state to all children
+	provide('ctApp', ctApp);
+
+	// provide access for window for e-z-debugging
+	window.ctApp = ctApp;
 });
 
 </script>
 <style lang="scss" scoped>
 
 	// the main wrapper for the page - fill the screen
-	.optionsWrapper {
+	.mainWindowWrapper {
 
 		// fill screen
 		position: absolute;
@@ -109,22 +107,16 @@ onBeforeMount(() => {
 		// the tab pages will spawn in this container
 		.tabPagesWrapper {
 
-			/* border: 1px solid red; */
-			/* min-width: 990px; */
-			/* border: 1px solid red; */
-
 			// fill bottom under top tabs
 			position: absolute;
 			inset: 42px 0px 0px calc(50vw - 800px);
 			
 			padding: 10px 10px 0px 10px;
-
-			/* translate: -50% 0px; */
-			/* width: 1500px; */
 			border-style: 15px;
 
 			overflow-y: auto;
 			overflow-x: hidden;
+			
 			//Ensures child elements respect height constraints
 			display: flex; 
 			flex-direction: column;
@@ -132,7 +124,7 @@ onBeforeMount(() => {
 
 		}// .tabPagesWrapper
 
-	}// .optionsWrapper
+	}// .mainWindowWrapper
 
 	// styles for modal backdrop via the "jenesius-vue-modal" library
 	:deep(.modal-container) {
@@ -144,7 +136,7 @@ onBeforeMount(() => {
 	// for smaller widths, we need to adjust the layout
 	@media (max-width: 1599px) {
 
-		.optionsWrapper {
+		.mainWindowWrapper {
 
 			// for debug, make it obvious
 			/* background: #00abae !important; */
@@ -155,7 +147,7 @@ onBeforeMount(() => {
 			
 			}// .tabPagesWrapper
 
-		}// .optionsWrapper
+		}// .mainWindowWrapper
 	}
 
 </style>

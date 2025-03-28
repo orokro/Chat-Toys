@@ -11,18 +11,9 @@
 		:selectedTab="selectedPage"
 		@changeTab="(tab)=>selectedPage = tab"
 	>	
-		<GeneralSettingsPage 
-			v-if="selectedPage === 'settings'" 
-			:optionsApp="optionsApp"
-		/>
-		<AssetsPage 
-			v-if="selectedPage === 'assets_db'" 
-			:optionsApp="optionsApp"
-		/>
-		<UsersPage 
-			v-if="selectedPage === 'users_db'" 
-			:optionsApp="optionsApp"
-		/>
+		<GeneralSettingsPage v-if="selectedPage === 'settings'" />
+		<AssetsPage v-if="selectedPage === 'assets_db'" />
+		<UsersPage v-if="selectedPage === 'users_db'" />
 
 	</VerticalItemsPage>
 
@@ -30,8 +21,7 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, onMounted, markRaw, watch, computed } from 'vue';
-import { chromeRef } from '../../../scripts/chromeRef';
+import { ref } from 'vue';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
@@ -39,20 +29,7 @@ import GeneralSettingsPage from './pages/GeneralSettingsPage.vue';
 import AssetsPage from './pages/AssetsPage.vue';
 import UsersPage from './pages/UsersPage.vue';
 
-// components
-import PageBox from '../PageBox.vue';
-import SectionHeader from '../SectionHeader.vue';
-
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
-
-// pages
+// this will generate the icons for the vertical strip items
 const pageItems = [
 	{
 		slug: 'settings',

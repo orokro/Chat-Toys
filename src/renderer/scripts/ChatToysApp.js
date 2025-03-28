@@ -7,11 +7,11 @@
 
 // vue
 import { ref, shallowRef } from 'vue';
-import { chromeRef, chromeShallowRef } from '../chromeRef';
+import { chromeRef, chromeShallowRef } from './chromeRef';
 
 // lib/misc
-import { toysData } from '../ToysData';
-import { AssetManager } from '../assets_state/AssetManager';
+import { toysData } from './ToysData';
+import { AssetManager } from './assets_state/AssetManager';
 import DragHelper from 'gdraghelper';
 
 // main export
@@ -117,4 +117,11 @@ export default class Options {
 		}		
 	}
 
+	
+	/**
+	 * For debug, resets the list of commands.
+	 */
+	resetCommands() {
+		this.commands.value = {};
+	}
 }

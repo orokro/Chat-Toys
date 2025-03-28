@@ -22,7 +22,6 @@
 			Below you can customize the commands that users can type to interact with the Stream Buddies system.
 		</p>
 		<CommandsConfigBox
-			:optionsApp="optionsApp"
 			:toyName="'Stream Buddies'"
 			:toySlug="toySlug"
 			:commands="commands"
@@ -47,14 +46,6 @@ import CatsumIpsum from '../../../CatsumIpsum.vue';
 const toySlug = 'stream_buddies';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

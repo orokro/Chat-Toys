@@ -55,19 +55,16 @@
 <script setup>
 
 // vue
-import { ref, onMounted, computed, useSlots, watch} from 'vue'
+import { ref, computed, useSlots, watch, inject} from 'vue'
 
 // yup, we're using slots
 const slots = useSlots();
 
+// fetch the main app state context
+const ctApp = inject('ctApp');
+
 // accept some props
 const props = defineProps({
-	
-	// options app for state
-	optionsApp: {
-		type: Object,
-		default: null
-	},
 
 	// the box data key
 	boxDataKey: {
@@ -132,7 +129,7 @@ const width = ref(props.boxData.width);
 const height = ref(props.boxData.height);
 
 // grab local ref to drag helper
-const dh = props.optionsApp.dragHelper;
+const dh = ctApp.dragHelper;
 
 // aspect ratio
 let aspectRatio = width.value / height.value;

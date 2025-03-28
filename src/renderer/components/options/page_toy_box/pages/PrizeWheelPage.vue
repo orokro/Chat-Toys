@@ -26,7 +26,6 @@
 			Below you can customize the commands that users can type to interact with the Prize Wheel system.
 		</p>
 		<CommandsConfigBox
-			:optionsApp="optionsApp"
 			:toyName="'Prize Wheel'"
 			:toySlug="toySlug"
 			:commands="commands"
@@ -64,7 +63,6 @@
 		<SettingsAssetRow
 			v-model="wheelImageId"
 			:kind-filter="'image'"
-			:optionsApp="props.optionsApp"
 		>
 			<h3>Image File for Wheel</h3>
 			<p>You can Photoshop or commission a custom theme to use for the wheel.</p>
@@ -73,7 +71,6 @@
 		<SettingsAssetRow
 			v-model="wheelSoundId"
 			:kind-filter="'sound'"
-			:optionsApp="props.optionsApp"
 		>
 			<h3>Click Sound for Wheel</h3>
 			<p>What sound to use for the spinning clicks.</p>
@@ -115,16 +112,6 @@ import ArrayColorInput from '../../ArrayColorInput.vue';
 
 // lib/misc
 import * as yup from 'yup';
-
-// props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
 
 // generate slug for command
 const toySlug = 'prize_wheel';

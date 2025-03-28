@@ -15,6 +15,9 @@ import { join } from 'path';
  */
 function createMainWindow() {
 
+	// true if we're in dev mode
+	const isDev = process.env.NODE_ENV === 'development';
+
 	// Create the browser window.
 	const mainWindow = new BrowserWindow({
 		width: 1750,
@@ -27,7 +30,7 @@ function createMainWindow() {
 	});
 
 	// if we're in dev, we'll connect to the localhost vite server
-	if (process.env.NODE_ENV === 'development') {
+	if (isDev) {
 		const rendererPort = process.argv[2];
 		mainWindow.loadURL(`http://localhost:${rendererPort}`);
 	}
@@ -47,11 +50,16 @@ function createMainWindow() {
 
 		We never want the main window to be closed, unless the user is actually
 		quitting the app. So, we'll just hide it when the user tries to close it.
+
+		Note that, because it would be annoying to have to goto the system tray
+		every time we close the app in Dev, we'll disable this feature in Dev.
 	*/
-	mainWindow.on('close', (event) => {
-		event.preventDefault();
-		mainWindow.hide();
-	});
+	if(isDev==false){
+		mainWindow.on('close', (event) => {
+			event.preventDefault();
+			mainWindow.hide();
+		});
+	}
 
 	return mainWindow;
 }

@@ -51,7 +51,7 @@
 			<FilePreview
 				:fileId="selectedRow"
 				:height="100"
-				:assetManager="props.optionsApp.assetsMgr"
+				:assetManager="ctApp.assetsMgr"
 			/>
 		</template>
 		<SectionHeader title="Assets Database"/>
@@ -61,7 +61,7 @@
 			@click="handleImportAssets"
 		>Import Assets</button>
 		<AssetsView
-			:data="props.optionsApp.assetsMgr.assets.value"
+			:data="ctApp.assetsMgr.assets.value"
 			:selected_id="selectedRow"			
 			:ignoreColumns="['id', 'file_path']"
 			:showDeleteColumn="true"
@@ -75,10 +75,8 @@
 </template>
 <script setup>
 
-//:editableFields="['name', 'tags']"
-
 // vue
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 
 // components
 import ConfirmModal from '../../ConfirmModal.vue';
@@ -91,18 +89,11 @@ import FilePreview from '../../FilePreview.vue';
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
 
-// props
-const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	}
-});
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // the currently selected row
-const selectedRow = ref(props.optionsApp.assetsMgr.assets.value[0].id);
+const selectedRow = ref(ctApp.assetsMgr.assets.value[0].id);
 
 // handle when a row is clicked
 function rowClick({ id, data }){
@@ -143,7 +134,7 @@ async function deleteRow(id){
 		return;
 
 	// remove the file
-	props.optionsApp.assetsMgr.remove(id);
+	ctApp.assetsMgr.remove(id);
 	if(selectedRow.value===id)
 		selectedRow.value = null;
 }
@@ -152,8 +143,7 @@ async function deleteRow(id){
 async function handleImportAssets(){
 
 	// open the modal to import assets
-	const optionsApp = props.optionsApp;
-	const assetsMgr = optionsApp.assetsMgr;
+	const assetsMgr = ctApp.assetsMgr;
 	const imports = await assetsMgr.importFiles('any', true);
 
 	// show list of imported IDs (for debug)

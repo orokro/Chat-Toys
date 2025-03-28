@@ -61,7 +61,6 @@
 				
 				<!-- actual editable widgets will be in here -->
 				<LayoutWidgets
-					:optionsApp="optionsApp"
 					:activeTab="activeTab"
 					:scale="scale"
 					:showAllWidgets="showAllWidgets"
@@ -76,7 +75,7 @@
 <script setup>
 
 // vue
-import { ref, onMounted, onBeforeUnmount, watch, mergeProps } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { chromeRef } from '../../../scripts/chromeRef';
 
 // components
@@ -99,12 +98,6 @@ const scale = ref(1);
 
 // accept some props
 const props = defineProps({
-	
-	// reference to the state of the options page
-	optionsApp: {
-		type: Object,
-		default: null
-	},
 
 	// the currently active widget tab
 	activeTab: {
