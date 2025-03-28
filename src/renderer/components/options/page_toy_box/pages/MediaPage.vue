@@ -121,7 +121,7 @@ function reconcileMediaAssets(currentCommands){
 
 			// create a new media asset object
 			newMediaAssets.push({
-				commandSlug: slugify(slug),
+				commandSlug: slug,
 				commandName: command.command,
 				hasImage: true,
 				imageId: "6",

@@ -392,9 +392,9 @@ function addCommand(){
 	// use props.toyslug as the prefix for the new command and increment number
 	// till we find one that's not in use
 	let newCommandIndex = 1;
-	let newCommandSlug = `${props.toySlug}_${newCommandIndex}`;
+	let newCommandSlug = `${props.toySlug}__${newCommandIndex}`;
 	while(commands.hasOwnProperty(newCommandSlug))
-		newCommandSlug = `${props.toySlug}_${++newCommandIndex}`;
+		newCommandSlug = `${props.toySlug}__${++newCommandIndex}`;
 	
 	// now that we got a slug, do the same for the actual command text
 	newCommandIndex = 1;
