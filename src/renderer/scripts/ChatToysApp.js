@@ -14,6 +14,8 @@ import { toysData } from './ToysData';
 import { ToySettings } from './ToySettings';
 import { AssetManager } from './assets_state/AssetManager';
 import { ChatProcessor } from './ChatProcessor';
+import { UserManager } from './UserManager';
+import { CommandProcessor } from './CommandProcessor';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -54,8 +56,14 @@ export default class ChatToysApp {
 		// a chrome plugin.
 		this.chatProcessor = new ChatProcessor();
 
-		this.chatProcessor.onNewChats((messages) => {
-			// console.log('ChatProcessor received new messages:', messages);
+		// make new data base of all our users we've seen
+		this.userManager = new UserManager(this);
+
+		// make a new command processor to handle all incoming commands
+		this.commandProcessor = new CommandProcessor(this, this.chatProcessor, this.userManager);
+
+		this.commandProcessor.onCommandFound((commandSlug, msg, user, params) => {
+			console.log(`Command found: ${commandSlug} from `, user, 'in', msg, 'with params', params);
 		});
 
 		// reusable drag helper
