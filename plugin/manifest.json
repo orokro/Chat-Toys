@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "YouTube Chat Toys (YTCT) Chat Helper",
 	"version": "1.0",
-	"description": "YouTube Live Chat helper.",
+	"description": "YouTube Chat Toys (YTCT) Chat Helper.",
 	"permissions": [],
 	"content_scripts": [
 		{
@@ -18,7 +18,7 @@
 	"web_accessible_resources": [
 		{
 			"resources": [
-				"thing.js"
+				"chatProcessorClient.js"
 			],
 			"matches": [
 				"<all_urls>"

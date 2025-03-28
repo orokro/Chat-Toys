@@ -8,37 +8,49 @@
 */
 
 /**
- * Adds a button to the YouTube Live Chat page that will inject a script to enable chat forwarding.
+ * Add a button to the YouTube Live Chat page to enable the chat forwarding.
  */
 function addInjectionButton() {
 
-	// if the button is already there, don't add it again
+	// Only add the button if it doesn't already exist
 	const header = document.querySelector('yt-live-chat-header-renderer');
-	if (!header || document.getElementById('inject-socket-btn'))
-		return;
+	if (!header || document.getElementById('inject-socket-btn')) return;
 
-	// create the button
+	// Create the button
 	const btn = document.createElement('button');
 	btn.id = 'inject-socket-btn';
 	btn.textContent = 'Enable YTCT';
 	btn.style.cssText = 'margin-left: 10px; padding: 4px 8px; cursor: pointer;';
 
-	// when the button is clicked, inject the script
+	// our state for if the chat forwarder is enabled
+	let enabled = false;
+
+	// Add a click listener to the button
 	btn.addEventListener('click', () => {
 
-		// add our chat processing script to the page
-		const script = document.createElement('script');
-		script.src = chrome.runtime.getURL('chatProcessorClient.js');
-		script.onload = () => script.remove();
-		(document.head || document.documentElement).appendChild(script);
+		// Inject the chatProcessorClient script if it hasn't been loaded yet
+		if (!window.YTCTLoaded) {
+			const script = document.createElement('script');
+			script.src = chrome.runtime.getURL('chatProcessorClient.js');
+			script.onload = () => script.remove();
+			(document.head || document.documentElement).appendChild(script);
+		}
+
+		// Toggle the enabled state
+		enabled = !enabled;
+		btn.textContent = enabled ? 'Disable YTCT' : 'Enable YTCT';
+
+		// Send a message to the main process to enable/disable the chat forwarder
+		window.postMessage({ source: 'YTCTController', enabled }, '*');
 	});
 
-	// add the button to the header
+	// Append the button to the header
 	header.appendChild(btn);
 }
 
-// we'll use an observer because the chat page is a SPA
-// and content loads dynamically via JS not via the browser
+
+// Observe the body for changes and add the button when the chat page loads
+// Because the app is a SPA, the chat page may change without a full page reload
 const observer = new MutationObserver(addInjectionButton);
 observer.observe(document.body, { childList: true, subtree: true });
 
