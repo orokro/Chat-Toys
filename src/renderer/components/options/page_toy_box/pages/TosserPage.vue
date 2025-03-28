@@ -96,7 +96,6 @@
 // vue
 import { ref, computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
-import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -116,39 +115,8 @@ const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
-// we'll use a chrome ref to aggregate all our settings
-const tosserSettings = chromeShallowRef('tosser-settings', {});
-
-// list of items that can be tossed
-const tosserAssets = ref([
-	{
-		model: "16",
-		sound: "15",
-		scale: 1,
-		slug: "tomato",
-		cmd: "tomato",
-	},
-	{
-		model: "18",
-		sound: "15",
-		scale: 1,
-		slug: "wad",
-		cmd: "paper",
-	}
-]);
-const randomTossMode = ref(false);
-const targetWidgetBox = ref({
-	x: (1280/2) - (200/2),
-	y: 720-400,
-	width: 200,
-	height: 400
-});
-
-// aggregate all our refs
-const settingsAggregator = new RefAggregator(tosserSettings);
-settingsAggregator.register('tosserAssets', tosserAssets);
-settingsAggregator.register('randomTossMode', randomTossMode);
-settingsAggregator.register('targetWidgetBox', targetWidgetBox);
+// get our local refs to use in template
+const { tosserAssets, randomTossMode } = ctApp.toySettings.tosserSettings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

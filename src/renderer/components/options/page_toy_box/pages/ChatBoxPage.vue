@@ -124,61 +124,40 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, computed } from 'vue';
+import { ref, shallowRef, computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
-import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
-import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsRow from '../../SettingsRow.vue';
 import SettingsInputRow from '../../SettingsInputRow.vue';
 import SettingsAssetRow from '../../SettingsAssetRow.vue';
+
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // generate slug for command
 const toySlug = 'chat_box';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
-// our local state
-const enableChatBox = ref(false);
-const chatBoxImage = ref('3');
-const filterCommands = ref(true);
-const showChatterNames = ref(true);
-const chatNameColor = ref('#00ABAE');
-const chatTextColor = ref('#000000');
-const shoutSoundId = ref('11');
-const swarmSize = ref(5);
-const swarmDuration = ref(10);
-const chatWidgetBox = shallowRef({
-	x: 1280-300,
-	y: 0,
-	width: 300,
-	height: 400
-});
-const shoutWidgetBox = shallowRef({
-	x: 20,
-	y: 20,
-	width: 400,
-	height: 100
-});
+// our local refs state
+const {
+	enableChatBox,
+	chatBoxImage,
+	filterCommands,
+	showChatterNames,
+	chatNameColor,
+	chatTextColor,
+	shoutSoundId,
+	swarmSize,
+	swarmDuration,
+	chatWidgetBox,
+	shoutWidgetBox
+} = ctApp.toySettings.chatSettings;
 
-// aggregate all our refs
-const chatBoxSettings = chromeShallowRef('chat-box-settings', {});
-const settingsAggregator = new RefAggregator(chatBoxSettings);
-settingsAggregator.register('enableChatBox', enableChatBox);
-settingsAggregator.register('chatBoxImage', chatBoxImage);
-settingsAggregator.register('filterCommands', filterCommands);
-settingsAggregator.register('showChatterNames', showChatterNames);
-settingsAggregator.register('chatNameColor', chatNameColor);
-settingsAggregator.register('chatTextColor', chatTextColor);
-settingsAggregator.register('shoutSoundId', shoutSoundId);
-settingsAggregator.register('swarmSize', swarmSize);
-settingsAggregator.register('swarmDuration', swarmDuration);
-settingsAggregator.register('chatWidgetBox', chatWidgetBox);
-settingsAggregator.register('shoutWidgetBox', shoutWidgetBox);
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

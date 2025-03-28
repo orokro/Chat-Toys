@@ -66,7 +66,6 @@
 // vue
 import { ref, computed, watch, onMounted, shallowRef, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
-import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -85,27 +84,15 @@ const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
-// we'll use a chrome ref to aggregate all our settings
-const mediaSettings = chromeShallowRef('media-settings', {});
-const mediaAssets = shallowRef([]);
-const widgetBox = shallowRef({
-	x: 20,
-	y: 20,
-	width: 400,
-	height: 200
-});
-const settingsAggregator = new RefAggregator(mediaSettings);
-settingsAggregator.register('mediaAssets', mediaAssets);
-settingsAggregator.register('widgetBox', widgetBox);
+// local settings refs
+const { mediaAssets, widgetBox } = ctApp.toySettings.mediaSettings;
 
 // this toy always starts empty!
 // all commands are user defined
 const commands = [];
 
-
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
-
 
 // compute array of the custom commands
 const customCommands = computed(() => {

@@ -73,4 +73,27 @@ export class RefAggregator {
 			}
 		);
 	}
+
+
+	/**
+	 * Batch register multiple refs with the aggregator.
+	 * 
+	 * @param {Object} obj - Object like { key: ref, key2: ref2, ... }
+	 */
+	registerObject(obj) {
+
+		// check all keys in the object
+		for (const key in obj) {
+			
+			// if we have a valid key
+			if (obj.hasOwnProperty(key)){
+
+				// and it is a ref, register it
+				if (isRef(obj[key]))
+					this.register(key, obj[key]);
+			}
+			
+		}// next key
+	}
+
 }

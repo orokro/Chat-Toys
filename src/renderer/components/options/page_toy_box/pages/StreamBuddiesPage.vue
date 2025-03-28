@@ -33,19 +33,26 @@
 <script setup>
 
 // vue
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 
 // components
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
-import CatsumIpsum from '../../../CatsumIpsum.vue';
+
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 // generate slug for command
 const toySlug = 'stream_buddies';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
+// our local ref settings for this system
+const { 
+	maxBuddyCount,
+	buddySize
+} = ctApp.toySettings.buddySettings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

@@ -49,9 +49,8 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, computed } from 'vue';
+import { ref, shallowRef, computed, inject } from 'vue';
 import { chromeShallowRef } from '../../../../scripts/chromeRef';
-import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -61,32 +60,20 @@ import CommandsConfigBox from '../../CommandsConfigBox.vue';
 import SettingsInputRow from '../../SettingsInputRow.vue';
 import SettingsAssetRow from '../../SettingsAssetRow.vue';
 
+// fetch the main app state context
+const ctApp = inject('ctApp');
+
 // generate slug for command
 const toySlug = 'head_pats';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
-// we'll use a chrome ref to aggregate all our settings
-const headPatsSettings = chromeShallowRef('head-pat-settings', {});
-const allowUserPats = ref(true);
-const headPatChatterImage = ref('22');
-const streamerWidgetBox = shallowRef({
-	x: 1280 - 200,
-	y: 200,
-	width: 200,
-	height: 200
-});
-const chatterWidgetBox = shallowRef({
-	x: (1280/2) - 100,
-	y: 720 - 400,
-	width: 200,
-	height: 200
-});
-
-const settingsAggregator = new RefAggregator(headPatsSettings);
-settingsAggregator.register('allowUserPats', allowUserPats);
-settingsAggregator.register('headPatChatterImage', headPatChatterImage);
-settingsAggregator.register('streamerWidgetBox', streamerWidgetBox);
-settingsAggregator.register('chatterWidgetBox', chatterWidgetBox);
+// local settings refs
+const { 
+	allowUserPats,
+	headPatChatterImage,
+	streamerWidgetBox,
+	chatterWidgetBox
+} = ctApp.toySettings.headPatSettings;
 
 
 // we'll define our commands here

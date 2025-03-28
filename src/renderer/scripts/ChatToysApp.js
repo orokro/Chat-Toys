@@ -11,14 +11,15 @@ import { chromeRef, chromeShallowRef } from './chromeRef';
 
 // lib/misc
 import { toysData } from './ToysData';
+import { ToySettings } from './ToySettings';
 import { AssetManager } from './assets_state/AssetManager';
 import DragHelper from 'gdraghelper';
 
 // main export
-export default class Options {
+export default class ChatToysApp {
 
 	/**
-	 * Builds the Options instance.
+	 * Builds the main ChatToysApp object
 	 */
 	constructor() {
 
@@ -40,6 +41,10 @@ export default class Options {
 		// the popup will also have it's own assets manager ref
 		this.assetsMgr = new AssetManager();
 
+		// this will build and/or populate the toy settings app-wide
+		// they're stored from localStorage, so this will init them or repopulate them
+		this.toySettings = new ToySettings(this);
+		
 		// reusable drag helper
 		this.dragHelper = new DragHelper();
 

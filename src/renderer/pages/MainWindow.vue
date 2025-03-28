@@ -67,7 +67,7 @@ const tabs = [
 ];
 
 // the index of the active tab
-const activeTab = ref(3);
+const activeTab = ref(2);
 
 // before we render first time, we need to instantiate our main state
 onBeforeMount(() => {
@@ -79,7 +79,7 @@ onBeforeMount(() => {
 	provide('ctApp', ctApp);
 
 	// provide access for window for e-z-debugging
-	window.ctApp = ctApp;
+	window.dctApp = ctApp;
 });
 
 </script>

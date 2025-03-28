@@ -50,9 +50,8 @@
 <script setup>
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
-import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -60,34 +59,21 @@ import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CommandsConfigBox from '../../CommandsConfigBox.vue';
 
+// fetch the main app state context
+const ctApp = inject('ctApp');
+
 // generate slug for command
 const toySlug = 'gamba';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
-// gamba settings
-const gambaStateMode = shallowRef('off');
-const gambaPrompt = shallowRef('Streamer will beat the boss?');
-const gambaOptions = shallowRef(['Yes', 'No']);
-const resultsWidgetBox = shallowRef({
-	x: (1280/2) - (500/2),
-	y: (720/2) - (600/2),
-	width: 500,
-	height: 600
-});
-const widgetBox = shallowRef({
-	x: (1280/2) - (400/2),
-	y: 720-220,
-	width: 400,
-	height: 200
-});
-const gambaSettings = chromeShallowRef('gamba-settings', {});
-const settingsAggregator = new RefAggregator(gambaSettings);
-settingsAggregator.register('gambaStateMode', gambaStateMode);
-settingsAggregator.register('gambaPrompt', gambaPrompt);
-settingsAggregator.register('gambaOptions', gambaOptions);
-settingsAggregator.register('resultsWidgetBox', resultsWidgetBox);
-settingsAggregator.register('widgetBox', widgetBox);
-
+// our local ref settings for this system
+const {
+	gambaStateMode,
+	gambaPrompt,
+	gambaOptions,
+	resultsWidgetBox,
+	widgetBox
+} = ctApp.toySettings.gambaSettings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

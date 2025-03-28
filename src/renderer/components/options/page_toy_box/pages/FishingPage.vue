@@ -72,7 +72,6 @@
 // vue
 import { ref, shallowRef, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
-import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -91,52 +90,12 @@ const ctApp = inject('ctApp');
 const toySlug = 'fishing';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
-// built in fish list
-const defaultFishList = [
-	{
-		name: 'runt',
-		image: '10',
-		scale: 1,
-		points: 10,
-		rarity: 10
-	},
-	{
-		name: 'common',
-		image: '9',
-		scale: 1,
-		points: 30,
-		rarity: 5
-	},
-	{
-		name: 'lunker',
-		image: '8',
-		scale: 1,
-		points: 100,
-		rarity: 1
-	},
-	{
-		name: 'boot',
-		image: '21',
-		scale: 1,
-		points: 0,
-		rarity: 1
-	},
-];
-
-// our local settings
-const fishSpawnInterval = ref(120);
-const fishList = shallowRef(defaultFishList); 
-const widgetBox = shallowRef({
-	x: 0,
-	y: 720-300,
-	width: 300,
-	height: 300
-});
-const fishingSettings = chromeShallowRef('fishing-settings', {});
-const settingsAggregator = new RefAggregator(fishingSettings);
-settingsAggregator.register('fishSpawnInterval', fishSpawnInterval);
-settingsAggregator.register('fishList', fishList);
-settingsAggregator.register('widgetBox', widgetBox);
+// our local ref settings
+const {
+	fishSpawnInterval,
+	fishList,
+	widgetBox
+} = ctApp.toySettings.fishingSettings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

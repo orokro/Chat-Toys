@@ -93,9 +93,7 @@
 <script setup>
 
 // vue
-import { ref, shallowRef } from 'vue';
-import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
-import { RefAggregator } from '../../../../scripts/RefAggregator';
+import { ref, shallowRef, inject } from 'vue';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -113,6 +111,9 @@ import ArrayColorInput from '../../ArrayColorInput.vue';
 // lib/misc
 import * as yup from 'yup';
 
+// fetch the main app state context
+const ctApp = inject('ctApp');
+
 // generate slug for command
 const toySlug = 'prize_wheel';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
@@ -121,30 +122,15 @@ const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 const itemSchema = yup.string().matches(/^[^\\]+$/, 'Escape characters are not allowed');
 const colorSchema = yup.string().matches(/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex color');
 
-// we'll use a chrome ref to aggregate all our settings
-const prizeWheelSettings = chromeShallowRef('prize-wheel-settings', {});
-
-// our settings for this system
-const wheelItems = ref([]);
-const wheelColors = ref([]);
-const wheelImageId = ref('5');
-const wheelSoundId = ref('12');
-const alwaysShowWheel = ref(false);
-const widgetBox = shallowRef({
-	x: (1280/2) - (420/2),
-	y: (720/2) - (466/2),
-	width: 420,
-	height: 466
-});
-
-// aggregate all our refs
-const settingsAggregator = new RefAggregator(prizeWheelSettings);
-settingsAggregator.register('wheelItems', wheelItems);
-settingsAggregator.register('wheelColors', wheelColors);
-settingsAggregator.register('wheelImageId', wheelImageId);
-settingsAggregator.register('wheelSoundId', wheelSoundId);
-settingsAggregator.register('alwaysShowWheel', alwaysShowWheel);
-settingsAggregator.register('widgetBox', widgetBox);
+// our local ref settings for this system
+const { 
+	wheelItems, 
+	wheelColors, 
+	wheelImageId, 
+	wheelSoundId, 
+	alwaysShowWheel, 
+	widgetBox
+} = ctApp.toySettings.prizeWheelSettings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage

@@ -167,7 +167,6 @@
 // vue
 import { ref, watch, computed, shallowRef, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
-import { RefAggregator } from '../../../../scripts/RefAggregator';
 
 // components
 import PageBox from '../../PageBox.vue';
@@ -186,44 +185,22 @@ const ctApp = inject('ctApp');
 const toySlug = 'channel_points';
 const slugify = (text) => (toySlug + '_' + text.toLowerCase());
 
-// we'll use a chrome ref to aggregate all our settings
-const channelPointsSettings = chromeRef('channel-points-settings', {});
-
-// our settings for this system
-const claimInterval = ref(300);
-const claimRandomness = ref(0);
-const claimDuration = ref(60);
-const pointsPerClaim = ref(100);
-const maxClaims = ref(0);
-const showTimerBar = ref(true);
-const showClaimsRemaining = ref(true);
-const showUserClaims = ref(true);
-const showTextPrompt = ref(true);
-const widgetColorTheme = ref('#00ABAE');
-const widgetIconId = ref('1');
-const widgetIconPath = ref('builtin/' + ctApp.assetsMgr.getFileData(widgetIconId.value).name);
-const widgetBox = shallowRef({
-	x: 1280-150,
-	y: 720-150,
-	width: 150,
-	height: 150
-});
-
-// aggregate all our refs
-const settingsAggregator = new RefAggregator(channelPointsSettings);
-settingsAggregator.register('claimInterval', claimInterval);
-settingsAggregator.register('claimRandomness', claimRandomness);
-settingsAggregator.register('claimDuration', claimDuration);
-settingsAggregator.register('pointsPerClaim', pointsPerClaim);
-settingsAggregator.register('maxClaims', maxClaims);
-settingsAggregator.register('showTimerBar', showTimerBar);
-settingsAggregator.register('showClaimsRemaining', showClaimsRemaining);
-settingsAggregator.register('showUserClaims', showUserClaims);
-settingsAggregator.register('showTextPrompt', showTextPrompt);
-settingsAggregator.register('widgetColorTheme', widgetColorTheme);
-settingsAggregator.register('widgetIconId', widgetIconId);
-settingsAggregator.register('widgetIconPath', widgetIconPath);
-settingsAggregator.register('widgetBox', widgetBox);
+// our local ref settings for this system
+const {
+	claimInterval,
+	claimRandomness,
+	claimDuration,
+	pointsPerClaim,
+	maxClaims,
+	showTimerBar,
+	showClaimsRemaining,
+	showUserClaims,
+	showTextPrompt,
+	widgetColorTheme,
+	widgetIconId,
+	widgetIconPath,
+	widgetBox
+} = ctApp.toySettings.channelPointsSettings;
 
 
 // we'll define our commands here
