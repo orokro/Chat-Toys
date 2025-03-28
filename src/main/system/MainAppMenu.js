@@ -22,7 +22,13 @@ function createAppMenu(mainWindow) {
 		{
 			label: 'File',
 			submenu: [
-				{ role: 'quit' }
+				{
+					label: 'Quit',
+					click: () => {
+						mainWindow.destroy();
+						app.quit();
+					}
+				}
 			]
 		},
 		{
