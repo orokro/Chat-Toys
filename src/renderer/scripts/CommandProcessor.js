@@ -7,6 +7,8 @@
 
 // vue
 import { computed, watch } from 'vue';
+
+// our app
 import { ChatProcessor } from "./ChatProcessor";
 import ChatToysApp from "./ChatToysApp";
 
@@ -156,14 +158,37 @@ export class CommandProcessor {
 				continue;
 
 			// notify all listeners of this command that was successfully run
-			for (const cb of this.toyHooks.get(toySlug))
-				cb(commandSlug, msg, user, params);
+			this._notifyListeners(toySlug, commandSlug, msg, user, params, commandData);
 
 			// Update cooldowns
 			const now = Date.now();
 			this.userCooldowns.set(`${commandData.slug}:${user.id}`, now);
 			this.groupCooldowns.set(commandData.slug, now);
 		}
+	}
+
+
+	/**
+	 * Get's a user from our database, or a dummy user if none is found
+	 * 
+	 * @param {String} id - user unique ID
+	 */
+	getUser(id){
+		
+		// get from database
+		const userFromDB = window.ytctDB.getUser(id);
+
+		// if not null, return as is
+		if (userFromDB)
+			return userFromDB;
+
+		// if not found, return a dummy user
+		return {
+			banned: 0,
+			display_name: 'Unknown Chatter',
+			points: 0,
+			youtube_id: id,
+		};
 	}
 
 
@@ -205,9 +230,17 @@ export class CommandProcessor {
 	 */
 	validateCommand(commandData, user, params) {
 
-		// if the command is not enabled, GTFO
-		if (!commandData.enabled)
+		// if the user is banned, GTFO
+		if (user.banned){
+			console.error(`User ${user.display_name} is banned`);
 			return false;
+		}
+
+		// if the command is not enabled, GTFO
+		if (!commandData.enabled){
+			console.error(`Command "${commandData.command}" is disabled`);
+			return false;
+		}
 
 		// gather some data we need
 		const now = Date.now();
@@ -272,6 +305,57 @@ export class CommandProcessor {
 		}// next i
 
 		return true;
+	}
+
+
+	/**
+	 * Notifies all listeners of a command that was run
+	 * 
+	 * @param {String} toySlug - slug for the toy that listeners are hooked to (like "chat" or "tosser")
+	 * @param {String} commandSlug - specifically which command was run
+	 * @param {Object} msg - the original chat message details that triggered the command
+	 * @param {Object} user - details about the user MAY BE a dummy object if user is not found
+	 * @param {Array<String>} params - the parameters passed to the command
+	 * @param {Object} commandData - details about the command from our settings
+	 */
+	_notifyListeners(toySlug, commandSlug, msg, user, params, commandData) {
+
+		// get all the listeners for this toySlug
+		const hooks = this.toyHooks.get(toySlug) || [];
+
+		// only allow one listener to accept the command
+		let wasAccepted = false;
+	
+		// notify all listeners of this command that was successfully run
+		for (const cb of hooks) {
+
+			// build a method to accept the command
+			const accept = () => {
+
+				// only allow one listener to accept the command
+				if (wasAccepted) 
+					return;
+				wasAccepted = true;
+
+				// update the user's points and other data
+				window.ytctDB.updateUser(msg.authorUniqueID, {
+					displayName: msg.author,
+					streamID: msg.streamID,
+					command: commandData.command,
+					relativePoints: (this.enableCosts.value === true && commandData.costEnabled)
+						? commandData.cost
+						: 0,
+				});
+			};
+			
+			// build a method to reject the command
+			const reject = (reason) => {
+				console.log(`Command "${commandSlug}" rejected by listener: ${reason}`);
+			};
+	
+			// call the listener with the command details
+			cb(commandSlug, msg, user, params, { accept, reject });
+		}
 	}
 
 }
