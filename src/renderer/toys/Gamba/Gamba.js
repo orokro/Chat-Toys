@@ -1,32 +1,32 @@
 /*
-	Tosser.js
-	---------
+	Gamba.js
+	--------
 
-	This class handles the state for the Tosser toy system.
+	This class handles the state for the Gamba toy system.
 
-	NOTE: it does not handle the rendering, which will be the Tosser widgets.
+	NOTE: it does not handle the rendering, which will be the Gamba widgets.
 */
 
 // our app
 import ToyState from "../ToyState";
 
 // main export
-export default class Tosser extends ToyState {
+export default class Gamba extends ToyState {
 
 	// static info
-	static name = 'Tosser';
-	static slug = 'tosser';
-	static desc = 'Let viewers toss objects onto your stream.';
+	static name = 'Gamba';
+	static slug = 'gamba';
+	static desc = 'Let viewers gamble their points.';
 
 	/**
-	 * Constructs the Tosser object
+	 * Constructs the Gamba object
 	 * 
 	 * @param {ToyManager} toyManager - reference to the toy manager
 	 */
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, Tosser.slug);
+		super(toyManager, Gamba.slug);
 
 	}
 
@@ -43,11 +43,10 @@ export default class Tosser extends ToyState {
 	onCommand(commandSlug, msg, user, params, handshake) {
 
 		// log it:
-		console.log('Tosser found', commandSlug, 'from', msg.author, 'with params', params);
+		console.log('Gamba found', commandSlug, 'from', msg.author, 'with params', params);
 
 		// accept the command which updates the database
 		handshake.accept();
 	}
-
 	
 }

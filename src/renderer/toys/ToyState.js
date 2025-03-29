@@ -17,17 +17,16 @@ export default class ToyState {
 	 * Constructs the ToyState object
 	 * 
 	 * @param {ToyManager} toyManager - reference to the toy manager
-	 * @param {Object} toyInfo - the toy's info from the toysData
+	 * @param {String} slug - the toy's slug from the class that extends this one
 	 */
-	constructor(toyManager, toyInfo) {
+	constructor(toyManager, slug) {
 
 		// save reference to the toy manager but also grab our chat app
 		this.toyManager = toyManager;
 		this.chatToysApp = toyManager.chatToysApp;
 
-		// save our toy info locally
-		this.slug = toyInfo.slug;
-		this.toyInfo = toyInfo;
+		// save our slug even though it's also technically static
+		this.slug = slug;
 
 		// we'll auto-subscribe to the commands for this toy!
 		// we'll use a callback that can be overridden by the toy

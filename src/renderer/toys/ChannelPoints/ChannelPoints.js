@@ -1,32 +1,33 @@
 /*
-	Tosser.js
-	---------
+	ChannelPoints.js
+	----------------
 
-	This class handles the state for the Tosser toy system.
+	This class handles the state for the Channel Points system,
+	which is really the heart of the app.
 
-	NOTE: it does not handle the rendering, which will be the Tosser widgets.
+	NOTE: it does not handle the rendering, which will be the widgets.
 */
 
 // our app
 import ToyState from "../ToyState";
 
 // main export
-export default class Tosser extends ToyState {
+export default class ChannelPoints extends ToyState {
 
 	// static info
-	static name = 'Tosser';
-	static slug = 'tosser';
-	static desc = 'Let viewers toss objects onto your stream.';
+	static name = 'Channel Points';
+	static slug = 'channel_points';
+	static desc = 'Let users occasionally earn points for watching your stream.';
 
 	/**
-	 * Constructs the Tosser object
+	 * Constructs the ChannelPoints object
 	 * 
 	 * @param {ToyManager} toyManager - reference to the toy manager
 	 */
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, Tosser.slug);
+		super(toyManager, ChannelPoints.slug);
 
 	}
 
@@ -43,11 +44,10 @@ export default class Tosser extends ToyState {
 	onCommand(commandSlug, msg, user, params, handshake) {
 
 		// log it:
-		console.log('Tosser found', commandSlug, 'from', msg.author, 'with params', params);
+		console.log('Channel Points found', commandSlug, 'from', msg.author, 'with params', params);
 
 		// accept the command which updates the database
 		handshake.accept();
 	}
-
 	
 }
