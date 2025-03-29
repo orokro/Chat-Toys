@@ -18,14 +18,19 @@ function createMainWindow() {
 	// true if we're in dev mode
 	const isDev = process.env.NODE_ENV === 'development';
 
+	// get data base path to pass to renderer
+	const dbPath = join(app.getPath('userData'), 'ytct.db');
+	
 	// Create the browser window.
 	const mainWindow = new BrowserWindow({
 		width: 1750,
 		height: 1000,
 		webPreferences: {
-			preload: join(__dirname, 'preload.js'),
+			preload: join(__dirname, 'preload.js'), 
+			additionalArguments: [`--dbPath=${dbPath}`],
 			nodeIntegration: false,
 			contextIsolation: true,
+			sandbox: false
 		}
 	});
 

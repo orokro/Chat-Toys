@@ -8,7 +8,9 @@
 		"build": "node scripts/build.js && electron-builder",
 		"build:win": "node scripts/build.js && electron-builder --win",
 		"build:mac": "node scripts/build.js && electron-builder --mac",
-		"build:linux": "node scripts/build.js && electron-builder --linux"
+		"build:linux": "node scripts/build.js && electron-builder --linux",
+		"rebuild": "electron-rebuild",
+		"postinstall": "electron-rebuild"
 	},
 	"repository": "https://github.com/orokro/YouTube-Chat-Toys",
 	"author": {
@@ -21,11 +23,13 @@
 		"chokidar": "^3.5.3",
 		"electron": "^32.1.2",
 		"electron-builder": "^25.1.6",
+		"electron-rebuild": "^3.2.9",
 		"typescript": "^5.2.2",
 		"vite": "^4.5.0"
 	},
 	"dependencies": {
 		"@types/three": "^0.174.0",
+		"better-sqlite3": "^11.9.1",
 		"chroma-js": "^3.1.2",
 		"examples": "^0.1.0",
 		"express": "^4.21.2",
