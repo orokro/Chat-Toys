@@ -123,6 +123,17 @@ export class ChatProcessor {
 
 			}// next run
 
+			// attempt to extract stream ID
+			let streamID = undefined;
+			try {
+				const topic = data?.continuationContents?.liveChatContinuation?.continuations?.[0]?.invalidationContinuationData?.invalidationId?.topic;
+				if (typeof topic === 'string' && topic.startsWith('chat~')) {
+					streamID = topic.split('chat~')[1];
+				}
+			} catch (e) {
+				console.warn('Could not extract streamID from payload:', e);
+			}
+
 			// the final formatted message
 			const formatted = {
 				id,
@@ -132,6 +143,7 @@ export class ChatProcessor {
 				emojis,
 				time: timestampUsec ? Number(timestampUsec) : undefined,
 				isMember,
+				streamID,
 			};
 
 			// add it to our list & mark it as seen so we don't repeat it
