@@ -1,23 +1,32 @@
 /*
 	DummyToy.js
-	--------------
+	-----------
 
-	Each of the "Toys" will be a separate classes that will be imported into the main script.
+	Each of the Toys in our app will manager their state with their own class that extends ToyState.
 
-	When the user adds a toy to their setup, the corresponding Toy's class will be instantiated,
-	and stored in the array of toys on the Plugin state.
+	The file ToyData.js will provide all the constructors based on the various toy kinds.
 
-	However, until we have all systems programmed, this DummyToy will be used as a placeholder.
+	However, we need a placeholder for when a toy is not yet implemented. This is that placeholder.
 */
 
+// our app
+import ToyState from "./ToyState";
+
 // main export
-export default class DummyToy {
+export default class DummyToy extends ToyState {
 
 	/**
-	 * Builds the DummyToy instance.
+	 * Constructs the DummyToy object
+	 * 
+	 * @param {ToyManager} toyManager - reference to the toy manager
+	 * @param {Object} toyInfo - the toy's info from the toysData
 	 */
-	constructor() {
+	constructor(toyManager, toyInfo) {
 
+		// call the parent constructor
+		super(toyManager, toyInfo);
+
+		// mark this as a dummy toy
 		this.isDummy = true;
 	}
 	

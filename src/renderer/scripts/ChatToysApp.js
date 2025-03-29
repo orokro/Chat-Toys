@@ -14,8 +14,8 @@ import { toysData } from './ToysData';
 import { ToySettings } from './ToySettings';
 import { AssetManager } from './assets_state/AssetManager';
 import { ChatProcessor } from './ChatProcessor';
-import { UserManager } from './UserManager';
 import { CommandProcessor } from './CommandProcessor';
+import { ToyManager } from './ToyManager';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -56,19 +56,21 @@ export default class ChatToysApp {
 		// a chrome plugin.
 		this.chatProcessor = new ChatProcessor();
 
-		// make new data base of all our users we've seen
-		this.userManager = new UserManager(this);
-
 		// make a new command processor to handle all incoming commands
-		this.commandProcessor = new CommandProcessor(this, this.chatProcessor, this.userManager);
+		this.commandProcessor = new CommandProcessor(this, this.chatProcessor);
 
-		this.commandProcessor.onCommandFound((commandSlug, msg, user, params) => {
-			console.log(`Command found: ${commandSlug} from `, user, 'in', msg, 'with params', params);
-		});
+		// for debug
+		// this.commandProcessor.onCommandFound((commandSlug, msg, user, params) => {
+		// 	console.log(`Command found: ${commandSlug} from `, user, 'in', msg, 'with params', params);
+		// });
+
+		// this will actually instantiate the toys and manage their state
+		this.toyManager = new ToyManager(this);
 
 		// reusable drag helper
 		this.dragHelper = new DragHelper();
 
+		// layout size
 		this.layoutWidth = chromeRef('layoutWidth', 1280);
 		this.layoutHeight = chromeRef('layoutHeight', 720);
 	}

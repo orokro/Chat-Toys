@@ -7,6 +7,7 @@
 
 // import the various toy systems
 import DummyToy from "./toys/DummyToy";
+import Tosser from "./toys/Tosser";
 
 // just the basics for now
 export const toysData = [
@@ -32,7 +33,7 @@ export const toysData = [
 		name: "Tosser",
 		slug: "tosser",
 		desc: "Let viewers toss objects onto your stream.",
-		constructor: DummyToy,
+		constructor: Tosser,
 	},
 	{
 		name: "Prize Wheel",

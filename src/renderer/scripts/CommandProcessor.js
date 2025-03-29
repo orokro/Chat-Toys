@@ -12,6 +12,7 @@ import { computed, watch } from 'vue';
 import { ChatProcessor } from "./ChatProcessor";
 import ChatToysApp from "./ChatToysApp";
 
+
 /**
  * CommandProcessor class
  */
@@ -22,14 +23,12 @@ export class CommandProcessor {
 	 * 
 	 * @param {ChatToysApp} chatToysApp - The main ChatToysApp object
 	 * @param {ChatProcessor} chatProcessor - The ChatProcessor object
-	 * @param {UserManager} userManager - The UserManager object
 	 */
-	constructor(chatToysApp, chatProcessor, userManager) {
+	constructor(chatToysApp, chatProcessor) {
 
 		// save our app / references
 		this.chatToysApp = chatToysApp;
 		this.chatProcessor = chatProcessor;
-		this.userManager = userManager;
 		this.commandsRef = this.chatToysApp.commands
 
 		// build a map of commands for easy lookup
@@ -140,7 +139,7 @@ export class CommandProcessor {
 			const params = this.parseParams(commandData, messageText);
 
 			// get the user data from our data base
-			const user = this.userManager.getUserByID(authorUniqueID);
+			const user = this.getUser(authorUniqueID);
 
 			// make sure this command is able to be run
 			if (this.validateCommand(commandData, user, params) == false)
