@@ -6,8 +6,8 @@
 */
 
 // import the various toy systems
-import DummyToy from "./toys/DummyToy";
-import Tosser from "./toys/Tosser";
+import DummyToy from "./DummyToy/DummyToy";
+import Tosser from "./Tosser/Tosser";
 
 // just the basics for now
 export const toysData = [

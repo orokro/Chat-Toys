@@ -10,7 +10,6 @@
 import { ref, watch } from 'vue';
 
 // our app
-import { toysData } from './ToysData';
 import ChatToysApp from "./ChatToysApp";
 
 /**
@@ -49,6 +48,7 @@ export class ToyManager {
 
 		// get the list of enabled toys
 		const enabledSlugs = this.chatToysApp.enabledToys.value;
+		const toysData = this.chatToysApp.toysData;
 
 		// Add new toys
 		for (const slug of enabledSlugs) {

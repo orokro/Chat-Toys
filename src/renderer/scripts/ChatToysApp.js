@@ -10,7 +10,7 @@ import { ref, shallowRef } from 'vue';
 import { chromeRef, chromeShallowRef } from './chromeRef';
 
 // our app
-import { toysData } from './ToysData';
+import { toysData } from '../toys/ToysData';
 import { ToySettings } from './ToySettings';
 import { AssetManager } from './assets_state/AssetManager';
 import { ChatProcessor } from './ChatProcessor';
@@ -28,6 +28,9 @@ export default class ChatToysApp {
 	 */
 	constructor() {
 
+		// save our static coded list of toys
+		this.toysData = toysData;
+		
 		// our global list of commands
 		this.commands = chromeShallowRef('commands', {});
 		

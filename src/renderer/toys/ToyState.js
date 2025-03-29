@@ -8,7 +8,7 @@
 */
 
 // our app
-import { ToyManager } from "../ToyManager";
+import { ToyManager } from "../scripts/ToyManager";
 
 // main export
 export default class ToyState {

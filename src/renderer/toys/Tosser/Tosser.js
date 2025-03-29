@@ -8,7 +8,7 @@
 */
 
 // our app
-import ToyState from "./ToyState";
+import ToyState from "../ToyState";
 
 // main export
 export default class Tosser extends ToyState {

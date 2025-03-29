@@ -19,7 +19,7 @@
 			
 			<!-- loop through the toys and display them -->
 			<div
-				v-for="toy in toysData"
+				v-for="toy in ctApp.toysData"
 				:key="toy.slug"
 				class="toyIcon"
 				:class="{ alreadyAdded: includedToys[toy.slug] }"
@@ -78,7 +78,6 @@ import ModalWindowFrame from '../ModalWindowFrame.vue';
 
 // lib misc
 import { closeModal, Modal } from 'jenesius-vue-modal';
-import { toysData } from '../../../scripts/ToysData';
 
 // which item is hovered
 const hoveredToySlug = ref(null);
@@ -93,7 +92,7 @@ const emit = defineEmits([Modal.EVENT_PROMPT]);
 const includedToys = computed(() => {
 
 	const data = {};	
-	toysData.map(toy => {
+	ctApp.toysData.map(toy => {
 		data[toy.slug] = ctApp.enabledToys.value.includes(toy.slug);
 	});
 	return data;
@@ -110,7 +109,7 @@ const descriptionText = computed(() => {
 	const alreadyAdded = includedToys.value[hoveredToySlug.value];
 
 	// find the toy's description
-	const toy = toysData.find(toy => toy.slug === hoveredToySlug.value);
+	const toy = ctApp.toysData.find(toy => toy.slug === hoveredToySlug.value);
 	if(toy === undefined)
 		return 'No description available.';
 

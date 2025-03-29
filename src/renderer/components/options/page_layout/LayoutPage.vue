@@ -83,9 +83,6 @@ import LayoutScreen from './LayoutScreen.vue';
 import PageBox from '../PageBox.vue';
 import SectionHeader from '../SectionHeader.vue';
 
-// lib/ misc
-import { toysData } from '../../../scripts/ToysData';
-
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
@@ -96,7 +93,7 @@ const verticalItems = computed(() => {
 		slug: "settings",
 		desc: "System Widget.",
 	}
-	const toys = ctApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
+	const toys = ctApp.enabledToys.value.map((slug)=>(ctApp.toysData.asObject[slug]));
 	return [system, ...toys];
 });
 

@@ -61,7 +61,6 @@ import TosserPage from './pages/TosserPage.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
-import { toysData } from '../../../scripts/ToysData';
 
 
 // fetch the main app state context
@@ -70,13 +69,13 @@ const ctApp = inject('ctApp');
 
 // list of items to show in the vertical strip
 const verticalItems = computed(() => {
-	return ctApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
+	return ctApp.enabledToys.value.map((slug)=>(ctApp.toysData.asObject[slug]));
 });
 
 
 // true when the user has added all the toys
 const allToysAdded = computed(() => {
-	return ctApp.enabledToys.value.length >= toysData.length;
+	return ctApp.enabledToys.value.length >= ctApp.toysData.length;
 });
 
 
@@ -87,7 +86,7 @@ const toyPageArea = ref(null);
 // handle when the remove toy button was clicked on the strip
 async function handleRemoveToy(toy){
 
-	const toyDetails = toysData.asObject[toy];
+	const toyDetails = ctApp.toysData.asObject[toy];
 	const response = await promptModal(ConfirmModal, {
 		title: 'Are you sure?',
 		prompt: `Are you sure you want to remove the toy: ${toyDetails.name}?`,

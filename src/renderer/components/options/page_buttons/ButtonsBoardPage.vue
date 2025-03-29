@@ -27,10 +27,6 @@ import { socketRef, socketShallowRef, bindRef, bindRefs } from 'socket-ref';
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
 
-// lib/ misc
-import { openModal, promptModal } from "jenesius-vue-modal"
-import { toysData } from '../../../scripts/ToysData';
-
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
@@ -41,7 +37,7 @@ const verticalItems = computed(() => {
 		slug: "settings",
 		desc: "System Widget.",
 	}
-	const toys = ctApp.enabledToys.value.map((slug)=>(toysData.asObject[slug]));
+	const toys = ctApp.enabledToys.value.map((slug)=>(ctApp.toysData.asObject[slug]));
 	return [system, ...toys];
 });
 
