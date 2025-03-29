@@ -55,9 +55,9 @@ export class ToyManager {
 
 			if (!this.toys[slug]) {
 
-				const toyInfo = toysData.asObject[slug];
-				if (toyInfo && toyInfo.constructor)
-					this.toys[slug] = new toyInfo.constructor(this, toyInfo);
+				const toyConstructor = toysData.asObject[slug];
+				if (toyConstructor)
+					this.toys[slug] = new toyConstructor(this, toyConstructor);
 				
 			}
 			

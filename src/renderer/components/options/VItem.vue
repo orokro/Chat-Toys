@@ -57,7 +57,7 @@ const props = defineProps({
 
 	// the vertical item object data
 	item: {
-		type: Object,
+		type: [Object, Function],
 		default: ''
 	},
 
