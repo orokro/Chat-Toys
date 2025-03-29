@@ -153,4 +153,13 @@ export default class ChatToysApp {
 		this.commands.value = {};
 	}
 
+
+	/**
+	 * For debug, resets our local storage and reloads the page.
+	 */
+	nukeStorageAndReload() {
+		localStorage.clear();
+		location.reload();
+	}
+
 }

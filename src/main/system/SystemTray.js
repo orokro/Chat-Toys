@@ -17,8 +17,9 @@ const isDev = !app.isPackaged;
  * Class to create the system tray icon.
  * 
  * @param {BrowserWindow} mainWindow - The main window for the app.
+ * @param {function} destroyAllWindows - Function to destroy all windows.
  */
-function createSystemTray(mainWindow) {
+function createSystemTray(mainWindow, destroyAllWindows) {
 
 	// pick the icon path based on if we're in dev mode
 	const trayIconPath = isDev
@@ -40,7 +41,7 @@ function createSystemTray(mainWindow) {
 		{
 			label: 'Quit',
 			click: () => {
-				mainWindow.destroy();
+				destroyAllWindows();
 				app.quit();
 			}
 		}
