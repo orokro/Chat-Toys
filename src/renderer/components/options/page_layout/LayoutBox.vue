@@ -55,13 +55,13 @@
 <script setup>
 
 // vue
-import { ref, computed, useSlots, watch, inject} from 'vue'
+import { ref, computed, useSlots, watch, onBeforeUnmount} from 'vue'
+
+// lib/misc
+import DragHelper from 'gdraghelper';
 
 // yup, we're using slots
 const slots = useSlots();
-
-// fetch the main app state context
-const ctApp = inject('ctApp');
 
 // accept some props
 const props = defineProps({
@@ -129,11 +129,15 @@ const width = ref(props.boxData.width);
 const height = ref(props.boxData.height);
 
 // grab local ref to drag helper
-const dh = ctApp.dragHelper;
+const dh = new DragHelper();
 
 // aspect ratio
 let aspectRatio = width.value / height.value;
 
+// cleanup
+onBeforeUnmount(() => {
+	dh.end();
+});
 
 // watch for changes to the box data & update local refs & vice versa
 watch(() => props.boxData, (newData) => {
