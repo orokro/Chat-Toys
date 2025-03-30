@@ -43,7 +43,7 @@ export default class PrizeWheel extends ToyState {
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, PrizeWheel.slug);
+		super(toyManager);
 
 	}
 

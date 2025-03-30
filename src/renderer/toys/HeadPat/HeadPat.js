@@ -50,7 +50,7 @@ export default class HeadPat extends ToyState {
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, HeadPat.slug);
+		super(toyManager);
 
 	}
 

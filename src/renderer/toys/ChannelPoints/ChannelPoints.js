@@ -45,7 +45,7 @@ export default class ChannelPoints extends ToyState {
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, ChannelPoints.slug);
+		super(toyManager);
 
 	}
 

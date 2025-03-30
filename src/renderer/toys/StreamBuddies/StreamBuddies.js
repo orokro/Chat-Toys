@@ -36,7 +36,7 @@ export default class StreamBuddies extends ToyState {
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, StreamBuddies.slug);
+		super(toyManager);
 
 	}
 	

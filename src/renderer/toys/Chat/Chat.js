@@ -49,7 +49,7 @@ export default class Chat extends ToyState {
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, Chat.slug);
+		super(toyManager);
 
 	}
 

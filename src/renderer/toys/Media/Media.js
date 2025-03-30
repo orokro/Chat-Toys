@@ -43,7 +43,7 @@ export default class Media extends ToyState {
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, Media.slug);
+		super(toyManager);
 
 	}
 

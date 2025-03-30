@@ -19,16 +19,18 @@ export default class ToyState {
 	 * Constructs the ToyState object
 	 * 
 	 * @param {ToyManager} toyManager - reference to the toy manager
-	 * @param {String} slug - the toy's slug from the class that extends this one
 	 */
-	constructor(toyManager, slug) {
+	constructor(toyManager) {
 
 		// save reference to the toy manager but also grab our chat app
 		this.toyManager = toyManager;
 		this.chatToysApp = toyManager.chatToysApp;
 
+		// lazy hack to ref statics elsewhere
+		this.static = this.constructor;
+
 		// save our slug even though it's also technically static
-		this.slug = slug;
+		this.slug = new.target.slug;
 
 		// build our settings right away (the toy can override this)
 		this.initSettings();

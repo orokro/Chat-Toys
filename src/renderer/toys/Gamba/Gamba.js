@@ -49,7 +49,7 @@ export default class Gamba extends ToyState {
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, Gamba.slug);
+		super(toyManager);
 
 	}
 

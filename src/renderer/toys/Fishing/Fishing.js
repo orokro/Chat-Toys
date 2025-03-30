@@ -43,7 +43,7 @@ export default class Fishing extends ToyState {
 	constructor(toyManager) {
 
 		// call the parent constructor
-		super(toyManager, Fishing.slug);
+		super(toyManager);
 
 	}
 
