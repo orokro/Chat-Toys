@@ -90,8 +90,7 @@ const toy = ctApp.toyManager.toys[Fishing.slug];
 const {
 	fishSpawnInterval,
 	fishList,
-	widgetBox
-} = ctApp.toyManager.toys[toy.slug].settings;
+} = toy.settings;
 
 </script>
 <style lang="scss" scoped>	

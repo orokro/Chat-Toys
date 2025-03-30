@@ -47,9 +47,7 @@ const toy = ctApp.toyManager.toys[StreamBuddies.slug];
 
 // our local ref settings for this system
 const { 
-	maxBuddyCount,
-	buddySize
-} = ctApp.toyManager.toys[toy.slug].settings;
+} = toy.settings;
 
 </script>
 <style lang="scss" scoped>	

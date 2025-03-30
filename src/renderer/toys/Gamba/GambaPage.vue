@@ -64,12 +64,7 @@ const toy = ctApp.toyManager.toys[Gamba.slug];
 
 // our local ref settings for this system
 const {
-	gambaStateMode,
-	gambaPrompt,
-	gambaOptions,
-	resultsWidgetBox,
-	widgetBox
-} = ctApp.toyManager.toys[toy.slug].settings;
+} = toy.settings;
 
 </script>
 <style lang="scss" scoped>	

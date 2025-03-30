@@ -124,9 +124,8 @@ const {
 	wheelColors, 
 	wheelImageId, 
 	wheelSoundId, 
-	alwaysShowWheel, 
-	widgetBox
-} = ctApp.toyManager.toys[toy.slug].settings;
+	alwaysShowWheel,
+} = toy.settings;
 
 
 </script>

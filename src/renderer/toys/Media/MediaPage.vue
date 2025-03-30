@@ -85,8 +85,7 @@ const toy = ctApp.toyManager.toys[Media.slug];
 // local settings refs
 const { 
 	mediaAssets,
-	widgetBox
-} = ctApp.toyManager.toys[toy.slug].settings;
+} = toy.settings;
 
 
 // all of the commands system wide are stored in this chrome shallow ref

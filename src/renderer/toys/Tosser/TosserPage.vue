@@ -117,7 +117,7 @@ const toy = ctApp.toyManager.toys[Tosser.slug];
 const { 
 	tosserAssets, 
 	randomTossMode
-} = ctApp.toyManager.toys[toy.slug].settings;
+} = toy.settings;
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});

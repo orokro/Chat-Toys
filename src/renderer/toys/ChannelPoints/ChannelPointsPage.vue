@@ -195,8 +195,7 @@ const {
 	widgetColorTheme,
 	widgetIconId,
 	widgetIconPath,
-	widgetBox
-} = ctApp.toyManager.toys[toy.slug].settings;
+} = toy.settings;
 
 
 // update the icon path dynamically when the asset ID changes
