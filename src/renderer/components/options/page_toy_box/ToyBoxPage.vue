@@ -27,15 +27,12 @@
 
 		<template v-else>
 
-			<ChannelPointsPage v-show="ctApp.selectedToy.value === 'channel_points'" />
-			<ChatBoxPage v-show="ctApp.selectedToy.value === 'chat_box'" />
-			<FishingPage v-show="ctApp.selectedToy.value === 'fishing'" />
-			<GambaPage v-show="ctApp.selectedToy.value === 'gamba'" />
-			<HeadPatsPage v-show="ctApp.selectedToy.value === 'head_pats'" />
-			<MediaPage v-show="ctApp.selectedToy.value === 'media'" />
-			<PrizeWheelPage v-show="ctApp.selectedToy.value === 'prize_wheel'" />
-			<StreamBuddiesPage v-show="ctApp.selectedToy.value === 'stream_buddies'" />
-			<TosserPage v-show="ctApp.selectedToy.value === 'tosser'" />
+			<div class="toyPageArea" ref="toyPageArea">
+				<component
+					:is="toyComponent"
+					ref="toyPageArea"
+				/>
+			</div>
 
 		</template>
 	</VerticalItemsPage>
@@ -49,15 +46,6 @@ import { ref, markRaw, watch, computed, inject } from 'vue';
 import VerticalItemsPage from '../VerticalItemsPage.vue';
 import AddToyModal from './AddToyModal.vue';
 import ConfirmModal from '../ConfirmModal.vue';
-import ChannelPointsPage from './pages/ChannelPointsPage.vue';
-import ChatBoxPage from './pages/ChatBoxPage.vue';
-import FishingPage from './pages/FishingPage.vue';
-import GambaPage from './pages/GambaPage.vue';
-import HeadPatsPage from './pages/HeadPatsPage.vue';
-import MediaPage from './pages/MediaPage.vue';
-import PrizeWheelPage from './pages/PrizeWheelPage.vue';
-import StreamBuddiesPage from './pages/StreamBuddiesPage.vue';
-import TosserPage from './pages/TosserPage.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
@@ -66,6 +54,14 @@ import { openModal, promptModal } from "jenesius-vue-modal"
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
+
+// the component to load based on the current toy slug
+const toyComponent = computed(() => {
+
+	const toySlug = ctApp.selectedToy.value;
+	const toyConstructor = ctApp.toysData.asObject[toySlug];
+	return toyConstructor.optionsPageComponent;
+});
 
 // list of items to show in the vertical strip
 const verticalItems = computed(() => {

@@ -11,10 +11,14 @@
 // our app
 import ToyState from "../ToyState";
 
+// components
+import ChannelPointsPage from './ChannelPointsPage.vue';
+
 // main export
 export default class ChannelPoints extends ToyState {
 
 	// static info
+	static optionsPageComponent = ChannelPointsPage;
 	static name = 'Channel Points';
 	static slug = 'channel_points';
 	static desc = 'Let users occasionally earn points for watching your stream.';

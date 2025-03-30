@@ -10,10 +10,14 @@
 // our app
 import ToyState from "../ToyState";
 
+// components
+import GambaPage from './GambaPage.vue';
+
 // main export
 export default class Gamba extends ToyState {
 
 	// static info
+	static optionsPageComponent = GambaPage;
 	static name = 'Gamba';
 	static slug = 'gamba';
 	static desc = 'Let viewers gamble their points.';

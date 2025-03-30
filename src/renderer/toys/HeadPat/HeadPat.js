@@ -10,10 +10,14 @@
 // our app
 import ToyState from "../ToyState";
 
+// components
+import HeadPatsPage from './HeadPatsPage.vue';
+
 // main export
 export default class HeadPat extends ToyState {
 
 	// static info
+	static optionsPageComponent = HeadPatsPage;
 	static name = 'Head Pat';
 	static slug = 'head_pats';
 	static desc = 'Let viewers give and receive head pats.';

@@ -51,7 +51,7 @@
 
 // vue
 import { ref, shallowRef, inject } from 'vue';
-import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
+import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 
 // components
 import PageBox from '@components/options/PageBox.vue';

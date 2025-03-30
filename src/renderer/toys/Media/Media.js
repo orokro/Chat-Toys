@@ -10,10 +10,14 @@
 // our app
 import ToyState from "../ToyState";
 
+// components
+import MediaPage from './MediaPage.vue';
+
 // main export
 export default class Media extends ToyState {
 
 	// static info
+	static optionsPageComponent = MediaPage;
 	static name = 'Media';
 	static slug = 'media';
 	static desc = 'Display images, GIFs, or play sounds on your stream.';

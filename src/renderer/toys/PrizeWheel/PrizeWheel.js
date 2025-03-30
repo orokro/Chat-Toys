@@ -10,10 +10,14 @@
 // our app
 import ToyState from "../ToyState";
 
+// components
+import PrizeWheelPage from './PrizeWheelPage.vue';
+
 // main export
 export default class PrizeWheel extends ToyState {
 
 	// static info
+	static optionsPageComponent = PrizeWheelPage;
 	static name = 'Prize Wheel';
 	static slug = 'prize_wheel';
 	static desc = 'Let viewers spin a wheel to win prizes.';

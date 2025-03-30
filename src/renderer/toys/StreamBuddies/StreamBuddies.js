@@ -10,10 +10,14 @@
 // our app
 import ToyState from "../ToyState";
 
+// components
+import StreamBuddiesPage from './StreamBuddiesPage.vue';
+
 // main export
 export default class StreamBuddies extends ToyState {
 
 	// static info
+	static optionsPageComponent = StreamBuddiesPage;
 	static name = 'Stream Buddies';
 	static slug = 'stream_buddies';
 	static desc = 'Let viewers spawn buddies on your stream.';

@@ -10,10 +10,14 @@
 // our app
 import ToyState from "../ToyState";
 
+// components
+import TosserPage from './TosserPage.vue';
+
 // main export
 export default class Tosser extends ToyState {
 
 	// static info
+	static optionsPageComponent = TosserPage;
 	static name = 'Tosser';
 	static slug = 'tosser';
 	static desc = 'Let viewers toss objects onto your stream.';

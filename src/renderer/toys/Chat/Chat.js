@@ -10,10 +10,14 @@
 // our app
 import ToyState from "../ToyState";
 
+// components
+import ChatBoxPage from './ChatBoxPage.vue';
+
 // main export
 export default class Chat extends ToyState {
 
 	// static info
+	static optionsPageComponent = ChatBoxPage;
 	static name = 'Chat';
 	static slug = 'chat_box';
 	static desc = 'Add a chat overlay to your stream.';
