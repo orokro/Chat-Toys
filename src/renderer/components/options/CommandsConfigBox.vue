@@ -64,7 +64,7 @@
 			</div>
 
 			<template 
-				v-for="command in localCommandsList"
+				v-for="command in toy.localCommandsList.value"
 				:key="command.slug"
 			>
 				<div
@@ -184,114 +184,12 @@ const isChannelPointsEnabled = computed(()=>
 	ctApp.enabledToys.value.includes(ChannelPoints.slug));
 
 
-/*	
-	NOTE:
-	-----
-
-	Here we have a big comment block because the following is somewhat confusing.
-
-	All of the commands system wide will be stored in the above defined, commandsRef.
-	This variable is a chromeShallowRef, so it will be stored in local/plugin storage.
-
-	It will have keys on it's object for EVERY COMMAND in the system, including custom user ones.
-	It's essentially the source-of-truth for all commands in the system.
-
-	However, it is never explicitly defined anywhere.
-
-	Rather, this very component will help to initialize it.
-
-	In our props we take in a commands array - this is essentially the default list of commands
-	for this toy. When the component mounts we need to compare this list with the list in storage.
-
-	If we don't yet have these in the storage commandsRef, then we can initialize them with the
-	commands array from props. However, if we do have them, then we need to load them.
-
-	That's where the array (defined below) comes in. The actual data we'll display onscreen
-	will be duplicated from the chrome ref, because we don't want to show ALL commands, just
-	the current state of the commands that match the list passed in (via command slug).
-
-	So (also below) when we mount we'll do this comparison - and we'll also set up a watch(),
-	on the chrome ref - if the commands are edited elsewhere, we can update our internal array.
-
-	FURTHER: since some command boxes will allow users to add their own custom commands,
-	we'll also build our internal list based off the slug prefix.
-*/
-
-// the array mentioned above - the local scope ref to display in the component
-const localCommandsList = shallowRef([]);
-
-
-/**
- * Whenever we mount, our props change, or the chrome ref changes, we need to reconcile
- * the commands list with whats default and whats in storage.
- */
-function reconcileCommandsList(){
-
-	// we'll build the new local list temporarily here - we'll only update the ref at the end
-	const newLocalCommandsList = [];
-
-	// keep track of slugs alone as well
-	const newSlugs = [];
-
-	// we'll also keep an object of new commands to merge into the chrome ref if needed
-	const newCommands = {};
-
-	// fetch the current object storing all commands system wide
-	const commandsState = commandsRef.value;
-
-	// lets loop over every list in our props commands array and see if it already exists
-	// in the commands state - if not, we'll add it
-	for(let command of props.toy.commands){
-
-		// the slug for this command
-		const slug = command.slug;
-
-		// if the commandsState doesn't have this command have this slug as a key, 
-		// then we need to add it
-		if(!(slug in commandsState)){
-
-			// add it to the new commands object
-			newCommands[slug] = command;
-
-			// add it to the new local list
-			newLocalCommandsList.push(command);
-			newSlugs.push(slug);
-		
-		}
-		// otherwise, we'll just add the command from the commands state
-		else {
-			newLocalCommandsList.push(commandsState[slug]);
-			newSlugs.push(slug);
-		}
-		
-	}// next command
-
-	// if we have any new commands to add, then we'll merge them into the commands state
-	if(Object.keys(newCommands).length>0){
-		commandsRef.value = { ...commandsState, ...newCommands };
-	}
-
-	// before we update the local list, we should also search the keys that 
-	// follow the pattern of our toySlug_ prefix - these are custom commands
-	// we should pull them from the commands state and add them to our local list
-	for(let key in commandsState){
-
-		// if the key starts with our toySlug_ prefix, then we should add it to the local list
-		// (if its not already there)
-		if(key.startsWith(`${props.toy.slug}_`) && newSlugs.includes(key)==false)
-			newLocalCommandsList.push(commandsState[key]);		
-
-	}// next key
-
-	// update the local list
-	localCommandsList.value = newLocalCommandsList;
-}
 
 // when we mount, we need to reconcile the commands list
 onMounted(()=>{
 
 	// reconcile the commands list so our local array is up to date
-	reconcileCommandsList();
+	props.toy.reconcileCommandsList();
 });
 
 
@@ -301,7 +199,7 @@ watch(commandsRef, ()=>{
 	// console.log('commands ref changed');
 	// console.log(commandsRef.value);
 	// reconcile the commands list so our local array is up to date
-	reconcileCommandsList();
+	props.toy.reconcileCommandsList();
 });
 
 
