@@ -17,10 +17,20 @@ import PrizeWheelPage from './PrizeWheelPage.vue';
 export default class PrizeWheel extends ToyState {
 
 	// static info
-	static optionsPageComponent = PrizeWheelPage;
 	static name = 'Prize Wheel';
 	static slug = 'prize_wheel';
 	static desc = 'Let viewers spin a wheel to win prizes.';
+	static optionsPageComponent = PrizeWheelPage;
+	static themeColor = '#FFAAC5';
+	static widgetComponents = [
+		{
+			component: null,
+			key: 'widgetBox',
+			allowResize: true,
+			lockAspectRatio: true,
+		}
+	];
+
 
 	/**
 	 * Constructs the PrizeWheel object

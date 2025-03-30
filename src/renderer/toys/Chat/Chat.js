@@ -16,12 +16,28 @@ import ChatBoxPage from './ChatBoxPage.vue';
 // main export
 export default class Chat extends ToyState {
 
-	// static info
-	static optionsPageComponent = ChatBoxPage;
+	// static info	
 	static name = 'Chat';
 	static slug = 'chat_box';
 	static desc = 'Add a chat overlay to your stream.';
-	
+	static optionsPageComponent = ChatBoxPage;
+	static themeColor = '#60C5F1';
+	static widgetComponents = [
+		{
+			component: null,
+			key: 'chatWidgetBox',
+			allowResize: true,
+			lockAspectRatio: false,
+		},
+		{
+			component: null,
+			key: 'shoutWidgetBox',
+			allowResize: true,
+			lockAspectRatio: false,
+		},
+	];
+
+
 	/**
 	 * Constructs the Chat object
 	 * 

@@ -18,14 +18,21 @@ import ChannelPointsWidget from "./ChannelPointsWidget.vue";
 // main export
 export default class ChannelPoints extends ToyState {
 
-	// static info
-	static optionsPageComponent = ChannelPointsPage;
-	static widgetComponents = [
-		[ChannelPointsWidget, 'widgetBox']
-	];
+	// static info	
 	static name = 'Channel Points';
 	static slug = 'channel_points';
 	static desc = 'Let users occasionally earn points for watching your stream.';
+	static optionsPageComponent = ChannelPointsPage;
+	static themeColor = '#EED43A';
+	static widgetComponents = [
+		{
+			component: ChannelPointsWidget,
+			key: 'widgetBox',
+			allowResize: true,
+			lockAspectRatio: true,			
+		}
+	];
+
 
 	/**
 	 * Constructs the ChannelPoints object

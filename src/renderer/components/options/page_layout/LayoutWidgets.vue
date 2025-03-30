@@ -113,7 +113,7 @@ const widgets = [
 		allowResize: true,
 		lockAspectRatio: true,
 		color: '#EED43A'
-	},
+	},	
 	{
 		slug: 'chat_box',
 		component: null,
@@ -131,7 +131,7 @@ const widgets = [
 		allowResize: true,
 		lockAspectRatio: false,
 		color: '#60C5F1'
-	},
+	},	
 	{
 		slug: 'fishing',
 		component: null,
@@ -140,7 +140,7 @@ const widgets = [
 		allowResize: true,
 		lockAspectRatio: true,
 		color: '#A4704C'
-	},
+	},	
 	{
 		slug: 'gamba',
 		component: null,
@@ -158,7 +158,7 @@ const widgets = [
 		allowResize: true,
 		lockAspectRatio: false,
 		color: '#458233'
-	},
+	},	
 	{
 		slug: 'head_pats',
 		component: null,
@@ -176,7 +176,7 @@ const widgets = [
 		allowResize: true,
 		lockAspectRatio: true,
 		color: '#C6C37A'
-	},
+	},	
 	{
 		slug: 'media',
 		component: null,
@@ -185,7 +185,7 @@ const widgets = [
 		allowResize: true,
 		lockAspectRatio: false,
 		color: '#51547D'
-	},
+	},	
 	{
 		slug: 'prize_wheel',
 		component: null,
@@ -195,6 +195,7 @@ const widgets = [
 		lockAspectRatio: true,
 		color: '#FFAAC5'
 	},
+	
 	{
 		slug: 'tosser',
 		component: null,

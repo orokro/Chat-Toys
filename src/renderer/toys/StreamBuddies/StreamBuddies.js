@@ -17,10 +17,13 @@ import StreamBuddiesPage from './StreamBuddiesPage.vue';
 export default class StreamBuddies extends ToyState {
 
 	// static info
-	static optionsPageComponent = StreamBuddiesPage;
 	static name = 'Stream Buddies';
 	static slug = 'stream_buddies';
 	static desc = 'Let viewers spawn buddies on your stream.';
+	static optionsPageComponent = StreamBuddiesPage;
+	static themeColor = '#B59EDE';
+	static widgetComponents = [];
+
 
 	/**
 	 * Constructs the StreamBuddies object

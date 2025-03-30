@@ -17,10 +17,20 @@ import MediaPage from './MediaPage.vue';
 export default class Media extends ToyState {
 
 	// static info
-	static optionsPageComponent = MediaPage;
 	static name = 'Media';
 	static slug = 'media';
 	static desc = 'Display images, GIFs, or play sounds on your stream.';
+	static optionsPageComponent = MediaPage;
+	static themeColor = '#51547D';
+	static widgetComponents = [
+		{
+			component: null,
+			key: 'widgetBox',
+			allowResize: true,
+			lockAspectRatio: false,
+		}
+	];
+
 
 	/**
 	 * Constructs the Media object

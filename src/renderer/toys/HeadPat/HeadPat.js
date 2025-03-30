@@ -17,10 +17,27 @@ import HeadPatsPage from './HeadPatsPage.vue';
 export default class HeadPat extends ToyState {
 
 	// static info
-	static optionsPageComponent = HeadPatsPage;
 	static name = 'Head Pat';
 	static slug = 'head_pats';
 	static desc = 'Let viewers give and receive head pats.';
+	static optionsPageComponent = HeadPatsPage;
+	static themeColor = '#A4704C';
+	static themeColor = '#C6C37A';
+	static widgetComponents = [
+		{
+			component: null,
+			key: 'streamerWidgetBox',
+			allowResize: true,
+			lockAspectRatio: true,
+		},
+		{
+			component: null,
+			key: 'chatterWidgetBox',
+			allowResize: true,
+			lockAspectRatio: true,
+		}
+	];
+
 
 	/**
 	 * Constructs the Gamba object

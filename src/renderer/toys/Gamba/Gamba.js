@@ -17,10 +17,26 @@ import GambaPage from './GambaPage.vue';
 export default class Gamba extends ToyState {
 
 	// static info
-	static optionsPageComponent = GambaPage;
 	static name = 'Gamba';
 	static slug = 'gamba';
 	static desc = 'Let viewers gamble their points.';
+	static optionsPageComponent = GambaPage;
+	static themeColor = '#458233';
+	static widgetComponents = [
+		{
+			component: null,
+			key: 'widgetBox',
+			allowResize: true,
+			lockAspectRatio: false,
+		},
+		{
+			component: null,
+			key: 'resultsWidgetBox',
+			allowResize: true,
+			lockAspectRatio: false,
+		}
+	];
+
 
 	/**
 	 * Constructs the Gamba object

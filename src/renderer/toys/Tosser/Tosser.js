@@ -17,10 +17,20 @@ import TosserPage from './TosserPage.vue';
 export default class Tosser extends ToyState {
 
 	// static info
-	static optionsPageComponent = TosserPage;
 	static name = 'Tosser';
 	static slug = 'tosser';
 	static desc = 'Let viewers toss objects onto your stream.';
+	static optionsPageComponent = TosserPage;
+	static themeColor = '#E65A5A';
+	static widgetComponents = [
+		{
+			component: null,
+			key: 'targetWidgetBox',
+			allowResize: true,
+			lockAspectRatio: true,
+		}
+	];
+
 
 	/**
 	 * Constructs the Tosser object

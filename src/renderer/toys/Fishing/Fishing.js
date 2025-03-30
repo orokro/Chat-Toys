@@ -16,11 +16,21 @@ import FishingPage from './FishingPage.vue';
 // main export
 export default class Fishing extends ToyState {
 
-	// static info
-	static optionsPageComponent = FishingPage;
+	// static info	
 	static name = 'Fishing Mini-game';
 	static slug = 'fishing';
 	static desc = 'Let viewers play a fishing mini-game on your stream.';
+	static optionsPageComponent = FishingPage;
+	static themeColor = '#A4704C';
+	static widgetComponents = [
+		{
+			component: null,
+			key: 'widgetBox',
+			allowResize: true,
+			lockAspectRatio: true,
+		}
+	];
+
 
 	/**
 	 * Constructs the Gamba object
