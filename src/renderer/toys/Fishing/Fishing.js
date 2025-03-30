@@ -44,7 +44,6 @@ export default class Fishing extends ToyState {
 
 		// call the parent constructor
 		super(toyManager);
-
 	}
 
 

@@ -46,7 +46,6 @@ export default class ChannelPoints extends ToyState {
 
 		// call the parent constructor
 		super(toyManager);
-
 	}
 
 	
@@ -77,8 +76,8 @@ export default class ChannelPoints extends ToyState {
 				height: 150
 			}),
 		});
-
 	}
+
 
 	/**
 	 * Initialize the commands for this toy

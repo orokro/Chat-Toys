@@ -50,7 +50,6 @@ export default class Gamba extends ToyState {
 
 		// call the parent constructor
 		super(toyManager);
-
 	}
 
 

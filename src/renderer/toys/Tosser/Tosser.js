@@ -44,7 +44,6 @@ export default class Tosser extends ToyState {
 
 		// call the parent constructor
 		super(toyManager);
-
 	}
 
 

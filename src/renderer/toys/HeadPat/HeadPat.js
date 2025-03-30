@@ -51,7 +51,6 @@ export default class HeadPat extends ToyState {
 
 		// call the parent constructor
 		super(toyManager);
-
 	}
 
 
