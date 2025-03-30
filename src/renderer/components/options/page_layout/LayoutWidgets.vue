@@ -143,11 +143,7 @@ const widgets = [
  * @param {object} widget - the widget that spawned the box
  */
 function handleBoxChange(e, widget) {
-
-	widget.settings.value = {
-		...widget.settings.value,
-		[widget.key]: e
-	};
+	widget.settings[widget.key].value = e;
 }
 
 </script>
