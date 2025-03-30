@@ -47,9 +47,7 @@
 			Below you can customize the commands that users can type to interact with the Tosser system.
 		</p>
 		<CommandsConfigBox
-			:toyName="'Tosser'"
-			:toySlug="Tosser.slug"
-			:commands="commands"
+			:toy="toy"
 			:enableCustomCommands="true"
 		/>
 		
@@ -121,17 +119,12 @@ const {
 	randomTossMode
 } = ctApp.toyManager.toys[toy.slug].settings;
 
-// we'll define our commands here
-// NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
-// in the CommandsConfigBox component
-const commands = toy.commands;
-
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
 
 // get the command used for tossing items
 const toss_command = computed(() => {
-	return commandsRef.value.tosser_toss?.command || '';
+	return commandsRef.value.tosser__toss?.command || '';
 });
 
 </script>

@@ -25,11 +25,7 @@
 		<p>
 			Below you can customize the commands that users can type to interact with the Prize Wheel system.
 		</p>
-		<CommandsConfigBox
-			:toyName="'Prize Wheel'"
-			:toySlug="PrizeWheel.slug"
-			:commands="commands"
-		/>
+		<CommandsConfigBox :toy="toy" />
 			
 		<SectionHeader title="Settings"/>
 
@@ -132,10 +128,6 @@ const {
 	widgetBox
 } = ctApp.toyManager.toys[toy.slug].settings;
 
-// we'll define our commands here
-// NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
-// in the CommandsConfigBox component
-const commands = toy.commands
 
 </script>
 <style lang="scss" scoped>	

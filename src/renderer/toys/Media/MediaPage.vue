@@ -29,8 +29,7 @@
 			in the settings below
 		</p>
 		<CommandsConfigBox
-			:toyName="'Media'"
-			:toySlug="Media.slug"
+			:toy="toy"
 			:enable-custom-commands="true"
 		/>
 
@@ -89,12 +88,10 @@ const {
 	widgetBox
 } = ctApp.toyManager.toys[toy.slug].settings;
 
-// this toy always starts empty!
-// all commands are user defined
-// const kkcommands = [];
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
+
 
 // compute array of the custom commands
 const customCommands = computed(() => {

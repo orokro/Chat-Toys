@@ -24,11 +24,7 @@
 		<p>
 			Below you can customize the commands that users can type to interact with the Fishing system.
 		</p>
-		<CommandsConfigBox
-			:toyName="'Fishing'"
-			:toySlug="Fishing.slug"
-			:commands="commands"
-		/>
+		<CommandsConfigBox :toy="toy" />
 			
 		<SectionHeader title="Settings"/>
 		<SettingsInputRow
@@ -96,11 +92,6 @@ const {
 	fishList,
 	widgetBox
 } = ctApp.toyManager.toys[toy.slug].settings;
-
-// we'll define our commands here
-// NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
-// in the CommandsConfigBox component
-const commands = toy.commands;
 
 </script>
 <style lang="scss" scoped>	

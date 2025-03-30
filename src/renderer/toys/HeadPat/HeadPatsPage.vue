@@ -20,11 +20,7 @@
 		<p>
 			Below you can customize the commands that users can type to interact with the Head Pats system.
 		</p>
-		<CommandsConfigBox
-			:toyName="'Head Pats'"
-			:toySlug="HeadPat.slug"
-			:commands="commands"
-		/>
+		<CommandsConfigBox :toy="toy" />
 
 		<SectionHeader title="Settings"/>
 		<SettingsInputRow
@@ -76,18 +72,12 @@ const {
 } = ctApp.toyManager.toys[toy.slug].settings;
 
 
-// we'll define our commands here
-// NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
-// in the CommandsConfigBox component
-const commands = toy.commands;
-
-
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
 
 // get the command used for head patting
 const pat_command = computed(() => {
-	return commandsRef.value.head_pats_pat?.command || '';
+	return commandsRef.value.headPat__pat?.command || '';
 });
 
 

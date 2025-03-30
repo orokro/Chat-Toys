@@ -11,7 +11,7 @@
 
 		<!-- the header -->
 		<div class="header">
-			<h2>{{ toyName }} Commands / Triggers:</h2>
+			<h2>{{ toy.static.name }} Commands / Triggers:</h2>
 			<button 
 				v-if="enableCustomCommands"
 				class="addCommandButton"
@@ -164,22 +164,10 @@ const ctApp = inject('ctApp');
 // props
 const props = defineProps({
 
-	// title title of commands list
-	toyName: {
-		type: String,
-		default: 'Commands'
-	},
-
-	// the toy slug that's also used as a command slug prefix
-	toySlug: {
-		type: String,
-		default: 'toy'
-	},
-
-	// the array of command objects to configure
-	commands: {
-		type: Array,
-		default: []
+	// reference to the instance of the toy
+	toy: {
+		type: Object,
+		required: true
 	},
 
 	// allow custom commands
@@ -253,7 +241,7 @@ function reconcileCommandsList(){
 
 	// lets loop over every list in our props commands array and see if it already exists
 	// in the commands state - if not, we'll add it
-	for(let command of props.commands){
+	for(let command of props.toy.commands){
 
 		// the slug for this command
 		const slug = command.slug;
@@ -290,7 +278,7 @@ function reconcileCommandsList(){
 
 		// if the key starts with our toySlug_ prefix, then we should add it to the local list
 		// (if its not already there)
-		if(key.startsWith(`${props.toySlug}_`) && newSlugs.includes(key)==false)
+		if(key.startsWith(`${props.toy.slug}_`) && newSlugs.includes(key)==false)
 			newLocalCommandsList.push(commandsState[key]);		
 
 	}// next key
@@ -390,18 +378,18 @@ function addCommand(){
 	const commands = commandsRef.value;
 	const currentCommands = getUniqueCommands(commandsRef.value);
 
-	// use props.toyslug as the prefix for the new command and increment number
+	// use props.toy.slug as the prefix for the new command and increment number
 	// till we find one that's not in use
 	let newCommandIndex = 1;
-	let newCommandSlug = `${props.toySlug}__${newCommandIndex}`;
+	let newCommandSlug = `${props.toy.slug}__${newCommandIndex}`;
 	while(commands.hasOwnProperty(newCommandSlug))
-		newCommandSlug = `${props.toySlug}__${++newCommandIndex}`;
+		newCommandSlug = `${props.toy.slug}__${++newCommandIndex}`;
 	
 	// now that we got a slug, do the same for the actual command text
 	newCommandIndex = 1;
-	let newCommandText = `${props.toySlug}_${newCommandIndex}`;
+	let newCommandText = `${props.toy.slug}_${newCommandIndex}`;
 	while(currentCommands.includes(newCommandText))
-		newCommandText = `${props.toySlug}_${++newCommandIndex}`;
+		newCommandText = `${props.toy.slug}_${++newCommandIndex}`;
 
 	// create a new command object
 	const newCommand = {

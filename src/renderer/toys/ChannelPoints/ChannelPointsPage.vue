@@ -37,11 +37,7 @@
 		<p>
 			Below you can customize the commands that users can type to interact with the Channel Points system.
 		</p>
-		<CommandsConfigBox
-			:toyName="'Channel Points'"
-			:toySlug="ChannelPoints.slug"
-			:commands="commands"
-		/>
+		<CommandsConfigBox :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
 
@@ -203,12 +199,6 @@ const {
 } = ctApp.toyManager.toys[toy.slug].settings;
 
 
-// we'll define our commands here
-// NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
-// in the CommandsConfigBox component
-const commands = toy.commands;
-
-
 // update the icon path dynamically when the asset ID changes
 watch (widgetIconId, (newVal) => {
 	const fileData = ctApp.assetsMgr.getFileData(newVal);
@@ -223,7 +213,7 @@ const commandsRef = chromeShallowRef('commands', {});
 
 // get the command used for claiming points
 const claimCommand = computed(() => {
-	return commandsRef.value.channelPoints_get?.command || '';
+	return commandsRef.value.channelPoints__get?.command || '';
 });
 
 </script>

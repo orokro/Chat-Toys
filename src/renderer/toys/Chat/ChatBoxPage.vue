@@ -30,11 +30,7 @@
 		<p>
 			Below you can customize the commands that users can type to interact with the Chat system.
 		</p>
-		<CommandsConfigBox
-			:toyName="'Chat'"
-			:toySlug="Chat.slug"
-			:commands="commands"
-		/>
+		<CommandsConfigBox :toy="toy" />
 			
 		<SectionHeader title="Settings"/>
 		<SettingsInputRow
@@ -159,20 +155,15 @@ const {
 } = ctApp.toyManager.toys[toy.slug].settings;
 
 
-// we'll define our commands here
-// NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
-// in the CommandsConfigBox component
-const commands = toy.commands;
-
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
 
 // get the command used for tossing items
 const shout_command = computed(() => {
-	return commandsRef.value.chat_box_shout?.command || '';
+	return commandsRef.value.chat__shout?.command || '';
 });
 const swarm_command = computed(() => {
-	return commandsRef.value.chat_box_swarm?.command || '';
+	return commandsRef.value.chat__swarm?.command || '';
 });
 
 
