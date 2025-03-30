@@ -6,8 +6,9 @@
 */
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
 import { chromeRef, chromeShallowRef } from './chromeRef';
+import { socketShallowRef } from 'socket-ref';
 import { RefAggregator } from './RefAggregator';
 
 // our app
@@ -31,15 +32,15 @@ export default class ChatToysApp {
 		// save our static coded list of toys
 		this.toysData = toysData;
 
-		// build some general settings for the app
-		this.buildSettings();
-
 		// our global list of commands
 		this.commands = chromeShallowRef('commands', {});
 		
 		// we will use a chromeRef to persist the list of enabled toys
 		this.enabledToys = chromeShallowRef('enabledToys', []);
 
+		// build some general settings for the app
+		this.buildSettings();
+		
 		// but a regular ref for the active toy (if any), since
 		// this doesn't need to persist across tabs or even refreshes
 		this.selectedToy = chromeRef('selectedToy', null);
@@ -84,10 +85,20 @@ export default class ChatToysApp {
 			}),
 			stageWidth: ref(1280),
 			stageHeight: ref(720),
+			enabledToys: this.enabledToys,
 		};
 		this.settingsStorRef = chromeShallowRef('general-settings', {});
 		this.settingsAggregator = new RefAggregator(this.settingsStorRef);
 		this.settingsAggregator.registerObject(this.settings);
+
+		// now for some magic - we'll watch the settings object for changes
+		// and update a socket ref with the json, so our live page can update
+		this.settingsSocketRef = socketShallowRef('general-settings', this.settingsStorRef.value);
+		this.stopSettingsSocketWatch = watch(this.settingsStorRef, (newVal) => {
+			this.settingsSocketRef.value = newVal;
+		});
+		setTimeout(()=>
+			this.settingsSocketRef.value = this.settingsStorRef.value, 1000);
 	}
 
 

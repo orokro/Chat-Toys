@@ -17,7 +17,7 @@
 
 		></ChannelPointsWidget>
 
-		<pre>{{ json }}</pre>
+		<pre>{{ generalSettingsJSON }}</pre>
 	</div>
 </template>
 <script setup>
@@ -42,6 +42,7 @@ const asdasd = socketRef('test2', 'foo');
 
 window.st = socketTest;
 
+const generalSettingsJSON = socketRef('general-settings', 'foo');
 const json = socketRef('chat-settings', 'foo');
 
 </script>
