@@ -1,10 +1,11 @@
 /*
-	ToyState.js
-	-----------
+	Toy.js
+	------
 
-	This will be the base class for all the various state classes for
-	our toys. Nothing will instantiate this class directly, but
-	all toys (including the placeholder DummyToy) will extend this class.
+	This will be the base class for all our toys.
+
+	It will not only handle the state for when they're live,
+	but also act as a base for the commands and settings.
 */
 
 // our app
@@ -13,10 +14,10 @@ import { RefAggregator } from "../scripts/RefAggregator";
 import { chromeShallowRef } from "../scripts/chromeRef";
 
 // main export
-export default class ToyState {
+export default class Toy {
 
 	/**
-	 * Constructs the ToyState object
+	 * Constructs the Toy object
 	 * 
 	 * @param {ToyManager} toyManager - reference to the toy manager
 	 */

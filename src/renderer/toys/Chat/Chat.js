@@ -11,13 +11,13 @@
 import { ref, shallowRef } from 'vue';
 
 // our app
-import ToyState from "../ToyState";
+import Toy from "../Toy";
 
 // components
 import ChatBoxPage from './ChatBoxPage.vue';
 
 // main export
-export default class Chat extends ToyState {
+export default class Chat extends Toy {
 
 	// static info	
 	static name = 'Chat';

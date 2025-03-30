@@ -11,13 +11,13 @@
 import { ref, shallowRef } from 'vue';
 
 // our app
-import ToyState from "../ToyState";
+import Toy from "../Toy";
 
 // components
 import PrizeWheelPage from './PrizeWheelPage.vue';
 
 // main export
-export default class PrizeWheel extends ToyState {
+export default class PrizeWheel extends Toy {
 
 	// static info
 	static name = 'Prize Wheel';

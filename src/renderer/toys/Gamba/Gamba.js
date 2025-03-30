@@ -11,13 +11,13 @@
 import { ref, shallowRef } from 'vue';
 
 // our app
-import ToyState from "../ToyState";
+import Toy from "../Toy";
 
 // components
 import GambaPage from './GambaPage.vue';
 
 // main export
-export default class Gamba extends ToyState {
+export default class Gamba extends Toy {
 
 	// static info
 	static name = 'Gamba';

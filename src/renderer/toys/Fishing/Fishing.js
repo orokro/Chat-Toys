@@ -11,13 +11,13 @@
 import { ref, shallowRef } from 'vue';
 
 // our app
-import ToyState from "../ToyState";
+import Toy from "../Toy";
 
 // components
 import FishingPage from './FishingPage.vue';
 
 // main export
-export default class Fishing extends ToyState {
+export default class Fishing extends Toy {
 
 	// static info	
 	static name = 'Fishing Mini-game';

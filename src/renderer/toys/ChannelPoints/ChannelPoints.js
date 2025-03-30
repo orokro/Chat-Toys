@@ -12,14 +12,14 @@
 import { ref, shallowRef } from 'vue';
 
 // our app
-import ToyState from "../ToyState";
+import Toy from "../Toy";
 
 // components
 import ChannelPointsPage from './ChannelPointsPage.vue';
 import ChannelPointsWidget from "./ChannelPointsWidget.vue";
 
 // main export
-export default class ChannelPoints extends ToyState {
+export default class ChannelPoints extends Toy {
 
 	// static info	
 	static name = 'Channel Points';
