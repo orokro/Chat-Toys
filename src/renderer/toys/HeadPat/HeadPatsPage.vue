@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Head Pats Settings"
-		themeColor="#C6C37A"
+		:themeColor="toy.static.themeColor"
 	>
 		<p>
 			The Head Pats system lets chatters give you head pats!

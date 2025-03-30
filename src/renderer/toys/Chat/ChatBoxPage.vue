@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Chat Box Settings"
-		themeColor="#60C5F1"
+		:themeColor="toy.static.themeColor"
 	>
 		<p>
 			The Chat Box system allows you to show a customized chat capture on screen.

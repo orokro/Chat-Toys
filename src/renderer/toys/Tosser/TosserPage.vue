@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Tosser Settings"
-		themeColor="#E65A5A"
+		:themeColor="toy.static.themeColor"
 	>
 		<p>
 			The Tosser system lets chatters throw things at you, like tomatoes, pies, and more!

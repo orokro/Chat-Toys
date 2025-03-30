@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Media Settings"
-		themeColor="#51547D"
+		:themeColor="toy.static.themeColor"
 	>
 		<p>
 			The Media system lets chatters trigger things such as images, gifs, or sounds, or both at the same time!

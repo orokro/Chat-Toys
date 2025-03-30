@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Gamba Settings"
-		themeColor="#458233"
+		:themeColor="toy.static.themeColor"
 	>
 		<p>
 			The Gamba system lets chatters gamble their points away!

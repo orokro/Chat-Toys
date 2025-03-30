@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Stream Buddies Settings"
-		themeColor="#B59EDE"
+		:themeColor="toy.static.themeColor"
 	>
 		<p>
 			The Stream Buddies system lets chatters appear on screen as a character.

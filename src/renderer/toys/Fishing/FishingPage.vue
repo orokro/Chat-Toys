@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Fishing Settings"
-		themeColor="#A4704C"
+		:themeColor="toy.static.themeColor"
 	>
 		<p>The Fishing Toy is a mini game your viewers can play in chat.</p>
 		<p>You can customize the list of fish, including:</p>

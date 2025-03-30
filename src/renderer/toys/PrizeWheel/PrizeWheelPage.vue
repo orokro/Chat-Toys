@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Prize Wheel Settings"
-		themeColor="#FFAAC5"
+		:themeColor="toy.static.themeColor"
 	>
 		<p>
 			The Prize Wheel is a fun way to reward your viewers with points, prizes, and more!

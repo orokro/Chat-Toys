@@ -8,7 +8,7 @@
 
 	<PageBox
 		title="Channel Points"
-		themeColor="#EED43A"
+		:themeColor="toy.static.themeColor"
 		class="channelPointsPage"
 	>
 		<p>
