@@ -8,6 +8,7 @@
 // vue
 import { ref, shallowRef } from 'vue';
 import { chromeRef, chromeShallowRef } from './chromeRef';
+import { RefAggregator } from './RefAggregator';
 
 // our app
 import { toysData } from '../toys/ToysData';
@@ -29,6 +30,9 @@ export default class ChatToysApp {
 
 		// save our static coded list of toys
 		this.toysData = toysData;
+
+		// build some general settings for the app
+		this.buildSettings();
 
 		// our global list of commands
 		this.commands = chromeShallowRef('commands', {});
@@ -62,12 +66,30 @@ export default class ChatToysApp {
 
 		// reusable drag helper
 		this.dragHelper = new DragHelper();
-
-		// layout size
-		this.layoutWidth = chromeRef('layoutWidth', 1280);
-		this.layoutHeight = chromeRef('layoutHeight', 720);
 	}
 	
+
+	/**
+	 * Sets up some general settings for the app in a nice, state synced object.
+	 */
+	buildSettings() {
+
+		// make general settings to store the output widget box
+		this.settings = {
+			outputWidgetBox: shallowRef({
+				x: 1280-150-300,
+				y: 720-150,
+				width: 300,
+				height: 150
+			}),
+			stageWidth: ref(1280),
+			stageHeight: ref(720),
+		};
+		this.settingsStorRef = chromeShallowRef('general-settings', {});
+		this.settingsAggregator = new RefAggregator(this.settingsStorRef);
+		this.settingsAggregator.registerObject(this.settings);
+	}
+
 
 	/**
 	 * Selects a toy to be the selected toy.

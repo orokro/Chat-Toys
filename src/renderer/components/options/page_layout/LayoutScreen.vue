@@ -75,18 +75,22 @@
 <script setup>
 
 // vue
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import { chromeRef } from '../../../scripts/chromeRef';
+import { ref, onMounted, onBeforeUnmount, watch, inject } from 'vue'
 
 // components
 import LayoutWidgets from './LayoutWidgets.vue';
+
+// our app
+const ctApp = inject('ctApp');
 
 // refs to html elements
 const autoSizeDiv = ref(null);
 
 // data
-const stageWidth = chromeRef('layoutWidth', 1280);
-const stageHeight = chromeRef('layoutHeight', 720);
+const { 
+	stageWidth,
+	stageHeight
+} = ctApp.settings;
 const stageColor = ref('#000000');
 const showAllWidgets = ref(false);
 

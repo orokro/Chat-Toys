@@ -38,11 +38,6 @@
 </template>
 <script setup>
 
-const a = (a, b) => {
-	console.log(a, b);
-	return a;
-}
-
 // vue
 import { shallowRef, inject } from 'vue'
 import { chromeRef, chromeShallowRef } from '../../../scripts/chromeRef';
@@ -78,29 +73,6 @@ const props = defineProps({
 });
 
 
-// make general settings to store the output widget box
-const generalSettings = {
-	outputWidgetBox: shallowRef({
-		x: 1280-150-300,
-		y: 720-150,
-		width: 300,
-		height: 150
-	})
-};
-const generalSettingsStorRef = chromeShallowRef('general-settings', {});
-const settingsAggregator = new RefAggregator(generalSettingsStorRef);
-settingsAggregator.registerObject('outputWidgetBox', generalSettings);
-
-// refs to our various settings
-const channelPointsSettings = chromeRef('channel-points-settings', {});
-const chatBoxSettings = chromeShallowRef('chat-box-settings', {});
-const fishingSettings = chromeShallowRef('fishing-settings', {});
-const gambaSettings = chromeShallowRef('gamba-settings', {});
-const headPatsSettings = chromeShallowRef('head-pat-settings', {});
-const mediaSettings = chromeShallowRef('media-settings', {});
-const prizeWheelSettings = chromeShallowRef('prize-wheel-settings', {});
-const tosserSettings = chromeShallowRef('tosser-settings', {});
-
 // we'll store a list of widgets that can be spawned in the layout
 const widgets = [
 
@@ -108,7 +80,7 @@ const widgets = [
 	{
 		slug: 'settings',
 		component: null,
-		settings: generalSettings,
+		settings: ctApp.settings,
 		key: 'outputWidgetBox',
 		allowResize: true,
 		lockAspectRatio: false,
