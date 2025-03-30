@@ -12,7 +12,7 @@
 		@changeTab="(tab)=>selectedPage = tab"
 	>
 		buttons<br>
-		<input type="text" v-model="myTestSocket"/><br>
+		<input v-if="myTestSocket" type="text" v-model="myTestSocket"/><br>
 		<input type="text" v-model="myTestSocket2"/>
 		
 	</VerticalItemsPage>
@@ -22,7 +22,7 @@
 // vue
 import { ref, computed, inject } from 'vue';
 import { chromeRef } from '../../../scripts/chromeRef';
-import { socketRef, socketShallowRef, bindRef, bindRefs } from 'socket-ref';
+import { socketRef, socketShallowRef, socketRefAsync, bindRef, bindRefs } from 'socket-ref';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
@@ -44,12 +44,18 @@ const verticalItems = computed(() => {
 // what's the selected tab?
 const selectedPage = ref('settings');
 
-const syncRef = chromeRef('test', 'foo');
-const myTestSocket = socketRef('test', 'foo');
 
-setTimeout(()=>{
+let myTestSocket = null;
+async function setupSocketsTest(){
+
+	const syncRef = chromeRef('test', 'foo');
+	window.sr = syncRef;
+	myTestSocket = await socketRefAsync('test', 'foo');
 	bindRef(myTestSocket).to(syncRef);
-}, 1000);
+
+	
+}
+setupSocketsTest();
 
 const myTestSocket2 = socketRef('test2', 'bar');
 

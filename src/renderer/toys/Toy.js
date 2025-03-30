@@ -9,7 +9,8 @@
 */
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
+import { socketRef, socketShallowRef } from 'socket-ref';
 
 // our app
 import { ToyManager } from "../scripts/ToyManager";
@@ -149,6 +150,15 @@ export default class Toy {
 		// create a ref aggregator to sync the settings & register them
 		this.settingsAggregator = new RefAggregator(this.settingsStorRef);
 		this.settingsAggregator.registerObject(this.settings);
+
+		// now for some magic - we'll watch the settings object for changes
+		// and update a socket ref with the json, so our live page can update
+		this.settingsSocketRef = socketShallowRef(blockNameKebab + '-settings', this.settingsStorRef.value);
+		this.stopSettingsSocketWatch = watch(this.settingsStorRef, (newVal) => {
+			this.settingsSocketRef.value = newVal;
+		});
+		setTimeout(()=>
+			this.settingsSocketRef.value = this.settingsStorRef.value, 1000);
 	}
 
 
@@ -254,6 +264,19 @@ export default class Toy {
 
 		// return new local commands list as well
 		return newLocalCommandsList;
+	}
+
+
+	/**
+	 * Clean up the toy when it's about to be removed
+	 */
+	end(){
+
+		// for debug
+		console.log("Ending toy", this.slug);
+
+		// stop watching the settings
+		this.stopSettingsSocketWatch();
 	}
 
 

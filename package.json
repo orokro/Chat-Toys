@@ -40,7 +40,7 @@
 		"node-gyp": "^11.1.0",
 		"sass": "^1.86.0",
 		"seedrandom": "^3.0.5",
-		"socket-ref": "file:misc/socket-ref-0.0.4.tgz",
+		"socket-ref": "file:misc/socket-ref-0.0.5.tgz",
 		"three": "^0.174.0",
 		"uuid": "^11.1.0",
 		"vue": "^3.3.8",

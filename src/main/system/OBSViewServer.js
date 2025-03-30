@@ -38,6 +38,33 @@ class OBSViewServer {
 
 
 	/**
+	 * Starts the echo server.
+	 */
+	startEchoServer(){
+
+		// note that, WSS comes from the socket-ref server
+		// and is already set up to handle incoming messages
+		this.wss.on('connection', (socket) => {
+
+			// when we get a message, parse it and forward it to the renderer
+			socket.on('message', (data) => {
+				let msg;
+
+				try {
+					msg = JSON.parse(data);
+				} catch (err) {
+					return; // ignore non-JSON messages
+				}
+
+				if (msg.type === 'echo' && msg.data !== undefined) {
+					socket.send(`Echo: ${msg.data}`);
+				}
+			});
+		});
+	}
+
+
+	/**
 	 * Starts both the http and websocket servers.
 	 */
 	startServers(){
@@ -51,7 +78,8 @@ class OBSViewServer {
 
 			// using our socket-ref server, that syncs socketRefs
 			this.wss = socketRefServer({ server });
-	
+			this.startEchoServer();
+
 			// Serve /live.html in production
 			if (true || process.env.NODE_ENV !== 'development') {
 	
