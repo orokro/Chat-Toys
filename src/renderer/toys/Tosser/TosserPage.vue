@@ -106,7 +106,7 @@ import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
-import ArrayTosserEdit from '@components/options/ArrayTosserEdit.vue';
+import ArrayTosserEdit from './ArrayTosserEdit.vue';
 
 // generate slug for command
 const toySlug = 'tosser';

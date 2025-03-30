@@ -45,7 +45,7 @@ import { RefAggregator } from '../../../scripts/RefAggregator';
 
 // components
 import LayoutBox from './LayoutBox.vue';
-import ChannelPointsWidget from '../../stage/widgets/ChannelPointsWidget.vue';
+import ChannelPointsWidget from '../../../toys/ChannelPoints/ChannelPointsWidget.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');

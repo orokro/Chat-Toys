@@ -176,7 +176,7 @@ import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
-import ChannelPointsWidget from '@components/options/../stage/widgets/ChannelPointsWidget.vue';
+import ChannelPointsWidget from './ChannelPointsWidget.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');

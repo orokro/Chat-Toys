@@ -86,8 +86,8 @@
 import { ref, watch, markRaw } from 'vue';
 
 // components
-import FilePreview from './FilePreview.vue';
-import AssetPickerModal from './AssetPickerModal.vue';
+import FilePreview from '@components/options/FilePreview.vue';
+import AssetPickerModal from '@components/options/AssetPickerModal.vue';
 
 // lib/misc
 import * as yup from 'yup';

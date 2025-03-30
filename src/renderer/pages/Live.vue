@@ -25,7 +25,7 @@ import { ref } from 'vue';
 import { socketRef, socketShallowRef } from 'socket-ref';
 
 // include the demo channel points widget
-import ChannelPointsWidget from '../components/stage/widgets/ChannelPointsWidget.vue';
+import ChannelPointsWidget from '../toys/ChannelPoints/ChannelPointsWidget.vue';
 
 // local state
 const blackBG = ref(false);

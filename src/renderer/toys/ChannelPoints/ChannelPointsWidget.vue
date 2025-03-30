@@ -51,8 +51,8 @@
 
 // vue
 import { ref, watch, computed } from 'vue';
-import { chromeRef, chromeShallowRef } from '../../../scripts/chromeRef';
-import { RefAggregator } from '../../../scripts/RefAggregator';
+import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
+import { RefAggregator } from '../../scripts/RefAggregator';
 
 // we'll use a chrome ref to aggregate all our settings
 const channelPointsSettings = chromeRef('channel-points-settings', {});

@@ -82,8 +82,8 @@ import { directive as VTippy } from 'vue-tippy';
 import 'tippy.js/dist/tippy.css';
 
 // components
-import FilePreview from './FilePreview.vue';
-import AssetPickerModal from './AssetPickerModal.vue';
+import FilePreview from '@components/options/FilePreview.vue';
+import AssetPickerModal from '@components/options/AssetPickerModal.vue';
 
 // lib/misc
 import * as yup from 'yup';

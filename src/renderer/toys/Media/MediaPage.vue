@@ -75,7 +75,7 @@ import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
-import ArrayMediaEdit from '@components/options/ArrayMediaEdit.vue';
+import ArrayMediaEdit from './ArrayMediaEdit.vue';
 
 // generate slug for command
 const toySlug = 'media';

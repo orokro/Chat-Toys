@@ -81,7 +81,7 @@ import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
-import ArrayFishEdit from '@components/options/ArrayFishEdit.vue';
+import ArrayFishEdit from './ArrayFishEdit.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
