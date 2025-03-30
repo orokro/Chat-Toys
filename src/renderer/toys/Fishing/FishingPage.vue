@@ -86,45 +86,21 @@ import ArrayFishEdit from './ArrayFishEdit.vue';
 // our app
 import Fishing from './Fishing';
 
-// fetch the main app state context
+// fetch the main app state context & our toy
 const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[Fishing.slug];
 
 // our local ref settings
 const {
 	fishSpawnInterval,
 	fishList,
 	widgetBox
-} = ctApp.toyManager.toys[Fishing.slug].settings;
+} = ctApp.toyManager.toys[toy.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [
-	{
-		slug: Fishing.slugify('cast'),
-		command: 'cast',
-		params: [
-			{ name: 'x', type: 'number', optional: true, desc: 'where on x axis to cast line' },
-			{ name: 'y', type: 'number', optional: true, desc: 'where on y axis to cast line' }
-		],
-		description: 'Cast your fishing line, optionally specify x and y coordinates',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},
-	{
-		slug: Fishing.slugify('reel'),
-		command: 'reel',
-		description: 'Attempt to reel in your fishing line',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	}
-];
+const commands = toy.commands;
 
 </script>
 <style lang="scss" scoped>	

@@ -35,6 +35,9 @@ export default class ToyState {
 		// build our settings right away (the toy can override this)
 		this.initSettings();
 
+		// build the commands list, if any, for this toy
+		this.buildCommands([]);
+
 		// we'll auto-subscribe to the commands for this toy!
 		// we'll use a callback that can be overridden by the toy
 		this.chatToysApp.commandProcessor.hookToyCommands(this.slug, this.onCommand.bind(this));
@@ -49,7 +52,52 @@ export default class ToyState {
 	initSettings() {
 
 		// let the toy override this
+		this.settings = {};
 	}
+
+
+	/**
+	 * Initialize the commands for this toy
+	 *
+	 * This is a placeholder that the toy can override to set up its commands.
+	 */
+	buildCommands(commandDefs) {
+
+		// build the commands list with defaults
+        this.commands = commandDefs.map(def => {
+
+			// get the provided settings or otherwise use defaults
+            const {
+                command,
+                description,
+                slug = this.constructor.slugify(command),
+                params = [],
+                enabled = true,
+                costEnabled = true,
+                cost = 0,
+                coolDown = 0,
+                groupCoolDown = 0,
+            } = def;
+
+			// make sure we have the required fields
+            if (!command || !description) {
+                throw new Error(`Command "${command}" is missing required fields.`);
+            }
+
+			// return the command object
+            return {
+                command,
+                description,
+                slug,
+                params,
+                enabled,
+                costEnabled,
+                cost,
+                coolDown,
+                groupCoolDown,
+            };
+        });
+    }
 
 
 	/**

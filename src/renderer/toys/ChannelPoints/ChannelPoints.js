@@ -77,6 +77,34 @@ export default class ChannelPoints extends ToyState {
 				height: 150
 			}),
 		});
+
+	}
+
+	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+		
+		super.buildCommands([
+			{
+				command: 'get',
+				description: 'Claim points',
+				costEnabled: false,
+			},	
+			{
+				command: 'me',
+				description: 'Have on screen text show your points',
+				costEnabled: false,
+			},
+			{
+				command: 'give',
+				params: [
+					{ name: 'user', type: 'username', optional: false, desc: 'The user to give points to' },
+					{ name: 'amount', type: 'number', optional: false, desc: 'The amount of points to give' }
+				],
+				description: 'One user can give points to another user',
+			},			
+		]);
 	}
 
 

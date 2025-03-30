@@ -80,6 +80,24 @@ export default class HeadPat extends ToyState {
 		});
 	}
 
+
+	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+
+		super.buildCommands([
+			{
+				command: 'pat',
+				params: [
+					{ name: 'user', type: 'username', optional: true, desc: 'Which chatter to head pat' },
+				],
+				description: 'Show head pat graphic on streamer, or optionally a chatter.!',
+			},	
+		]);
+	}
+	
+
 	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 

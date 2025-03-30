@@ -72,6 +72,23 @@ export default class PrizeWheel extends ToyState {
 
 
 	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+
+		super.buildCommands([
+			{
+				command: 'spin',
+				params: [
+					{ name: 'strength', type: 'number', optional: true, desc: 'How hard to spin' },
+				],
+				description: 'Lets the chatter spin the wheel!',
+			},	
+		]);
+	}
+	
+
+	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 
 	 * @param {String} commandSlug - the slug of the command

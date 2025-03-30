@@ -114,8 +114,9 @@ import * as yup from 'yup';
 // our app
 import PrizeWheel from './PrizeWheel';
 
-// fetch the main app state context
+// fetch the main app state context & our toy
 const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[PrizeWheel.slug];
 
 // make a yup schema that disallows escape characters, as well as one to validate color strings
 const itemSchema = yup.string().matches(/^[^\\]+$/, 'Escape characters are not allowed');
@@ -129,26 +130,12 @@ const {
 	wheelSoundId, 
 	alwaysShowWheel, 
 	widgetBox
-} = ctApp.toyManager.toys[PrizeWheel.slug].settings;
+} = ctApp.toyManager.toys[toy.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [
-	{
-		slug: PrizeWheel.slugify('spin'),
-		command: 'spin',
-		params: [
-			{ name: 'strength', type: 'number', optional: true, desc: 'How hard to spin' },
-		],
-		description: 'Lets the chatter spin the wheel!',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},	
-];
+const commands = toy.commands
 
 </script>
 <style lang="scss" scoped>	

@@ -181,8 +181,9 @@ import ChannelPointsWidget from './ChannelPointsWidget.vue';
 // our app
 import ChannelPoints from './ChannelPoints';
 
-// fetch the main app state context
+// fetch the main app state context & our toy
 const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[ChannelPoints.slug];
 
 // our local ref settings for this system
 const {
@@ -199,51 +200,13 @@ const {
 	widgetIconId,
 	widgetIconPath,
 	widgetBox
-} = ctApp.toyManager.toys[ChannelPoints.slug].settings;
+} = ctApp.toyManager.toys[toy.slug].settings;
 
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [
-	{
-		slug: ChannelPoints.slugify('get'),
-		command: 'get',
-		params: null,
-		description: 'Claim points',
-		enabled: true,
-		costEnabled: false,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},	
-	{
-		slug: ChannelPoints.slugify('show'),
-		command: 'me',
-		params: null,
-		description: 'Have on screen text show your points',
-		enabled: true,
-		costEnabled: false,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},
-	{
-		slug: ChannelPoints.slugify('give'),
-		command: 'give',
-		params: [
-			{ name: 'user', type: 'username', optional: false, desc: 'The user to give points to' },
-			{ name: 'amount', type: 'number', optional: false, desc: 'The amount of points to give' }
-		],
-		description: 'One user can give points to another user',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},
-	
-];
+const commands = toy.commands;
 
 
 // update the icon path dynamically when the asset ID changes

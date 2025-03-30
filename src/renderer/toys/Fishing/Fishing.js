@@ -99,6 +99,28 @@ export default class Fishing extends ToyState {
 
 
 	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+
+		super.buildCommands([
+			{
+				command: 'cast',
+				params: [
+					{ name: 'x', type: 'number', optional: true, desc: 'where on x axis to cast line' },
+					{ name: 'y', type: 'number', optional: true, desc: 'where on y axis to cast line' }
+				],
+				description: 'Cast your fishing line, optionally specify x and y coordinates',
+			},
+			{
+				command: 'reel',
+				description: 'Attempt to reel in your fishing line',
+			}
+		]);
+	}
+
+
+	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 
 	 * @param {String} commandSlug - the slug of the command

@@ -88,6 +88,30 @@ export default class Chat extends ToyState {
 
 
 	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+
+		super.buildCommands([
+			{
+				command: 'shout',
+				params: [
+					{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "shout"' },
+				],
+				description: 'A chatter can shout a message in exchange for channel points',
+			},
+			{
+				command: 'swarm',
+				params: [
+					{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "swarm"' },
+				],
+				description: 'If enough chatters swarm at once, their messages will appear on screen',
+			}
+		]);
+	}
+
+
+	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 
 	 * @param {String} commandSlug - the slug of the command

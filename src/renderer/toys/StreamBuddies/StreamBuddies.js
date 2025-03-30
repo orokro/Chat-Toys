@@ -56,6 +56,67 @@ export default class StreamBuddies extends ToyState {
 
 
 	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+
+		super.buildCommands([
+			{
+				command: 'join',
+				description: 'Being on screen is optional, users can opt-in with this command.',
+			},
+			{
+				command: 'leave',
+				description: 'Being on screen is optional, users can opt-out with this command.',
+			},
+			{
+				command: 'left',
+				params: [
+					{ name: 'amount', type: 'number', optional: true, desc: 'Amount to walk left in pixels' },
+				],
+				description: 'Make their character walk left',
+			},
+			{
+				command: 'right',
+				params: [
+					{ name: 'amount', type: 'number', optional: true, desc: 'Amount to walk right in pixels' },
+				],
+				description: 'Make their character walk right',
+			},
+			{
+				command: 'jump',
+				params: [
+					{ name: 'amount', type: 'string', optional: true, desc: 'Either "left" or "right"' },
+				],
+				description: 'Make their character jump up, or optionally, a direction.',
+			},
+			{
+				command: 'hug',
+				params: [
+					{ name: 'user', type: 'username', optional: false, desc: 'user to hug' },
+				],
+				description: 'Make their character hug another user.',
+			},
+			{
+				command: 'attack',
+				params: [
+					{ name: 'user', type: 'username', optional: false, desc: 'user to attack' },
+				],
+				description: 'Make their character attack another user.',
+			},
+			{
+				command: 'sit',
+				description: 'Make character sit down.',
+			},
+			{
+				command: 'fart',
+				description: 'Make character fart.',
+			}
+		]);
+	}
+	
+
+	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 
 	 * @param {String} commandSlug - the slug of the command

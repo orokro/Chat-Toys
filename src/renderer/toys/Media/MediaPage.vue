@@ -32,7 +32,6 @@
 			:toyName="'Media'"
 			:toySlug="Media.slug"
 			:enable-custom-commands="true"
-			:commands="commands"
 		/>
 
 		<SectionHeader title="Settings"/>
@@ -80,18 +79,19 @@ import ArrayMediaEdit from './ArrayMediaEdit.vue';
 // our app
 import Media from './Media';
 
-// fetch the main app state context
+// fetch the main app state context & our toy
 const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[Media.slug];
 
 // local settings refs
 const { 
 	mediaAssets,
 	widgetBox
-} = ctApp.toyManager.toys[Media.slug].settings;
+} = ctApp.toyManager.toys[toy.slug].settings;
 
 // this toy always starts empty!
 // all commands are user defined
-const commands = [];
+// const kkcommands = [];
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});

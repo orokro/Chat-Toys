@@ -111,33 +111,20 @@ import ArrayTosserEdit from './ArrayTosserEdit.vue';
 // our app
 import Tosser from './Tosser';
 
-// fetch the main app state context
+// fetch the main app state context & our toy
 const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[Tosser.slug];
 
 // get our local refs to use in template
 const { 
 	tosserAssets, 
 	randomTossMode
-} = ctApp.toyManager.toys[Tosser.slug].settings;
+} = ctApp.toyManager.toys[toy.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [
-	{
-		slug: Tosser.slugify('toss'),
-		command: 'toss',
-		params: [
-			{ name: 'item', type: 'string', optional: true, desc: 'Which item to toss' },
-		],
-		description: 'Lets the toss an item!',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},	
-];
+const commands = toy.commands;
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});

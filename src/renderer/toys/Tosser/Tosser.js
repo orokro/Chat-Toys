@@ -85,6 +85,23 @@ export default class Tosser extends ToyState {
 
 
 	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+
+		super.buildCommands([
+			{
+				command: 'toss',
+				params: [
+					{ name: 'item', type: 'string', optional: true, desc: 'Which item to toss' },
+				],
+				description: 'Lets the toss an item!',
+			},	
+		]);
+	}
+	
+
+	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 
 	 * @param {String} commandSlug - the slug of the command

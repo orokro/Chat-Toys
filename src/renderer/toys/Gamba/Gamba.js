@@ -82,6 +82,28 @@ export default class Gamba extends ToyState {
 
 
 	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+
+		super.buildCommands([
+			{
+				command: 'bet',
+				params: [
+					{ name: 'amount', type: 'number', optional: false, desc: 'How many points to wage.' },
+					{ name: 'option', type: 'string', optional: false, desc: 'Which option to gamble on' },
+				],
+				description: 'Gamble points on options set up by the Streamer',
+			},
+			{
+				command: 'cancel_bet',
+				description: 'Revokes bet before the game starts.',
+			},
+		]);
+	}
+	
+
+	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 
 	 * @param {String} commandSlug - the slug of the command

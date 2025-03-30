@@ -63,8 +63,9 @@ import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 // our app
 import HeadPat from './HeadPat';
 
-// fetch the main app state context
+// fetch the main app state context & our toy
 const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[HeadPat.slug];
 
 // local settings refs
 const { 
@@ -72,27 +73,13 @@ const {
 	headPatChatterImage,
 	streamerWidgetBox,
 	chatterWidgetBox
-} = ctApp.toyManager.toys[HeadPat.slug].settings;
+} = ctApp.toyManager.toys[toy.slug].settings;
 
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [
-	{
-		slug: HeadPat.slugify('pat'),
-		command: 'pat',
-		params: [
-			{ name: 'user', type: 'username', optional: true, desc: 'Which chatter to head pat' },
-		],
-		description: 'Show head pat graphic on streamer, or optionally a chatter.!',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},	
-];
+const commands = toy.commands;
 
 
 // all of the commands system wide are stored in this chrome shallow ref

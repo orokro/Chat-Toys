@@ -139,8 +139,9 @@ import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 // our app
 import Chat from './Chat';
 
-// fetch the main app state context
+// fetch the main app state context & our toy
 const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[Chat.slug];
 
 // our local refs state
 const {
@@ -155,40 +156,13 @@ const {
 	swarmDuration,
 	chatWidgetBox,
 	shoutWidgetBox
-} = ctApp.toyManager.toys[Chat.slug].settings;
+} = ctApp.toyManager.toys[toy.slug].settings;
 
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [
-	{
-		slug: Chat.slugify('shout'),
-		command: 'shout',
-		params: [
-			{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "shout"' },
-		],
-		description: 'A chatter can shout a message in exchange for channel points',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},
-	{
-		slug: Chat.slugify('swarm'),
-		command: 'swarm',
-		params: [
-			{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "swarm"' },
-		],
-		description: 'If enough chatters swarm at once, their messages will appear on screen',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	}
-];
+const commands = toy.commands;
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});

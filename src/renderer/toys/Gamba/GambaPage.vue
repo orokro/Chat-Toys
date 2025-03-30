@@ -62,8 +62,9 @@ import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 // our app
 import Gamba from './Gamba';
 
-// fetch the main app state context
+// fetch the main app state context & our toy
 const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[Gamba.slug];
 
 // our local ref settings for this system
 const {
@@ -72,37 +73,12 @@ const {
 	gambaOptions,
 	resultsWidgetBox,
 	widgetBox
-} = ctApp.toyManager.toys[Gamba.slug].settings;
+} = ctApp.toyManager.toys[toy.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
-const commands = [
-	{
-		slug: Gamba.slugify('bet'),
-		command: 'bet',
-		params: [
-			{ name: 'amount', type: 'number', optional: false, desc: 'How many points to wage.' },
-			{ name: 'option', type: 'string', optional: false, desc: 'Which option to gamble on' },
-		],
-		description: 'Gamble points on options set up by the Streamer',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},
-	{
-		slug: Gamba.slugify('cancel_bet'),
-		command: 'cancel_bet',
-		description: 'Revokes bet before the game starts.',
-		enabled: true,
-		costEnabled: true,
-		cost: 0,
-		coolDown: 0,
-		groupCoolDown: 0,
-	},	
-];
+const commands = toy.commands;
 
 </script>
 <style lang="scss" scoped>	

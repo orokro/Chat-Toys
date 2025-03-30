@@ -44,15 +44,16 @@ import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 // our app
 import StreamBuddies from './StreamBuddies';
 
-// fetch the main app state context
+// fetch the main app state context & our toy
 const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[StreamBuddies.slug];
 
 
 // our local ref settings for this system
 const { 
 	maxBuddyCount,
 	buddySize
-} = ctApp.toyManager.toys[StreamBuddies.slug].settings;
+} = ctApp.toyManager.toys[toy.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
