@@ -20,7 +20,7 @@
 				:editing="activeTab === widget.slug"
 				:scale="scale"
 				:slug="widget.slug"
-				:boxData="widget.settings.value[widget.key]"
+				:boxData="widget.settings[widget.key].value"
 				:allowResize="widget.allowResize"
 				:maintainAspectRatio="widget.lockAspectRatio"
 				:color="widget.color"
@@ -37,6 +37,11 @@
 
 </template>
 <script setup>
+
+const a = (a, b) => {
+	console.log(a, b);
+	return a;
+}
 
 // vue
 import { shallowRef, inject } from 'vue'
@@ -74,15 +79,17 @@ const props = defineProps({
 
 
 // make general settings to store the output widget box
-const generalSettings = chromeShallowRef('general-settings', {});
-const outputWidgetBox = shallowRef({
-	x: 1280-150-300,
-	y: 720-150,
-	width: 300,
-	height: 150
-});
-const settingsAggregator = new RefAggregator(generalSettings);
-settingsAggregator.register('outputWidgetBox', outputWidgetBox);
+const generalSettings = {
+	outputWidgetBox: shallowRef({
+		x: 1280-150-300,
+		y: 720-150,
+		width: 300,
+		height: 150
+	})
+};
+const generalSettingsStorRef = chromeShallowRef('general-settings', {});
+const settingsAggregator = new RefAggregator(generalSettingsStorRef);
+settingsAggregator.registerObject('outputWidgetBox', generalSettings);
 
 // refs to our various settings
 const channelPointsSettings = chromeRef('channel-points-settings', {});
@@ -96,6 +103,8 @@ const tosserSettings = chromeShallowRef('tosser-settings', {});
 
 // we'll store a list of widgets that can be spawned in the layout
 const widgets = [
+
+	// settings isn't a toy in itself, so we'll hard code stuff for it's widget
 	{
 		slug: 'settings',
 		component: null,
@@ -105,106 +114,26 @@ const widgets = [
 		lockAspectRatio: false,
 		color: '#FFFFFF'
 	},
-	{
-		slug: 'channel_points',
-		component: ChannelPointsWidget,
-		settings: channelPointsSettings,
-		key: 'widgetBox',
-		allowResize: true,
-		lockAspectRatio: true,
-		color: '#EED43A'
-	},	
-	{
-		slug: 'chat_box',
-		component: null,
-		settings: chatBoxSettings,
-		key: 'chatWidgetBox',
-		allowResize: true,
-		lockAspectRatio: false,
-		color: '#60C5F1'
-	},
-	{
-		slug: 'chat_box',
-		component: null,
-		settings: chatBoxSettings,
-		key: 'shoutWidgetBox',
-		allowResize: true,
-		lockAspectRatio: false,
-		color: '#60C5F1'
-	},	
-	{
-		slug: 'fishing',
-		component: null,
-		settings: fishingSettings,
-		key: 'widgetBox',
-		allowResize: true,
-		lockAspectRatio: true,
-		color: '#A4704C'
-	},	
-	{
-		slug: 'gamba',
-		component: null,
-		settings: gambaSettings,
-		key: 'widgetBox',
-		allowResize: true,
-		lockAspectRatio: false,
-		color: '#458233'
-	},
-	{
-		slug: 'gamba',
-		component: null,
-		settings: gambaSettings,
-		key: 'resultsWidgetBox',
-		allowResize: true,
-		lockAspectRatio: false,
-		color: '#458233'
-	},	
-	{
-		slug: 'head_pats',
-		component: null,
-		settings: headPatsSettings,
-		key: 'streamerWidgetBox',
-		allowResize: true,
-		lockAspectRatio: true,
-		color: '#C6C37A'
-	},
-	{
-		slug: 'head_pats',
-		component: null,
-		settings: headPatsSettings,
-		key: 'chatterWidgetBox',
-		allowResize: true,
-		lockAspectRatio: true,
-		color: '#C6C37A'
-	},	
-	{
-		slug: 'media',
-		component: null,
-		settings: mediaSettings,
-		key: 'widgetBox',
-		allowResize: true,
-		lockAspectRatio: false,
-		color: '#51547D'
-	},	
-	{
-		slug: 'prize_wheel',
-		component: null,
-		settings: prizeWheelSettings,
-		key: 'widgetBox',
-		allowResize: true,
-		lockAspectRatio: true,
-		color: '#FFAAC5'
-	},
-	
-	{
-		slug: 'tosser',
-		component: null,
-		settings: tosserSettings,
-		key: 'targetWidgetBox',
-		allowResize: true,
-		lockAspectRatio: true,
-		color: '#E65A5A'
-	}
+
+	// flatly merge in the rest of the widgets as defined on the toy's themselves
+	...(ctApp.enabledToys.value.flatMap(slug => {
+
+			// loop over the widgets for the toy with this slug
+			const toy = ctApp.toyManager.toys[slug];
+			return toy.static.widgetComponents.map(widget => {
+
+				return {
+					slug: slug,
+					component: widget.component,
+					settings: toy.settings,
+					key: widget.key,
+					allowResize: widget.allowResize,
+					lockAspectRatio: widget.lockAspectRatio,
+					color: toy.static.themeColor,
+				};
+			});			
+		})
+	),
 ];
 
 
