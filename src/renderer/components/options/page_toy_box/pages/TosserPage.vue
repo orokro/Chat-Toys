@@ -98,15 +98,15 @@ import { ref, computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../../../scripts/chromeRef';
 
 // components
-import PageBox from '../../PageBox.vue';
-import SectionHeader from '../../SectionHeader.vue';
-import InfoBox from '../../InfoBox.vue';
-import CommandsConfigBox from '../../CommandsConfigBox.vue';
-import CatsumIpsum from '../../../CatsumIpsum.vue';
-import SettingsRow from '../../SettingsRow.vue';
-import SettingsInputRow from '../../SettingsInputRow.vue';
-import ArrayEdit from '../../ArrayEdit.vue';
-import ArrayTosserEdit from '../../ArrayTosserEdit.vue';
+import PageBox from '@components/options/PageBox.vue';
+import SectionHeader from '@components/options/SectionHeader.vue';
+import InfoBox from '@components/options/InfoBox.vue';
+import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
+import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
+import SettingsRow from '@components/options/SettingsRow.vue';
+import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import ArrayEdit from '@components/options/ArrayEdit.vue';
+import ArrayTosserEdit from '@components/options/ArrayTosserEdit.vue';
 
 // generate slug for command
 const toySlug = 'tosser';

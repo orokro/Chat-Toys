@@ -96,17 +96,17 @@
 import { ref, shallowRef, inject } from 'vue';
 
 // components
-import PageBox from '../../PageBox.vue';
-import SectionHeader from '../../SectionHeader.vue';
-import InfoBox from '../../InfoBox.vue';
-import CommandsConfigBox from '../../CommandsConfigBox.vue';
-import CatsumIpsum from '../../../CatsumIpsum.vue';
-import SettingsRow from '../../SettingsRow.vue';
-import SettingsInputRow from '../../SettingsInputRow.vue';
-import SettingsAssetRow from '../../SettingsAssetRow.vue';
-import ArrayEdit from '../../ArrayEdit.vue';
-import ArrayTextInput from '../../ArrayTextInput.vue';
-import ArrayColorInput from '../../ArrayColorInput.vue';
+import PageBox from '@components/options/PageBox.vue';
+import SectionHeader from '@components/options/SectionHeader.vue';
+import InfoBox from '@components/options/InfoBox.vue';
+import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
+import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
+import SettingsRow from '@components/options/SettingsRow.vue';
+import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
+import ArrayEdit from '@components/options/ArrayEdit.vue';
+import ArrayTextInput from '@components/options/ArrayTextInput.vue';
+import ArrayColorInput from '@components/options/ArrayColorInput.vue';
 
 // lib/misc
 import * as yup from 'yup';

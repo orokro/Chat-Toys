@@ -53,12 +53,12 @@ import { ref, shallowRef, computed, inject } from 'vue';
 import { chromeShallowRef } from '../../../../scripts/chromeRef';
 
 // components
-import PageBox from '../../PageBox.vue';
-import SectionHeader from '../../SectionHeader.vue';
-import InfoBox from '../../InfoBox.vue';
-import CommandsConfigBox from '../../CommandsConfigBox.vue';
-import SettingsInputRow from '../../SettingsInputRow.vue';
-import SettingsAssetRow from '../../SettingsAssetRow.vue';
+import PageBox from '@components/options/PageBox.vue';
+import SectionHeader from '@components/options/SectionHeader.vue';
+import InfoBox from '@components/options/InfoBox.vue';
+import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
+import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');

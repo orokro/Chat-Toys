@@ -6,6 +6,15 @@ const { defineConfig } = require('vite');
  * https://vitejs.dev/config
  */
 const config = defineConfig({
+	// 👇 Add this alias block
+	resolve: {
+		alias: {
+			'@components': Path.resolve(__dirname, 'src/renderer/components'),
+			// optional other aliases
+			'@toys': Path.resolve(__dirname, 'src/renderer/toys'),
+		}
+	},
+	
 	css: {
 		preprocessorOptions: {
 			scss: {

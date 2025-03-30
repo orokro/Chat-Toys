@@ -36,10 +36,10 @@
 import { ref, inject } from 'vue';
 
 // components
-import PageBox from '../../PageBox.vue';
-import SectionHeader from '../../SectionHeader.vue';
-import InfoBox from '../../InfoBox.vue';
-import CommandsConfigBox from '../../CommandsConfigBox.vue';
+import PageBox from '@components/options/PageBox.vue';
+import SectionHeader from '@components/options/SectionHeader.vue';
+import InfoBox from '@components/options/InfoBox.vue';
+import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
