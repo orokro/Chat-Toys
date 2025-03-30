@@ -7,6 +7,9 @@
 	NOTE: it does not handle the rendering, which will be the widgets.
 */
 
+// vue
+import { ref, shallowRef } from 'vue';
+
 // our app
 import ToyState from "../ToyState";
 
@@ -18,7 +21,7 @@ export default class HeadPat extends ToyState {
 
 	// static info
 	static name = 'Head Pat';
-	static slug = 'head_pats';
+	static slug = 'headPat';
 	static desc = 'Let viewers give and receive head pats.';
 	static optionsPageComponent = HeadPatsPage;
 	static themeColor = '#A4704C';
@@ -53,6 +56,31 @@ export default class HeadPat extends ToyState {
 
 
 	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			allowUserPats: ref(true),
+			headPatChatterImage: ref('22'),
+			streamerWidgetBox: shallowRef({
+				x: 1280 - 200,
+				y: 200,
+				width: 200,
+				height: 200
+			}),
+			chatterWidgetBox: shallowRef({
+				x: (1280 / 2) - 100,
+				y: 720 - 400,
+				width: 200,
+				height: 200
+			}),
+		});
+	}
+
+	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 
 	 * @param {String} commandSlug - the slug of the command
@@ -69,5 +97,5 @@ export default class HeadPat extends ToyState {
 		// accept the command which updates the database
 		handshake.accept();
 	}
-	
+
 }

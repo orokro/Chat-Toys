@@ -91,7 +91,7 @@ const commandsRef = chromeShallowRef('commands', {});
 
 // get the command used for claiming points
 const claimCommand = computed(() => {
-	return commandsRef.value.channel_points_get?.command || '';
+	return commandsRef.value.channelPoints_get?.command || '';
 });
 
 const claimsLeft = computed(() => {

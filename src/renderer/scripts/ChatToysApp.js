@@ -11,7 +11,6 @@ import { chromeRef, chromeShallowRef } from './chromeRef';
 
 // our app
 import { toysData } from '../toys/ToysData';
-import { ToySettings } from './ToySettings';
 import { AssetManager } from './assets_state/AssetManager';
 import { ChatProcessor } from './ChatProcessor';
 import { CommandProcessor } from './CommandProcessor';
@@ -30,7 +29,7 @@ export default class ChatToysApp {
 
 		// save our static coded list of toys
 		this.toysData = toysData;
-		
+
 		// our global list of commands
 		this.commands = chromeShallowRef('commands', {});
 		
@@ -48,10 +47,6 @@ export default class ChatToysApp {
 		// we'll load our assets from the AssetManager here in the Options class
 		// the popup will also have it's own assets manager ref
 		this.assetsMgr = new AssetManager();
-
-		// this will build and/or populate the toy settings app-wide
-		// they're stored from localStorage, so this will init them or repopulate them
-		this.toySettings = new ToySettings(this);
 		
 		// make a new chat processor to handle all incoming chats from outside
 		// note: this will handle messages coming from IPC messages from the electron
@@ -61,11 +56,6 @@ export default class ChatToysApp {
 
 		// make a new command processor to handle all incoming commands
 		this.commandProcessor = new CommandProcessor(this, this.chatProcessor);
-
-		// for debug
-		// this.commandProcessor.onCommandFound((commandSlug, msg, user, params) => {
-		// 	console.log(`Command found: ${commandSlug} from `, user, 'in', msg, 'with params', params);
-		// });
 
 		// this will actually instantiate the toys and manage their state
 		this.toyManager = new ToyManager(this);

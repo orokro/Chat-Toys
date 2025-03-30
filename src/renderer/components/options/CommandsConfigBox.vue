@@ -153,6 +153,7 @@ import ConfirmModal from './ConfirmModal.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
+import ChannelPoints from '@toys/ChannelPoints/ChannelPoints';
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
@@ -192,7 +193,7 @@ const props = defineProps({
 
 // true if we have at 'channel_points' enabled in ctApp.enabledToys.value
 const isChannelPointsEnabled = computed(()=>
-	ctApp.enabledToys.value.includes('channel_points'));
+	ctApp.enabledToys.value.includes(ChannelPoints.slug));
 
 
 /*	

@@ -22,7 +22,7 @@
 		</p>
 		<CommandsConfigBox
 			:toyName="'Head Pats'"
-			:toySlug="toySlug"
+			:toySlug="HeadPat.slug"
 			:commands="commands"
 		/>
 
@@ -60,12 +60,11 @@ import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 
+// our app
+import HeadPat from './HeadPat';
+
 // fetch the main app state context
 const ctApp = inject('ctApp');
-
-// generate slug for command
-const toySlug = 'head_pats';
-const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // local settings refs
 const { 
@@ -73,7 +72,7 @@ const {
 	headPatChatterImage,
 	streamerWidgetBox,
 	chatterWidgetBox
-} = ctApp.toySettings.headPatSettings;
+} = ctApp.toyManager.toys[HeadPat.slug].settings;
 
 
 // we'll define our commands here
@@ -81,7 +80,7 @@ const {
 // in the CommandsConfigBox component
 const commands = [
 	{
-		slug: slugify('pat'),
+		slug: HeadPat.slugify('pat'),
 		command: 'pat',
 		params: [
 			{ name: 'user', type: 'username', optional: true, desc: 'Which chatter to head pat' },

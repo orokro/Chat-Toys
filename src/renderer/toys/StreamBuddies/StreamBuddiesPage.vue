@@ -23,7 +23,7 @@
 		</p>
 		<CommandsConfigBox
 			:toyName="'Stream Buddies'"
-			:toySlug="toySlug"
+			:toySlug="StreamBuddies.slug"
 			:commands="commands"
 		/>
 		
@@ -41,25 +41,25 @@ import SectionHeader from '@components/options/SectionHeader.vue';
 import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 
+// our app
+import StreamBuddies from './StreamBuddies';
+
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
-// generate slug for command
-const toySlug = 'stream_buddies';
-const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // our local ref settings for this system
 const { 
 	maxBuddyCount,
 	buddySize
-} = ctApp.toySettings.buddySettings;
+} = ctApp.toyManager.toys[StreamBuddies.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
 const commands = [
 	{
-		slug: slugify('join'),
+		slug: StreamBuddies.slugify('join'),
 		command: 'join',
 		description: 'Being on screen is optional, users can opt-in with this command.',
 		enabled: true,
@@ -69,7 +69,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('leave'),
+		slug: StreamBuddies.slugify('leave'),
 		command: 'leave',
 		description: 'Being on screen is optional, users can opt-out with this command.',
 		enabled: true,
@@ -79,7 +79,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('left'),
+		slug: StreamBuddies.slugify('left'),
 		command: 'left',
 		params: [
 			{ name: 'amount', type: 'number', optional: true, desc: 'Amount to walk left in pixels' },
@@ -92,7 +92,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('right'),
+		slug: StreamBuddies.slugify('right'),
 		command: 'right',
 		params: [
 			{ name: 'amount', type: 'number', optional: true, desc: 'Amount to walk right in pixels' },
@@ -105,7 +105,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('jump'),
+		slug: StreamBuddies.slugify('jump'),
 		command: 'jump',
 		params: [
 			{ name: 'amount', type: 'string', optional: true, desc: 'Either "left" or "right"' },
@@ -118,7 +118,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('hug'),
+		slug: StreamBuddies.slugify('hug'),
 		command: 'hug',
 		params: [
 			{ name: 'user', type: 'username', optional: false, desc: 'user to hug' },
@@ -131,7 +131,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('attack'),
+		slug: StreamBuddies.slugify('attack'),
 		command: 'attack',
 		params: [
 			{ name: 'user', type: 'username', optional: false, desc: 'user to attack' },
@@ -144,7 +144,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('sit'),
+		slug: StreamBuddies.slugify('sit'),
 		command: 'sit',
 		description: 'Make character sit down.',
 		enabled: true,
@@ -154,7 +154,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('fart'),
+		slug: StreamBuddies.slugify('fart'),
 		command: 'fart',
 		description: 'Make character fart.',
 		enabled: true,

@@ -7,6 +7,9 @@
 	NOTE: it does not handle the rendering, which will be the widgets.
 */
 
+// vue
+import { ref, shallowRef } from 'vue';
+
 // our app
 import ToyState from "../ToyState";
 
@@ -18,7 +21,7 @@ export default class Chat extends ToyState {
 
 	// static info	
 	static name = 'Chat';
-	static slug = 'chat_box';
+	static slug = 'chat';
 	static desc = 'Add a chat overlay to your stream.';
 	static optionsPageComponent = ChatBoxPage;
 	static themeColor = '#60C5F1';
@@ -48,6 +51,39 @@ export default class Chat extends ToyState {
 		// call the parent constructor
 		super(toyManager, Chat.slug);
 
+	}
+
+
+	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			enableChatBox: ref(false),
+			chatBoxImage: ref('3'),
+			filterCommands: ref(true),
+			showChatterNames: ref(true),
+			chatNameColor: ref('#00ABAE'),
+			chatTextColor: ref('#000000'),
+			shoutSoundId: ref('11'),
+			swarmSize: ref(5),
+			swarmDuration: ref(10),
+			chatWidgetBox: shallowRef({
+				x: 1280 - 300,
+				y: 0,
+				width: 300,
+				height: 400
+			}),
+			shoutWidgetBox: shallowRef({
+				x: 20,
+				y: 20,
+				width: 400,
+				height: 100
+			}),
+		});
 	}
 
 

@@ -8,6 +8,9 @@
 	NOTE: it does not handle the rendering, which will be the widgets.
 */
 
+// vue
+import { ref, shallowRef } from 'vue';
+
 // our app
 import ToyState from "../ToyState";
 
@@ -20,7 +23,7 @@ export default class ChannelPoints extends ToyState {
 
 	// static info	
 	static name = 'Channel Points';
-	static slug = 'channel_points';
+	static slug = 'channelPoints';
 	static desc = 'Let users occasionally earn points for watching your stream.';
 	static optionsPageComponent = ChannelPointsPage;
 	static themeColor = '#EED43A';
@@ -44,6 +47,36 @@ export default class ChannelPoints extends ToyState {
 		// call the parent constructor
 		super(toyManager, ChannelPoints.slug);
 
+	}
+
+	
+	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			claimInterval: ref(300),
+			claimRandomness: ref(0),
+			claimDuration: ref(60),
+			pointsPerClaim: ref(100),
+			maxClaims: ref(0),
+			showTimerBar: ref(true),
+			showClaimsRemaining: ref(true),
+			showUserClaims: ref(true),
+			showTextPrompt: ref(true),
+			widgetColorTheme: ref('#00ABAE'),
+			widgetIconId: ref('1'),
+			widgetIconPath: ref('builtin/' + this.chatToysApp.assetsMgr.getFileData('1').name),
+			widgetBox: shallowRef({
+				x: 1280 - 150,
+				y: 720 - 150,
+				width: 150,
+				height: 150
+			}),
+		});
 	}
 
 

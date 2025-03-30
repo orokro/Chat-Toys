@@ -26,7 +26,7 @@
 		</p>
 		<CommandsConfigBox
 			:toyName="'Fishing'"
-			:toySlug="toySlug"
+			:toySlug="Fishing.slug"
 			:commands="commands"
 		/>
 			
@@ -83,26 +83,25 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayFishEdit from './ArrayFishEdit.vue';
 
+// our app
+import Fishing from './Fishing';
+
 // fetch the main app state context
 const ctApp = inject('ctApp');
-
-// generate slug for command
-const toySlug = 'fishing';
-const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // our local ref settings
 const {
 	fishSpawnInterval,
 	fishList,
 	widgetBox
-} = ctApp.toySettings.fishingSettings;
+} = ctApp.toyManager.toys[Fishing.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
 const commands = [
 	{
-		slug: slugify('cast'),
+		slug: Fishing.slugify('cast'),
 		command: 'cast',
 		params: [
 			{ name: 'x', type: 'number', optional: true, desc: 'where on x axis to cast line' },
@@ -116,7 +115,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('reel'),
+		slug: Fishing.slugify('reel'),
 		command: 'reel',
 		description: 'Attempt to reel in your fishing line',
 		enabled: true,

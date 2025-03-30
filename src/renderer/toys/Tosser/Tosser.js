@@ -7,6 +7,9 @@
 	NOTE: it does not handle the rendering, which will be the Tosser widgets.
 */
 
+// vue
+import { ref, shallowRef } from 'vue';
+
 // our app
 import ToyState from "../ToyState";
 
@@ -42,6 +45,42 @@ export default class Tosser extends ToyState {
 		// call the parent constructor
 		super(toyManager, Tosser.slug);
 
+	}
+
+
+	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			// list of items that can be tossed
+			tosserAssets: ref([
+				{
+					model: "16",
+					sound: "15",
+					scale: 1,
+					slug: "tomato",
+					cmd: "tomato",
+				},
+				{
+					model: "18",
+					sound: "15",
+					scale: 1,
+					slug: "wad",
+					cmd: "paper",
+				}
+			]),
+			randomTossMode: ref(false),
+			targetWidgetBox: ref({
+				x: (1280 / 2) - (200 / 2),
+				y: 720 - 400,
+				width: 200,
+				height: 400
+			}),
+		});
 	}
 
 

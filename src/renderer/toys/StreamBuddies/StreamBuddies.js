@@ -7,6 +7,9 @@
 	NOTE: it does not handle the rendering, which will be the StreamBuddies widgets.
 */
 
+// vue
+import { ref, shallowRef } from 'vue';
+
 // our app
 import ToyState from "../ToyState";
 
@@ -18,7 +21,7 @@ export default class StreamBuddies extends ToyState {
 
 	// static info
 	static name = 'Stream Buddies';
-	static slug = 'stream_buddies';
+	static slug = 'streamBuddies';
 	static desc = 'Let viewers spawn buddies on your stream.';
 	static optionsPageComponent = StreamBuddiesPage;
 	static themeColor = '#B59EDE';
@@ -35,6 +38,20 @@ export default class StreamBuddies extends ToyState {
 		// call the parent constructor
 		super(toyManager, StreamBuddies.slug);
 
+	}
+	
+
+	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			maxBuddyCount: ref(5),
+			buddySize: ref(1.0),
+		});
 	}
 
 

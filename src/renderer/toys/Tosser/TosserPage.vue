@@ -48,7 +48,7 @@
 		</p>
 		<CommandsConfigBox
 			:toyName="'Tosser'"
-			:toySlug="toySlug"
+			:toySlug="Tosser.slug"
 			:commands="commands"
 			:enableCustomCommands="true"
 		/>
@@ -108,22 +108,24 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayTosserEdit from './ArrayTosserEdit.vue';
 
-// generate slug for command
-const toySlug = 'tosser';
-const slugify = (text) => (toySlug + '__' + text.toLowerCase());
+// our app
+import Tosser from './Tosser';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
 // get our local refs to use in template
-const { tosserAssets, randomTossMode } = ctApp.toySettings.tosserSettings;
+const { 
+	tosserAssets, 
+	randomTossMode
+} = ctApp.toyManager.toys[Tosser.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
 const commands = [
 	{
-		slug: slugify('toss'),
+		slug: Tosser.slugify('toss'),
 		command: 'toss',
 		params: [
 			{ name: 'item', type: 'string', optional: true, desc: 'Which item to toss' },

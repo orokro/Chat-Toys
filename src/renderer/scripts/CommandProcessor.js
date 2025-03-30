@@ -11,7 +11,7 @@ import { computed, watch } from 'vue';
 // our app
 import { ChatProcessor } from "./ChatProcessor";
 import ChatToysApp from "./ChatToysApp";
-
+import ChannelPoints from '@toys/ChannelPoints/ChannelPoints';
 
 /**
  * CommandProcessor class
@@ -38,9 +38,9 @@ export class CommandProcessor {
 		// out map of listeners based on toySlugs
 		this.toyHooks = new Map();
 
-		// true when we have 'channel_points' enabled
+		// true when we have 'channelPoints' enabled
 		this.enableCosts = computed(()=>
-			this.chatToysApp.enabledToys.value.includes('channel_points'));
+			this.chatToysApp.enabledToys.value.includes(ChannelPoints.slug));
 
 		// maps of timestamps for user cooldowns
 		this.userCooldowns = new Map();

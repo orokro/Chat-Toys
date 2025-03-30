@@ -40,7 +40,7 @@
 		</p>
 		<CommandsConfigBox
 			:toyName="'Gamba'"
-			:toySlug="toySlug"
+			:toySlug="Gamba.slug"
 			:commands="commands"
 		/>
 		
@@ -59,12 +59,11 @@ import SectionHeader from '@components/options/SectionHeader.vue';
 import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 
+// our app
+import Gamba from './Gamba';
+
 // fetch the main app state context
 const ctApp = inject('ctApp');
-
-// generate slug for command
-const toySlug = 'gamba';
-const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // our local ref settings for this system
 const {
@@ -73,14 +72,14 @@ const {
 	gambaOptions,
 	resultsWidgetBox,
 	widgetBox
-} = ctApp.toySettings.gambaSettings;
+} = ctApp.toyManager.toys[Gamba.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
 const commands = [
 	{
-		slug: slugify('bet'),
+		slug: Gamba.slugify('bet'),
 		command: 'bet',
 		params: [
 			{ name: 'amount', type: 'number', optional: false, desc: 'How many points to wage.' },
@@ -94,7 +93,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('cancel_bet'),
+		slug: Gamba.slugify('cancel_bet'),
 		command: 'cancel_bet',
 		description: 'Revokes bet before the game starts.',
 		enabled: true,

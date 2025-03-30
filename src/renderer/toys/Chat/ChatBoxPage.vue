@@ -32,7 +32,7 @@
 		</p>
 		<CommandsConfigBox
 			:toyName="'Chat'"
-			:toySlug="toySlug"
+			:toySlug="Chat.slug"
 			:commands="commands"
 		/>
 			
@@ -136,12 +136,11 @@ import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 
+// our app
+import Chat from './Chat';
+
 // fetch the main app state context
 const ctApp = inject('ctApp');
-
-// generate slug for command
-const toySlug = 'chat_box';
-const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // our local refs state
 const {
@@ -156,7 +155,7 @@ const {
 	swarmDuration,
 	chatWidgetBox,
 	shoutWidgetBox
-} = ctApp.toySettings.chatSettings;
+} = ctApp.toyManager.toys[Chat.slug].settings;
 
 
 // we'll define our commands here
@@ -164,7 +163,7 @@ const {
 // in the CommandsConfigBox component
 const commands = [
 	{
-		slug: slugify('shout'),
+		slug: Chat.slugify('shout'),
 		command: 'shout',
 		params: [
 			{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "shout"' },
@@ -177,7 +176,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('swarm'),
+		slug: Chat.slugify('swarm'),
 		command: 'swarm',
 		params: [
 			{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "swarm"' },

@@ -7,6 +7,9 @@
 	NOTE: it does not handle the rendering, which will be the Gamba widgets.
 */
 
+// vue
+import { ref, shallowRef } from 'vue';
+
 // our app
 import ToyState from "../ToyState";
 
@@ -52,6 +55,33 @@ export default class Gamba extends ToyState {
 
 
 	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			gambaStateMode: shallowRef('off'),
+			gambaPrompt: shallowRef('Streamer will beat the boss?'),
+			gambaOptions: shallowRef(['Yes', 'No']),
+			resultsWidgetBox: shallowRef({
+				x: (1280 / 2) - (500 / 2),
+				y: (720 / 2) - (600 / 2),
+				width: 500,
+				height: 600
+			}),
+			widgetBox: shallowRef({
+				x: (1280 / 2) - (400 / 2),
+				y: 720 - 220,
+				width: 400,
+				height: 200
+			}),
+		});
+	}
+
+
+	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 
 	 * @param {String} commandSlug - the slug of the command
@@ -68,5 +98,5 @@ export default class Gamba extends ToyState {
 		// accept the command which updates the database
 		handshake.accept();
 	}
-	
+
 }

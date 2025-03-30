@@ -7,6 +7,9 @@
 	NOTE: it does not handle the rendering, which will be the widgets.
 */
 
+// vue
+import { ref, shallowRef } from 'vue';
+
 // our app
 import ToyState from "../ToyState";
 
@@ -18,7 +21,7 @@ export default class PrizeWheel extends ToyState {
 
 	// static info
 	static name = 'Prize Wheel';
-	static slug = 'prize_wheel';
+	static slug = 'prizeWheel';
 	static desc = 'Let viewers spin a wheel to win prizes.';
 	static optionsPageComponent = PrizeWheelPage;
 	static themeColor = '#FFAAC5';
@@ -42,6 +45,29 @@ export default class PrizeWheel extends ToyState {
 		// call the parent constructor
 		super(toyManager, PrizeWheel.slug);
 
+	}
+
+
+	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			wheelItems: ref([]),
+			wheelColors: ref([]),
+			wheelImageId: ref('5'),
+			wheelSoundId: ref('12'),
+			alwaysShowWheel: ref(false),
+			widgetBox: shallowRef({
+				x: (1280 / 2) - (420 / 2),
+				y: (720 / 2) - (466 / 2),
+				width: 420,
+				height: 466
+			}),
+		});
 	}
 
 

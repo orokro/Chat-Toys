@@ -39,7 +39,7 @@
 		</p>
 		<CommandsConfigBox
 			:toyName="'Channel Points'"
-			:toySlug="toySlug"
+			:toySlug="ChannelPoints.slug"
 			:commands="commands"
 		/>
 		
@@ -178,12 +178,11 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import ChannelPointsWidget from './ChannelPointsWidget.vue';
 
+// our app
+import ChannelPoints from './ChannelPoints';
+
 // fetch the main app state context
 const ctApp = inject('ctApp');
-
-// generate slug for command
-const toySlug = 'channel_points';
-const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // our local ref settings for this system
 const {
@@ -200,7 +199,7 @@ const {
 	widgetIconId,
 	widgetIconPath,
 	widgetBox
-} = ctApp.toySettings.channelPointsSettings;
+} = ctApp.toyManager.toys[ChannelPoints.slug].settings;
 
 
 // we'll define our commands here
@@ -208,7 +207,7 @@ const {
 // in the CommandsConfigBox component
 const commands = [
 	{
-		slug: slugify('get'),
+		slug: ChannelPoints.slugify('get'),
 		command: 'get',
 		params: null,
 		description: 'Claim points',
@@ -219,7 +218,7 @@ const commands = [
 		groupCoolDown: 0,
 	},	
 	{
-		slug: slugify('show'),
+		slug: ChannelPoints.slugify('show'),
 		command: 'me',
 		params: null,
 		description: 'Have on screen text show your points',
@@ -230,7 +229,7 @@ const commands = [
 		groupCoolDown: 0,
 	},
 	{
-		slug: slugify('give'),
+		slug: ChannelPoints.slugify('give'),
 		command: 'give',
 		params: [
 			{ name: 'user', type: 'username', optional: false, desc: 'The user to give points to' },
@@ -261,7 +260,7 @@ const commandsRef = chromeShallowRef('commands', {});
 
 // get the command used for claiming points
 const claimCommand = computed(() => {
-	return commandsRef.value.channel_points_get?.command || '';
+	return commandsRef.value.channelPoints_get?.command || '';
 });
 
 </script>

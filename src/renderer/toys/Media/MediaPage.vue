@@ -30,7 +30,7 @@
 		</p>
 		<CommandsConfigBox
 			:toyName="'Media'"
-			:toySlug="toySlug"
+			:toySlug="Media.slug"
 			:enable-custom-commands="true"
 			:commands="commands"
 		/>
@@ -77,15 +77,17 @@ import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayMediaEdit from './ArrayMediaEdit.vue';
 
-// generate slug for command
-const toySlug = 'media';
-const slugify = (text) => (toySlug + '__' + text.toLowerCase());
+// our app
+import Media from './Media';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
 // local settings refs
-const { mediaAssets, widgetBox } = ctApp.toySettings.mediaSettings;
+const { 
+	mediaAssets,
+	widgetBox
+} = ctApp.toyManager.toys[Media.slug].settings;
 
 // this toy always starts empty!
 // all commands are user defined
@@ -99,7 +101,7 @@ const customCommands = computed(() => {
 
 	// get all keys of the commandsRef.value as an array
 	const commandKeys = Object.keys(commandsRef.value);
-	return commandKeys.filter(cmd => cmd.startsWith(toySlug));
+	return commandKeys.filter(cmd => cmd.startsWith(Media.slug));
 });
 
 

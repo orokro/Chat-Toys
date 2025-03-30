@@ -7,6 +7,9 @@
 	NOTE: it does not handle the rendering, which will be the widgets.
 */
 
+// vue
+import { ref, shallowRef } from 'vue';
+
 // our app
 import ToyState from "../ToyState";
 
@@ -46,6 +49,56 @@ export default class Fishing extends ToyState {
 
 
 	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			// our local settings
+			fishSpawnInterval: ref(120),
+			fishList: shallowRef([
+				{
+					name: 'runt',
+					image: '10',
+					scale: 1,
+					points: 10,
+					rarity: 10
+				},
+				{
+					name: 'common',
+					image: '9',
+					scale: 1,
+					points: 30,
+					rarity: 5
+				},
+				{
+					name: 'lunker',
+					image: '8',
+					scale: 1,
+					points: 100,
+					rarity: 1
+				},
+				{
+					name: 'boot',
+					image: '21',
+					scale: 1,
+					points: 0,
+					rarity: 1
+				},
+			]),
+			widgetBox: shallowRef({
+				x: 0,
+				y: 720 - 300,
+				width: 300,
+				height: 300
+			}),
+		});
+	}
+
+
+	/**
 	 * Handle when an incoming command is sent to this toy
 	 * 
 	 * @param {String} commandSlug - the slug of the command
@@ -62,5 +115,5 @@ export default class Fishing extends ToyState {
 		// accept the command which updates the database
 		handshake.accept();
 	}
-	
+
 }

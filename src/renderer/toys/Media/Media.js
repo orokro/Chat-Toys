@@ -7,6 +7,9 @@
 	NOTE: it does not handle the rendering, which will be the widgets.
 */
 
+// vue
+import { ref, shallowRef } from 'vue';
+
 // our app
 import ToyState from "../ToyState";
 
@@ -42,6 +45,25 @@ export default class Media extends ToyState {
 		// call the parent constructor
 		super(toyManager, Media.slug);
 
+	}
+
+
+	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			mediaAssets: shallowRef([]),
+			widgetBox: shallowRef({
+				x: 20,
+				y: 20,
+				width: 400,
+				height: 200
+			}),			
+		});
 	}
 
 

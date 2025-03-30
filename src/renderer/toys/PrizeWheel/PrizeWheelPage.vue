@@ -27,7 +27,7 @@
 		</p>
 		<CommandsConfigBox
 			:toyName="'Prize Wheel'"
-			:toySlug="toySlug"
+			:toySlug="PrizeWheel.slug"
 			:commands="commands"
 		/>
 			
@@ -111,12 +111,11 @@ import ArrayColorInput from '@components/options/ArrayColorInput.vue';
 // lib/misc
 import * as yup from 'yup';
 
+// our app
+import PrizeWheel from './PrizeWheel';
+
 // fetch the main app state context
 const ctApp = inject('ctApp');
-
-// generate slug for command
-const toySlug = 'prize_wheel';
-const slugify = (text) => (toySlug + '__' + text.toLowerCase());
 
 // make a yup schema that disallows escape characters, as well as one to validate color strings
 const itemSchema = yup.string().matches(/^[^\\]+$/, 'Escape characters are not allowed');
@@ -130,14 +129,14 @@ const {
 	wheelSoundId, 
 	alwaysShowWheel, 
 	widgetBox
-} = ctApp.toySettings.prizeWheelSettings;
+} = ctApp.toyManager.toys[PrizeWheel.slug].settings;
 
 // we'll define our commands here
 // NOTE: these are the DEFAULTS, the actual commands will be loaded from storage
 // in the CommandsConfigBox component
 const commands = [
 	{
-		slug: slugify('spin'),
+		slug: PrizeWheel.slugify('spin'),
 		command: 'spin',
 		params: [
 			{ name: 'strength', type: 'number', optional: true, desc: 'How hard to spin' },
