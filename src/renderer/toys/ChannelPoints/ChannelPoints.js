@@ -9,7 +9,8 @@
 */
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, computed } from 'vue';
+import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
 import Toy from "../Toy";
@@ -46,6 +47,44 @@ export default class ChannelPoints extends Toy {
 
 		// call the parent constructor
 		super(toyManager);
+
+		// state vars we share w/ the UI
+		this.claimCommand = this.initClaimCommand();
+		this.claimsLeft = socketShallowRef(this.static.slugify('claimsLeft'), 0);
+		this.mode = socketShallowRef(this.static.slugify('mode'), 'idle');
+		this.timeLeftNormalised = socketShallowRef(this.static.slugify('timeLeftNormalised'), 0);
+		this.userClaims = socketShallowRef(this.static.slugify('userClaims'), []);
+
+		// internal state vars
+		this.timeLeft = 0;
+
+		// starts logic for this item
+		setTimeout(()=>{
+			this.start();
+		}, 1000);
+	}
+
+
+	/**
+	 * Builds logic for the claim command & binds it to a computed from our start
+	 * 
+	 * @returns {Ref} - the ref for the claim command
+	 */
+	initClaimCommand(){
+
+		// all of the commands system wide are stored in this chrome shallow ref
+		const commandsRef = this.chatToysApp.commands;
+
+		// get the command used for claiming points
+		const claimCommand = computed(() => {
+			return commandsRef.value.channelPoints__get?.command || '';
+		});
+
+		// build the ref & bind it to our computed so it updates automatically
+		const command = socketShallowRef(this.static.slugify('claimCommand'), claimCommand.value);
+		bindRef(claimCommand).to(command);
+
+		return command;
 	}
 
 	
@@ -121,8 +160,142 @@ export default class ChannelPoints extends Toy {
 		// log it:
 		console.log('Channel Points found', commandSlug, 'from', msg.author, 'with params', params);
 
+		if(commandSlug === 'get'){
+			this.doGet(msg, user, params, handshake);
+			return;
+		}
+		
 		// accept the command which updates the database
 		handshake.accept();
 	}
+
+
+	/**
+	 * User attempts to get the points
+	 * 
+	 * @param {Object} msg - the message object
+	 * @param {Object} user - the user object
+	 * @param {Array<String>} params - the parameters passed to the command
+	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
+	 */
+	doGet(msg, user, params, handshake) {
+
+		// if we're not in the get mode, reject the command
+		if(this.mode.value !== 'GET'){
+			handshake.reject('Not in GET mode');
+			return;
+		}
+
+		// if we dont have any claims left, reject the command
+		if(this.claimsLeft.value <= 0){
+			handshake.reject('No claims left');
+			return;
+		}
+
+		// decrement the claims left
+		this.claimsLeft.value--;
+
+		// update the user's points and other data
+		window.ytctDB.updateUser(msg.authorUniqueID, {
+			relativePoints: this.settings.pointsPerClaim.value,
+		});
+
+		// we have accepted the command
+		handshake.accept();
+	}
 	
+
+	/**
+	 * Starts the logic loop for this toy
+	 */
+	start(){
+
+		// set our mode to 'get' to begin with
+		this.startGetMode();
+
+		// universal tick
+		this.tickInterval = setInterval(()=>{
+
+			this.tick();
+		}, 500);
+	}
+
+
+	/**
+	 * Regardless of which mode we're in (GET or IDLE), we're always ticking
+	 */
+	tick(){
+
+		// decrement the time left
+		this.setTimeLeft(this.timeLeft - 1);
+
+		// if we're out of time, switch modes
+		if(this.timeLeft <= 0){
+			console.log('Time is up!');
+			
+			if(this.mode.value === 'GET')
+				this.startIdleMode();
+			else
+				this.startGetMode();
+			
+		}
+	}
+
+
+	/**
+	 * Set time remaining for our current mode
+	 * 
+	 * @param {Number} timeLeft - decrements our time left & normalizes it for the UI
+	 */
+	setTimeLeft(timeLeft){
+
+		console.log(timeLeft + ' seconds left');
+		this.timeLeft = timeLeft;
+		this.timeLeftNormalised.value = timeLeft / this.settings.claimDuration.value;
+	}
+
+
+	/**
+	 * Switch to the GET mode
+	 */
+	startGetMode(){
+		
+		// set our mode to GET to render the UI for Get mode
+		this.mode.value = 'GET';
+
+		// reset the number of claims available
+		this.claimsLeft.value = this.settings.maxClaims.value;
+
+		// reset the time for the fixed get duration
+		const duration = this.settings.claimDuration.value;
+		console.log('Starting timer for GET mode');
+		console.log(duration + ' seconds on the clock!')
+		this.setTimeLeft(duration);
+	}
+
+
+	/**
+	 * IDLE mode... users cannot GET during this time
+	 */
+	startIdleMode(){
+
+		// set our mode to IDLE to render the UI for Idle mode
+		this.mode.value = 'IDLE';
+
+		// cancel out claims
+		this.claimsLeft.value = 0;
+
+		// compute the interval (with possible randomness) for the next claim
+		const interval = this.settings.claimInterval.value;
+		const randomness = this.settings.claimRandomness.value;
+		const randomSeconds = Math.floor(Math.random() * randomness);
+		const duration = interval + randomSeconds;
+		console.log('Starting timer for IDLE mode');
+		console.log('Randomness: ' + randomSeconds + ' seconds');
+		console.log(duration + ' seconds on the clock!')
+		this.setTimeLeft(duration);
+
+	}
+
+
 }

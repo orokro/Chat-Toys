@@ -29,6 +29,8 @@
 import { ref, watch, computed, onMounted } from 'vue';
 import { socketRef, socketShallowRef, socketRefAsync, bindRef, bindRefs } from 'socket-ref';
 
+import { useToySettings } from '@toys/useToySettings';
+
 // props
 const props = defineProps({
 	
@@ -45,74 +47,9 @@ const emit = defineEmits([
 	'boxChange'
 ]);
 
-let settingsSocket = null;
-let boxInfo = {
-	x: 100,
-	y: 100,
-	width: 200,
-	height: 200
-};
+// gets the settings for this widget
+const settingsSocketRef = useToySettings(props.widgetInfo.slug, props.widgetInfo.key, emit);
 
-// get the string for our socket ref / settings
-const socketRefString = computed(() => {
-
-	const slug = props.widgetInfo.slug;
-	const blockNameKebab = slug.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-	const settingsName = blockNameKebab + '-settings'
-	
-	return settingsName;
-});
-
-
-// setup the socket
-function initSocket(){
-
-	if(settingsSocket!=null)
-		return;
-
-	settingsSocket = socketShallowRef(socketRefString.value, 'uninitialized');
-
-	const initCheckInterval = setInterval(()=>{
-
-		if(settingsSocket.value !== 'uninitialized'){
-
-			
-			clearInterval(initCheckInterval);
-			
-
-			const data = settingsSocket.value;
-			boxInfo = data[props.widgetInfo.key];
-
-			console.log('boxInfo', boxInfo);
-			emit('boxChange', {
-				slug: props.widgetInfo.slug,
-				boxKey: props.widgetInfo.boxKey,
-				key: props.widgetInfo.key,
-				value: boxInfo
-			});
-
-		}
-
-	}, 100);
-
-	watch(settingsSocket, (newVal) => {
-		if (newVal === 'uninitialized')
-			return;
-		
-		const data = settingsSocket.value;
-		boxInfo = data[props.widgetInfo.key];
-
-		emit('boxChange', {
-			slug: props.widgetInfo.slug,
-			boxKey: props.widgetInfo.boxKey,
-			key: props.widgetInfo.key,
-			value: boxInfo
-		});
-	});
-}
-
-
-initSocket();
 
 </script>
 <style lang="scss" scoped>

@@ -8,16 +8,17 @@
 
 	<!-- the main box for the widget -->
 	<div 
+		v-if="ready"
 		class="channelPointsWidget"
-		
+		:class="{ idle: mode === 'IDLE' }"
 		:style="{
-			'--widget-color': widgetColorTheme || 'red'
+			'--widget-color': socketSettingsRef.widgetColorTheme || 'red'
 		}"
 	>
-		
+
 		<!-- inner wrapper to reset CSS stacking context -->
 		<div class="innerWrapper">
-			
+
 			<div class="spinnerBox glowSpinner_1">
 				<div class="gradient-overlay"></div>
 			</div>
@@ -25,23 +26,40 @@
 				<div class="gradient-overlay"></div>
 			</div>
 			<div class="spinnerBox glowSpinner_3"></div>
-			
+
 			<div class="icon">
-				<img
-					:src="widgetIconPath"
-					alt="channel points icon"
-					width="60"
-					height="60"
-				/>
+				<img :src="socketSettingsRef.widgetIconPath" alt="channel points icon" width="60" height="60" />
 			</div>
 
+			<svg 
+				v-if="socketSettingsRef.showTimerBar"
+				class="timerCircle"
+				:width="svgSize"
+				:height="svgSize"
+				:viewBox="`0 0 ${svgSize} ${svgSize}`"
+			>
+				<circle 
+					v-if="timeLeftNormalised > 0"
+					:cx="center"
+					:cy="center"
+					:r="radius"
+					fill="none"
+					:stroke="socketSettingsRef.widgetColorTheme"
+					:stroke-width="thiccness"
+					:stroke-dasharray="dashArray"
+					:stroke-dashoffset="dashOffset"
+					stroke-linecap="round"
+					:transform="`rotate(-90, ${center}, ${center})`"
+				/>
+			</svg>
+
 			<div class="colorOverlay"></div>
-			
-			<div v-if="showClaimsRemaining" class="claimsRemaining">
+
+			<div v-if="socketSettingsRef.showClaimsRemaining" class="claimsRemaining">
 				{{ claimsLeft }} left!
 			</div>
-			<div v-if="showTextPrompt" class="command">
-				Type <span class="cmd">!{{ claimCommand }}</span> to get {{ pointsPerClaim }} now!
+			<div v-if="socketSettingsRef.showTextPrompt" class="command" align="center">
+				Type <span class="cmd">!{{ claimCommand }}</span><br>to get {{ socketSettingsRef.pointsPerClaim }} now!
 			</div>
 		</div>
 	</div>
@@ -53,65 +71,57 @@
 import { ref, watch, computed } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 import { RefAggregator } from '../../scripts/RefAggregator';
+import { socketShallowRefReadOnly } from 'socket-ref';
 
-// we'll use a chrome ref to aggregate all our settings
-const channelPointsSettings = chromeRef('channel-points-settings', {});
+// our settings system
+import { useToySettings } from '@toys/useToySettings';
 
-// our settings for this system
-const claimInterval = ref(300);
-const claimRandomness = ref(0);
-const claimDuration = ref(60);
-const pointsPerClaim = ref(100);
-const maxClaims = ref(0);
-const showTimerBar = ref(true);
-const showClaimsRemaining = ref(true);
-const showUserClaims = ref(true);
-const showTextPrompt = ref(true);
-const widgetColorTheme = ref('#00ABAE');
-const widgetIconId = ref('1');
-const widgetIconPath = ref('');
+const thisSlug = 'channelPoints';
+const slugify = (text) => {
+	return thisSlug + '__' + text.toLowerCase();
+}
 
-// aggregate all our refs
-const settingsAggregator = new RefAggregator(channelPointsSettings);
-settingsAggregator.register('claimInterval', claimInterval);
-settingsAggregator.register('claimRandomness', claimRandomness);
-settingsAggregator.register('claimDuration', claimDuration);
-settingsAggregator.register('pointsPerClaim', pointsPerClaim);
-settingsAggregator.register('maxClaims', maxClaims);
-settingsAggregator.register('showTimerBar', showTimerBar);
-settingsAggregator.register('showClaimsRemaining', showClaimsRemaining);
-settingsAggregator.register('showUserClaims', showUserClaims);
-settingsAggregator.register('showTextPrompt', showTextPrompt);
-settingsAggregator.register('widgetColorTheme', widgetColorTheme);
-settingsAggregator.register('widgetIconId', widgetIconId);
-settingsAggregator.register('widgetIconPath', widgetIconPath);
+const emit = defineEmits([
+	'boxChange'
+]);
 
-// all of the commands system wide are stored in this chrome shallow ref
-const commandsRef = chromeShallowRef('commands', {});
 
-// get the command used for claiming points
-const claimCommand = computed(() => {
-	return commandsRef.value.channelPoints_get?.command || '';
+// timer circle settings
+const thiccness = ref(10);
+const diameter = ref(100);
+const radius = computed(() => diameter.value / 2);
+const center = computed(() => radius.value + 5);
+const circumference = computed(() => 2 * Math.PI * radius.value);
+const dashArray = computed(() => circumference.value);
+const dashOffset = computed(() => {
+  const pct = Math.min(Math.max(timeLeftNormalised.value, 0), 1);
+  return circumference.value * (1 - pct);
+});
+const svgSize = computed(() => diameter.value + 10); // 5px padding around
+
+// gets our settings
+const ready = ref(false);
+const socketSettingsRef = useToySettings('channel-points', 'widgetBox', emit, () => {
+	ready.value = true;
+	console.log('channel-points settings updated');
+	console.log(socketSettingsRef.value);
 });
 
-const claimsLeft = computed(() => {
-	return props.demoMode ? 3 : maxClaims.value;
+watch(socketSettingsRef, (newVal) => {
+	// console.log('channel-points settings updated');
+	// console.log(newVal);
 });
+
+
+// gets live sockets
+const claimCommand = socketShallowRefReadOnly(slugify('claimCommand'), '');
+const claimsLeft = socketShallowRefReadOnly(slugify('claimsLeft'), 0);
+const mode = socketShallowRefReadOnly(slugify('mode'), 'idle');
+const timeLeftNormalised = socketShallowRefReadOnly(slugify('timeLeftNormalised'), 0);
+const userClaims = socketShallowRefReadOnly(slugify('userClaims'), []);
 
 // define some props
 const props = defineProps({
-	
-	// true if the widget is in demo mode
-	demoMode: {
-		type: Boolean,
-		default: false
-	},
-
-	// time left in the current claim
-	timeLeft: Number,
-
-	// the number of claims remaining
-	claimsRemaining: Number,
 
 });
 
@@ -127,6 +137,12 @@ const props = defineProps({
 
 		// for debug
 		/* border: 1px solid red; */
+
+		transition: transform 0.25s ease-in-out;
+		transform: scale(1);
+		&.idle {
+			transform: scale(0);
+		}
 
 		// while the .channelPointsWidget is able to be positioned abso-lutely,
 		// this inner wrapper will reset CSS stacking context
@@ -151,36 +167,42 @@ const props = defineProps({
 				animation: throb 2s ease-in-out infinite;
 			}
 
+			.timerCircle {
+				position: absolute;
+				left: 50%;
+				top: 53%;
+				transform: translate(-50%, -50%);
+			}	
+
 			// spinner boxes
 			.spinnerBox {
 				width: 200px;
 				height: 200px;
 				position: absolute;
-				mask-image: 
-					radial-gradient(
-						circle, rgb(255, 255, 255) 40%, 
-						rgba(0, 0, 0, 0.2) 70%, 
+				mask-image:
+					radial-gradient(circle, rgb(255, 255, 255) 40%,
+						rgba(0, 0, 0, 0.2) 70%,
 						rgba(0, 0, 0, 0) 100%);
 			}
 
 			// the first spinner box, clockwise glow
 			.glowSpinner_1 {
-				
+
 				background: url('/assets/channel_points/starburst_glow.png') no-repeat;
 				background-size: cover;
-				animation: rotate_cw 45s linear infinite;		
+				animation: rotate_cw 45s linear infinite;
 				opacity: 0.15;
 			}
 
 			// the second spinner box, counter-clockwise glow
 			.glowSpinner_2 {
-				
+
 				background: url('/assets/channel_points/starburst_glow.png') no-repeat;
 				background-size: cover;
-				animation: rotate_ccw 45s linear infinite;		
+				animation: rotate_ccw 45s linear infinite;
 				opacity: 0.15;
 			}
-			
+
 
 			// for coloring the widget
 			.colorOverlay {
@@ -195,12 +217,13 @@ const props = defineProps({
 
 				mix-blend-mode: overlay;
 
-				mask-image: 
-					radial-gradient(
-						circle, rgb(255, 255, 255) 40%, 
-						rgba(0, 0, 0, 0.2) 70%, 
+				mask-image:
+					radial-gradient(circle, rgb(255, 255, 255) 40%,
+						rgba(0, 0, 0, 0.2) 70%,
 						rgba(0, 0, 0, 0) 100%);
-			}// .colorOverlay
+			}
+
+			// .colorOverlay
 
 			// remaining count
 			.claimsRemaining {
@@ -212,12 +235,14 @@ const props = defineProps({
 				font-size: 1.5em;
 				color: white;
 				text-shadow: 2px 2px 2px black;
-			
-			}// .claimsRemaining
+
+			}
+
+			// .claimsRemaining
 
 			// text prompt for the user
 			.command {
-				
+
 				// for debug
 				/* border: 1px solid red; */
 
@@ -232,20 +257,29 @@ const props = defineProps({
 				color: white;
 				text-shadow: 2px 2px 2px black;
 				white-space: nowrap;
+				line-height: 22px;
+
 				.cmd {
 					font-weight: bold;
 					color: yellow;
 				}
-			}// .command
+			}
 
-		}// .innerWrapper
+			// .command
 
-	}// .channelPointsWidget
+		}
+
+		// .innerWrapper
+
+	}
+
+	// .channelPointsWidget
 
 	@keyframes rotate_cw {
 		from {
 			transform: rotate(0deg);
 		}
+
 		to {
 			transform: rotate(360deg);
 		}
@@ -255,15 +289,24 @@ const props = defineProps({
 		from {
 			transform: rotate(360deg);
 		}
+
 		to {
 			transform: rotate(0deg);
 		}
 	}
 
 	@keyframes throb {
-		0% { transform: translate(-50%, -50%) scale(1); }
-		50% { transform: translate(-50%, -50%) scale(1.5); }
-		100% { transform: translate(-50%, -50%) scale(1); }
+		0% {
+			transform: translate(-50%, -50%) scale(1);
+		}
+
+		50% {
+			transform: translate(-50%, -50%) scale(1.5);
+		}
+
+		100% {
+			transform: translate(-50%, -50%) scale(1);
+		}
 	}
 
 </style>

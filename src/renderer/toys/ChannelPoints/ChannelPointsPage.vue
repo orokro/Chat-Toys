@@ -203,7 +203,7 @@ watch (widgetIconId, (newVal) => {
 	const fileData = ctApp.assetsMgr.getFileData(newVal);
 	setTimeout(()=>{
 		widgetIconPath.value = `builtin/${fileData.name}`;
-	});
+	},1000);
 });
 
 
