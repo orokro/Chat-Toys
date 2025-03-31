@@ -4,20 +4,25 @@
 
 	This is the root component for the live page, that will be compiled and served from Express
 	in the final build, so that OBS can use it as a browser source.
+
+	This page will either include the LiveLayout component, which will use the Layout
+	as built in the main YTCT app.
+
+	OR, if our query URL has a slug, it will load _just_ that widget, this way OBS
+	can layout the individual widgets using browser sources for each. This is better
+	for users that want multiple scenes handled by OBS.
 -->
 <template>
 
 	<div 
 		class="pageContainer"
-		:class="{ 'blackBG': blackBG }"
+		:style="{ '--bgColor': bg }"
+		:class="{ 'hasBg': bg!=null }"
 	>
-		<h1>Live {{ socketTest }}</h1>
-		<h2>2 {{ asdasd }}</h2>
-		<ChannelPointsWidget
 
-		></ChannelPointsWidget>
+		<!-- show the layout of all widgets if a toy wasn't specified in the params -->
+		<LiveLayout v-if="toySlug == null" />
 
-		<pre>{{ generalSettingsJSON }}</pre>
 	</div>
 </template>
 <script setup>
@@ -26,24 +31,31 @@
 import { ref } from 'vue';
 import { socketRef, socketShallowRef } from 'socket-ref';
 
-// include the demo channel points widget
-import ChannelPointsWidget from '../toys/ChannelPoints/ChannelPointsWidget.vue';
+// components
+import LiveLayout from '@components/live/LiveLayout.vue';
 
-// local state
-const blackBG = ref(false);
-
-// check if our URL has &blackbg=true
-if (window.location.search.toLocaleLowerCase().includes('blackbg=true')) {
-	blackBG.value = true;
-}
-
-const socketTest = socketRef('test', 'foo');
-const asdasd = socketRef('test2', 'foo');
-
-window.st = socketTest;
-
+// general app settings
 const generalSettingsJSON = socketRef('general-settings', 'foo');
-const json = socketRef('chat-settings', 'foo');
+
+// Grab query parameters from the URL
+const query = new URLSearchParams(window.location.search);
+
+// bg=<color> → string or null
+// Handle bg param
+let rawBg = query.get('bg')
+let parsedBg = null
+
+if (rawBg) {
+  const hexPattern = /^([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
+  parsedBg = hexPattern.test(rawBg) ? `#${rawBg}` : rawBg
+}
+const bg = ref(parsedBg)
+
+// slug=<slug_string> → string or null
+const toySlug = ref(query.get('slug'));
+
+// widx=<number> → number or 0
+const widgetIndex = ref(parseInt(query.get('widx') || '0', 10));
 
 </script>
 <style lang="scss" scoped>
@@ -55,8 +67,8 @@ const json = socketRef('chat-settings', 'foo');
 		position: absolute;
 		inset: 0px;
 
-		&.blackBG {
-			background: black;
+		&.hasBg {
+			background: var(--bgColor);
 		}
 
 		h1 {

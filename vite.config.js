@@ -10,8 +10,8 @@ const config = defineConfig({
 	resolve: {
 		alias: {
 			'@components': Path.resolve(__dirname, 'src/renderer/components'),
-			// optional other aliases
 			'@toys': Path.resolve(__dirname, 'src/renderer/toys'),
+			'@scripts': Path.resolve(__dirname, 'src/renderer/scripts'),
 		}
 	},
 	

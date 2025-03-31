@@ -15,6 +15,7 @@ import Toy from "../Toy";
 
 // components
 import GambaPage from './GambaPage.vue';
+import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class Gamba extends Toy {
@@ -27,13 +28,13 @@ export default class Gamba extends Toy {
 	static themeColor = '#458233';
 	static widgetComponents = [
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
 		},
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'resultsWidgetBox',
 			allowResize: true,
 			lockAspectRatio: false,

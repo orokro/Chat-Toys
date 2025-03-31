@@ -27,7 +27,7 @@
 				@boxChange="e=>handleBoxChange(e, widget)"
 			>
 				<component
-					v-if="widget.component != null"
+					v-if="widget.component != null && widget.component != DummyWidget"
 					:demoMode="true"
 					:is="widget.component"
 				/>
@@ -46,6 +46,7 @@ import { RefAggregator } from '../../../scripts/RefAggregator';
 // components
 import LayoutBox from './LayoutBox.vue';
 import ChannelPointsWidget from '../../../toys/ChannelPoints/ChannelPointsWidget.vue';
+import DummyWidget from '../../../toys/DummyWidget.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
