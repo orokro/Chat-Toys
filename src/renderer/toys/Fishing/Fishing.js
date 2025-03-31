@@ -15,6 +15,7 @@ import Toy from "../Toy";
 
 // components
 import FishingPage from './FishingPage.vue';
+import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class Fishing extends Toy {
@@ -27,7 +28,7 @@ export default class Fishing extends Toy {
 	static themeColor = '#A4704C';
 	static widgetComponents = [
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: true,

@@ -15,6 +15,7 @@ import Toy from "../Toy";
 
 // components
 import StreamBuddiesPage from './StreamBuddiesPage.vue';
+import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class StreamBuddies extends Toy {

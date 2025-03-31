@@ -15,6 +15,7 @@ import Toy from "../Toy";
 
 // components
 import MediaPage from './MediaPage.vue';
+import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class Media extends Toy {
@@ -27,7 +28,7 @@ export default class Media extends Toy {
 	static themeColor = '#51547D';
 	static widgetComponents = [
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: false,

@@ -12,7 +12,13 @@
 <template>
 
 	<!-- this container will 100% fill the LayoutScreen component -->
-	<div class="layoutWidgetsSpawnContainer">
+	<div 
+		class="layoutWidgetsSpawnContainer"
+		:style="{
+			width: generalSettingsJSON?.stageWidth + 'px',
+			height: generalSettingsJSON?.stageHeight + 'px'
+		}"
+	>
 
 		<!-- loop to spawn layout boxes for each -->
 		<template 
@@ -23,7 +29,7 @@
 				v-if="true"
 				:editing="false"
 				:slug="widget.slug"
-				:boxData="boxData[widget.boxKey][widget.key]"
+				:boxData="boxData[widget.boxKey].value[widget.key]"
 				:color="widget.color"
 			>
 				<component
@@ -59,17 +65,19 @@ const props = defineProps({
 const widgets = shallowRef([]);
 
 // story box settings, this will be dynamically populated by the widgets we spawn in
-const boxData = shallowRef({});
+const boxData = {};
 
 function handleBoxChange(e, widget) {
-	
-	let boxDataValue = {...boxData.value};
-	boxDataValue[widget.boxKey][widget.key] = e.value;
-	boxData.value = boxDataValue;
+
+	// find the ref with this box key
+	const boxDataValue = {...boxData[widget.boxKey].value};
+	boxDataValue[widget.key] = e.value;
+	boxData[widget.boxKey].value = boxDataValue;
 }
 
 // general app settings, via socket. watch to update widgets
 const generalSettingsJSON = socketShallowRef('general-settings', 'uninitialized');
+window.gs = generalSettingsJSON;;
 watch(generalSettingsJSON, (newVal) => {
 	if (newVal === 'uninitialized')
 		return;
@@ -91,13 +99,18 @@ function buildWidgetsList(){
 			// build a box key that will store the widget's screen position
 			const boxKey = slug + '-' + widget.key;
 
+			// check if we already have a ref for this box key
+			if (!boxData[boxKey]) {
+				boxData[boxKey] = shallowRef({});
+			}
+
 			// update with placeholder until the widget populates this
-			const data = {...boxData.value};
-			data[boxKey] = { 
-				...data[boxKey],
+			let data = {...boxData[boxKey].value};
+			data = { 
+				...data,
 				[widget.key]: { x: 100, y: 100, width: 200, height: 200 },
 			}
-			boxData.value = data;
+			boxData[boxKey].value = data;
 
 			return {
 				slug,
@@ -152,10 +165,10 @@ function buildWidgetsList(){
 	// area to spawn widgets
 	.layoutWidgetsSpawnContainer {
 
+		border: 1px solid red;
+
 		color: white !important;
-		// fill area
-		width: 100%;
-		height: 100%;
+
 
 		// reset stacking context
 		position: relative;

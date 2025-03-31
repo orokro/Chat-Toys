@@ -15,6 +15,7 @@ import Toy from "../Toy";
 
 // components
 import TosserPage from './TosserPage.vue';
+import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class Tosser extends Toy {
@@ -27,7 +28,7 @@ export default class Tosser extends Toy {
 	static themeColor = '#E65A5A';
 	static widgetComponents = [
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'targetWidgetBox',
 			allowResize: true,
 			lockAspectRatio: true,

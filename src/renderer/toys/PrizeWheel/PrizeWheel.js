@@ -15,6 +15,7 @@ import Toy from "../Toy";
 
 // components
 import PrizeWheelPage from './PrizeWheelPage.vue';
+import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class PrizeWheel extends Toy {
@@ -27,7 +28,7 @@ export default class PrizeWheel extends Toy {
 	static themeColor = '#FFAAC5';
 	static widgetComponents = [
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: true,

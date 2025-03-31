@@ -15,6 +15,7 @@ import Toy from "../Toy";
 
 // components
 import HeadPatsPage from './HeadPatsPage.vue';
+import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class HeadPat extends Toy {
@@ -28,13 +29,13 @@ export default class HeadPat extends Toy {
 	static themeColor = '#C6C37A';
 	static widgetComponents = [
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'streamerWidgetBox',
 			allowResize: true,
 			lockAspectRatio: true,
 		},
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'chatterWidgetBox',
 			allowResize: true,
 			lockAspectRatio: true,

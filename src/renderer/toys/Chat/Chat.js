@@ -15,6 +15,7 @@ import Toy from "../Toy";
 
 // components
 import ChatBoxPage from './ChatBoxPage.vue';
+import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class Chat extends Toy {
@@ -27,13 +28,13 @@ export default class Chat extends Toy {
 	static themeColor = '#60C5F1';
 	static widgetComponents = [
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'chatWidgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
 		},
 		{
-			component: null,
+			component: DummyWidget,
 			key: 'shoutWidgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
