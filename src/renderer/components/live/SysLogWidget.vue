@@ -105,7 +105,8 @@ console.log('syslog messages', messages);
 				// text settings
 				color: var(--logTextColor);
 				font-size: 12px;
-
+				text-shadow: 2px 2px 0px black;
+				
 				// padding
 				padding: 0px 5px;
 

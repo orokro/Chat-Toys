@@ -160,8 +160,15 @@ export default class ChannelPoints extends Toy {
 		// log it:
 		console.log('Channel Points found', commandSlug, 'from', msg.author, 'with params', params);
 
+		// handle get attempts
 		if(commandSlug === 'get'){
 			this.doGet(msg, user, params, handshake);
+			return;
+		}
+
+		// handle me attempts
+		if(commandSlug === 'me'){
+			this.doMe(msg, user, params, handshake);
 			return;
 		}
 		
@@ -182,18 +189,24 @@ export default class ChannelPoints extends Toy {
 
 		// if we're not in the get mode, reject the command
 		if(this.mode.value !== 'GET'){
-			handshake.reject('Not in GET mode');
+			handshake.reject(`${msg.author}: Not in GET mode`);
 			return;
 		}
 
-		// if we dont have any claims left, reject the command
+		// if we don't have any claims left, reject the command
 		if(this.claimsLeft.value <= 0){
-			handshake.reject('No claims left');
+			handshake.reject(`${msg.author}: No claims left`);
 			return;
 		}
 
 		// decrement the claims left
 		this.claimsLeft.value--;
+
+		// if there's no claims left, return to idle mode
+		if(this.claimsLeft.value <= 0)
+			setTimeout(()=>{
+				this.startGetMode();
+			}, 1000);
 
 		// update the user's points and other data
 		window.ytctDB.updateUser(msg.authorUniqueID, {
@@ -207,6 +220,29 @@ export default class ChannelPoints extends Toy {
 		handshake.accept();
 	}
 	
+
+	/**
+	 * Logs user current points
+	 * 
+	 * @param {Object} msg - the message object
+	 * @param {Object} user - the user object
+	 * @param {Array<String>} params - the parameters passed to the command
+	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
+	 */
+	doMe(msg, user, params, handshake) {
+
+		// get the user
+		const userData = window.ytctDB.getUser(msg.authorUniqueID);
+
+		const points = userData ? userData.points : 0;
+
+		// log success!
+		this.chatToysApp.log.info(`${msg.author} has ${points} points`);
+
+		// we have accepted the command
+		handshake.accept();
+	}
+
 
 	/**
 	 * Starts the logic loop for this toy

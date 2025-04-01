@@ -40,7 +40,9 @@ export class SysLogger {
 	 */
 	trimLog() {
 		if (this.messages.value.length > this.logLength) {
-			this.messages.value = [...this.messages.value].shift();
+			
+			// remove the first item
+			this.messages.value = this.messages.value.slice(1);
 		}
 	}
 

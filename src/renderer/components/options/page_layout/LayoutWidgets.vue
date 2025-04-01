@@ -46,6 +46,7 @@ import { RefAggregator } from '../../../scripts/RefAggregator';
 // components
 import LayoutBox from './LayoutBox.vue';
 import ChannelPointsWidget from '../../../toys/ChannelPoints/ChannelPointsWidget.vue';
+import SysLogWidget from '@components/live/SysLogWidget.vue';
 import DummyWidget from '../../../toys/DummyWidget.vue';
 
 // fetch the main app state context
@@ -80,7 +81,7 @@ const widgets = [
 	// settings isn't a toy in itself, so we'll hard code stuff for it's widget
 	{
 		slug: 'settings',
-		component: null,
+		component: SysLogWidget,
 		settings: ctApp.settings,
 		key: 'outputWidgetBox',
 		allowResize: true,

@@ -349,7 +349,9 @@ export class CommandProcessor {
 			
 			// build a method to reject the command
 			const reject = (reason) => {
-				console.log(`Command "${commandSlug}" rejected by listener: ${reason}`);
+				const errMsg = `"!${commandSlug}" rejected by listener: ${reason}`
+				console.log(errMsg);
+				this.chatToysApp.log.err(reason);
 			};
 	
 			// call the listener with the command details
