@@ -149,9 +149,11 @@
 		<p>Below is an example of the points widget as it will appear on the stage.</p>
 		<div class="previewBox">
 
-			<ChannelPointsWidget
-				:demoMode="true"
-			/>
+			<div class="widgetBox">
+				<ChannelPointsWidget
+					:demoMode="true"
+				/>
+			</div>
 			
 		</div>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
@@ -223,7 +225,9 @@ const claimCommand = computed(() => {
 
 		// random area where we'll show the widget over a bg image
 		.previewBox {
-
+			
+			position: relative;
+			
 			width: 600px;
 			height: 400px;
 			border: 2px solid black;
@@ -235,6 +239,14 @@ const claimCommand = computed(() => {
 			display: flex;
 			justify-content: center;
 			align-items: center;
+
+			// box to spawn the widget in
+			.widgetBox {
+				
+				width: 200px;
+				height: 200px;
+			
+			}// .widgetBox
 
 		}// .previewBox
 
