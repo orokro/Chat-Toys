@@ -6,79 +6,97 @@
 -->
 <template>
 
-	<!-- the main box for the widget -->
-	<div 
-		v-if="ready"
-		class="channelPointsWidget"
-		:class="{ idle: mode === 'IDLE' }"
-		:style="{
-			'--widget-color': socketSettingsRef.widgetColorTheme || 'red'
-		}"
-	>
+	<!-- auto sizer so we can lazily scale the widget lol -->
+	<AutoSizer :targetWidth="200" v-model="scale">
 
-		<!-- inner wrapper to reset CSS stacking context -->
-		<div class="innerWrapper">
-
-			<div class="spinnerBox glowSpinner_1">
-				<div class="gradient-overlay"></div>
-			</div>
-			<div class="spinnerBox glowSpinner_2">
-				<div class="gradient-overlay"></div>
-			</div>
-			<div class="spinnerBox glowSpinner_3"></div>
-
-			<div class="icon">
-				<img :src="socketSettingsRef.widgetIconPath" alt="channel points icon" width="60" height="60" />
-			</div>
-
-			<svg 
-				v-if="socketSettingsRef.showTimerBar"
-				class="timerCircle"
-				:width="svgSize"
-				:height="svgSize"
-				:viewBox="`0 0 ${svgSize} ${svgSize}`"
+		<!-- box to scale -->
+		<div
+			class="scaleBox"
+			:style="{
+				transform: `translate(-50%, -50%) scale(${scale})`
+			}"
+		>
+			<!-- the main box for the widget -->
+			<div 
+				v-if="ready"
+				class="channelPointsWidget"
+				:class="{ idle: mode === 'IDLE' }"
+				:style="{
+					'--widget-color': socketSettingsRef.widgetColorTheme || 'red'
+				}"
 			>
-				<circle 
-					v-if="timeLeftNormalised > 0"
-					:cx="center"
-					:cy="center"
-					:r="radius"
-					fill="none"
-					:stroke="socketSettingsRef.widgetColorTheme"
-					:stroke-width="thiccness"
-					:stroke-dasharray="dashArray"
-					:stroke-dashoffset="dashOffset"
-					stroke-linecap="round"
-					:transform="`rotate(-90, ${center}, ${center})`"
-				/>
-			</svg>
 
-			<div class="colorOverlay"></div>
+				<!-- inner wrapper to reset CSS stacking context -->
+				<div class="innerWrapper">
 
-			
-		</div>
+					<div class="spinnerBox glowSpinner_1">
+						<div class="gradient-overlay"></div>
+					</div>
+					<div class="spinnerBox glowSpinner_2">
+						<div class="gradient-overlay"></div>
+					</div>
+					<div class="spinnerBox glowSpinner_3"></div>
 
-		<div class="textOverlay">
-			<div v-if="socketSettingsRef.showClaimsRemaining" class="claimsRemaining">
-				{{ claimsLeft }} left!
+					<div class="icon">
+						<img :src="socketSettingsRef.widgetIconPath" alt="channel points icon" width="60" height="60" />
+					</div>
+
+					<svg 
+						v-if="socketSettingsRef.showTimerBar"
+						class="timerCircle"
+						:width="svgSize"
+						:height="svgSize"
+						:viewBox="`0 0 ${svgSize} ${svgSize}`"
+					>
+						<circle 
+							v-if="timeLeftNormalised > 0"
+							:cx="center"
+							:cy="center"
+							:r="radius"
+							fill="none"
+							:stroke="socketSettingsRef.widgetColorTheme"
+							:stroke-width="thiccness"
+							:stroke-dasharray="dashArray"
+							:stroke-dashoffset="dashOffset"
+							stroke-linecap="round"
+							:transform="`rotate(-90, ${center}, ${center})`"
+						/>
+					</svg>
+
+					<div class="colorOverlay"></div>
+
+					
+				</div>
+
+				<div class="textOverlay">
+					<div v-if="socketSettingsRef.showClaimsRemaining" class="claimsRemaining">
+						{{ claimsLeft }} left!
+					</div>
+					<div v-if="socketSettingsRef.showTextPrompt" class="command" align="center">
+						Type <span class="cmd">!{{ claimCommand }}</span><br>to get {{ socketSettingsRef.pointsPerClaim }} now!
+					</div>
+				</div>
 			</div>
-			<div v-if="socketSettingsRef.showTextPrompt" class="command" align="center">
-				Type <span class="cmd">!{{ claimCommand }}</span><br>to get {{ socketSettingsRef.pointsPerClaim }} now!
-			</div>
 		</div>
-	</div>
+	</AutoSizer>
 
 </template>
 <script setup>
 
 // vue
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 import { RefAggregator } from '../../scripts/RefAggregator';
 import { socketShallowRefReadOnly } from 'socket-ref';
 
+// other components
+import AutoSizer from '@components/AutoSizer.vue';
+
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
+
+// inherit scale from AutoSizer
+const scale = ref(1);
 
 const thisSlug = 'channelPoints';
 const slugify = (text) => {
@@ -131,6 +149,23 @@ const props = defineProps({
 
 </script>
 <style lang="scss" scoped>
+
+	// box used to scale the widget
+	.scaleBox {
+		
+		// same size as the default widget scale
+		width: 200px;
+		height: 200px;
+		
+		// center in the widget
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		
+		// for debug
+		/* border: 1px dotted cyan;
+		 */
+	}// .scaleBox
 
 	// the main box for the widget
 	.channelPointsWidget {
