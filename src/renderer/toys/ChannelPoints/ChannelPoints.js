@@ -137,8 +137,8 @@ export default class ChannelPoints extends Toy {
 			{
 				command: 'give',
 				params: [
+					{ name: 'amount', type: 'number', optional: false, desc: 'The amount of points to give' },
 					{ name: 'user', type: 'username', optional: false, desc: 'The user to give points to' },
-					{ name: 'amount', type: 'number', optional: false, desc: 'The amount of points to give' }
 				],
 				description: 'One user can give points to another user',
 			},			

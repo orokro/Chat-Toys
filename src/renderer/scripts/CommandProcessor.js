@@ -200,6 +200,7 @@ export class CommandProcessor {
 	 */
 	parseParams(commandData, messageText) {
 
+		console.log('commandData', commandData, messageText);
 		// get the raw message text, trim it, and remove the command part
 		// +2 for '!' and space
 		const raw = messageText.trim().slice(commandData.command.length + 2); 
@@ -215,7 +216,31 @@ export class CommandProcessor {
 		// some of them might be quoted, so we need to handle that
 		const quoted = raw.match(/"(.*?)"|(\S+)/g) || [];
 		const clean = quoted.map(str => str.replace(/(^"|"$)/g, ''));
-		return clean;
+
+		// if there's more params than defined, combine the last ones into one
+		if (clean.length > paramDefs.length) {
+			const last = clean.slice(paramDefs.length - 1).join(' ');
+			clean.splice(paramDefs.length - 1, clean.length - paramDefs.length + 1, last);
+		}
+
+		// add some extra processing for params based on type
+		for (let i = 0; i < paramDefs.length; i++) {
+
+			// convert numbers to actual numbers (i.e. not strings)
+			if (paramDefs[i].type === 'number')
+				clean[i] = parseFloat(clean[i], 10);
+
+			// if the type is username, remove potential @ symbol
+			if (paramDefs[i].type === 'username' && clean[i].startsWith('@'))
+				clean[i] = clean[i].slice(1);
+		}
+		
+		// instead of returning an array, make an object with the names as keys
+		const obj = {};
+		for (let i = 0; i < paramDefs.length; i++)
+			obj[paramDefs[i].name] = clean[i];
+
+		return obj;
 	}
 
 
@@ -224,7 +249,7 @@ export class CommandProcessor {
 	 * 
 	 * @param {Object} commandData - The command data object
 	 * @param {Object} user - The user object
-	 * @param {Array<String>} params - Optional parameters
+	 * @param {Object} params - Optional parameters
 	 * @returns {Boolean} - True if the command is valid and can be run
 	 */
 	validateCommand(commandData, user, params) {
@@ -289,14 +314,15 @@ export class CommandProcessor {
 		for (let i = 0; i < paramDefs.length; i++) {
 
 			const def = paramDefs[i];
-			const val = params[i];
+			const val = params[def.name];
 
 			if (!val && !def.optional) {
 				console.error(`Missing required param: ${def.name}`);
 				return false;
 			}
 
-			if (def.type === 'number' && isNaN(parseFloat(val))) {
+			if (def.type === 'number' && isNaN(parseFloat(val, 10))) {
+				console.log(val, parseInt(val, 10), isNaN(parseInt(val, 10)));
 				console.error(`Invalid number for param: ${def.name}`);
 				return false;
 			}
