@@ -17,6 +17,7 @@ import { AssetManager } from './assets_state/AssetManager';
 import { ChatProcessor } from './ChatProcessor';
 import { CommandProcessor } from './CommandProcessor';
 import { ToyManager } from './ToyManager';
+import { SysLogger } from './SysLogger';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -40,6 +41,9 @@ export default class ChatToysApp {
 
 		// build some general settings for the app
 		this.buildSettings();
+
+		// integrated logging for on screen messages
+		this.log = new SysLogger(this);
 		
 		// but a regular ref for the active toy (if any), since
 		// this doesn't need to persist across tabs or even refreshes
@@ -86,6 +90,9 @@ export default class ChatToysApp {
 			stageWidth: ref(1280),
 			stageHeight: ref(720),
 			enabledToys: this.enabledToys,
+			logBGColor: ref('white'),
+			logBGOpacity: ref(0.2),
+			logTextColor: ref('#FFFFFF'),
 		};
 		this.settingsStorRef = chromeShallowRef('general-settings', {});
 		this.settingsAggregator = new RefAggregator(this.settingsStorRef);

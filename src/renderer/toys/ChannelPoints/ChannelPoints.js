@@ -200,6 +200,9 @@ export default class ChannelPoints extends Toy {
 			relativePoints: this.settings.pointsPerClaim.value,
 		});
 
+		// log success!
+		this.chatToysApp.log.msg(msg.author + ' claimed ' + this.settings.pointsPerClaim.value + ' points!');
+		
 		// we have accepted the command
 		handshake.accept();
 	}
@@ -249,7 +252,7 @@ export default class ChannelPoints extends Toy {
 	 */
 	setTimeLeft(timeLeft){
 
-		console.log(timeLeft + ' seconds left');
+		// console.log(timeLeft + ' seconds left');
 		this.timeLeft = timeLeft;
 		this.timeLeftNormalised.value = timeLeft / this.settings.claimDuration.value;
 	}
