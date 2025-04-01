@@ -55,6 +55,10 @@
 
 			<div class="colorOverlay"></div>
 
+			
+		</div>
+
+		<div class="textOverlay">
 			<div v-if="socketSettingsRef.showClaimsRemaining" class="claimsRemaining">
 				{{ claimsLeft }} left!
 			</div>
@@ -143,10 +147,17 @@ const props = defineProps({
 		&.idle {
 			transform: scale(0);
 		}
+		/* mix-blend-mode: overlay; */
+
+		.textOverlay {
+			position: absolute !important;
+			inset: 0px;
+			mask-image: none !important;
+		}
 
 		// while the .channelPointsWidget is able to be positioned abso-lutely,
 		// this inner wrapper will reset CSS stacking context
-		.innerWrapper {
+		.innerWrapper, .textOverlay {
 
 			// fill the box
 			width: 100%;
@@ -154,6 +165,11 @@ const props = defineProps({
 
 			// reset stacking context
 			position: relative;
+
+			mask-image:
+				radial-gradient(circle, rgb(255, 255, 255) 40%,
+					rgba(0, 0, 0, 0.2) 60%,
+					rgba(0, 0, 0, 0) 100%);
 
 			// for debug
 			/* border: 1px solid blue; */
@@ -170,7 +186,7 @@ const props = defineProps({
 			.timerCircle {
 				position: absolute;
 				left: 50%;
-				top: 53%;
+				top: 50%;
 				transform: translate(-50%, -50%);
 			}	
 
@@ -181,17 +197,23 @@ const props = defineProps({
 				position: absolute;
 				mask-image:
 					radial-gradient(circle, rgb(255, 255, 255) 40%,
-						rgba(0, 0, 0, 0.2) 70%,
+						rgba(0, 0, 0, 0.2) 50%,
 						rgba(0, 0, 0, 0) 100%);
 			}
 
 			// the first spinner box, clockwise glow
 			.glowSpinner_1 {
-
+				/* display: none; */
 				background: url('/assets/channel_points/starburst_glow.png') no-repeat;
 				background-size: cover;
 				animation: rotate_cw 45s linear infinite;
-				opacity: 0.15;
+				opacity: 0.06;
+
+				mask-image:
+					radial-gradient(circle, rgb(255, 255, 255) 0%,
+						rgba(0, 0, 0, 0.2) 35%,
+						rgba(0, 0, 0, 0) 60%);
+
 			}
 
 			// the second spinner box, counter-clockwise glow
@@ -200,13 +222,21 @@ const props = defineProps({
 				background: url('/assets/channel_points/starburst_glow.png') no-repeat;
 				background-size: cover;
 				animation: rotate_ccw 45s linear infinite;
-				opacity: 0.15;
+				opacity: 0.35;
+
+				/* display: none; */
+				
+				mask-image:
+					radial-gradient(circle, rgb(255, 255, 255) 25%,
+						rgba(0, 0, 0, 0.2) 40%,
+						rgba(0, 0, 0, 0) 90%);
 			}
 
 
 			// for coloring the widget
 			.colorOverlay {
 
+				/* display: none; */
 				// load from CSS var
 				background-color: var(--widget-color);
 				width: 100%;
@@ -216,11 +246,14 @@ const props = defineProps({
 				left: 0;
 
 				mix-blend-mode: overlay;
+				opacity: 0.5;
+				
+				/* display: none; */
 
 				mask-image:
-					radial-gradient(circle, rgb(255, 255, 255) 40%,
+					radial-gradient(circle, rgb(255, 255, 255) 10%,
 						rgba(0, 0, 0, 0.2) 70%,
-						rgba(0, 0, 0, 0) 100%);
+						rgba(0, 0, 0, 0) 90%);
 			}
 
 			// .colorOverlay
@@ -232,9 +265,10 @@ const props = defineProps({
 				top: 10px;
 				left: 50%;
 				transform: translateX(-50%);
-				font-size: 1.5em;
+				font-size: 24px;
+				font-weight: bolder;
 				color: white;
-				text-shadow: 2px 2px 2px black;
+				text-shadow: 2px 2px 0px black;
 
 			}
 
@@ -253,9 +287,10 @@ const props = defineProps({
 				transform: translateX(-50%);
 
 				// text style
-				font-size: 1.2em;
+				font-size: 19px;
+				font-weight: bolder;
 				color: white;
-				text-shadow: 2px 2px 2px black;
+				text-shadow: 2px 2px 0px black;
 				white-space: nowrap;
 				line-height: 22px;
 
