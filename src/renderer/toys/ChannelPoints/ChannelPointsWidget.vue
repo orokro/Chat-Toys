@@ -26,7 +26,7 @@
 				}"
 			>
 
-				<!-- inner wrapper to reset CSS stacking context -->
+				<!-- the graphical elements -->
 				<div class="innerWrapper">
 
 					<div class="spinnerBox glowSpinner_1">
@@ -68,14 +68,30 @@
 					
 				</div>
 
+				<!-- the text elements -->
 				<div class="textOverlay">
+
 					<div v-if="socketSettingsRef.showClaimsRemaining" class="claimsRemaining">
 						{{ claimsLeft }} left!
 					</div>
+
 					<div v-if="socketSettingsRef.showTextPrompt" class="command" align="center">
 						Type <span class="cmd">!{{ claimCommand }}</span><br>to get {{ socketSettingsRef.pointsPerClaim }} now!
 					</div>
+
+					<div class="userClaims">
+						<div
+							v-if="socketSettingsRef.showUserClaims"
+							v-for="claim in userClaims"
+							class="claimText"
+							:key="claim.id"
+						>
+							{{ claim.text }}
+						</div>
+					</div>
+
 				</div>
+
 			</div>
 		</div>
 	</AutoSizer>
@@ -142,6 +158,14 @@ const mode = socketShallowRefReadOnly(slugify('mode'), 'idle');
 const timeLeftNormalised = socketShallowRefReadOnly(slugify('timeLeftNormalised'), 0);
 const userClaims = socketShallowRefReadOnly(slugify('userClaims'), []);
 
+window.uc = userClaims;
+
+watch(userClaims, (newVal) => {
+	// console.log('channel-points settings updated');
+	console.log(newVal);
+});
+
+
 // define some props
 const props = defineProps({
 
@@ -162,9 +186,6 @@ const props = defineProps({
 		top: 50%;
 		left: 50%;
 		
-		// for debug
-		/* border: 1px dotted cyan;
-		 */
 	}// .scaleBox
 
 	// the main box for the widget
@@ -185,10 +206,41 @@ const props = defineProps({
 		/* mix-blend-mode: overlay; */
 
 		.textOverlay {
+
 			position: absolute !important;
 			inset: 0px;
 			mask-image: none !important;
-		}
+
+			// with the text that appears like "orokro got 100 points!"
+			.userClaims {
+
+				position: absolute;
+				inset: 0px;
+				
+				.claimText {
+
+					position: absolute;
+					bottom: 40px;
+					left: 50%;
+					min-width: 100%;
+					
+					transform: translate(-50%, 0%);
+				
+					// claim text
+					color: white;
+					text-shadow: 2px 2px 0px black;
+					font-weight: bolder;
+					text-align: center;
+					white-space: nowrap;
+
+					// play forward slideUp animation once
+					animation: slideUp 0.75s linear forwards;
+
+				}// .claimText
+
+			}// .userClaims
+
+		}// .textOverlay
 
 		// while the .channelPointsWidget is able to be positioned abso-lutely,
 		// this inner wrapper will reset CSS stacking context
@@ -289,9 +341,7 @@ const props = defineProps({
 					radial-gradient(circle, rgb(255, 255, 255) 10%,
 						rgba(0, 0, 0, 0.2) 70%,
 						rgba(0, 0, 0, 0) 90%);
-			}
-
-			// .colorOverlay
+			}// .colorOverlay
 
 			// remaining count
 			.claimsRemaining {
@@ -305,9 +355,7 @@ const props = defineProps({
 				color: white;
 				text-shadow: 2px 2px 0px black;
 
-			}
-
-			// .claimsRemaining
+			}// .claimsRemaining
 
 			// text prompt for the user
 			.command {
@@ -333,13 +381,9 @@ const props = defineProps({
 					font-weight: bold;
 					color: yellow;
 				}
-			}
+			}// .command
 
-			// .command
-
-		}
-
-		// .innerWrapper
+		}// .innerWrapper
 
 	}
 
@@ -378,5 +422,22 @@ const props = defineProps({
 			transform: translate(-50%, -50%) scale(1);
 		}
 	}
+
+	// animation that makes text go from translate(-50%, 0) to translate(-50%, -50%)
+	@keyframes slideUp {
+		0% {
+			transform: translate(-50%, 0px);
+			opacity: 1;
+		}
+
+		75% {
+			transform: translate(-50%, -75px);
+			opacity: 1;
+		}
+		100% {
+			transform: translate(-50%, -100px);
+			opacity: 0;
+		}
+	}	
 
 </style>

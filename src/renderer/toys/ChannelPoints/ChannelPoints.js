@@ -15,6 +15,9 @@ import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'soc
 // our app
 import Toy from "../Toy";
 
+// lib/misc
+import { v4 as uuidv4 } from 'uuid';
+
 // components
 import ChannelPointsPage from './ChannelPointsPage.vue';
 import ChannelPointsWidget from "./ChannelPointsWidget.vue";
@@ -62,6 +65,8 @@ export default class ChannelPoints extends Toy {
 		setTimeout(()=>{
 			this.start();
 		}, 1000);
+
+		window.aids = this;
 	}
 
 
@@ -222,6 +227,19 @@ export default class ChannelPoints extends Toy {
 		// log success!
 		this.chatToysApp.log.msg(msg.author + ' claimed ' + this.settings.pointsPerClaim.value + ' points!');
 		
+		// get list of claims so we can send to the UI
+		const userClaims = [...this.userClaims.value];
+		userClaims.push({
+			id: uuidv4(),
+			text: `${msg.author} +${this.settings.pointsPerClaim.value}!`,
+		});
+
+		// if the length is greater than 10, remove the first one
+		if(userClaims.length > 10)
+			userClaims.shift();
+	
+		this.userClaims.value = userClaims;
+
 		// we have accepted the command
 		handshake.accept();
 	}
