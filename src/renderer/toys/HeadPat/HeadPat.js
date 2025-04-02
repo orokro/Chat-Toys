@@ -13,13 +13,12 @@ import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'soc
 
 // our app
 import Toy from "../Toy";
+import { StateTickerQueue } from '@scripts/StateTickerQueue';
 
 // components
 import HeadPatsPage from './HeadPatsPage.vue';
 import HeadPatsWidget from './HeadPatsWidget.vue';
 import HeadPatsUserWidget from './HeadPatsUserWidget.vue';
-
-import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class HeadPat extends Toy {
@@ -57,13 +56,15 @@ export default class HeadPat extends Toy {
 		// call the parent constructor
 		super(toyManager);
 
-		// queues for streamer/chatter head pats
-		this.streamerPatQueue = [];
-		this.chatterPatQueue = [];
-
-		// time counters to show the head pat for a certain amount of time
-		this.streamerTimer = 0;
-		this.chatterTimer = 0;
+		// make two queues - one for chatter pats and one for streamer pats
+		this.streamerPatQueue = new StateTickerQueue(this.handlePatQueue.bind(this), 2, 10);
+		this.chatterPatQueue = new StateTickerQueue(this.handleChatQueue.bind(this), 2, 10);
+		
+		// listen to ticks
+		electronAPI.tick(() => {
+			this.streamerPatQueue.tick();
+			this.chatterPatQueue.tick();
+		});
 
 		// the mode we're in, either 'IDLE', or 'SHOWING'
 		this.streamerMode = socketShallowRef(this.static.slugify('streamerMode'), 'IDLE');
@@ -81,9 +82,6 @@ export default class HeadPat extends Toy {
 		watch(this.settings.headPatChatterImage, () => {
 			this.userImagePath.value = this.getUserImagePath();
 		});
-
-		// listen to ticks
-		electronAPI.tick(() => this.tick());
 	}
 
 
@@ -164,12 +162,12 @@ export default class HeadPat extends Toy {
 			// only show the pat on the chatter if it's enabled, otherwise show it on the streamer
 			if(params.user) {
 				if(this.settings.allowUserPats.value) {
-					this.chatterPatQueue.push({patter: msg.author, pattee:params.user});
+					this.chatterPatQueue.addToQueue({patter: msg.author, pattee:params.user, duration: 10});
 				} else {
-					this.streamerPatQueue.push({patter: msg.author, pattee: ''});
+					this.streamerPatQueue.addToQueue({patter: msg.author, pattee: '', duration: 10});
 				}
 			} else {
-				this.streamerPatQueue.push({patter: msg.author, pattee: ''});
+				this.streamerPatQueue.addToQueue({patter: msg.author, pattee: '', duration: 10});
 			}
 		}
 
@@ -179,103 +177,42 @@ export default class HeadPat extends Toy {
 
 
 	/**
-	 * Tick function that runs every second
+	 * Handle the pat queue change
+	 * 
+	 * @param {Object} stateDetails - arbitrary state
 	 */
-	tick() {
+	handlePatQueue(stateDetails) {
 
-		/*
-			NOTE: the code below is redundant.
+		// if details null, we're in IDLE mode
+		if(stateDetails === null) {
+			this.streamerMode.value = 'IDLE';
+			this.currentPat.value = null;
+			return;
+		}
 
-			I KNO "DRY" aka "Don't Repeat Yourself" is a thing.
-
-			But, I got other things to do rn. So, I'm just gonna leave it as is for now.
-			TODO: Refactor this to be DRY.
-		*/
-
-		// run state logic for both queues
-		this.tickStreamer();
-		this.tickChatter();
+		// otherwise we're in SHOWING mode
+		this.streamerMode.value = 'SHOWING';
+		this.currentPat.value = stateDetails;
 	}
 
 
 	/**
-	 * Tick state logic for the streamer head pats
+	 * Handle the chat queue change
+	 * 
+	 * @param {Object} stateDetails - arbitrary state or null
 	 */
-	tickStreamer() {
-		
-		// if we have time on the clock, decrement it
-		if(this.streamerTimer > 0) {
-			this.streamerTimer--;
+	handleChatQueue(stateDetails) {
 
-			// if times up, determine what to do next
-			if(this.streamerTimer === 0) {				
-
-				// if we were in IDLE, check the queue to see if we should show a new pat
-				if(this.streamerMode.value === 'IDLE') {
-
-					if(this.streamerPatQueue.length > 0) {
-						this.currentPat.value = this.streamerPatQueue.shift();
-						this.streamerMode.value = 'SHOWING';
-						this.streamerTimer = 5;
-					}
-
-				// if we were in SHOWING, reset the current pat and go back to IDLE
-				} else {
-					this.currentPat.value = null;
-					this.streamerMode.value = 'IDLE';
-					this.streamerTimer = 1;
-				}
-
-			}
-		}else{
-			this.streamerMode.value = 'IDLE';
-
-			if(this.streamerPatQueue.length > 0) {
-				this.currentPat.value = this.streamerPatQueue.shift();
-				this.streamerMode.value = 'SHOWING';
-				this.streamerTimer = 10;
-			}
-		}
-	}	
-
-
-	/**
-	 * Tick state logic for the chatter head pats
-	 */
-	tickChatter() {
-		
-		// if we have time on the clock, decrement it
-		if(this.chatterTimer > 0) {
-			this.chatterTimer--;
-
-			// if times up, determine what to do next
-			if(this.chatterTimer === 0) {				
-
-				// if we were in IDLE, check the queue to see if we should show a new pat
-				if(this.chatterMode.value === 'IDLE') {
-
-					if(this.chatterPatQueue.length > 0) {
-						this.currentChatterPat.value = this.chatterPatQueue.shift();
-						this.chatterMode.value = 'SHOWING';
-						this.chatterTimer = 5;
-					}
-
-				// if we were in SHOWING, reset the current pat and go back to IDLE
-				} else {
-					this.currentChatterPat.value = null;
-					this.chatterMode.value = 'IDLE';
-					this.chatterTimer = 1;
-				}
-
-			}
-		}else{
+		// if details null, we're in IDLE mode
+		if(stateDetails === null) {
 			this.chatterMode.value = 'IDLE';
-
-			if(this.chatterPatQueue.length > 0) {
-				this.currentChatterPat.value = this.chatterPatQueue.shift();
-				this.chatterMode.value = 'SHOWING';
-				this.chatterTimer = 10;
-			}
+			this.currentChatterPat.value = null;
+			return;
 		}
-	}	
+
+		// otherwise we're in SHOWING mode
+		this.chatterMode.value = 'SHOWING';
+		this.currentChatterPat.value = stateDetails;
+	}
+
 }
