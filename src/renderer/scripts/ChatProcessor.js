@@ -9,6 +9,9 @@
 // vue
 import { shallowRef } from 'vue';
 
+// our app
+import { ABMap } from './ABMap';
+
 /**
  * Class to process incoming chat messages
  */
@@ -36,6 +39,10 @@ export class ChatProcessor {
 
 		// Bind method for handling chat messages
 		this._handleChatMessage = this._handleChatMessage.bind(this);
+
+		// as we process chat messages we'll keep track of which
+		// userName:userUniqueID pairs we've seen
+		this.seenAuthors = new ABMap();
 
 		// Hook up to Electron API
 		window.electronAPI.onChatMessage(this._handleChatMessage);
@@ -145,6 +152,9 @@ export class ChatProcessor {
 				isMember,
 				streamID,
 			};
+
+			// always reset this relationship because either side could change
+			this.seenAuthors.set(authorName, authorChannelId);
 
 			// add it to our list & mark it as seen so we don't repeat it
 			newMessages.push(formatted);

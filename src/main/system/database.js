@@ -164,6 +164,49 @@ class DatabaseManager {
 
 
 	/**
+	 * Get a user by display name (basic info)
+	 * 
+	 * @param {String} display_name - The display name of the user
+	 * @returns {Object|null}
+	 */
+	getUserByDisplayName(display_name) {
+		return this.db
+			.prepare(`SELECT youtube_id, display_name, points, banned FROM users WHERE display_name = ? COLLATE NOCASE`)
+			.get(display_name);
+	}
+	
+
+	/**
+	 * Get a user by display name (full info)
+	 * 
+	 * @param {String} display_name - The display name of the user
+	 * @returns {Object|null}
+	 */
+	getUserFullByDisplayName(display_name) {
+		const user = this.db
+			.prepare(`SELECT * FROM users WHERE display_name = ? COLLATE NOCASE`)
+			.get(display_name);
+		if (!user) return null;
+	
+		const streams = this.db
+			.prepare(`SELECT stream_id FROM user_streams WHERE youtube_id = ?`)
+			.all(user.youtube_id)
+			.map(row => row.stream_id);
+	
+		const commands = this.db
+			.prepare(`SELECT command_name, usage_count FROM user_commands WHERE youtube_id = ?`)
+			.all(user.youtube_id)
+			.map(row => `${row.command_name}:${row.usage_count}`);
+	
+		return {
+			...user,
+			streams,
+			commands
+		};
+	}
+
+
+	/**
 	 * Updates a user's data in the database
 	 * 
 	 * @param {String} youtube_id - the channel id for a YouTuber user

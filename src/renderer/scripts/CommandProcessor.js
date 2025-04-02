@@ -233,7 +233,8 @@ export class CommandProcessor {
 			// if the type is username, remove potential @ symbol
 			if (paramDefs[i].type === 'username' && clean[i].startsWith('@'))
 				clean[i] = clean[i].slice(1);
-		}
+			
+		}// next i
 		
 		// instead of returning an array, make an object with the names as keys
 		const obj = {};

@@ -171,6 +171,12 @@ export default class ChannelPoints extends Toy {
 			this.doMe(msg, user, params, handshake);
 			return;
 		}
+
+		// handle give attempts
+		if(commandSlug === 'give'){
+			this.doGive(msg, user, params, handshake);
+			return;
+		}
 		
 		// accept the command which updates the database
 		handshake.accept();
@@ -182,7 +188,7 @@ export default class ChannelPoints extends Toy {
 	 * 
 	 * @param {Object} msg - the message object
 	 * @param {Object} user - the user object
-	 * @param {Array<String>} params - the parameters passed to the command
+	 * @param {Object} params - the parameters passed to the command
 	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
 	 */
 	doGet(msg, user, params, handshake) {
@@ -226,7 +232,7 @@ export default class ChannelPoints extends Toy {
 	 * 
 	 * @param {Object} msg - the message object
 	 * @param {Object} user - the user object
-	 * @param {Array<String>} params - the parameters passed to the command
+	 * @param {Object} params - the parameters passed to the command
 	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
 	 */
 	doMe(msg, user, params, handshake) {
@@ -240,6 +246,80 @@ export default class ChannelPoints extends Toy {
 		this.chatToysApp.log.info(`${msg.author} has ${points} points`);
 
 		// we have accepted the command
+		handshake.accept();
+	}
+
+
+	/**
+	 * User attempts to give points to another user
+	 * 
+	 * @param {Object} msg - the message object
+	 * @param {Object} user - the user object
+	 * @param {Object} params - the parameters passed to the command
+	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
+	 */
+	doGive(msg, user, params, handshake) {
+
+		// first we have to see if the user has enough points to give
+		const giveUserData = window.ytctDB.getUser(msg.authorUniqueID);
+		const giveUserPoints = giveUserData ? giveUserData.points : 0;
+
+		// if the user doesn't have enough points, reject the command
+		if(giveUserPoints < params.amount){
+			handshake.reject(`${msg.author}: Not enough points to give`);
+			return;
+		}
+
+		// first we'll check to see if we have the params.user in the database
+		const receiveUserData = window.ytctDB.getUserByDisplayName(params.user);
+
+		// if we have it, we can: subtract points from the caller user & add points to the receiver user
+		if(receiveUserData){
+
+			// update the user's points and other data
+			window.ytctDB.updateUser(msg.authorUniqueID, {
+				relativePoints: -params.amount,
+			});
+
+			// update the user's points and other data
+			window.ytctDB.updateUser(receiveUserData.youtube_id, {
+				relativePoints: params.amount,
+			});
+
+			// log success!
+			this.chatToysApp.log.msg(`${msg.author} gave ${params.amount} points to ${params.user}`);
+			
+			// we have accepted the command
+			handshake.accept();
+			return;
+		}
+
+		// check to see if we've seen them in chat recently
+		const receiveUser = this.chatToysApp.chatProcessor.seenAuthors.get(params.user)[0];
+
+		// if we haven't seen them, reject the command
+		if(!receiveUser){
+			handshake.reject(`${msg.author}: User "${params.user}" not found`);
+			return;
+		}
+
+		console.log('user found in chat:', receiveUser);
+		
+		// if we have seen them, we'll add them to the database
+		window.ytctDB.updateUser(receiveUser, {
+
+			displayName: params.user,
+			streamID: msg.streamID,
+			relativePoints: params.amount,
+		});
+
+		// subtract points from the caller user
+		window.ytctDB.updateUser(msg.authorUniqueID, {
+			relativePoints: -params.amount,
+		});
+
+		// log success!
+		this.chatToysApp.log.msg(`${msg.author} gave ${params.amount} points to ${params.user}`);
 		handshake.accept();
 	}
 

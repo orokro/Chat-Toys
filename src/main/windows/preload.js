@@ -26,6 +26,8 @@ contextBridge.exposeInMainWorld("ytctDB", {
 	getUser: (id) => db.getUser(id),
 	getUsers: (ids) => db.getUsers(ids),
 	getUserFull: (id) => db.getUserFull(id),
+	getUserByDisplayName: (name) => db.getUserByDisplayName(name),
+	getUserFullByDisplayName: (name) => db.getUserFullByDisplayName(name),
 	updateUser: (id, data) => db.updateUser(id, data),
 	ban: (id) => db.ban(id),
 	unBan: (id) => db.unBan(id),
