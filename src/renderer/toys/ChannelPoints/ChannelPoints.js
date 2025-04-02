@@ -65,8 +65,6 @@ export default class ChannelPoints extends Toy {
 		setTimeout(()=>{
 			this.start();
 		}, 1000);
-
-		window.aids = this;
 	}
 
 
@@ -321,8 +319,6 @@ export default class ChannelPoints extends Toy {
 			return;
 		}
 
-		console.log('user found in chat:', receiveUser);
-		
 		// if we have seen them, we'll add them to the database
 		window.ytctDB.updateUser(receiveUser, {
 

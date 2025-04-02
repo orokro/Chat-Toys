@@ -123,6 +123,10 @@ const emit = defineEmits([
 	'boxChange'
 ]);
 
+// define some props
+const props = defineProps({
+
+});
 
 // timer circle settings
 const thiccness = ref(10);
@@ -141,15 +145,9 @@ const svgSize = computed(() => diameter.value + 10); // 5px padding around
 const ready = ref(false);
 const socketSettingsRef = useToySettings('channel-points', 'widgetBox', emit, () => {
 	ready.value = true;
-	console.log('channel-points settings updated');
-	console.log(socketSettingsRef.value);
-});
-
-watch(socketSettingsRef, (newVal) => {
 	// console.log('channel-points settings updated');
-	// console.log(newVal);
+	// console.log(socketSettingsRef.value);
 });
-
 
 // gets live sockets
 const claimCommand = socketShallowRefReadOnly(slugify('claimCommand'), '');
@@ -158,18 +156,6 @@ const mode = socketShallowRefReadOnly(slugify('mode'), 'idle');
 const timeLeftNormalised = socketShallowRefReadOnly(slugify('timeLeftNormalised'), 0);
 const userClaims = socketShallowRefReadOnly(slugify('userClaims'), []);
 
-window.uc = userClaims;
-
-watch(userClaims, (newVal) => {
-	// console.log('channel-points settings updated');
-	console.log(newVal);
-});
-
-
-// define some props
-const props = defineProps({
-
-});
 
 </script>
 <style lang="scss" scoped>
@@ -216,7 +202,7 @@ const props = defineProps({
 
 				position: absolute;
 				inset: 0px;
-				
+
 				.claimText {
 
 					position: absolute;

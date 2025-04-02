@@ -13,7 +13,8 @@ const { DatabaseManager } = require(path.join(__dirname, "../system/database"));
 // Expose the electronAPI object to the renderer process
 contextBridge.exposeInMainWorld('electronAPI', {
 	sendMessage: (message) => ipcRenderer.send('message', message),
-	onChatMessage: (callback) => ipcRenderer.on('chat-message', (event, data) => callback(data))
+	onChatMessage: (callback) => ipcRenderer.on('chat-message', (event, data) => callback(data)),
+	tick: (callback) => ipcRenderer.on('tick', (event) => callback()),
 });
 
 // grab passed CLI args

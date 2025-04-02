@@ -66,6 +66,12 @@ function createMainWindow() {
 		});
 	}
 
+
+	// create an interval that will ping the renderer process every second
+	const tickInterval = setInterval(() => {
+		mainWindow.webContents.send('tick');
+	}, 1000);
+
 	return mainWindow;
 }
 

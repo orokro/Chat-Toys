@@ -51,7 +51,6 @@ const messages = socketShallowRefReadOnly('syslog', []);
 
 const generalSettings = socketShallowRefReadOnly('general-settings', {});
 
-console.log('syslog messages', messages);
 </script>
 <style lang="scss" scoped>
 

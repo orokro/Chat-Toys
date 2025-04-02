@@ -207,10 +207,23 @@ export class CommandProcessor {
 		const paramDefs = commandData.params || [];
 
 		// if this command doesn't have any params, return an empty array
-		if (paramDefs.length === 0) return [];
+		if (paramDefs.length === 0) return {};
 
 		// if this command only has one param, return the raw remainder of the message
-		if (paramDefs.length === 1) return [raw];
+		if (paramDefs.length === 1) {
+
+			if(raw.length === 0)
+				return {};
+			
+			let val = raw;
+			if(paramDefs[0].type === 'number')
+				val = parseFloat(val, 10);
+			if(paramDefs[0].type === 'username' && val.startsWith('@'))
+				val = val.slice(1);
+			return {
+				[paramDefs[0].name]: val
+			}
+		};
 
 		// If we got here, we have multiple params, so we need to parse them
 		// some of them might be quoted, so we need to handle that
