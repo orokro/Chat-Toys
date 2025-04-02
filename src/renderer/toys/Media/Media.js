@@ -13,6 +13,7 @@ import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'soc
 
 // our app
 import Toy from "../Toy";
+import { StateTickerQueue } from '@scripts/StateTickerQueue';
 
 // components
 import MediaPage from './MediaPage.vue';
@@ -47,11 +48,9 @@ export default class Media extends Toy {
 		// call the parent constructor
 		super(toyManager);
 
-		// queued media items
-		this.mediaQueue = [];
-
-		// time on the clock
-		this.mediaTimer = 0;
+		// our state ticker queue
+		this.stateTickerQueue = new StateTickerQueue(this.handleStateChange.bind(this), 2, 5);
+		electronAPI.tick(() => this.stateTickerQueue.tick());
 
 		// live socket settings
 		this.mode = socketShallowRef(this.static.slugify('mode'), 'IDLE');
@@ -59,8 +58,6 @@ export default class Media extends Toy {
 		this.soundPath = socketShallowRef(this.static.slugify('soundPath'), null);
 		this.imagePath = socketShallowRef(this.static.slugify('imagePath'), null);
 
-		// listen to ticks
-		electronAPI.tick(() => this.tick());
 	}
 
 
@@ -148,57 +145,26 @@ export default class Media extends Toy {
 			soundPath: mediaItem.hasSound ? this.getFilePath(mediaItem.soundId) : null,
 			duration: mediaItem.duration,
 		}
-		this.mediaQueue.push(queueItem);
+		this.stateTickerQueue.addToQueue(queueItem);
 	}
-
-	
-	/**
-	 * Tick state logic for media items
-	 */
-	tick() {
-
-		// if we have time on the clock, decrement it
-		if(this.mediaTimer > 0) {
-			this.mediaTimer--;
-
-			// if times up, determine what to do next
-			if(this.mediaTimer === 0) {				
-
-				// if we were in IDLE, check the queue to see if we should show a new media item
-				if(this.mode.value === 'IDLE') {
-
-					if(this.mediaQueue.length > 0) {
-						this.popMediaQueue();
-						return;
-					}
-
-				// if we were in SHOWING, reset the current pat and go back to IDLE
-				} else {
-					this.mode.value = 'IDLE';
-					this.mediaTimer = 1;
-				}
-
-			}
-		}else{
-			this.mode.value = 'IDLE';
-
-			if(this.mediaQueue.length > 0) {
-				this.popMediaQueue();
-			}
-		}
-	}	
 
 
 	/**
 	 * Pops the next media item from the queue
 	 */
-	popMediaQueue() {
+	handleStateChange(data) {
 		
-		const mediaItem = this.mediaQueue.shift();
+		// if we got null, return to IDLE
+		if(data === null) {
+			this.mode.value = 'IDLE';
+			return;
+		}
+
+		// otherwise, set the media item
+		const mediaItem = data;
 		this.message.value = mediaItem.message;
 		this.soundPath.value = mediaItem.soundPath;
 		this.imagePath.value = mediaItem.imagePath;
-		this.mediaTimer = mediaItem.duration
 		setTimeout(()=>{
 			this.mode.value = 'PLAY';
 		}, 100);
