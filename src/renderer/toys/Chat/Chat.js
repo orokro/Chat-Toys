@@ -5,16 +5,28 @@
 	This class handles the state for the Chat features toy system.
 
 	NOTE: it does not handle the rendering, which will be the widgets.
+
+	ALSO NOTE: there's technically a few different systems in this toy:
+	- Chat Box
+	- Shout Box
+	- Swarm Box
+
+	Technically I could break the logic down into separate classes, but
+	I decided just to do that for Swarm since it's the most technical.
 */
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, registerRuntimeCompiler, shallowRef, watch } from 'vue';
+import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
 import Toy from "../Toy";
+import { Swarm } from './Swarm';
+import { StateTickerQueue } from '@scripts/StateTickerQueue';
 
 // components
 import ChatBoxPage from './ChatBoxPage.vue';
+import ShoutWidget from './ShoutWidget.vue';
 import DummyWidget from '../DummyWidget.vue';
 
 // main export
@@ -34,7 +46,7 @@ export default class Chat extends Toy {
 			lockAspectRatio: false,
 		},
 		{
-			component: DummyWidget,
+			component: ShoutWidget,
 			key: 'shoutWidgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
@@ -51,6 +63,58 @@ export default class Chat extends Toy {
 
 		// call the parent constructor
 		super(toyManager);
+
+		// we'll use a ticker for queuing up shout messages
+		this.shoutQueue = new StateTickerQueue(this.handleShoutQueue.bind(this), 2, 10);
+		electronAPI.tick(() => this.shoutQueue.tick());
+
+		// our socket state
+		this.soundPath = socketShallowRef(
+			this.static.slugify('soundPath'),
+			this.getAssetPath(this.settings.shoutSoundId.value));
+		this.chatFramePath = socketShallowRef(
+			this.static.slugify('chatFramePath'),
+			this.getAssetPath(this.settings.chatBoxImage.value));
+		this.shoutMessage = socketShallowRef(this.static.slugify('shoutMessage'), '');
+		this.shoutMode = socketShallowRef(this.static.slugify('shoutMode'), 'IDLE');
+		this.chatLog = socketShallowRef(this.static.slugify('chatLog'), []);
+		this.swarmLog = socketShallowRef(this.static.slugify('swarmLog'), []);
+		this.swarmMode = socketShallowRef(this.static.slugify('swarmMode'), 'IDLE');
+
+		// listen to changes in the shout sound
+		watch(this.settings.shoutSoundId, (value) => {
+			this.soundPath.value = this.getAssetPath(value);
+		});
+
+		// listen to changes in the chat box image
+		watch(this.settings.chatBoxImage, (value) => {
+			this.chatFramePath.value = this.getAssetPath(value);
+		});
+
+		// listen for incoming chat messages from chat processor
+		this.handleChatMessage = this.handleChatMessage.bind(this);
+		this.chatToysApp.chatProcessor.onNewChats(this.handleChatMessage);
+
+		// build new swarm logic
+		this.swarmLogic = new Swarm(
+			50,
+			this.settings.swarmSize,
+			this.settings.swarmDuration,
+			(messages) => { this.swarmLog.value = messages; },
+			(swarmIsActive) => { this.swarmMode.value = swarmIsActive ? 'SHOWING' : 'IDLE'; }
+		);
+	}
+
+
+	/**
+	 * Helper to get the path to the assets
+	 * 
+	 * @param {String} assetID - the ID of the asset
+	 * @returns {String} - the path to the asset
+	 */
+	getAssetPath(assetID) {
+		const fileData = this.chatToysApp.assetsMgr.getFileData(assetID);
+		return `builtin/${fileData.name}`;
 	}
 
 
@@ -63,6 +127,7 @@ export default class Chat extends Toy {
 		this.buildSettingsBlock({
 
 			enableChatBox: ref(false),
+			enableChatBoxImage: ref(false),
 			chatBoxImage: ref('3'),
 			filterCommands: ref(true),
 			showChatterNames: ref(true),
@@ -125,8 +190,76 @@ export default class Chat extends Toy {
 		// log it:
 		console.log('Chat found', commandSlug, 'from', msg.author, 'with params', params);
 
-		// accept the command which updates the database
-		handshake.accept();
+		// if we got a shout command
+		if (commandSlug === 'shout') {
+
+			// NOTE: shout command should be fully validated by the time it gets here
+			// so we can just accept it and queue it up
+
+			// queue the shout message
+			this.shoutQueue.addToQueue({
+				message: {
+					user: msg.author,
+					message: params.message,
+				}
+			});
+
+			// we gucci
+			handshake.accept();
+			return;
+		}
+
+		// if we got a swarm command
+		if (commandSlug === 'swarm') {
+
+			// NOTE: swarm command should be fully validated by the time it gets here
+			// so we can just accept it and queue it up
+
+			// queue the swarm message
+			this.swarmLogic.newMessage(msg.author, msg.authorUniqueID, params.message);
+
+			// we gucci
+			handshake.accept();
+			return;
+		}
+
 	}
 	
+
+	/**
+	 * Handle when a new chat message comes in
+	 * 
+	 * @param {Object} chat - the chat object
+	 */
+	handleChatMessage(chat) {
+		console.log('Chat message from inside toy:', chat);
+	}
+
+
+	/**
+	 * Handle the shout queue change
+	 * 
+	 * @param {Object} item - the item in the queue
+	 */
+	handleShoutQueue(item) {
+
+		// if it's null, we're in wait mode
+		if(item === null) {
+			this.shoutMode.value = 'IDLE';
+			return;
+		}
+
+		// otherwise we're in SHOWING mode
+		this.shoutMode.value = 'SHOWING';
+		this.shoutMessage.value = item.message;
+	}
+
+
+	/**
+	 * Clean up
+	 */
+	end(){
+		this.chatToysApp.chatProcessor.removeNewChatsListener(this.onNewChats);
+	}
+
 }

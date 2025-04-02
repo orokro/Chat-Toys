@@ -31,7 +31,7 @@
 			Below you can customize the commands that users can type to interact with the Chat system.
 		</p>
 		<CommandsConfigBox :toy="toy" />
-			
+		
 		<SectionHeader title="Settings"/>
 		<SettingsInputRow
 			type="boolean"
@@ -42,10 +42,10 @@
 		</SettingsInputRow>
 		<SettingsInputRow
 			type="boolean"
-			v-model="enableChatBox"
+			v-model="enableChatBoxImage"
 		>
-			<h3>Enable Onscreen Chat Box</h3>
-			<p>Show chat box on screen mirroring live chat (as opposed to other streaming services)</p>
+			<h3>Enable Chat Box BG Image</h3>
+			<p>Use the image below to frame the chat box.</p>
 		</SettingsInputRow>
 		<SettingsAssetRow
 			v-model="chatBoxImage"
@@ -142,6 +142,7 @@ const toy = ctApp.toyManager.toys[Chat.slug];
 // our local refs state
 const {
 	enableChatBox,
+	enableChatBoxImage,
 	chatBoxImage,
 	filterCommands,
 	showChatterNames,

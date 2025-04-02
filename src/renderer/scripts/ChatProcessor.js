@@ -60,6 +60,16 @@ export class ChatProcessor {
 
 
 	/**
+	 * For clean up / prevent memory leaks, remove a callback from the list
+	 * 
+	 * @param {Function} callback - Callback to remove from the list of callbacks
+	 */
+	removeNewChatsListener(callback) {
+		this._onNewChatsCallbacks = this._onNewChatsCallbacks.filter((cb) => cb !== callback);
+	}
+
+
+	/**
 	 * Formats chat messages from the chat platform & triggers callbacks
 	 * 
 	 * @param {Object} data - Data from the chat platform
