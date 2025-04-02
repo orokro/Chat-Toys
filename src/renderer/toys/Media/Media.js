@@ -8,14 +8,15 @@
 */
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
+import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
 import Toy from "../Toy";
 
 // components
 import MediaPage from './MediaPage.vue';
-import DummyWidget from '../DummyWidget.vue';
+import MediaWidget from './MediaWidget.vue';
 
 // main export
 export default class Media extends Toy {
@@ -28,7 +29,7 @@ export default class Media extends Toy {
 	static themeColor = '#51547D';
 	static widgetComponents = [
 		{
-			component: DummyWidget,
+			component: MediaWidget,
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
@@ -45,6 +46,21 @@ export default class Media extends Toy {
 
 		// call the parent constructor
 		super(toyManager);
+
+		// queued media items
+		this.mediaQueue = [];
+
+		// time on the clock
+		this.mediaTimer = 0;
+
+		// live socket settings
+		this.mode = socketShallowRef(this.static.slugify('mode'), 'IDLE');
+		this.message = socketShallowRef(this.static.slugify('message'), '');
+		this.soundPath = socketShallowRef(this.static.slugify('soundPath'), null);
+		this.imagePath = socketShallowRef(this.static.slugify('imagePath'), null);
+
+		// listen to ticks
+		electronAPI.tick(() => this.tick());
 	}
 
 
@@ -90,11 +106,102 @@ export default class Media extends Toy {
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
 
-		// log it:
-		console.log('Media found', commandSlug, 'from', msg.author, 'with params', params);
+		// queue the media item & accept the command
+		this.queueMediaItem(msg, commandSlug);
 
 		// accept the command which updates the database
 		handshake.accept();
 	}
 	
+
+	/**
+	 * Get the file path of a media item
+	 * 
+	 * @param {String} mediaID - ID of media from the assets manager
+	 * @returns {String} path to media
+	 */
+	getFilePath(mediaID){
+		const fileData = this.chatToysApp.assetsMgr.getFileData(mediaID);
+		return `builtin/${fileData.name}`;
+	}
+
+
+	/**
+	 * Queues a media item when command is run
+	 * 
+	 * @param {Object} msg - the message object that invoked the command
+	 * @param {String} item - the raw media slug i.e. _1, _2, etc
+	 */
+	queueMediaItem(msg, item) {
+
+		// convert the item to index
+		const mediaIndex = parseInt(item, 10)-1;
+
+		// get the media item from the settings
+		const mediaAssets = this.settings.mediaAssets.value;
+		const mediaItem = mediaAssets[mediaIndex];
+
+		// repack the media item into a queue item
+		const queueItem = {
+			message: `${msg.author} used !${mediaItem.commandName}`,
+			imagePath: mediaItem.hasImage ? this.getFilePath(mediaItem.imageId) : null,
+			soundPath: mediaItem.hasSound ? this.getFilePath(mediaItem.soundId) : null,
+			duration: mediaItem.duration,
+		}
+		this.mediaQueue.push(queueItem);
+	}
+
+	
+	/**
+	 * Tick state logic for media items
+	 */
+	tick() {
+
+		// if we have time on the clock, decrement it
+		if(this.mediaTimer > 0) {
+			this.mediaTimer--;
+
+			// if times up, determine what to do next
+			if(this.mediaTimer === 0) {				
+
+				// if we were in IDLE, check the queue to see if we should show a new media item
+				if(this.mode.value === 'IDLE') {
+
+					if(this.mediaQueue.length > 0) {
+						this.popMediaQueue();
+						return;
+					}
+
+				// if we were in SHOWING, reset the current pat and go back to IDLE
+				} else {
+					this.mode.value = 'IDLE';
+					this.mediaTimer = 1;
+				}
+
+			}
+		}else{
+			this.mode.value = 'IDLE';
+
+			if(this.mediaQueue.length > 0) {
+				this.popMediaQueue();
+			}
+		}
+	}	
+
+
+	/**
+	 * Pops the next media item from the queue
+	 */
+	popMediaQueue() {
+		
+		const mediaItem = this.mediaQueue.shift();
+		this.message.value = mediaItem.message;
+		this.soundPath.value = mediaItem.soundPath;
+		this.imagePath.value = mediaItem.imagePath;
+		this.mediaTimer = mediaItem.duration
+		setTimeout(()=>{
+			this.mode.value = 'PLAY';
+		}, 100);
+	}
+
 }

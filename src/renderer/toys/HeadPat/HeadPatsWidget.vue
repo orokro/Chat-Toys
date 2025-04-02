@@ -91,7 +91,7 @@ const props = defineProps({
 	showProfilePicture: {
 		type: Boolean,
 		default: false
-},
+	},
 });
 
 // gets our settings
