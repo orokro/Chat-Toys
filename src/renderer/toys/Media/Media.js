@@ -34,6 +34,8 @@ export default class Media extends Toy {
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
+			description: 'Shows a picture, gif, and plays a sound. Can be placed anywhere.',
+			slug: 'mediaBox'
 		}
 	];
 

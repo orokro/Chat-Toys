@@ -32,12 +32,16 @@ export default class Gamba extends Toy {
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
+			description: 'Shows the current bet options.',
+			slug: 'bet'
 		},
 		{
 			component: DummyWidget,
 			key: 'resultsWidgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
+			description: 'Shows the results after the bet ends.',
+			slug: 'results'
 		}
 	];
 

@@ -37,6 +37,8 @@ export default class ChannelPoints extends Toy {
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: true,			
+			description: 'This widget periodically appears to show the current points available to claim.',
+			slug: 'points'
 		}
 	];
 

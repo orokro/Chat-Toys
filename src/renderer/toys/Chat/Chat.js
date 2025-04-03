@@ -26,6 +26,7 @@ import { StateTickerQueue } from '@scripts/StateTickerQueue';
 
 // components
 import ChatBoxPage from './ChatBoxPage.vue';
+import ChatBoxWidget from './ChatBoxWidget.vue';
 import ShoutWidget from './ShoutWidget.vue';
 import DummyWidget from '../DummyWidget.vue';
 
@@ -41,16 +42,28 @@ export default class Chat extends Toy {
 	static widgetComponents = [
 		{
 			component: DummyWidget,
+			key: 'swarmWidgetBox',
+			allowResize: true,
+			lockAspectRatio: false,
+			description: 'Shows swarm messages. Should ideally be placed full screen for maximum effect.',
+			slug: 'swarmBox'
+		},
+		{
+			component: ChatBoxWidget,
 			key: 'chatWidgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
+			description: 'Displays live chat.',
+			slug: 'liveChat'
 		},
 		{
 			component: ShoutWidget,
 			key: 'shoutWidgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
-		},
+			description: 'Shows when a chatter uses the !shout command. Similar to super chats, but channel points instead.',
+			slug: 'shoutBox'
+		},		
 	];
 
 
@@ -132,7 +145,7 @@ export default class Chat extends Toy {
 			filterCommands: ref(true),
 			showChatterNames: ref(true),
 			chatNameColor: ref('#00ABAE'),
-			chatTextColor: ref('#000000'),
+			chatTextColor: ref('#FFFFFF'),
 			shoutSoundId: ref('11'),
 			swarmSize: ref(5),
 			swarmDuration: ref(10),
@@ -147,6 +160,12 @@ export default class Chat extends Toy {
 				y: 20,
 				width: 400,
 				height: 100
+			}),
+			swarmWidgetBox: shallowRef({
+				x: 20,
+				y: 20,
+				width: 1880,
+				height: 1040
 			}),
 		});
 	}
@@ -224,15 +243,38 @@ export default class Chat extends Toy {
 		}
 
 	}
-	
+
 
 	/**
 	 * Handle when a new chat message comes in
 	 * 
-	 * @param {Object} chat - the chat object
+	 * @param {Array<Object>} chats - list of new chat messages
 	 */
-	handleChatMessage(chat) {
-		console.log('Chat message from inside toy:', chat);
+	handleChatMessage(chats) {
+
+		// spread into new array for new pointer
+		const chatLogMessages = [...this.chatLog.value];
+
+		// process each of the chat messages
+		for(const chat of chats) {
+
+			for(let i = 0; i < 3; i++) {
+				// add smaller chat object to the array
+				chatLogMessages.push({
+					id: chat.id,
+					author: chat.author,
+					message: chat.messageText,
+					isMember: chat.isMember,
+				});
+			}
+		}// next chat
+
+		// trim list if it's too long
+		while(chatLogMessages.length > 100)
+			chatLogMessages.shift();
+		
+		// update our socket ref
+		this.chatLog.value = chatLogMessages;
 	}
 
 

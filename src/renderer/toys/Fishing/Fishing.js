@@ -32,6 +32,8 @@ export default class Fishing extends Toy {
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: true,
+			description: 'The scene that shows the fishing lake',
+			slug: 'scene'
 		}
 	];
 

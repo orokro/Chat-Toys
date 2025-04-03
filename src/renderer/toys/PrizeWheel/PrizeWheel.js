@@ -32,6 +32,8 @@ export default class PrizeWheel extends Toy {
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: true,
+			description: 'The spinnable prize wheel!',
+			slug: 'wheel'
 		}
 	];
 
