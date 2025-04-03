@@ -100,16 +100,21 @@ export class Swarm {
 		// if we're in a swarm, show new messages
         if (isSwarm) {
             const newVisible = [];
-
+			
             for (const msg of this.swarmQueue) {
                 if (!msg.seen) {
                     msg.seen = true;
+
+					// pick a random % position to show the message
+					const x = parseInt(Math.random()*60, 10)+20;
+					const y = parseInt(Math.random()*60, 10)+20;
                     newVisible.push({
                         id: msg.id,
 						timestamp: msg.timestamp,
                         userName: msg.userName,
                         userID: msg.userID,
-                        message: msg.message
+                        message: msg.message,
+						pos: { x, y },
                     });
                 }
             }// next msg

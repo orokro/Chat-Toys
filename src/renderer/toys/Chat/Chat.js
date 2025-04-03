@@ -24,11 +24,14 @@ import Toy from "../Toy";
 import { Swarm } from './Swarm';
 import { StateTickerQueue } from '@scripts/StateTickerQueue';
 
+// misc/lib
+import { randUserName, randSentence, randPhrase, randUuid } from '@ngneat/falso';
+
 // components
 import ChatBoxPage from './ChatBoxPage.vue';
 import ChatBoxWidget from './ChatBoxWidget.vue';
 import ShoutWidget from './ShoutWidget.vue';
-import DummyWidget from '../DummyWidget.vue';
+import SwarmWidget from './SwarmWidget.vue';
 
 // main export
 export default class Chat extends Toy {
@@ -41,7 +44,7 @@ export default class Chat extends Toy {
 	static themeColor = '#60C5F1';
 	static widgetComponents = [
 		{
-			component: DummyWidget,
+			component: SwarmWidget,
 			key: 'swarmWidgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
@@ -116,6 +119,8 @@ export default class Chat extends Toy {
 			(messages) => { this.swarmLog.value = messages; },
 			(swarmIsActive) => { this.swarmMode.value = swarmIsActive ? 'SHOWING' : 'IDLE'; }
 		);
+		electronAPI.tick(() => this.swarmLogic.tick());
+
 	}
 
 
@@ -258,6 +263,10 @@ export default class Chat extends Toy {
 		// process each of the chat messages
 		for(const chat of chats) {
 
+			// skip chat.message starts with !
+			if(this.settings.filterCommands.value==true && chat.messageText.startsWith('!'))
+				continue;
+
 			for(let i = 0; i < 3; i++) {
 				// add smaller chat object to the array
 				chatLogMessages.push({
@@ -302,6 +311,44 @@ export default class Chat extends Toy {
 	 */
 	end(){
 		this.chatToysApp.chatProcessor.removeNewChatsListener(this.onNewChats);
+	}
+
+
+	/**
+	 * Tests swarm mode by generating random messages
+	 */
+	testSwarm(){
+
+		// toggle the swarm mode
+		if(this.testingSwarm === undefined)
+			this.testingSwarm = true;
+		else
+			this.testingSwarm = !this.testingSwarm;
+
+		// stop interval & gtfo
+		if(this.testingSwarm==false){
+			if(this.swarmTimeout !== null)
+				clearTimeout(this.swarmTimeout);
+			return;
+		}
+
+		// recursive timeout to send random messages
+		const randomMessage = () => {
+
+			if(this.testingSwarm === false)
+				return;
+
+			const id =  randUuid();
+			const username =  randUserName();
+			const message =  randPhrase();
+			this.swarmLogic.newMessage(username, id, message);
+
+			const randomTime = Math.floor(Math.random() * 1500) + 500;
+			this.swarmTimeout = setTimeout(randomMessage, randomTime);
+		}
+
+		// start the random message
+		randomMessage();
 	}
 
 }

@@ -80,14 +80,6 @@ const socketSettingsRef = useToySettings('chat', 'chatWidgetBox', emit, () => {
 const chatLog = socketShallowRefReadOnly(slugify('chatLog'), '');
 const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
 
-watch(chatLog, (newVal) => {
-	if(newVal !== '') {
-		// we have a new message
-		// const message = JSON.parse(newVal);
-		console.log('chatLog', newVal);
-	}
-});
-
 </script>
 <style lang="scss" scoped>
 
@@ -115,7 +107,7 @@ watch(chatLog, (newVal) => {
 		box-sizing: border-box;
 
 		// disable the background/border if user wants
-		&.disableBG {;
+		&.disableBG {
 			background: none !important;
 			border: 0px none !important;
 			border-image: none !important;
