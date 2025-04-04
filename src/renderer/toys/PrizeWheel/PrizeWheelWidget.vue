@@ -273,16 +273,15 @@ const slices = computed(() => {
 		// reset stacking context
 		position: relative;
 
+		// background image as CSS-sprites settinigs
 		background-repeat: no-repeat;
 		background-size: 200px 267px;
 		background-position: 0px -46px;
 
+		// allow nothing to escape
 		overflow: hidden;
-		/* border: 1px solid red; */
-		// debug bg
-		/* background: rgba(255, 255, 255, 0.1); */
-		/* border: 1px solid red; */
 
+		// idle in-n-out animation
 		transition: transform 0.25s ease-in-out;
 		transform: scale(1);
 		&.idle {

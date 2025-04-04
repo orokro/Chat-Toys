@@ -9,6 +9,7 @@
 	<PageBox
 		title="Prize Wheel Settings"
 		:themeColor="toy.static.themeColor"
+		class="prizeWheelPage"
 	>
 		<p>
 			The Prize Wheel is a fun way to reward your viewers with points, prizes, and more!
@@ -82,6 +83,16 @@
 		</SettingsInputRow>
 
 		<SectionHeader title="Widget Preview"/>
+		<p>Below is an example of the points widget as it will appear on the stage.</p>
+		<div class="previewBox">
+
+			<div class="widgetBox">
+				<PrizeWheelWidget
+					:demoMode="true"
+				/>
+			</div>
+			
+		</div>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 
@@ -103,6 +114,7 @@ import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayTextInput from '@components/options/ArrayTextInput.vue';
 import ArrayColorInput from '@components/options/ArrayColorInput.vue';
+import PrizeWheelWidget from './PrizeWheelWidget.vue';
 
 // lib/misc
 import * as yup from 'yup';
@@ -131,5 +143,36 @@ const {
 </script>
 <style lang="scss" scoped>	
 
+	// main page scoping
+	.prizeWheelPage {
+
+		// random area where we'll show the widget over a bg image
+		.previewBox {
+			
+			position: relative;
+			
+			width: 600px;
+			height: 400px;
+			border: 2px solid black;
+			border-radius: 10px;
+
+			background-image: url('../assets/channel_points/demo_bg.png');
+
+			// flex center
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
+			// box to spawn the widget in
+			.widgetBox {
+				
+				width: 300px;
+				height: 200px;
+			
+			}// .widgetBox
+
+		}// .previewBox
+
+	}// .prizeWheelPage
 
 </style>

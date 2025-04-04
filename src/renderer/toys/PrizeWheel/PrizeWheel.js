@@ -178,11 +178,9 @@ export default class PrizeWheel extends Toy {
 		// if we got a spin command...
 		if (commandSlug === 'spin') {
 
-			console.log('spin command', params);
-
 			// get the strength of the spin
-			let strength = Math.max(Math.min(parseInt(params.strength, 10) || 50, 100), 0);
-			strength = ((strength+15) / 115) * 100;
+			const inputStrength = Math.max(Math.min(parseInt(params.strength, 10) || 50, 100), 0);
+			const strength = ((inputStrength+15) / 115) * 100;
 			const spinTime = (Math.floor(Math.random() * 3000) + 15000) * (strength / 100.0);
 
 			// queue the spin message
@@ -196,7 +194,7 @@ export default class PrizeWheel extends Toy {
 			console.log('spin time ' + spinTime);
 
 			// log the spin to the screen
-			this.chatToysApp.log.msg(msg.author + ' spun the wheel with strength ' + strength);
+			this.chatToysApp.log.msg(msg.author + ' spun the wheel with strength ' + inputStrength);
 
 			// accept the command which updates the database
 			handshake.accept();
@@ -275,7 +273,7 @@ export default class PrizeWheel extends Toy {
 			}
 			
 			// update the rotation with the easing function
-			this.rotation.value = this.rotation.value + spinEasing(normalizedTime);
+			this.rotation.value = (this.rotation.value + spinEasing(normalizedTime)) % 360;
 			
 		}, 10);
 	}

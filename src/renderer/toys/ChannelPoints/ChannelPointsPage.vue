@@ -250,6 +250,6 @@ const claimCommand = computed(() => {
 
 		}// .previewBox
 
-	}// .chanelPointsPage
+	}// .channelPointsPage
 
 </style>
