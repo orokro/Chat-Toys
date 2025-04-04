@@ -16,6 +16,11 @@ import { createSystemTray } from './system/SystemTray.js';
 import { createAppMenu } from './system/MainAppMenu.js';
 import { chatForward } from './system/chatForward.js';
 
+import 'electron-interval-system/main.js';
+// or with require:
+// require('electron-interval-system/main.js');
+
+
 // global vars
 let mainWindow = null;
 let chatTesterWindow = null;

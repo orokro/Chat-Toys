@@ -13,6 +13,7 @@ import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'soc
 
 // our app
 import Toy from "../Toy";
+import { StateTickerQueue } from '@scripts/StateTickerQueue';
 
 // components
 import PrizeWheelPage from './PrizeWheelPage.vue';
@@ -49,6 +50,10 @@ export default class PrizeWheel extends Toy {
 		// call the parent constructor
 		super(toyManager);
 
+		// new queue for scheduling multiple requests to spin
+		this.spinQueue = new StateTickerQueue(this.handleSpinQueue.bind(this), 2, 10);
+		electronAPI.tick(() => this.spinQueue.tick());
+
 		// our socket state
 		this.wheelImagePath = socketShallowRef(
 			this.static.slugify('wheelImagePath'),
@@ -56,6 +61,7 @@ export default class PrizeWheel extends Toy {
 		this.wheelSoundPath = socketShallowRef(
 			this.static.slugify('wheelSoundPath'),
 			this.getAssetPath(this.settings.wheelSoundId.value));
+		this.wheelMode = socketShallowRef(this.static.slugify('wheelMode'), 'IDLE');
 		this.rotation = socketShallowRef(this.static.slugify('rotation'), 0);
 		this.spinMessage = socketShallowRef(this.static.slugify('spinMessage'), 'Orokro');
 		this.spinItem = socketShallowRef(this.static.slugify('spinItem'), '');
@@ -67,10 +73,6 @@ export default class PrizeWheel extends Toy {
 		watch(this.settings.wheelSoundId, (value) => {
 			this.wheelSoundPath.value = this.getAssetPath(value);
 		});
-
-		setInterval(() => {
-			this.rotation.value = (this.rotation.value + 1) % 360;			
-		}, 30);
 
 		watch(this.rotation, (value) => {
 			this.spinItem.value = this.computeSpinItem(value);
@@ -113,19 +115,13 @@ export default class PrizeWheel extends Toy {
 
 		const anglePerSlice = 360 / items.length;
 
-		// // Normalize angle to be between 0 and 360
-		// let normalized = ((rot % 360) + 360) % 360;
-
-		// // Flip the angle so 0 is at the top (like a wheel)
-		// normalized = (360 - normalized - 90) % 360;
-
+		// Normalize angle to be between 0 and 360 & adjust for angle
 		let normalized = (-rot + (360*100) -90) % 360;
 
 		const index = Math.floor(normalized / anglePerSlice);
 		return items[index];
 
 	}
-
 
 
 	/**
@@ -174,16 +170,134 @@ export default class PrizeWheel extends Toy {
 	 * @param {String} commandSlug - the slug of the command
 	 * @param {Object} msg - details about the chat message that invoked the command
 	 * @param {Object} user - details about the user that invoked the command (could be dummy if not in database yet)
-	 * @param {Array<String>} params - the parameters passed to the command
+	 * @param {Object} params - the parameters passed to the command
 	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
 
-		// log it:
-		console.log('PrizeWheel found', commandSlug, 'from', msg.author, 'with params', params);
+		// if we got a spin command...
+		if (commandSlug === 'spin') {
 
-		// accept the command which updates the database
-		handshake.accept();
+			console.log('spin command', params);
+
+			// get the strength of the spin
+			let strength = Math.max(Math.min(parseInt(params.strength, 10) || 50, 100), 0);
+			strength = ((strength+15) / 115) * 100;
+			const spinTime = (Math.floor(Math.random() * 3000) + 15000) * (strength / 100.0);
+
+			// queue the spin message
+			this.spinQueue.addToQueue({
+				chatter: msg.author,
+				strength,
+				spinTime,
+				duration: (spinTime / 1000) + 2,
+			});
+
+			console.log('spin time ' + spinTime);
+
+			// log the spin to the screen
+			this.chatToysApp.log.msg(msg.author + ' spun the wheel with strength ' + strength);
+
+			// accept the command which updates the database
+			handshake.accept();
+			return;
+		}
+
+		// otherwise
+		handshake.reject();
+	}
+
+
+	/**
+	 * Handle the shout queue change
+	 * 
+	 * @param {Object} item - the item in the queue
+	 */
+	handleSpinQueue(item) {
+
+		// if it's null, we're in wait mode
+		if(item === null) {
+			this.wheelMode.value = 'IDLE';
+			return;
+		}
+
+		this.doSpin(item);
+
+	}
+
+
+	/**
+	 * Spin the wheel!
+	 * 
+	 * @param {Object} item - details about the spin (i.e. author, strength, etc)
+	 */
+	doSpin(item) {
+
+		// we spinning now baby
+		this.wheelMode.value = 'SPEEEN';
+
+		// get the current time
+		const now = new Date();
+
+		// update message w/ user name
+		this.spinMessage.value = item.chatter;
+
+		// use our electron interval so we don't throttle
+		const spinInterval = window.setElectronInterval(() => {
+
+			// compute delta time
+			const deltaTime = (new Date() - now);
+
+			// GTFO if we're outta time
+			if (deltaTime > item.spinTime) {
+				window.clearElectronInterval(spinInterval);
+				this.finishSpin(item);
+				return;
+			}
+
+			// normalise time
+			const normalizedTime = Math.max(Math.min(deltaTime / item.spinTime, 1), 0);
+
+			// method for calculating the speed of the spin
+			function spinEasing(normalizedTime) {
+				
+				// degrees per tick at the start
+				const maxSpeed = 10; 				
+			
+				// easeOutCubic easing
+				const t = Math.min(Math.max(normalizedTime, 0), 1);
+				const easeOut = 1 - Math.pow(1 - t, 3);
+			
+				// Invert so that it's fast at first, slow at the end
+				const speed = (1 - easeOut) * maxSpeed;
+			
+				return speed;
+			}
+			
+			// update the rotation with the easing function
+			this.rotation.value = this.rotation.value + spinEasing(normalizedTime);
+			
+		}, 10);
+	}
+
+
+	/**
+	 * Handle when a spin finishes
+	 * 
+	 * @param {Object} item - the spin details
+	 */
+	finishSpin(item) {
+
+		// make sure current spinItem is up to date
+		this.spinItem.value = this.computeSpinItem(this.rotation.value);
+
+		// log message
+		this.chatToysApp.log.msg(item.chatter + ' spun the wheel and got ' + this.spinItem.value);
+
+		// return to idle
+		setTimeout(() => {
+			this.wheelMode.value = 'IDLE';
+		}, 2000);
 	}
 
 }

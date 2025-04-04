@@ -117,7 +117,12 @@ export default class Chat extends Toy {
 			this.settings.swarmSize,
 			this.settings.swarmDuration,
 			(messages) => { this.swarmLog.value = messages; },
-			(swarmIsActive) => { this.swarmMode.value = swarmIsActive ? 'SHOWING' : 'IDLE'; }
+			(swarmIsActive) => { 
+				this.swarmMode.value = swarmIsActive ? 'SHOWING' : 'IDLE';
+				if(swarmIsActive) {
+					this.chatToysApp.log.msg('SWARM ACTIVATED!');
+				}
+			}
 		);
 		electronAPI.tick(() => this.swarmLogic.tick());
 
@@ -199,9 +204,6 @@ export default class Chat extends Toy {
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
 
-		// log it:
-		console.log('Chat found', commandSlug, 'from', msg.author, 'with params', params);
-
 		// if we got a shout command
 		if (commandSlug === 'shout') {
 
@@ -215,6 +217,8 @@ export default class Chat extends Toy {
 					message: params.message,
 				}
 			});
+
+			this.chatToysApp.log.msg(msg.author + ' used !shout ');
 
 			// we gucci
 			handshake.accept();

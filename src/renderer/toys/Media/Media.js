@@ -140,6 +140,9 @@ export default class Media extends Toy {
 		const mediaAssets = this.settings.mediaAssets.value;
 		const mediaItem = mediaAssets[mediaIndex];
 
+		// show on system console
+		this.chatToysApp.log.msg(`${msg.author} used media !${mediaItem.commandName}`);
+
 		// repack the media item into a queue item
 		const queueItem = {
 			message: `${msg.author} used !${mediaItem.commandName}`,

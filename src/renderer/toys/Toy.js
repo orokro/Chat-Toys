@@ -302,4 +302,25 @@ export default class Toy {
 		return `builtin/${fileData.name}`;
 	}
 
+
+	/**
+	 * Helper to get command text (which can be changed by user) and is different from the slug
+	 * 
+	 * @param {String} commandSlug - command slug
+	 * @returns {String} the command text
+	 */
+	getCommandFromSlug(commandSlug){
+
+		// search the local commands list for the command slug
+		commandSlug = this.constructor.slugify(commandSlug);
+		const command = this.localCommandsList.value.find(cmd => cmd.slug === commandSlug);
+
+		// if we found it, return it
+		if(command)
+			return command.command;
+
+		// otherwise, return empty string
+		return '';
+	}
+
 }

@@ -334,11 +334,14 @@ export class CommandProcessor {
 				console.error(`Missing required param: ${def.name}`);
 				return false;
 			}
+			
+			if(val!==undefined){
 
-			if (def.type === 'number' && isNaN(parseFloat(val, 10))) {
-				console.log(val, parseInt(val, 10), isNaN(parseInt(val, 10)));
-				console.error(`Invalid number for param: ${def.name}`);
-				return false;
+				if (!val && def.type === 'number' && isNaN(parseFloat(val, 10))) {
+					console.log(val, parseInt(val, 10), isNaN(parseInt(val, 10)));
+					console.error(`Invalid number for param: ${def.name}`);
+					return false;
+				}
 			}
 
 		}// next i

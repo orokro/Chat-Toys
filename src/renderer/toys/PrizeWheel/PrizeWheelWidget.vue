@@ -24,6 +24,9 @@
 			<div 
 				v-if="ready"
 				class="prizeWheelWidget" 
+				:class="{ 
+					idle: (wheelMode === 'IDLE') && (socketSettingsRef?.alwaysShowWheel == false),
+				}"
 				:style="{
 					backgroundImage: `url(${wheelImagePath})`,
 				}"
@@ -56,9 +59,9 @@
 
 								<path :d="slice.path" :fill="adjustedColors()[i]" />
 								<text
-									:x="radius * 1.15"
+									:x="radius * 1.6"
 									:y="radius"
-									text-anchor="right"
+									text-anchor="middle"
 									alignment-baseline="middle"
 									:transform="`rotate(${slice.textAngle+0}, ${radius}, ${radius})`"
 									font-size="5"
@@ -143,6 +146,7 @@ const defaultColors = ['#d3d3d3', '#808080', '#ffffff'];
 // gets live sockets
 const wheelImagePath = socketShallowRefReadOnly(slugify('wheelImagePath'), null);
 const wheelSoundPath = socketShallowRefReadOnly(slugify('wheelSoundPath'), null);
+const wheelMode = socketShallowRefReadOnly(slugify('wheelMode'), 'IDLE');
 const rotation = socketShallowRefReadOnly(slugify('rotation'), 0);
 const spinMessage = socketShallowRefReadOnly(slugify('spinMessage'), '');
 const spinItem = socketShallowRefReadOnly(slugify('spinItem'), '');
@@ -281,9 +285,8 @@ const slices = computed(() => {
 
 		transition: transform 0.25s ease-in-out;
 		transform: scale(1);
-
 		&.idle {
-			/* transform: scale(0); */
+			transform: scale(0);
 		}
 
 		// the SVG wheel

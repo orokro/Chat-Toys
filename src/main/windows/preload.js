@@ -10,6 +10,9 @@ import { contextBridge, ipcRenderer } from 'electron';
 const path = require("path");
 const { DatabaseManager } = require(path.join(__dirname, "../system/database"));
 
+import 'electron-interval-system/preload.js'; 
+
+
 // Expose the electronAPI object to the renderer process
 contextBridge.exposeInMainWorld('electronAPI', {
 	sendMessage: (message) => ipcRenderer.send('message', message),
