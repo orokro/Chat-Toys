@@ -125,18 +125,6 @@ export default class Chat extends Toy {
 
 
 	/**
-	 * Helper to get the path to the assets
-	 * 
-	 * @param {String} assetID - the ID of the asset
-	 * @returns {String} - the path to the asset
-	 */
-	getAssetPath(assetID) {
-		const fileData = this.chatToysApp.assetsMgr.getFileData(assetID);
-		return `builtin/${fileData.name}`;
-	}
-
-
-	/**
 	 * Initialize the settings for this toy
 	 */
 	initSettings() {
@@ -267,15 +255,14 @@ export default class Chat extends Toy {
 			if(this.settings.filterCommands.value==true && chat.messageText.startsWith('!'))
 				continue;
 
-			for(let i = 0; i < 3; i++) {
-				// add smaller chat object to the array
-				chatLogMessages.push({
-					id: chat.id,
-					author: chat.author,
-					message: chat.messageText,
-					isMember: chat.isMember,
-				});
-			}
+			// add smaller chat object to the array
+			chatLogMessages.push({
+				id: chat.id,
+				author: chat.author,
+				message: chat.messageText,
+				isMember: chat.isMember,
+			});
+			
 		}// next chat
 
 		// trim list if it's too long

@@ -290,4 +290,16 @@ export default class Toy {
 		return this.slug + '__' + text.toLowerCase();
 	}
 
+
+	/**
+	 * Helper to get the path to the assets
+	 * 
+	 * @param {String} assetID - the ID of the asset
+	 * @returns {String} - the path to the asset
+	 */
+	getAssetPath(assetID) {
+		const fileData = this.chatToysApp.assetsMgr.getFileData(assetID);
+		return `builtin/${fileData.name}`;
+	}
+
 }
