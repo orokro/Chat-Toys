@@ -96,10 +96,17 @@ export class ChatProcessor {
 		// loop through the actions
 		for (const action of actions) {
 
-			// get the renderer
-			const renderer = action?.addChatItemAction?.item?.liveChatTextMessageRenderer;
+			// get the renderer, which will be either liveChatPaidMessageRenderer or liveChatTextMessageRenderer
+			let rendererA = action?.addChatItemAction?.item?.liveChatPaidMessageRenderer;
+			let rendererB = action?.addChatItemAction?.item?.liveChatTextMessageRenderer;
+			const renderer = rendererA || rendererB;
+
+			// gtfo if we don't have a renderer
 			if (!renderer)
 				continue;
+
+			// based on which renderer we used, determine if super
+			const isSuper = renderer == rendererA;
 
 			// get the message ID
 			const id = renderer.id;
@@ -161,7 +168,12 @@ export class ChatProcessor {
 				time: timestampUsec ? Number(timestampUsec) : undefined,
 				isMember,
 				streamID,
+				isSuper,
 			};
+
+			if(isSuper){
+				console.log('Superchat', formatted);
+			}
 
 			// always reset this relationship because either side could change
 			this.seenAuthors.set(authorName, authorChannelId);
