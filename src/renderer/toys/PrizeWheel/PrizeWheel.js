@@ -8,14 +8,15 @@
 */
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
+import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
 import Toy from "../Toy";
 
 // components
 import PrizeWheelPage from './PrizeWheelPage.vue';
-import DummyWidget from '../DummyWidget.vue';
+import PrizeWheelWidget from './PrizeWheelWidget.vue';
 
 // main export
 export default class PrizeWheel extends Toy {
@@ -28,7 +29,7 @@ export default class PrizeWheel extends Toy {
 	static themeColor = '#FFAAC5';
 	static widgetComponents = [
 		{
-			component: DummyWidget,
+			component: PrizeWheelWidget,
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: true,
@@ -47,7 +48,84 @@ export default class PrizeWheel extends Toy {
 
 		// call the parent constructor
 		super(toyManager);
+
+		// our socket state
+		this.wheelImagePath = socketShallowRef(
+			this.static.slugify('wheelImagePath'),
+			this.getAssetPath(this.settings.wheelImageId.value));
+		this.wheelSoundPath = socketShallowRef(
+			this.static.slugify('wheelSoundPath'),
+			this.getAssetPath(this.settings.wheelSoundId.value));
+		this.rotation = socketShallowRef(this.static.slugify('rotation'), 0);
+		this.spinMessage = socketShallowRef(this.static.slugify('spinMessage'), 'Orokro');
+		this.spinItem = socketShallowRef(this.static.slugify('spinItem'), '');
+
+		// listen to changes in the shout sound
+		watch(this.settings.wheelImageId, (value) => {
+			this.wheelImagePath.value = this.getAssetPath(value);
+		});
+		watch(this.settings.wheelSoundId, (value) => {
+			this.wheelSoundPath.value = this.getAssetPath(value);
+		});
+
+		setInterval(() => {
+			this.rotation.value = (this.rotation.value + 1) % 360;			
+		}, 30);
+
+		watch(this.rotation, (value) => {
+			this.spinItem.value = this.computeSpinItem(value);
+		})
 	}
+
+
+	/**
+	 * Handles fewer than 6 items with auto-repeating
+	 * 
+	 * @param {Array<String>} baseItems - wheel items
+	 * @returns {Array<String>} - the items to show on the wheel
+	 */
+	repeatItems(baseItems) {
+		const count = baseItems.length;
+		if (count === 0) return [];
+		if (count === 1) return Array(6).fill(baseItems[0]);
+		if (count === 2) return Array.from({ length: 6 }, (_, i) => baseItems[i % 2]);
+		if (count === 3) return Array.from({ length: 6 }, (_, i) => baseItems[i % 3]);
+		if (count === 4) return Array.from({ length: 8 }, (_, i) => baseItems[i % 4]);
+		if (count === 5) return Array.from({ length: 10 }, (_, i) => baseItems[i % 5]);
+		return baseItems;
+	}
+
+
+	/**
+	 * Figure out which item is currently selected on the wheel
+	 * 
+	 * @param {Number} rot - rotation of wheel
+	 * @returns {String} - which item is currently selected on the wheel
+	 */
+	computeSpinItem(rot){
+
+		// get the adjusted list of items so we can compute angles
+		const items = this.repeatItems(this.settings.wheelItems.value);
+
+		// if we have no items, return
+		if (items.length === 0)
+			this.spinItem.value = '';
+
+		const anglePerSlice = 360 / items.length;
+
+		// // Normalize angle to be between 0 and 360
+		// let normalized = ((rot % 360) + 360) % 360;
+
+		// // Flip the angle so 0 is at the top (like a wheel)
+		// normalized = (360 - normalized - 90) % 360;
+
+		let normalized = (-rot + (360*100) -90) % 360;
+
+		const index = Math.floor(normalized / anglePerSlice);
+		return items[index];
+
+	}
+
 
 
 	/**
@@ -85,10 +163,10 @@ export default class PrizeWheel extends Toy {
 					{ name: 'strength', type: 'number', optional: true, desc: 'How hard to spin' },
 				],
 				description: 'Lets the chatter spin the wheel!',
-			},	
+			},
 		]);
 	}
-	
+
 
 	/**
 	 * Handle when an incoming command is sent to this toy
@@ -107,5 +185,5 @@ export default class PrizeWheel extends Toy {
 		// accept the command which updates the database
 		handshake.accept();
 	}
-	
+
 }
