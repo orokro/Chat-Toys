@@ -40,4 +40,5 @@ coverage/
 *.bak
 *.tmp
 install_socket_ref.sh
+install_eis.sh
 
