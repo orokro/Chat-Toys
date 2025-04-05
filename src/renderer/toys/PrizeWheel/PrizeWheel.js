@@ -81,6 +81,46 @@ export default class PrizeWheel extends Toy {
 
 
 	/**
+	 * Initialize the settings for this toy
+	 */
+	initSettings() {
+
+		// channel points settings
+		this.buildSettingsBlock({
+
+			wheelItems: ref(['prize 1', 'prize 2', 'prize 3', 'prize 4', 'prize 5']),
+			wheelColors: ref([]),
+			wheelImageId: ref('5'),
+			wheelSoundId: ref('12'),
+			alwaysShowWheel: ref(false),
+			widgetBox: shallowRef({
+				x: (1280 / 2) - (420 / 2),
+				y: (720 / 2) - (466 / 2),
+				width: 420,
+				height: 466
+			}),
+		});
+	}
+
+
+	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+
+		super.buildCommands([
+			{
+				command: 'spin',
+				params: [
+					{ name: 'strength', type: 'number', optional: true, desc: 'How hard to spin' },
+				],
+				description: 'Lets the chatter spin the wheel!',
+			},
+		]);
+	}
+
+
+	/**
 	 * Handles fewer than 6 items with auto-repeating
 	 * 
 	 * @param {Array<String>} baseItems - wheel items
@@ -120,47 +160,6 @@ export default class PrizeWheel extends Toy {
 
 		const index = Math.floor(normalized / anglePerSlice);
 		return items[index];
-
-	}
-
-
-	/**
-	 * Initialize the settings for this toy
-	 */
-	initSettings() {
-
-		// channel points settings
-		this.buildSettingsBlock({
-
-			wheelItems: ref([]),
-			wheelColors: ref([]),
-			wheelImageId: ref('5'),
-			wheelSoundId: ref('12'),
-			alwaysShowWheel: ref(false),
-			widgetBox: shallowRef({
-				x: (1280 / 2) - (420 / 2),
-				y: (720 / 2) - (466 / 2),
-				width: 420,
-				height: 466
-			}),
-		});
-	}
-
-
-	/**
-	 * Initialize the commands for this toy
-	 */
-	buildCommands() {
-
-		super.buildCommands([
-			{
-				command: 'spin',
-				params: [
-					{ name: 'strength', type: 'number', optional: true, desc: 'How hard to spin' },
-				],
-				description: 'Lets the chatter spin the wheel!',
-			},
-		]);
 	}
 
 

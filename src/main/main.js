@@ -16,10 +16,8 @@ import { createSystemTray } from './system/SystemTray.js';
 import { createAppMenu } from './system/MainAppMenu.js';
 import { chatForward } from './system/chatForward.js';
 
+// system to use backend for intervals
 import 'electron-interval-system/main.js';
-// or with require:
-// require('electron-interval-system/main.js');
-
 
 // global vars
 let mainWindow = null;
@@ -71,7 +69,7 @@ app.whenReady().then(() => {
 				...details.responseHeaders,
 				'Content-Security-Policy': ['script-src \'self\'']
 			}
-		})
+		})  
 	})
 
 });

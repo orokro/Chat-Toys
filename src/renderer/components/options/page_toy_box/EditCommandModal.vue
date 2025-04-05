@@ -102,7 +102,7 @@
 				</div>
 			</div>
 
-			<!-- the buttons along hte bottom -->
+			<!-- the buttons along the bottom -->
 			<div 
 				class="buttons"				
 				tabindex="0"
