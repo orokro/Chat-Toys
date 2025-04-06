@@ -32,6 +32,7 @@
 		"@types/three": "^0.174.0",
 		"better-sqlite3": "^11.9.1",
 		"chroma-js": "^3.1.2",
+		"cors": "^2.8.5",
 		"electron-interval-system": "file:misc/electron-interval-system-1.0.0.tgz",
 		"examples": "^0.1.0",
 		"express": "^4.21.2",

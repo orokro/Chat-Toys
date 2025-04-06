@@ -86,7 +86,7 @@ export class AssetManager {
 				kind: asset.type,
 				tags: [],
 				internal: false,
-				file_path: `custom_assets/${asset.uuid}.${asset.extension}`,
+				file_path: `live/custom_assets/${asset.uuid}`,
 			};
 		});
 	}
@@ -188,11 +188,11 @@ export class AssetManager {
 		if (assetData.internal) {
 			filePath = `builtin/${assetData.name}`;
 		} else {
-			filePath = `http://localhost:3001/live/custom_assets/${assetData.name}`
+			filePath = `http://localhost:3001/${assetData.file_path}`;
 		}
 
 		console.log(filePath);
-		
+
 		// if we have a file path, let's fetch it
 		if (filePath) {
 			const response = await fetch(filePath);

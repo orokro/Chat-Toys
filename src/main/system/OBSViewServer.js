@@ -17,6 +17,7 @@ import express from 'express';
 import http from 'http';
 const { socketRefServer } = require('socket-ref/server');
 const serveIndex = require('serve-index');
+import cors from 'cors';
 
 /**
  * Class to set up the servers for the live page.
@@ -81,6 +82,15 @@ class OBSViewServer {
 			this.wss = socketRefServer({ server });
 			this.startEchoServer();
 
+			// 👇 Allow CORS for Vite dev server ONLY in development
+			if (process.env.NODE_ENV === 'development') {
+				expressApp.use(cors({
+				origin: 'http://localhost:8080',
+				methods: ['GET', 'POST'],
+				credentials: true
+				}));
+			}
+
 			// Serve /live.html in production
 			if (true || process.env.NODE_ENV !== 'development') {
 	
@@ -108,7 +118,7 @@ class OBSViewServer {
 				const assetFolder = join(app.getPath('userData'), 'custom_assets');
 				expressApp.use('/live/custom_assets',
 					express.static(assetFolder),
-					// serveIndex(assetFolder, { icons: true })
+					serveIndex(assetFolder, { icons: true })
 				);
 
 
