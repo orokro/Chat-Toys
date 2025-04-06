@@ -151,12 +151,6 @@ const rotation = socketShallowRefReadOnly(slugify('rotation'), 0);
 const spinMessage = socketShallowRefReadOnly(slugify('spinMessage'), '');
 const spinItem = socketShallowRefReadOnly(slugify('spinItem'), '');
 
-watch(spinMessage, (newVal) => {
-	if (newVal) {
-		console.log('wheelImagePath', newVal);
-	}
-});
-
 // the audio
 let audio = null;
 

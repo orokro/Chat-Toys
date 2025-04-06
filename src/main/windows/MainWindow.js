@@ -9,6 +9,9 @@
 import { app, BrowserWindow } from 'electron';
 import { join } from 'path';
 
+// local imports
+import { setupAssetImportHandler } from '../system/importAsset';
+
 /**
  * Creates the main window for the app.
  * @returns {BrowserWindow} - The main window for the app.
@@ -66,6 +69,8 @@ function createMainWindow() {
 		});
 	}
 
+	// set up the asset import handler
+	setupAssetImportHandler(mainWindow);
 
 	// create an interval that will ping the renderer process every second
 	const tickInterval = setInterval(() => {

@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	sendMessage: (message) => ipcRenderer.send('message', message),
 	onChatMessage: (callback) => ipcRenderer.on('chat-message', (event, data) => callback(data)),
 	tick: (callback) => ipcRenderer.on('tick', (event) => callback()),
+	invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
 });
 
 // grab passed CLI args
@@ -36,4 +37,13 @@ contextBridge.exposeInMainWorld("ytctDB", {
 	ban: (id) => db.ban(id),
 	unBan: (id) => db.unBan(id),
 	dbPath: dbPath
+});
+
+// Expose just the asset stuff as separate object
+contextBridge.exposeInMainWorld("assetDB", {
+	addAsset: (meta) => db.addAsset(meta),
+	getAllAssets: () => db.getAllAssets(),
+	getAssetByID: (id) => db.getAssetByID(id),
+	getAssetsByType: (type) => db.getAssetsByType(type),
+	removeAsset: (id) => db.removeAsset(id),
 });

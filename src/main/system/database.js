@@ -104,6 +104,18 @@ class DatabaseManager {
 				internal INTEGER DEFAULT 0
 			)
 		`);
+
+		// FILES (NEW ASSETS)
+		run(`
+			CREATE TABLE IF NOT EXISTS custom_assets (
+				id INTEGER PRIMARY KEY,
+				uuid TEXT NOT NULL,
+				original_name TEXT,
+				extension TEXT,
+				type TEXT,
+				added_at DATETIME DEFAULT CURRENT_TIMESTAMP
+			);
+		`);
 	}
 
 
@@ -305,6 +317,67 @@ class DatabaseManager {
 	unBan(youtube_id) {
 		this.db.prepare(`UPDATE users SET banned = 0 WHERE youtube_id = ?`).run(youtube_id);
 	}
+
+
+	/**
+	 * Adds asset item to db
+	 * 
+	 * @param {Object} param0 object with properties
+	 */
+	addAsset({ uuid, originalName, extension, type }) {
+		this.db
+			.prepare(`INSERT INTO custom_assets (uuid, original_name, extension, type) VALUES (?, ?, ?, ?)`)
+			.run(uuid, originalName, extension, type);
+	}
+
+
+	/**
+	 * Gets all assets
+	 * 
+	 * @returns {Array} - list of all assets in the database
+	 */
+	getAllAssets() {
+		return this.db.prepare(`SELECT * FROM custom_assets`).all();
+	}
+
+
+	/**
+	 * Gets an asset by its UUID
+	 * 
+	 * @param {String} uuid - UUID of the asset to get
+	 * @returns {Object|null} - the asset object or null if not found
+	 */
+	getAssetByID(uuid) {
+		return this.db
+			.prepare(`SELECT * FROM custom_assets WHERE uuid = ?`)
+			.get(uuid);
+	}
+
+
+	/**
+	 * Gets assets by type
+	 * 
+	 * @param {String} type - type of asset to get
+	 * @returns {Array} - list of assets of the specified type
+	 */
+	getAssetsByType(type) {
+		return this.db
+			.prepare(`SELECT * FROM custom_assets WHERE type = ?`)
+			.all(type);
+	}
+
+
+	/**
+	 * Removes an asset
+	 * @param {String} uuid - UUID of asset to remove
+	 */
+	removeAsset(uuid) {
+		this.db
+			.prepare(`DELETE FROM custom_assets WHERE uuid = ?`)
+			.run(uuid);
+	}
+
+	  
 }
 
 // Export the DatabaseManager class
