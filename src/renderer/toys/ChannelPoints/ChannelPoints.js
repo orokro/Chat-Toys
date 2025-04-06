@@ -162,9 +162,6 @@ export default class ChannelPoints extends Toy {
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
 
-		// log it:
-		console.log('Channel Points found', commandSlug, 'from', msg.author, 'with params', params);
-
 		// handle get attempts
 		if(commandSlug === 'get'){
 			this.doGet(msg, user, params, handshake);
@@ -366,7 +363,6 @@ export default class ChannelPoints extends Toy {
 
 		// if we're out of time, switch modes
 		if(this.timeLeft <= 0){
-			console.log('Time is up!');
 			
 			if(this.mode.value === 'GET')
 				this.startIdleMode();
@@ -384,7 +380,6 @@ export default class ChannelPoints extends Toy {
 	 */
 	setTimeLeft(timeLeft){
 
-		// console.log(timeLeft + ' seconds left');
 		this.timeLeft = timeLeft;
 		this.timeLeftNormalised.value = timeLeft / this.settings.claimDuration.value;
 	}
@@ -403,8 +398,6 @@ export default class ChannelPoints extends Toy {
 
 		// reset the time for the fixed get duration
 		const duration = this.settings.claimDuration.value;
-		console.log('Starting timer for GET mode');
-		console.log(duration + ' seconds on the clock!')
 		this.setTimeLeft(duration);
 	}
 
@@ -425,9 +418,6 @@ export default class ChannelPoints extends Toy {
 		const randomness = this.settings.claimRandomness.value;
 		const randomSeconds = Math.floor(Math.random() * randomness);
 		const duration = interval + randomSeconds;
-		console.log('Starting timer for IDLE mode');
-		console.log('Randomness: ' + randomSeconds + ' seconds');
-		console.log(duration + ' seconds on the clock!')
 		this.setTimeLeft(duration);
 
 	}
