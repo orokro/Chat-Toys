@@ -42,6 +42,38 @@
 			Below you can customize the commands that users can type to interact with the Gamba system.
 		</p>
 		<CommandsConfigBox :toy="toy" />
+
+		<SectionHeader title="Theme Colors"/>
+
+		<SettingsInputRow
+			type="color"
+			v-model="windowHeaderColor"
+		>
+			<h3>Widget Header Color</h3>
+			<p>What color header of the widgets be?</p>
+		</SettingsInputRow>
+		<SettingsInputRow
+			type="color"
+			v-model="windowBodyColor"
+		>
+			<h3>Widget Body Color</h3>
+			<p>What color body of the widgets be?</p>
+		</SettingsInputRow>
+		<SettingsInputRow
+			type="color"
+			v-model="windowHeaderTextColor"
+		>
+			<h3>Widget Header Text Color</h3>
+			<p>What color header text of the widgets be?</p>	
+		</SettingsInputRow>
+		<SettingsInputRow
+			type="color"
+			v-model="windowBodyTextColor"
+		>
+			<h3>Widget Body Text Color</h3>
+			<p>What color body text of the widgets be?</p>
+		</SettingsInputRow>
+
 		<SectionHeader title="Settings"/>
 
 		<div
@@ -206,6 +238,10 @@ const {
 	gambaPrompt,
 	gambaOptions,
 	gambaBetTime,
+	windowHeaderColor,
+	windowBodyColor,
+	windowHeaderTextColor,
+	windowBodyTextColor,
 } = toy.settings;
 
 

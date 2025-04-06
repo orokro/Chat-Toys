@@ -190,8 +190,6 @@ export default class PrizeWheel extends Toy {
 				duration: (spinTime / 1000) + 2,
 			});
 
-			console.log('spin time ' + spinTime);
-
 			// log the spin to the screen
 			this.chatToysApp.log.msg(msg.author + ' spun the wheel with strength ' + inputStrength);
 

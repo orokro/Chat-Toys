@@ -16,7 +16,7 @@ import Toy from "../Toy";
 
 // components
 import GambaPage from './GambaPage.vue';
-import DummyWidget from '../DummyWidget.vue';
+import GambaBetWidget from './GambaBetWidget.vue';
 
 // main export
 export default class Gamba extends Toy {
@@ -29,21 +29,13 @@ export default class Gamba extends Toy {
 	static themeColor = '#458233';
 	static widgetComponents = [
 		{
-			component: DummyWidget,
+			component: GambaBetWidget,
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
 			description: 'Shows the current bet options.',
 			slug: 'bet'
 		},
-		{
-			component: DummyWidget,
-			key: 'resultsWidgetBox',
-			allowResize: true,
-			lockAspectRatio: false,
-			description: 'Shows the results after the bet ends.',
-			slug: 'results'
-		}
 	];
 
 	// define modes for the gamba state
@@ -71,6 +63,7 @@ export default class Gamba extends Toy {
 		// will keep one array of all bets
 		this.betsPlaced = socketShallowRef(this.static.slugify('allBets'), []);
 		this.timeToBet = socketShallowRef(this.static.slugify('timeToBet'), 0);
+		this.results = socketShallowRef(this.static.slugify('results'), null);
 		this.bettingPool = socketShallowRef(this.static.slugify('bettingPool'), 0);
 		this.optionStats = socketShallowRef(this.static.slugify('optionStats'), []);
 
@@ -106,7 +99,7 @@ export default class Gamba extends Toy {
 				// add the points to the total for this option
 				const option = options[bet.optionIndex]
 				option.total += bet.points;
-				option.percentage = (option.total / bettingPoolTotal.value) * 100;
+				option.percentage = (option.total / this.bettingPoolTotal.value) * 100;
 			});
 
 			return options
@@ -115,6 +108,13 @@ export default class Gamba extends Toy {
 		// bind the computed values to the sockets
 		bindRef(this.bettingPoolTotal).to(this.bettingPool);
 		bindRef(this.bettingOptionStats).to(this.optionStats);		
+
+		// reset some things when we start up
+		setTimeout(()=>{
+			// this.betsPlaced.value = [];
+			// this.timeToBet.value = 0;
+			// this.settings.gambaStateMode.value = Gamba.MODE.OFF;
+		}, 10000);
 	}
 
 
@@ -130,6 +130,10 @@ export default class Gamba extends Toy {
 			gambaPrompt: shallowRef('Streamer will beat the boss?'),
 			gambaOptions: shallowRef(['Yes', 'No']),
 			gambaBetTime: shallowRef(30),
+			windowHeaderColor: ref('#00ABAE'),
+			windowHeaderTextColor: ref('#FFFFFF'),
+			windowBodyColor: ref('#EFEFEF'),
+			windowBodyTextColor: ref('#555555'),
 			resultsWidgetBox: shallowRef({
 				x: (1280 / 2) - (500 / 2),
 				y: (720 / 2) - (600 / 2),
@@ -178,9 +182,6 @@ export default class Gamba extends Toy {
 	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
-
-		// log it:
-		console.log('Gamba found', commandSlug, 'from', msg.author, 'with params', params);
 
 		// handle when user places a bet
 		if(commandSlug === 'bet') {
@@ -319,6 +320,10 @@ export default class Gamba extends Toy {
 	 */
 	startRound(){
 
+		// clear previous results & reset things
+		this.results.value = null;
+		this.betsPlaced.value = [];
+
 		// start time on the clock
 		this.timeToBet.value = this.settings.gambaBetTime.value;
 		this.settings.gambaStateMode.value = Gamba.MODE.OPEN;
@@ -343,6 +348,10 @@ export default class Gamba extends Toy {
 		// refund all bets
 		this.cancelAndRefund(() => true);
 
+		// clear previous results & reset things
+		this.results.value = null;
+		this.betsPlaced.value = [];
+
 		// cancel the round
 		this.settings.gambaStateMode.value = Gamba.MODE.OFF;
 	}
@@ -355,7 +364,103 @@ export default class Gamba extends Toy {
 	 */
 	resolveRound(option){
 
-		
+		const getOptionLetter = (index) => {
+			return String.fromCharCode('A'.charCodeAt(0) + index);
+		};
+
+		// first check if nobody picked this option
+		const bets = [...this.betsPlaced.value];
+		const betsOnOption = bets.filter(bet => bet.optionIndex === option);
+		const optionLetter = getOptionLetter(option);
+		const correctOption = `${optionLetter}) ${this.settings.gambaOptions.value[option]}`;
+		if(betsOnOption.length === 0) {
+
+			// print that nobody picked this option
+			// get the letter from the number, where 0 is A			
+			this.chatToysApp.log.info(`Gamba: Nobody picked option ${optionLetter}, refunding all bets`);
+
+			// refund all bets
+			this.cancelAndRefund(() => true);
+
+			// set results object
+			this.results.value = {
+				prompt: this.settings.gambaPrompt.value,
+				correct_option: correctOptioncorrectOption,
+				message: `Nobody picked option ${optionLetter}, all bets refunded!`,
+				userResults: [],
+			};
+
+			// close the round
+			this.settings.gambaStateMode.value = Gamba.MODE.OFF;
+
+			return;
+		}
+
+		// compute the total points bet on this option (i.e. the correct option)
+		const totalCorrectPoints = betsOnOption.reduce((total, bet) => total + bet.points, 0);
+
+		// build an array of results, per user
+		const chatResults = new Map();
+		for(const bet of bets) {
+
+			// as the above, we need to check if the bet optionIndex is the same as the winning option
+			const isWinner = bet.optionIndex === option;
+			const isLoser = bet.optionIndex !== option;
+
+			// compute the points won
+			const pointsWon = isWinner ? Math.floor((bet.points / totalCorrectPoints) * this.bettingPoolTotal.value) : 0;
+			const pointsLost = isLoser ? bet.points : 0;
+			const userID = bet.userID;
+
+			// if the user won, pay 'em
+			if(isWinner) {
+				window.ytctDB.updateUser(userID, {
+					relativePoints: pointsWon,
+				});
+			}
+
+			// check if the user is already in the chatResults map
+			if(chatResults.has(userID)) {
+
+				// update the user object
+				const user = chatResults.get(userID);
+				user.pointsWon += pointsWon;
+				user.pointsLost += pointsLost;
+
+				// if they are a loser, add them to the losing bets
+				if(isLoser) {
+					user.losingBets.push(getOptionLetter(bet.optionIndex));
+				}
+
+			} else {
+
+				// create a new user object and add it to the map
+				const user = {
+					userID: userID,
+					user: bet.userData,
+					pointsWon: pointsWon,
+					pointsLost: pointsLost,
+					losingBets: isLoser ? [getOptionLetter(bet.optionIndex)] : [],
+				}
+				chatResults.set(userID, user);
+			}
+			
+		}// next bet
+
+		// convert our map to an array & sort iit
+		let winnersArray = Array.from(chatResults.values())
+		winnersArray = this._sortWinnerArray(winnersArray);
+
+		// set results object
+		this.results.value = {
+			prompt: this.settings.gambaPrompt.value,
+			correct_option: correctOption,
+			message: `Option ${optionLetter} was the correct answer!`,
+			userResults: winnersArray,
+		};
+
+		// close the round
+		this.settings.gambaStateMode.value = Gamba.MODE.OFF;
 	}
 
 
@@ -381,5 +486,47 @@ export default class Gamba extends Toy {
 			this.timeToBet.value = this.settings.gambaBetTime.value;
 		}		
 	}
+
+
+	/**
+	 * helper function to sort the winner array
+	 * 
+	 * @param {Array<Object>} winnerArray - array of winner objects
+	 * @returns {Array<Object>} - sorted array of winner objects
+	 */
+	_sortWinnerArray(winnerArray) {
+
+		// Segment into the 3 groups
+		const onlyWon = [];
+		const mixed = [];
+		const onlyLost = [];
+
+		for (const entry of winnerArray) {
+
+			const won = entry.pointsWon;
+			const lost = entry.pointsLost;
+
+			if (won > 0 && lost === 0)
+				onlyWon.push(entry);
+			else if (won > 0 && lost > 0)
+				mixed.push(entry);
+			else if (won === 0 && lost > 0)
+				onlyLost.push(entry);
+			
+		}// next entry
+
+		// Sort each group
+		// Descending by winnings
+		onlyWon.sort((a, b) => b.pointsWon - a.pointsWon); 
+
+		// Net value
+		mixed.sort((a, b) => (b.pointsWon - b.pointsLost) - (a.pointsWon - a.pointsLost)); 
+		
+		// Least loss first
+		onlyLost.sort((a, b) => a.pointsLost - b.pointsLost); 
+
+		// Combine into final sorted array
+		return [...onlyWon, ...mixed, ...onlyLost];
+	}	  
 
 }
