@@ -16,6 +16,7 @@ import { join } from 'path';
 import express from 'express';
 import http from 'http';
 const { socketRefServer } = require('socket-ref/server');
+const serveIndex = require('serve-index');
 
 /**
  * Class to set up the servers for the live page.
@@ -102,6 +103,15 @@ class OBSViewServer {
 				expressApp.use('/live', express.static(rendererPath, {
 					index: false,
 				}));
+
+				// our custom imported user-assets folder needs to statically serve as well
+				const assetFolder = join(app.getPath('userData'), 'custom_assets');
+				expressApp.use('/live/custom_assets',
+					express.static(assetFolder),
+					// serveIndex(assetFolder, { icons: true })
+				);
+
+
 			}
 	
 			// Example WebSocket echo

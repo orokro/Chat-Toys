@@ -178,6 +178,31 @@ export class AssetManager {
 	 */
 	async getFile(id) {
 
+		// look up the file in our system
+		const assetData = this.getFileData(id);
+		if (!assetData)
+			return null;
+
+		// if it's a built-in asset, let's generate the path
+		let filePath = '';
+		if (assetData.internal) {
+			filePath = `builtin/${assetData.name}`;
+		} else {
+			filePath = `http://localhost:3001/live/custom_assets/${assetData.name}`
+		}
+
+		console.log(filePath);
+		
+		// if we have a file path, let's fetch it
+		if (filePath) {
+			const response = await fetch(filePath);
+			if (response.ok) {
+				const blob = await response.blob();
+				return new File([blob], assetData.name, { type: this.getMimeType(assetData.kind) });
+			}
+		}
+
+		// if we got here, we didn't find a file
 		return null;
 	}
 
