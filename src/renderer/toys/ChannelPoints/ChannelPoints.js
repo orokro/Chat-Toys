@@ -9,7 +9,7 @@
 */
 
 // vue
-import { ref, shallowRef, computed } from 'vue';
+import { ref, shallowRef, computed, watch } from 'vue';
 import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
@@ -59,6 +59,14 @@ export default class ChannelPoints extends Toy {
 		this.mode = socketShallowRef(this.static.slugify('mode'), 'idle');
 		this.timeLeftNormalised = socketShallowRef(this.static.slugify('timeLeftNormalised'), 0);
 		this.userClaims = socketShallowRef(this.static.slugify('userClaims'), []);
+		this.widgetIconPath = socketShallowRef(
+			this.static.slugify('widgetIconPath'),
+			this.getAssetPath(this.settings.widgetIconId.value));
+		
+		// set up a watch for the icon path
+		watch(this.settings.widgetIconId, (value) => {
+			this.widgetIconPath.value = this.getAssetPath(value);
+		});
 
 		// internal state vars
 		this.timeLeft = 0;
@@ -112,7 +120,6 @@ export default class ChannelPoints extends Toy {
 			showTextPrompt: ref(true),
 			widgetColorTheme: ref('#00ABAE'),
 			widgetIconId: ref('1'),
-			widgetIconPath: ref('builtin/' + this.chatToysApp.assetsMgr.getFileData('1').name),
 			widgetBox: shallowRef({
 				x: 1280 - 150,
 				y: 720 - 150,

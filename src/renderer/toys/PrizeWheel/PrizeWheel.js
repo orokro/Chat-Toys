@@ -73,7 +73,6 @@ export default class PrizeWheel extends Toy {
 		watch(this.settings.wheelSoundId, (value) => {
 			this.wheelSoundPath.value = this.getAssetPath(value);
 		});
-
 		watch(this.rotation, (value) => {
 			this.spinItem.value = this.computeSpinItem(value);
 		})

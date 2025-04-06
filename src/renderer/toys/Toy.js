@@ -299,7 +299,11 @@ export default class Toy {
 	 */
 	getAssetPath(assetID) {
 		const fileData = this.chatToysApp.assetsMgr.getFileData(assetID);
-		return `builtin/${fileData.name}`;
+		
+		if(fileData.internal)
+			return `builtin/${fileData.name}`;
+		else
+			return `http://localhost:3001/${fileData.file_path}`;
 	}
 
 

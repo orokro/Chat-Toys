@@ -114,18 +114,6 @@ export default class Media extends Toy {
 	
 
 	/**
-	 * Get the file path of a media item
-	 * 
-	 * @param {String} mediaID - ID of media from the assets manager
-	 * @returns {String} path to media
-	 */
-	getFilePath(mediaID){
-		const fileData = this.chatToysApp.assetsMgr.getFileData(mediaID);
-		return `builtin/${fileData.name}`;
-	}
-
-
-	/**
 	 * Queues a media item when command is run
 	 * 
 	 * @param {Object} msg - the message object that invoked the command
@@ -146,8 +134,8 @@ export default class Media extends Toy {
 		// repack the media item into a queue item
 		const queueItem = {
 			message: `${msg.author} used !${mediaItem.commandName}`,
-			imagePath: mediaItem.hasImage ? this.getFilePath(mediaItem.imageId) : null,
-			soundPath: mediaItem.hasSound ? this.getFilePath(mediaItem.soundId) : null,
+			imagePath: mediaItem.hasImage ? this.getAssetPath(mediaItem.imageId) : null,
+			soundPath: mediaItem.hasSound ? this.getAssetPath(mediaItem.soundId) : null,
 			duration: mediaItem.duration,
 		}
 		this.stateTickerQueue.addToQueue(queueItem);

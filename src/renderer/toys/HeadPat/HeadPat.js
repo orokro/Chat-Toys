@@ -75,7 +75,9 @@ export default class HeadPat extends Toy {
 		this.chatterMode = socketShallowRef(this.static.slugify('chatterMode'), 'IDLE');
 
 		// path to the user image
-		this.userImagePath = socketShallowRef(this.static.slugify('userImagePath'), this.getUserImagePath());
+		this.userImagePath = socketShallowRef(
+			this.static.slugify('userImagePath'), 
+			this.getAssetPath(this.settings.headPatChatterImage.value));
 
 		// we will have two queues for head pats - one for streamer and one for chatters
 		// but at any given time one variable to hold the current pattern being shown
@@ -84,21 +86,8 @@ export default class HeadPat extends Toy {
 		
 		// set up a watcher to update the user image path
 		watch(this.settings.headPatChatterImage, () => {
-			this.userImagePath.value = this.getUserImagePath();
+			this.userImagePath.value = this.getAssetPath(this.settings.headPatChatterImage.value);
 		});
-	}
-
-
-	/**
-	 * Helper to get the path to the user image
-	 * 
-	 * @returns {String} - the path to the user image
-	 */
-	getUserImagePath() {
-
-		const imageID = this.settings.headPatChatterImage.value;
-		const fileData = this.chatToysApp.assetsMgr.getFileData(imageID);
-		return `builtin/${fileData.name}`;
 	}
 
 

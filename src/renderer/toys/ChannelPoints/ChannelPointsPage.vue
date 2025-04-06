@@ -196,17 +196,7 @@ const {
 	showTextPrompt,
 	widgetColorTheme,
 	widgetIconId,
-	widgetIconPath,
 } = toy.settings;
-
-
-// update the icon path dynamically when the asset ID changes
-watch (widgetIconId, (newVal) => {
-	const fileData = ctApp.assetsMgr.getFileData(newVal);
-	setTimeout(()=>{
-		widgetIconPath.value = `builtin/${fileData.name}`;
-	},1000);
-});
 
 
 // all of the commands system wide are stored in this chrome shallow ref

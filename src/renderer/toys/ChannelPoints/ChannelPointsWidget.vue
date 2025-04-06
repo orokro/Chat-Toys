@@ -38,7 +38,7 @@
 					<div class="spinnerBox glowSpinner_3"></div>
 
 					<div class="icon">
-						<img :src="socketSettingsRef.widgetIconPath" alt="channel points icon" width="60" height="60" />
+						<img :src="widgetIconPath" alt="channel points icon" width="60" height="60" />
 					</div>
 
 					<svg 
@@ -155,7 +155,7 @@ const claimsLeft = socketShallowRefReadOnly(slugify('claimsLeft'), 0);
 const mode = socketShallowRefReadOnly(slugify('mode'), 'idle');
 const timeLeftNormalised = socketShallowRefReadOnly(slugify('timeLeftNormalised'), 0);
 const userClaims = socketShallowRefReadOnly(slugify('userClaims'), []);
-
+const widgetIconPath = socketShallowRefReadOnly(slugify('widgetIconPath'), null);
 
 </script>
 <style lang="scss" scoped>
