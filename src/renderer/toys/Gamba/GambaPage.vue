@@ -135,22 +135,22 @@
 		<div class="status">
 
 			<div v-if="gambaStateMode === 'OFF'">
+				<h1>Current status: Idle.</h1>
 				<p>
-					<h1>Current status: Idle.</h1>
 					Press the button below to start a new round!
 				</p>
 			</div>
 			<div v-else-if="gambaStateMode === 'OPEN'">
+				<h1>Current status: Betting in progress.</h1>
 				<p>
-					<h1>Current status: Betting in progress.</h1>
 					{{ toy.timeToBet.value }} seconds left to place bets!
 					<br>
 					Press the button below to cancel the round and refund all bets.
 				</p>
 			</div>	
 			<div v-else-if="gambaStateMode === 'CLOSED'">
+				<h1>Current status: Betting closed.</h1>
 				<p>
-					<h1>Current status: Betting closed.</h1>
 					Press the button below to resolve the round and pay out the winners.
 					<br>
 					Or, press the button below to cancel the round and refund all bets.
