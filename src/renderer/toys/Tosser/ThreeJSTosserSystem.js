@@ -29,105 +29,6 @@ import { watch, unref } from 'vue';
 
 
 /**
- * Class to represent one of the tossed objects in the scene.
- */
-class TossedObject {
-
-	/**
-	 * 
-	 * @param {Object3D} model - the 3d model to toss
-	 * @param {Vector3} startPos - the starting position of the object
-	 * @param {Vector3} target - the target position to toss the object to
-	 * @param {Scene} scene - the Three.js scene to add the object to
-	 * @param {sound} sound - the sound to play when the object is tossed
-	 */
-	constructor(model, startPos, target, scene, sound) {
-
-		// save our scene
-		this.scene = scene;
-		this.mesh = model.clone();
-		this.mesh.traverse(child => {
-			if (child.isMesh) {
-				child.material = child.material.clone();
-			}
-		});
-
-		// save our start & target positions
-		this.startPos = startPos;
-		this.target = target.clone();
-
-		// set our start
-		this.mesh.position.copy(this.startPos);
-
-		this.velocity = target.clone().sub(this.startPos).normalize().multiplyScalar(25);
-		// this.velocity.y = 0;
-		this.gravity = new Vector3(0, -0.1, 0);
-		this.gravity = new Vector3(0, 0, 0);
-		
-		// state
-		this.hit = false;
-		this.opacity = 1;
-		this.fadeSpeed = 0.05;
-
-		// save our sound for later
-		this.sound = sound;
-		
-		// add our loaded
-		this.scene.add(this.mesh);
-	}
-
-
-	/**
-	 * Update the object position and check for collision with the target box.
-	 * 
-	 * @param {Object} targetBox - box to check for collision with like {min: {x, y}, max: {x, y}}
-	 * @returns {boolean} - true if the object is still in the scene, false if it has been removed
-	 */
-	update(targetBox) {
-
-		// if we we previously hit, fade out the object
-		if (this.hit) {
-			this.opacity -= this.fadeSpeed;
-			this.mesh.traverse(child => {
-				if (child.isMesh) {
-					child.material.transparent = true;
-					child.material.opacity = this.opacity;
-				}
-			});
-			if (this.opacity <= 0) {
-				this.scene.remove(this.mesh);
-				return false;
-			}
-			return true;
-		}
-
-		this.velocity.add(this.gravity);
-		this.mesh.position.add(this.velocity);
-
-		// get the position of the mesh * check if it's in the collider bounds
-		const pos = this.mesh.position;
-		if (
-			pos.x > targetBox.min.x &&
-			pos.x < targetBox.max.x &&
-			pos.y > targetBox.min.y &&
-			pos.y < targetBox.max.y
-		) {
-
-			// play the collision sound
-			if (this.sound)
-				this.sound.play();
-
-			// we hit
-			this.hit = true;
-			// this.mesh.scale.set(1.5, 1.5, 1.5);
-		}
-
-		return true;
-	}
-}
-
-
-/**
  * Main class to manager the tosser system state for the Tosser toy.
  */
 export class ThreeJSTosserSystem {
@@ -212,7 +113,7 @@ export class ThreeJSTosserSystem {
 		this.scene.add(this.camera);
 
 		// make a renderer & append it to the container element passed in
-		this.renderer = new WebGLRenderer({ alpha: false, antialias: true });
+		this.renderer = new WebGLRenderer({ alpha: true, antialias: true });
 		this.containerRef.value.appendChild(this.renderer.domElement);
 
 		// set up some basic lighting
@@ -223,7 +124,7 @@ export class ThreeJSTosserSystem {
 
 		// for debug, show the collider
 		this.debugCollider = null;
-		this.setupDebug();
+		// this.setupDebug();
 	}
 	
 
@@ -265,6 +166,11 @@ export class ThreeJSTosserSystem {
 	 * Update the collider boxes screen position and size based on the vue ref
 	 */
 	updateDebug() {
+
+		// if we don't have a debug collider, bail
+		if(!this.debugCollider)
+			return;
+
 		const box = unref(this.colliderRef);
 		const width = box.width * 0.75;
 		const x = box.x + (box.width - width) / 2;
@@ -442,4 +348,123 @@ export class ThreeJSTosserSystem {
 		this.resizeObserver.disconnect();
 	}
 	
+}
+
+
+/**
+ * Class to represent one of the tossed objects in the scene.
+ */
+class TossedObject {
+
+	/**
+	 * 
+	 * @param {Object3D} model - the 3d model to toss
+	 * @param {Vector3} startPos - the starting position of the object
+	 * @param {Vector3} target - the target position to toss the object to
+	 * @param {Scene} scene - the Three.js scene to add the object to
+	 * @param {sound} sound - the sound to play when the object is tossed
+	 */
+	constructor(model, startPos, target, scene, sound) {
+
+		// save our scene
+		this.scene = scene;
+		this.mesh = model.clone();
+		this.mesh.traverse(child => {
+			if (child.isMesh) {
+				child.material = child.material.clone();
+			}
+		});
+
+		// save our start & target positions
+		this.startPos = startPos;
+		this.target = target.clone();
+
+		// make random rotation values
+		const rotX = Math.random() * Math.PI * 2;
+		const rotY = Math.random() * Math.PI * 2;
+		const rotZ = Math.random() * Math.PI * 2;
+		this.rotation = new Vector3(rotX, rotY, rotZ);
+
+		// set our start
+		this.mesh.position.copy(this.startPos);
+
+		// vector from start to target
+		this.velocity = target.clone().sub(this.startPos).normalize().multiplyScalar(15);
+
+		// for now we'll turn gravity off b/c I don't feel like doing the maths
+		// this.velocity.y = 0;
+		this.gravity = new Vector3(0, -0.1, 0);
+		this.gravity = new Vector3(0, 0, 0);
+
+		// state
+		this.hit = false;
+		this.opacity = 1;
+		this.fadeSpeed = 0.05;
+
+		// save our sound for later
+		this.sound = sound;
+		
+		// add our loaded
+		this.scene.add(this.mesh);
+	}
+
+
+	/**
+	 * Update the object position and check for collision with the target box.
+	 * 
+	 * @param {Object} targetBox - box to check for collision with like {min: {x, y}, max: {x, y}}
+	 * @returns {boolean} - true if the object is still in the scene, false if it has been removed
+	 */
+	update(targetBox) {
+
+		// if we we previously hit, fade out the object
+		if (this.hit) {
+
+			// fade out the object
+			this.opacity -= this.fadeSpeed;
+			this.mesh.traverse(child => {
+				if (child.isMesh) {
+					child.material.transparent = true;
+					child.material.opacity = this.opacity;
+				}
+			});
+
+			// if the opacity is less than 0, remove the object from the scene & return false
+			if (this.opacity <= 0) {
+				this.scene.remove(this.mesh);
+
+				// returning false will cull it from the render loop
+				return false;
+			}
+			return true;
+		}
+
+		// do physics / motion updates
+		this.velocity.add(this.gravity);
+		this.mesh.position.add(this.velocity);
+
+		// apply our rotation spin
+		this.mesh.rotation.x += this.rotation.x * 0.01;
+		this.mesh.rotation.y += this.rotation.y * 0.01;
+		this.mesh.rotation.z += this.rotation.z * 0.01;
+
+		// get the position of the mesh * check if it's in the collider bounds
+		const pos = this.mesh.position;
+		if (
+			pos.x > targetBox.min.x &&
+			pos.x < targetBox.max.x &&
+			pos.y > targetBox.min.y &&
+			pos.y < targetBox.max.y
+		) {
+
+			// play the collision sound
+			if (this.sound)
+				this.sound.play();
+
+			// we hit
+			this.hit = true;
+		}
+
+		return true;
+	}
 }
