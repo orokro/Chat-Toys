@@ -15,6 +15,9 @@ import {
 	AmbientLight,
 	DirectionalLight,
 	Vector3,
+	Vector2,
+	Sprite,
+	SpriteMaterial,
 	Clock,
 	BoxGeometry,
 	MeshBasicMaterial,
@@ -23,8 +26,10 @@ import {
 	Audio,
 	AudioLoader,
 	Object3D,
+	Color,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { int } from 'three/src/nodes/TSL.js';
 import { watch, unref } from 'vue';
 
 
@@ -404,6 +409,9 @@ class TossedObject {
 		// save our sound for later
 		this.sound = sound;
 		
+		// when we crash, we'll store our particle system here
+		this.particleBurst = null;
+
 		// add our loaded
 		this.scene.add(this.mesh);
 	}
@@ -420,6 +428,10 @@ class TossedObject {
 		// if we we previously hit, fade out the object
 		if (this.hit) {
 
+			// update particles
+			if (this.particles)
+				this.particles.update();
+
 			// fade out the object
 			this.opacity -= this.fadeSpeed;
 			this.mesh.traverse(child => {
@@ -431,6 +443,10 @@ class TossedObject {
 
 			// if the opacity is less than 0, remove the object from the scene & return false
 			if (this.opacity <= 0) {
+
+				if (this.particles)
+					this.particles.removeAll();
+
 				this.scene.remove(this.mesh);
 
 				// returning false will cull it from the render loop
@@ -463,8 +479,145 @@ class TossedObject {
 
 			// we hit
 			this.hit = true;
+
+			// spawn particles
+			this.particles = new ParticleBurst(this.scene, this.mesh, pos.clone());
 		}
 
 		return true;
 	}
 }
+
+
+/**
+ * Helper method to get a color from a texture at the given UV coordinates.
+ * 
+ * @param {ImageBitmap} image - the image to sample from
+ * @param {Number} u - u coordinate (0-1)
+ * @param {Number} v - v coordinate (0-1)
+ * @returns {Color} - the color at the given UV coordinates
+ */
+function sampleTextureColor(image, u, v) {
+
+	// make a canvas to sample the image
+	const canvas = document.createElement('canvas');
+	canvas.width = image.width;
+	canvas.height = image.height;
+
+	// copy the image to the canvas so we can use canvas tools to sample
+	const ctx = canvas.getContext('2d');
+	ctx.drawImage(image, 0, 0);
+
+	// convert the UV coordinates to pixel coordinates
+	const x = Math.floor(u * image.width);
+	const y = Math.floor((1 - v) * image.height); // flip Y
+
+	// get the pixel data at the given coordinates
+	const pixel = ctx.getImageData(x, y, 1, 1).data;
+
+	// create & return a new color from the pixel data
+	return new Color(`rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`);
+}
+
+
+/**
+ * Class for the particle burst effect.
+ * 
+ * When an object hits the target box, we want to create a burst of particles,
+ * and base their colors on the texture of the object.
+ */
+class ParticleBurst {
+
+	/**
+	 * Constructs a new ParticleBurst object.
+	 * 
+	 * @param {Scene} scene - the main ThreeJS scene
+	 * @param {Mesh3d} mesh - the 3d model to sample the texture from
+	 * @param {Vector3} position - position to spawn the particles
+	 * @param {Number} count - how many
+	 */
+	constructor(scene, mesh, position, count = 50) {
+
+		// save our scene
+		this.scene = scene;
+
+		// store our spawned particles here
+		this.particles = [];
+		
+		// walk the mesh and sample it's geometry for textures to spawn color-coded particles
+		mesh.traverse(child => {
+
+			// if we found a geo w/ a texture, sample it
+			if (child.isMesh && child.geometry && child.material.map) {
+
+				// get the geometry and texture
+				const geom = child.geometry;
+				const tex = child.material.map;
+
+				// loop to spawn the particles
+				for (let i = 0; i < count; i++) {
+
+					// get UV from random vertex
+					const uvIndex = Math.floor(Math.random() * geom.attributes.uv.count);
+					const uv = new Vector2().fromBufferAttribute(geom.attributes.uv, uvIndex);
+
+					// use our helper to get a color from the texture
+					const color = sampleTextureColor(tex.image, uv.x, uv.y);
+
+					// make a sprite for the particle system, with random pos, scale, velocity
+					const sprite = new Sprite(new SpriteMaterial({ color }));
+					sprite.position.copy(position);
+					sprite.scale.setScalar(20);
+					// const veloScale = Math.random() * 10;
+					sprite.velocity = new Vector3(
+						(Math.random() - 0.5) * 10 * Math.random(),
+						(Math.random() - 0.5) * 10 * Math.random(),
+						0
+					);
+					sprite.opacity = 1;
+
+					// spawn in the scene & track the particles reference
+					this.scene.add(sprite);
+					this.particles.push(sprite);
+
+				}// next i
+			}
+		});
+
+		for(let i=0; i<20; i++)
+			this.update();
+	}
+
+
+	/**
+	 * Update the particles in the scene.
+	 */
+	update() {
+
+		// loop over the particles and update their position & opacity
+		this.particles = this.particles.filter(p => {
+
+			// update particles physics & renderer
+			p.position.add(p.velocity);
+			p.opacity -= 0.003;
+			p.material.opacity = p.opacity;
+			p.material.transparent = true;
+
+			// later nerd
+			if (p.opacity <= 0) {
+				this.scene.remove(p);
+				return false;
+			}
+			return true;
+		});
+	}
+
+
+	/**
+	 * Removes all the particles from the scene
+	 */
+	removeAll(){
+		this.particles.forEach(p => this.scene.remove(p));
+	}
+}
+
