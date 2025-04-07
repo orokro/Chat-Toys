@@ -1,21 +1,9 @@
-/*
-	ThreeJSTosserSystem.js
-	----------------------
-
-	The ThreeJS logic for spawning & rendering the tossed object.
-
-	Also plays the audio & etc.
-*/
-
-// three imports
 import {
 	Scene,
-	PerspectiveCamera,
 	OrthographicCamera,
 	WebGLRenderer,
 	AmbientLight,
 	DirectionalLight,
-	Box3,
 	Vector3,
 	Clock,
 	BoxGeometry,
@@ -25,298 +13,220 @@ import {
 	Audio,
 	AudioLoader,
 } from 'three';
+
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { watch, unref } from 'vue';
 
-/**
- * Class representing a tossed object.
- */
 class TossedObject {
-
-	/**
-	 * Makes a new tossed object.
-	 * 
-	 * @param {Mesh} model - the model to toss (like a tomato, or paper, or whatever)
-	 * @param {Vector3} startPos - the starting position of the object
-	 * @param {Vector3} targetPosition - the target position to toss the object to
-	 * @param {Audio} audio - the audio to play when the object is tossed
-	 * @param {Scene} scene - main scene to add the object to
-	 */
-	constructor(model, startPos, targetPosition, audio, scene) {
-
-		// clone & position the model
+	constructor(model, target, scene, sound) {
+		this.scene = scene;
 		this.mesh = model.clone();
-		this.mesh.position.copy(startPos.clone().setY(0));
+		this.mesh.traverse(child => {
+			if (child.isMesh) {
+				child.material = child.material.clone();
+			}
+		});
 
-		// set up it's physics
-		this.velocity = new Vector3(
-			(Math.random() - 0.5) * 0.5,
-			1 + Math.random(),
+		this.startPos = new Vector3(
+			(Math.random() - 0.5) * 200,
+			-200,
 			0
 		);
-		this.gravity = -0.01;
-		this.targetY = startPos.y;
 
-		// save scene & add our new mesh to it
-		this.scene = scene;
-		this.scene.add(this.mesh);
+		this.mesh.position.copy(this.startPos);
+		this.velocity = target.clone().sub(this.startPos).normalize().multiplyScalar(5);
+		this.gravity = new Vector3(0, -0.1, 0);
 
-		// state
-		this.done = false;
-		this.fadeOut = false;
+		this.hit = false;
 		this.opacity = 1;
+		this.fadeSpeed = 0.05;
 
-		// save the audio, if any
-		this.audio = audio;
+		if (sound) sound.play();
 
-		// if (audio) {
-		// 	audio.play();
-		// }
+		this.scene.add(this.mesh);
 	}
 
-	/**
-	 * Performs state update logic for the object
-	 */
-	update() {
+	update(targetBox) {
+		if (this.hit) {
+			this.opacity -= this.fadeSpeed;
+			this.mesh.traverse(child => {
+				if (child.isMesh) {
+					child.material.transparent = true;
+					child.material.opacity = this.opacity;
+				}
+			});
+			if (this.opacity <= 0) {
+				this.scene.remove(this.mesh);
+				return false;
+			}
+			return true;
+		}
 
-		// if we are done, don't do anything
-		if (this.done)
-			return;
-
-		// apply gravity
-		this.velocity.y += this.gravity;
+		this.velocity.add(this.gravity);
 		this.mesh.position.add(this.velocity);
 
-		// if we're not fading out, check if we hit the target
-		if (!this.fadeOut && this.mesh.position.y <= this.targetY) {
-			this.fadeOut = true;
-			this.velocity.set(0, 0, 0);
+		const pos = this.mesh.position;
+		if (
+			pos.x > targetBox.min.x &&
+			pos.x < targetBox.max.x &&
+			pos.y > targetBox.min.y &&
+			pos.y < targetBox.max.y
+		) {
+			this.hit = true;
 			this.mesh.scale.set(1.5, 1.5, 1.5);
 		}
 
-		// if we are fading out, apply the fade out logic
-		if (this.fadeOut) {
-			this.opacity -= 0.05;
-			this.mesh.material.transparent = true;
-			this.mesh.material.opacity = this.opacity;
-			if (this.opacity <= 0) {
-				this.done = true;
-				this.scene.remove(this.mesh);
-			}
-		}
+		return true;
 	}
-
 }
 
-
-/**
- * The main class to orchestrate the ThreeJS toss system.
- */
 export class ThreeJSTosserSystem {
-
-	/**
-	 * Sets up the ThreeJS toss system.
-	 * 
-	 * @param {Ref} canvasContainerRef - vue Ref to the parent canvas container
-	 * @param {shallowRef} modelsAvailableRef - vue Ref to array of available models data
-	 * @param {shallowRef} colliderBoxRef - vue ref to the collider box like { x, y, width, height }
-	 */
 	constructor(canvasContainerRef, modelsAvailableRef, colliderBoxRef) {
+		this.containerRef = canvasContainerRef;
+		this.modelsRef = modelsAvailableRef;
+		this.colliderRef = colliderBoxRef;
 
-		console.log('zzz', canvasContainerRef, modelsAvailableRef, colliderBoxRef);
-		// save the refs
-		this.canvasContainerRef = canvasContainerRef;
-		this.modelsAvailableRef = modelsAvailableRef;
-		this.colliderBoxRef = colliderBoxRef;
-
-		// our lst of spawned objects that have been tossed
 		this.tossedItems = [];
-
-		// maps of loaded models & audio sounds
-		this.allModelsLoaded = new Map();
+		this.allModels = new Map();
 		this.audioSources = new Map();
 
-		// save refs to the loaded models & audio
+		this.clock = new Clock();
 		this.scene = new Scene();
-
-		// our loaders
 		this.loader = new GLTFLoader();
 		this.audioLoader = new AudioLoader();
 		this.listener = new AudioListener();
 
-		// set up the audio listener
-		this.clock = new Clock();
-
-		// build our three JS scene stuffs
-		this.renderer = new WebGLRenderer({ alpha: true, antialias: true });
-		this.canvasContainerRef.value.appendChild(this.renderer.domElement);
-
 		this.camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
 		this.camera.position.z = 10;
+		this.scene.add(this.camera);
+
+		this.renderer = new WebGLRenderer({ alpha: false, antialias: true });
+		this.containerRef.value.appendChild(this.renderer.domElement);
 
 		this.scene.add(new AmbientLight(0xffffff, 0.5));
 		const dirLight = new DirectionalLight(0xffffff, 1);
 		dirLight.position.set(5, 10, 7.5);
 		this.scene.add(dirLight);
 
-		this.colliderDebug = null;
-		this.setupColliderDebug();
+		this.debugCollider = null;
+		this.setupDebug();
 
-		// watch our parent component so we can resize
-		const resizeObserver = new ResizeObserver(() => this.onResize());
-		resizeObserver.observe(this.canvasContainerRef.value);
+		this.resizeObserver = new ResizeObserver(() => this.onResize());
+		this.resizeObserver.observe(this.containerRef.value);
 		this.onResize();
 
-		watch(modelsAvailableRef, () => this.loadModels());
+		watch(this.modelsRef, () => this.loadModels());
 		this.loadModels();
 
 		this.renderLoop();
 	}
 
-	/**
-	 * Handle when our canvas container resizes
-	 */
 	onResize() {
-		const el = this.canvasContainerRef.value;
-		this.renderer.setSize(el.clientWidth, el.clientHeight);
-		this.canvasWidth = el.clientWidth;
-		this.canvasHeight = el.clientHeight;
-		this.camera.left = -el.clientWidth / 2;
-		this.camera.right = el.clientWidth / 2;
-		this.camera.top = el.clientHeight / 2;
-		this.camera.bottom = -el.clientHeight / 2;
+		const el = this.containerRef.value;
+		const w = el.clientWidth;
+		const h = el.clientHeight;
+		this.renderer.setSize(w, h);
+		this.camera.left = -w / 2;
+		this.camera.right = w / 2;
+		this.camera.top = h / 2;
+		this.camera.bottom = -h / 2;
 		this.camera.updateProjectionMatrix();
-		this.updateColliderDebug();
+		this.canvasWidth = w;
+		this.canvasHeight = h;
+		this.updateDebug();
 	}
 
+	setupDebug() {
+		const mat = new MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+		const geo = new BoxGeometry(1, 1, 1);
+		this.debugCollider = new Mesh(geo, mat);
+		this.scene.add(this.debugCollider);
+	}
+
+	updateDebug() {
+		const box = unref(this.colliderRef);
+		const width = box.width * 0.75;
+		const x = box.x + (box.width - width) / 2;
+		const y = box.y;
+		const centerX = x + width / 2 - this.canvasWidth / 2;
+		const centerY = this.canvasHeight / 2 - (y + box.height / 2);
+		this.debugCollider.position.set(centerX, centerY, 0);
+		this.debugCollider.scale.set(width, box.height, 1);
+	}
 
 	loadModels() {
-		const models = unref(this.modelsAvailableRef);
-
-		for (const item of models) {
-
-			if (!this.allModelsLoaded.has(item.slug)) {
-
+		const items = unref(this.modelsRef);
+		for (const item of items) {
+			if (!this.allModels.has(item.slug)) {
 				this.loader.load(item.modelPath, (gltf) => {
-					const mesh = gltf.scene;
-					mesh.scale.set(item.scale, item.scale, item.scale);
-					this.allModelsLoaded.set(item.slug, {
-						slug: item.slug,
-						command: item.cmd,
-						object: mesh,
-						sound: item.soundPath,
+					const obj = gltf.scene;
+					obj.scale.set(item.scale, item.scale, item.scale);
+					this.allModels.set(item.slug, {
+						object: obj,
+						soundPath: item.soundPath,
 					});
 				});
 
 				if (!this.audioSources.has(item.soundPath)) {
-					const sound = new Audio(this.listener);
+					const audio = new Audio(this.listener);
 					this.audioLoader.load(item.soundPath, (buffer) => {
-						sound.setBuffer(buffer);
+						audio.setBuffer(buffer);
 					});
-					this.audioSources.set(item.soundPath, sound);
+					this.audioSources.set(item.soundPath, audio);
 				}
 			}
-
-		}// next item
+		}
 	}
 
-
-	/**
-	 * Tosses an item at the collider box
-	 * @param {String} slug - one of the loaded model's slugs
-	 */
 	tossItem(slug) {
+		const def = this.allModels.get(slug);
+		if (!def) return;
 
-		// get the loaded model w/ this slug or GTFO if none
-		const modelEntry = this.allModelsLoaded.get(slug);
-		if (!modelEntry)
-			return;
+		const box = unref(this.colliderRef);
+		const width = box.width * 0.75;
+		const x = box.x + (box.width - width) / 2;
+		const y = box.y;
+		const minX = x - this.canvasWidth / 2;
+		const maxX = x + width - this.canvasWidth / 2;
+		const minY = this.canvasHeight / 2 - (y + box.height);
+		const maxY = this.canvasHeight / 2 - y;
 
-		// pick random place on the bottom of the screen
-		const spawnX = (Math.random() - 0.5) * this.canvasWidth;
-		const spawnPos = new Vector3(spawnX, -this.canvasHeight / 2, 0);
-
-		const collider = unref(this.colliderBoxRef);
-		const colliderCenterX = collider.x + (collider.width * 0.5);
-		const colliderTargetX = colliderCenterX - (collider.width * 0.125);
-		const colliderTarget = new Vector3(
-			colliderTargetX - this.canvasWidth / 2,
-			this.canvasHeight / 2 - collider.y - collider.height,
+		const target = new Vector3(
+			(minX + maxX) / 2,
+			(minY + maxY) / 2,
 			0
 		);
 
-		const audio = this.audioSources.get(modelEntry.sound);
+		const sound = this.audioSources.get(def.soundPath);
 
-		const tossed = new TossedObject(modelEntry.object, colliderTarget, audio, this.scene);
+		const tossed = new TossedObject(def.object, target, this.scene, sound);
 		this.tossedItems.push(tossed);
 	}
 
-
-	/**
-	 * Adds a cube to the scene so we can see the collider box
-	 */
-	setupColliderDebug() {
-		const material = new MeshBasicMaterial({ color: 0xff0000, wireframe: true });
-		const geometry = new BoxGeometry(1, 1, 1);
-		this.colliderDebug = new Mesh(geometry, material);
-		this.scene.add(this.colliderDebug);
-	}
-
-
-	/**
-	 * Updates the collider debug box to match the collider box
-	 */
-	updateColliderDebug() {
-
-		// break out the collider box into its components
-		// & adjust the size a bit
-		const collider = this.colliderBoxRef.value;
-		const width = collider.width * 0.75;
-		const height = collider.height;
-		const x = collider.x + (collider.width * 0.125) - this.canvasWidth / 2;
-		const y = this.canvasHeight / 2 - collider.y - (collider.height / 2);
-		this.colliderDebug.scale.set(width, height, 1);
-		this.colliderDebug.position.set(x, y, 0);
-	}
-
-
-	/**
-	 * Main render loop
-	 * 
-	 * Updates our super basic state logic for the tossed objects
-	 * and renders the scene.
-	 * @returns {void}
-	 */
 	renderLoop() {
-
-		// recursively loop on animation frames
 		requestAnimationFrame(() => this.renderLoop());
 
-		// update the tossed items w/ delta time
-		const delta = this.clock.getDelta();
-		this.tossedItems.forEach((item, index) => {
-			item.update(delta);
-		});
+		const box = unref(this.colliderRef);
+		const width = box.width * 0.75;
+		const x = box.x + (box.width - width) / 2;
+		const y = box.y;
+		const minX = x - this.canvasWidth / 2;
+		const maxX = x + width - this.canvasWidth / 2;
+		const minY = this.canvasHeight / 2 - (y + box.height);
+		const maxY = this.canvasHeight / 2 - y;
 
-		// any items that are done, remove 'em
-		this.tossedItems = this.tossedItems.filter(item => !item.done);
+		const colliderBox = { min: { x: minX, y: minY }, max: { x: maxX, y: maxY } };
 
-		// render the scene
+		this.tossedItems = this.tossedItems.filter(obj => obj.update(colliderBox));
 		this.renderer.render(this.scene, this.camera);
 	}
 
-
-	/**
-	 * Clean up logic
-	 */
 	end() {
 		this.renderer.dispose();
-		this.tossedItems.forEach(obj => {
-			this.scene.remove(obj.mesh);
-		});
-		this.tossedItems = [];
-		this.audioSources.clear();
-		this.allModelsLoaded.clear();
 		this.scene.clear();
+		this.allModels.clear();
+		this.audioSources.clear();
+		this.tossedItems = [];
+		this.resizeObserver.disconnect();
 	}
 }

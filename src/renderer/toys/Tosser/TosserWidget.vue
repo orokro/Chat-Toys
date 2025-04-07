@@ -11,6 +11,12 @@
 		v-if="ready"
 		class="tosserWidget" 
 	>
+
+		<div 
+				ref="canvasContainerRef"	
+				class="canvasContainer"
+		></div>
+
 		<div 
 			class="colliderImage"
 			:style="{
@@ -21,10 +27,7 @@
 			}"
 			@mousedown="handleStartColliderDrag"
 		>
-			<div 
-				ref="canvasContainerRef"	
-				class="canvasContainer"
-			></div>
+			
 			<div 
 				class="resizeHandle"
 				@mousedown="handleStartColliderResize"
@@ -190,6 +193,11 @@ function doDrag(keys){
 			.colliderImage {
 				opacity: 0.75;
 			}
+		}
+
+		.canvasContainer {
+			position: absolute;
+			inset: 0px;
 		}
 
 		// the area where we show a collider to send the info to ThreeJS
