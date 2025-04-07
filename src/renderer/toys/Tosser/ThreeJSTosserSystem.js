@@ -107,7 +107,7 @@ export class ThreeJSTosserSystem {
 		// set up camera & audio listener
 		this.listener = new AudioListener();
 		this.camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
-		this.camera.position.z = 10;
+		this.camera.position.z = 100;
 
 		// add to scene
 		this.scene.add(this.camera);
