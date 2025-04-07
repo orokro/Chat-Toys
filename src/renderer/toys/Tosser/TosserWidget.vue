@@ -90,8 +90,12 @@ const modelsAvailable = shallowRef([]);
 // gets our settings
 const ready = ref(false);
 const socketSettingsRef = useToySettings('tosser', 'widgetBox', emit, () => {
-	ready.value = true;
-	console.log(socketSettingsRef.value);
+	ready.value = true;	
+});
+
+
+// update our local copy of the tosser assets when the settings change
+watch(socketSettingsRef, (newVal) => {
 	modelsAvailable.value = socketSettingsRef.value.tosserAssets;
 });
 
@@ -116,6 +120,7 @@ watch(canvasContainerRef, (newVal)=>{
 });
 
 
+// watch when new items are scheduled to be tossed
 const tossQueue = socketShallowRefReadOnly(slugify('tossQueue'), []);
 const localTossHistory = [];
 watch(tossQueue, (newVal) => {
@@ -147,7 +152,6 @@ watch(tossQueue, (newVal) => {
 });
 
 
-
 // when this component is unmounted, destroy the tosser system
 onBeforeUnmount(() => {
 
@@ -156,17 +160,6 @@ onBeforeUnmount(() => {
 		tosserSystem = null;
 	}
 });
-
-// gets live sockets
-// const wheelImagePath = socketShallowRefReadOnly(slugify('wheelImagePath'), null);
-
-// // the audio
-// let audio = null;
-
-// // update the audio if its changes
-// watch(wheelSoundPath, (newVal) => {
-// 	audio = new Audio(wheelSoundPath.value);
-// });
 
 
 // handle the drag of the collider box

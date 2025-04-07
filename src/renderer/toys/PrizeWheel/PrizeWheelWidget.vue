@@ -133,6 +133,7 @@ const socketSettingsRef = useToySettings('prize-wheel', 'widgetBox', emit, () =>
 	ready.value = true;
 });
 
+
 // wheel settings
 const items = ref(['really cool prize', 'another cool prize', 'even more cool prizes']);
 const colors = ref([]);

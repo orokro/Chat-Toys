@@ -90,7 +90,7 @@ export default class Tosser extends Toy {
 					cmd: "paper",
 				}
 			]),
-			randomTossMode: ref(false),
+			randomTossMode: ref(true),
 			widgetBox: shallowRef({
 				x: 20,
 				y: 20,
@@ -129,35 +129,49 @@ export default class Tosser extends Toy {
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
 
-		// log it:
-		console.log('Tosser found', commandSlug, 'from', msg.author, 'with params', params);
+		// if we don't have any tosser assets, then we can't toss anything
+		if(this.settings.tosserAssets.value.length === 0) {
+			this.chatToysApp.log.error('Toss command failed, no tossable items found');
+			handshake.reject();
+			return;
+		}
 
 		// if the slug iis 'toss' then we need to check for parameters
 		if(commandSlug === 'toss') {
 
-			// if item is undefined, toss random & gtfo
+			// if item is undefined, toss random/unspecified & gtfo
 			if(params.item === undefined) {
-				this.tossRandomItem(msg);
+				this.tossUnspecifiedItem(msg);
 				handshake.accept();
 				return;
 			}
 
 			// check if the item is in the list of tossable items
-			const tossableItem = this.settings.tosserAssets.value.find(item => item.slug === params.item);
+			const matchItemSlug = params.item.toLowerCase();
+			const tossableItem = this.settings.tosserAssets.value.find(item => item.slug === matchItemSlug);
 			if(tossableItem !== undefined) {
-				this.tossRandomItem(msg);
+				this.tossItem(msg, tossableItem.slug);
 				handshake.accept();
 				return;
 			} 
 
-			// we should never get here, but just in case
-			handshake.reject('Invalid item: ' + params.item);
+			// otherwise we got TOSS and either there was no item, or it was invalid
+			// so we can just toss a random item
+			this.chatToysApp.log.msg(msg.author + ' chose invalid item, tossing random item instead');
+			handshake.accept();
 		}
 
 		// if it wasn't specifically toss, then it's a custom user command, we need to get it's full data
-		const fullCommandData = this.chatToysApp.commands.value[this.slug+'__'+1];
+		const fullCommandData = this.chatToysApp.commands.value[this.slug+'__'+commandSlug];
 		const command = fullCommandData.command;
 		const tossObject = this.settings.tosserAssets.value.find(item => item.cmd === command);
+
+		// if un found, then we need to toss an unspecified item
+		if(tossObject === undefined) {
+			this.tossUnspecifiedItem(msg);
+			handshake.accept();
+			return;
+		}
 
 		// get it's slug & toss that sum-bitch
 		const itemSlug = tossObject.slug;
@@ -169,14 +183,20 @@ export default class Tosser extends Toy {
 
 
 	/**
-	 * Tosses a random item
+	 * Tosses a random item, or the first item
 	 * 
 	 * @param {Object} msg - message object
 	 */
-	tossRandomItem(msg){
+	tossUnspecifiedItem(msg){
 
 		// pick a random slug if non specified
-		const randomIndex = Math.floor(Math.random() * this.settings.tosserAssets.value.length);
+		let randomIndex = Math.floor(Math.random() * this.settings.tosserAssets.value.length);
+
+		// note: if random mode isn't enabled, we'll just pick the first item
+		if(this.settings.randomTossMode.value === false)
+			randomIndex = 0;
+
+		// get the random item (or first item if random mode is disabled)
 		const randomItem = this.settings.tosserAssets.value[randomIndex];
 		const slug = randomItem.slug;
 
