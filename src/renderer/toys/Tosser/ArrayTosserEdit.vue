@@ -77,7 +77,7 @@
 <script setup>
 
 // vue
-import { ref, watch, markRaw } from 'vue';
+import { ref, watch, markRaw, inject } from 'vue';
 import { directive as VTippy } from 'vue-tippy';
 import 'tippy.js/dist/tippy.css';
 
@@ -121,6 +121,13 @@ const emit = defineEmits(['change']);
 // if we're using a schema, errors will be stored here
 const errorMessage = ref('');
 
+// our app
+import Tosser from './Tosser';
+
+// fetch the main app state context & our toy
+const ctApp = inject('ctApp');
+const toy = ctApp.toyManager.toys[Tosser.slug];
+
 // yup schemas
 const scaleSchema = yup.number().min(0.1).max(5);
 const textSchema = yup.string().matches(/^[a-z0-9]*$/, 'Invalid characters');
@@ -139,7 +146,9 @@ watch(() => props.value, (newValue) => {
 const emitChange = () => {
 	emit('change', {
 		model: props.value.model,
+		modelPath: toy.getAssetPath(props.value.model),
 		sound: props.value.sound,
+		soundPath: toy.getAssetPath(props.value.sound),
 		scale: scaleInput.value,
 		slug: slugInput.value,
 		cmd: cmdInput.value,

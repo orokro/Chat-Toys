@@ -22,6 +22,10 @@
 			@mousedown="handleStartColliderDrag"
 		>
 			<div 
+				ref="canvasContainerRef"	
+				class="canvasContainer"
+			></div>
+			<div 
 				class="resizeHandle"
 				@mousedown="handleStartColliderResize"
 			></div>
@@ -33,12 +37,13 @@
 <script setup>
 
 // vue
-import { ref, watch, computed, inject } from 'vue';
+import { ref, watch, computed, inject, onMounted, shallowRef } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 import { socketShallowRefReadOnly } from 'socket-ref';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
+import { ThreeJSTosserSystem } from './ThreeJSTosserSystem';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
@@ -47,6 +52,9 @@ const thisSlug = 'tosser';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
+
+// ref to the canvas container
+const canvasContainerRef = ref(null);
 
 // make new instance of the drag helper
 const dragHelper = new DragHelper();
@@ -69,10 +77,38 @@ const props = defineProps({
 
 });
 
+// store models available locally
+const modelsAvailable = shallowRef([]);
+
 // gets our settings
 const ready = ref(false);
 const socketSettingsRef = useToySettings('tosser', 'widgetBox', emit, () => {
 	ready.value = true;
+	console.log(socketSettingsRef.value);
+	modelsAvailable.value = socketSettingsRef.value.tosserAssets;
+});
+
+let tosserSystem = null;
+
+onMounted(()=>{
+
+	console.log(canvasContainerRef.value);
+
+	watch(canvasContainerRef, (newVal)=>{
+		
+		if(newVal != null && tosserSystem == null){
+
+			// make new tosser system
+			tosserSystem = new ThreeJSTosserSystem(
+				canvasContainerRef,
+				modelsAvailable,
+				colliderBox
+			);
+
+			window.ts = tosserSystem;
+		}
+	});
+
 });
 
 // gets live sockets
@@ -86,11 +122,15 @@ const socketSettingsRef = useToySettings('tosser', 'widgetBox', emit, () => {
 // 	audio = new Audio(wheelSoundPath.value);
 // });
 
+
+// handle the drag of the collider box
 function handleStartColliderDrag(e){
 
 	doDrag(['x', 'y']);
 }
 
+
+// handle the resize of the collider box
 function handleStartColliderResize(e){
 
 	e.cancelBubble = true;
@@ -98,6 +138,7 @@ function handleStartColliderResize(e){
 }
 
 
+// generic drag function for either x/y or width/height
 function doDrag(keys){
 
 	// save initial position
