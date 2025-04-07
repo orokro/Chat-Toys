@@ -121,7 +121,9 @@ function createChromeStorageRef(refType, storageKey, initialValue) {
 			if (currentStorage === newStorage)
 				return;
 
-			console.log('localStorage.setItem', storageKey, newValue);
+			if (DEBUG)
+				console.log('localStorage.setItem', storageKey, newValue);
+			
             localStorage.setItem(storageKey, newStorage);
 
 			// Dispatch an event so all instances with the same storageKey can update
