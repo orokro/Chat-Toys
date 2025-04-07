@@ -116,6 +116,38 @@ watch(canvasContainerRef, (newVal)=>{
 });
 
 
+const tossQueue = socketShallowRefReadOnly(slugify('tossQueue'), []);
+const localTossHistory = [];
+watch(tossQueue, (newVal) => {
+
+	// loop over the new value and toss items we haven't se in local history
+	for(let i=0; i<newVal.length; i++){
+
+		const item = newVal[i];
+
+		// if we haven't seen this item before, toss it
+		if(!localTossHistory.includes(item.id)){
+
+			// toss the item
+			if(tosserSystem != null)
+				tosserSystem.tossItem(item.item);
+
+			// add to local history
+			localTossHistory.push(item.id);
+		}
+
+	}// next i
+
+	// if we have a tosser system, and the toss queue is not empty
+	if(tosserSystem != null){
+
+		// toss the items
+		tosserSystem.tossItem(newVal);
+	}
+});
+
+
+
 // when this component is unmounted, destroy the tosser system
 onBeforeUnmount(() => {
 
