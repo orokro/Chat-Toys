@@ -77,7 +77,8 @@ export class ToyManager {
 
 		}// next slug
 
-		console.log('resynced toys list', this.toys);
+		// for debugging
+		// console.log('resynced toys list', this.toys);
 	}
 
 

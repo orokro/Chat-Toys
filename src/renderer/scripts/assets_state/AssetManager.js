@@ -191,8 +191,6 @@ export class AssetManager {
 			filePath = `http://localhost:3001/${assetData.file_path}`;
 		}
 
-		console.log(filePath);
-
 		// if we have a file path, let's fetch it
 		if (filePath) {
 			const response = await fetch(filePath);
