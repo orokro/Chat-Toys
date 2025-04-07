@@ -67,7 +67,7 @@ const tabs = [
 ];
 
 // the index of the active tab
-const activeTab = ref(1);
+const activeTab = ref(2);
 
 // before we render first time, we need to instantiate our main state
 onBeforeMount(() => {

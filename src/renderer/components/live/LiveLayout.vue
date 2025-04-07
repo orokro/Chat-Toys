@@ -27,7 +27,7 @@
 		>
 			<LayoutBox
 				v-if="true"
-				:editing="false"
+				:editing="windowWasClicked"
 				:slug="widget.slug"
 				:boxData="boxData[widget.boxKey].value[widget.key]"
 				:color="widget.color"
@@ -69,6 +69,17 @@ const widgets = shallowRef([]);
 const boxData = {
 	'settings-outputWidgetBox': shallowRef({}),
 };
+
+const windowWasClicked = shallowRef(false);
+
+// add event listener to see if the window was clicked
+window.addEventListener('dblclick' , (e) => {
+
+	windowWasClicked.value = !windowWasClicked.value;
+
+	console.log('window clicked', windowWasClicked.value);
+
+});
 
 
 // handle when one of our spawned widgets boxes changes
@@ -153,8 +164,6 @@ function buildWidgetsList(){
 	// update the last enabled toys
 	lastEnabledToys = enabledToysString;
 }
-
-
 </script>
 <style lang="scss" scoped>
 

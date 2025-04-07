@@ -260,14 +260,14 @@ const slices = computed(() => {
 	// the main box for the widget
 	.prizeWheelWidget {
 
-		// fill parent
+		// fixed size
 		width: 200px;
 		height: 222px;
 
 		// reset stacking context
 		position: relative;
 
-		// background image as CSS-sprites settinigs
+		// background image as CSS-sprites settings
 		background-repeat: no-repeat;
 		background-size: 200px 267px;
 		background-position: 0px -46px;

@@ -9,12 +9,14 @@
 
 // vue
 import { ref, shallowRef } from 'vue';
+import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
 import Toy from "../Toy";
 
 // components
 import TosserPage from './TosserPage.vue';
+import TosserWidget from './TosserWidget.vue';
 import DummyWidget from '../DummyWidget.vue';
 
 // main export
@@ -28,10 +30,10 @@ export default class Tosser extends Toy {
 	static themeColor = '#E65A5A';
 	static widgetComponents = [
 		{
-			component: DummyWidget,
-			key: 'targetWidgetBox',
+			component: TosserWidget,
+			key: 'widgetBox',
 			allowResize: true,
-			lockAspectRatio: true,
+			lockAspectRatio: false,
 		}
 	];
 
@@ -74,11 +76,11 @@ export default class Tosser extends Toy {
 				}
 			]),
 			randomTossMode: ref(false),
-			targetWidgetBox: ref({
-				x: (1280 / 2) - (200 / 2),
-				y: 720 - 400,
-				width: 200,
-				height: 400
+			widgetBox: shallowRef({
+				x: 20,
+				y: 20,
+				width: 1880,
+				height: 1040
 			}),
 		});
 	}
@@ -119,5 +121,4 @@ export default class Tosser extends Toy {
 		handshake.accept();
 	}
 
-	
 }
