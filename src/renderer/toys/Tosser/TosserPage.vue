@@ -75,7 +75,9 @@
 				:createItem="() => {
 					return {
 						model: '16',
+						modelPath: toy.getAssetPath('16'),
 						sound: '15',
+						soundPath: toy.getAssetPath('15'),
 						scale: 1,
 						slug: '',
 						cmd: '',

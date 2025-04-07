@@ -40,7 +40,7 @@
 <script setup>
 
 // vue
-import { ref, watch, computed, inject, onMounted, shallowRef } from 'vue';
+import { ref, watch, computed, inject, onMounted, onBeforeUnmount, shallowRef } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 import { socketShallowRefReadOnly } from 'socket-ref';
 
@@ -71,17 +71,21 @@ const colliderBox = chromeShallowRef('tosserColliderPos', {
 	height: 1200 * 0.2,
 });
 
+
 const emit = defineEmits([
 	'boxChange'
 ]);
+
 
 // define some props
 const props = defineProps({
 
 });
 
+
 // store models available locally
 const modelsAvailable = shallowRef([]);
+
 
 // gets our settings
 const ready = ref(false);
@@ -91,27 +95,34 @@ const socketSettingsRef = useToySettings('tosser', 'widgetBox', emit, () => {
 	modelsAvailable.value = socketSettingsRef.value.tosserAssets;
 });
 
+
+// wait for our ref to exist & then make the tosser system
 let tosserSystem = null;
+watch(canvasContainerRef, (newVal)=>{
 
-onMounted(()=>{
+	// if we have a new canvas container, and we don't have a tosser system yet
+	if(newVal != null && tosserSystem == null){
 
-	console.log(canvasContainerRef.value);
+		// make new tosser system
+		tosserSystem = new ThreeJSTosserSystem(
+			canvasContainerRef,
+			modelsAvailable,
+			colliderBox
+		);
 
-	watch(canvasContainerRef, (newVal)=>{
-		
-		if(newVal != null && tosserSystem == null){
+		// expose on window for debug
+		window.ts = tosserSystem;
+	}
+});
 
-			// make new tosser system
-			tosserSystem = new ThreeJSTosserSystem(
-				canvasContainerRef,
-				modelsAvailable,
-				colliderBox
-			);
 
-			window.ts = tosserSystem;
-		}
-	});
+// when this component is unmounted, destroy the tosser system
+onBeforeUnmount(() => {
 
+	if(tosserSystem != null){
+		tosserSystem.end();
+		tosserSystem = null;
+	}
 });
 
 // gets live sockets

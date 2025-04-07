@@ -62,14 +62,18 @@ export default class Tosser extends Toy {
 			tosserAssets: ref([
 				{
 					model: "16",
+					modelPath: this.getAssetPath('16'),
 					sound: "15",
+					soundPath: this.getAssetPath('15'),
 					scale: 1,
 					slug: "tomato",
 					cmd: "tomato",
 				},
 				{
 					model: "18",
+					modelPath: this.getAssetPath('18'),
 					sound: "15",
+					soundPath: this.getAssetPath('15'),
 					scale: 1,
 					slug: "wad",
 					cmd: "paper",
