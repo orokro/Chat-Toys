@@ -9,13 +9,18 @@
 
 // vue
 import { ref, shallowRef } from 'vue';
+import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
+
+// lib/misc
+import { v4 as uuidv4 } from 'uuid';
 
 // our app
 import Toy from "../Toy";
+import { FishingGame } from './FishingGame';
 
 // components
 import FishingPage from './FishingPage.vue';
-import DummyWidget from '../DummyWidget.vue';
+import FishingWidget from './FishingWidget.vue';
 
 // main export
 export default class Fishing extends Toy {
@@ -28,7 +33,7 @@ export default class Fishing extends Toy {
 	static themeColor = '#A4704C';
 	static widgetComponents = [
 		{
-			component: DummyWidget,
+			component: FishingWidget,
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: true,
@@ -47,6 +52,46 @@ export default class Fishing extends Toy {
 
 		// call the parent constructor
 		super(toyManager);
+
+		// make a new fishing game to manage our logic & set up a timer for it
+		const corners = [{x: 35, y: 53}, {x: 210, y: 53}, {x: 12, y: 188}, {x: 232, y: 188}];
+		const fishList = this.settings.fishList;
+		const maxFish = this.settings.maxFish;
+		const fishSpawnInterval = this.settings.fishSpawnInterval;
+		const castTimeout = this.settings.castTimeout;
+		this.fishingGame = new FishingGame(
+			corners,
+			fishList,
+			maxFish,
+			fishSpawnInterval,
+			castTimeout
+		);
+
+		// use the first time get initial state
+		const initialState = this.fishingGame.tick();
+		this.gameState = socketShallowRef(this.static.slugify('gameState'), initialState);
+
+		// set up repeating interval to call the fishing game tick function
+		this.fishingInterval = window.setElectronInterval(()=>{
+			this.gameState.value = {...this.fishingGame.tick()};
+		}, 100);
+
+		// handle when fishing game has events
+		this.fishingGame.onLog((log)=>{
+			this.chatToysApp.logger.info(log);
+		});
+		this.fishingGame.onCatch((fish)=>{
+			console.log('Caught a fish!', fish);
+		});
+
+	}
+
+
+	/**
+	 * Clean up
+	 */
+	end(){
+		window.clearElectronInterval(this.fishingInterval);
 	}
 
 
@@ -59,7 +104,9 @@ export default class Fishing extends Toy {
 		this.buildSettingsBlock({
 
 			// our local settings
+			maxFish: ref(5),
 			fishSpawnInterval: ref(120),
+			castTimeout: ref(300),
 			fishList: shallowRef([
 				{
 					name: 'runt',
@@ -116,6 +163,9 @@ export default class Fishing extends Toy {
 			},
 			{
 				command: 'reel',
+				params: [
+					{ name: 'strength', type: 'number', optional: true, desc: 'how hard to reel in' },
+				],
 				description: 'Attempt to reel in your fishing line',
 			}
 		]);
@@ -128,7 +178,7 @@ export default class Fishing extends Toy {
 	 * @param {String} commandSlug - the slug of the command
 	 * @param {Object} msg - details about the chat message that invoked the command
 	 * @param {Object} user - details about the user that invoked the command (could be dummy if not in database yet)
-	 * @param {Array<String>} params - the parameters passed to the command
+	 * @param {Object} params - the parameters passed to the command as an object
 	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
@@ -136,8 +186,23 @@ export default class Fishing extends Toy {
 		// log it:
 		console.log('Fishing found', commandSlug, 'from', msg.author, 'with params', params);
 
-		// accept the command which updates the database
-		handshake.accept();
+		// only allow cast or reel commands
+		if (commandSlug !== 'cast' && commandSlug !== 'reel') {
+			handshake.reject('Invalid command');
+			return;
+		}
+
+		// pack command into object for fishing game
+		const fishingCommand = {
+			userID: msg.authorUniqueID,
+			username: msg.author,
+			command: commandSlug,
+			params: params,
+			handshake: handshake,
+		};
+
+		// tell the fishing game this command happened
+		this.fishingGame.doCommand(fishingCommand);
 	}
 
 }

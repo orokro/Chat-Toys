@@ -20,7 +20,6 @@ import Toy from "../Toy";
 // components
 import TosserPage from './TosserPage.vue';
 import TosserWidget from './TosserWidget.vue';
-import DummyWidget from '../DummyWidget.vue';
 
 // main export
 export default class Tosser extends Toy {

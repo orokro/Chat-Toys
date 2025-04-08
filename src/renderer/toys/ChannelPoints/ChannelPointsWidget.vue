@@ -371,9 +371,7 @@ const widgetIconPath = socketShallowRefReadOnly(slugify('widgetIconPath'), null)
 
 		}// .innerWrapper
 
-	}
-
-	// .channelPointsWidget
+	}// .channelPointsWidget
 
 	@keyframes rotate_cw {
 		from {

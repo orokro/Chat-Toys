@@ -83,7 +83,7 @@ class OBSViewServer {
 			this.startEchoServer();
 
 			// 👇 Allow CORS for Vite dev server ONLY in development
-			if (process.env.NODE_ENV === 'development') {
+			if (true || process.env.NODE_ENV === 'development') {
 				expressApp.use(cors({
 				origin: 'http://localhost:8080',
 				methods: ['GET', 'POST'],
