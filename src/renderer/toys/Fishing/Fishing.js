@@ -78,7 +78,7 @@ export default class Fishing extends Toy {
 
 		// handle when fishing game has events
 		this.fishingGame.onLog((log)=>{
-			this.chatToysApp.logger.info(log);
+			this.chatToysApp.log.info(log);
 		});
 		this.fishingGame.onCatch((fish)=>{
 			console.log('Caught a fish!', fish);

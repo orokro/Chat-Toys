@@ -19,31 +19,34 @@
 			<!-- the main box for the widget -->
 			<div 
 				v-if="ready"
-				class="fishingWidget"
+				class="fishingWidget"				
 			>
 				<div class="caustics"></div>
-
-				<div class="c tl"></div>
-				<div class="c tr"></div>
-				<div class="c bl"></div>
-				<div class="c br"></div>
 
 				<!-- show the fish -->
 				<div
 					v-for="(fish, index) in gameState.fish"
-					class="fish"					
 					:key="index"
+					class="fish"					
+					:class="{
+						// debugColors: true,	
+						nibble: fish.nibbling,
+						attract: fish.mode=='attract' && fish.nibbling==false,
+						wander: fish.mode=='wander',
+						sadWander: fish.mode=='sadwander',			
+					}"
 					:style="{
 						left: fish.screenPosX + 'px',
 						top: fish.screenPosY + 'px',
 					}"
-				></div>
+				>
+				</div>
 
 				<!-- show the cast bobbles -->
 				<div 
 					v-for="(bobble, index) in gameState.casts"
-					class="bobble"
 					:key="index"
+					class="bobble"					
 					:style="{
 						left: bobble.screenX + 'px',
 						top: bobble.screenY + 'px',
@@ -101,7 +104,7 @@ const gameState = socketShallowRefReadOnly(slugify('gameState'), '');
 
 watch(gameState, (newVal) => {
 	if (newVal) {
-		console.log('gameState', newVal);
+		// console.log('gameState', newVal);
 	}
 }, { deep: true });
 
@@ -173,20 +176,36 @@ watch(gameState, (newVal) => {
 		// a fish
 		.fish {
 
+			pointer-events: initial;
+			cursor: pointer;
+
 			// fill the whole box
 			position: absolute;
+			transform: translate(-50%, -50%);
 
 			// gray transparent circle
-			width: 15px;
-			height: 15px;
+			width: 25px;
+			height: 25px;
 			border-radius: 50%;
 			background-color: rgba(0, 0, 0, 0.5);
 
+			// debug color
+			color: white;
+			font-size: 10px;
+			
 			// fade out towards distance
 			mask-image:
 				radial-gradient(circle, rgb(0, 0, 0, 1) 20%,
 					rgba(0, 0, 0, 0) 70%,
 					rgba(0, 0, 0, 0) 100%);
+
+			&.debugColors {
+				&.attract { background-color: rgba(0, 255, 242, 0.5); }
+				&.nibble { background-color: rgba(0, 255, 0, 0.5) !important; }
+				&.wander { background-color: rgba(39, 22, 87, 0.5); }
+				&.sadWander { background-color: rgba(83, 16, 16, 0.5); }
+			}
+
 		}// .fish
 
 		// a users cast bobble
@@ -225,21 +244,10 @@ watch(gameState, (newVal) => {
 				text-align: center;
 				text-shadow: 1px 1px 1px black;
 				white-space: nowrap;
+
 			}// .name
 
 		}//. bobble
-
-		.c {
-			position: absolute;
-			width: 5px;
-			height: 4px;
-			background: lime;
-
-			&.tl { left: 35px; top: 53px; }
-			&.tr { left: 210px; top: 53px; }
-			&.bl { left: 12px; top: 188px; }
-			&.br { left: 232px; top: 188px; }			
-		}
 
 	}// .fishingWidget
 

@@ -270,12 +270,12 @@ export class FishingGame {
 			if (dist < 1.5 && f.mode !== 'attract' || (f.mode === 'attract' && !f.nibbling)) {
 
 				// wander new position
-				f.mode = 'wander';
+				f.mode = 'sadwander';
 				f.waitTimer = 0;
 
 				// pick new random position
-				const awayX = f.posX + dx;
-				const awayY = f.posY + dy;
+				const awayX = f.posX + dx * 2;
+				const awayY = f.posY + dy * 2;
 				f.targetPosX = Math.max(0, Math.min(4, awayX));
 				f.targetPosY = Math.max(0, Math.min(4, awayY));
 			}
@@ -303,7 +303,6 @@ export class FishingGame {
 
 		// Update fish spawn
 		this.fishSpawnTimer -= deltaTime;
-		console.log('fish spawn timer', this.fishSpawnTimer);
 		if (this.fishSpawnTimer <= 0) {
 
 			// pick a new spawn interval
@@ -347,7 +346,7 @@ export class FishingGame {
 
 			// move fish
 			if (dist > 0.1) {
-				const speed = 0.01 * deltaTime;
+				const speed = 0.2 * deltaTime;
 				f.posX += (dx / dist) * speed;
 				f.posY += (dy / dist) * speed;
 
@@ -382,10 +381,17 @@ export class FishingGame {
 
 					// if we're in attract mode and time is up, switch to sadwander
 					if (f.waitTimer <= 0 && f.mode === 'attract') {
-						f.mode = 'sadwander';
-						f.nibbling = false;
-						f.targetPosX = Math.random() * 4;
-						f.targetPosY = Math.random() * 4;
+
+						if(f.nibbling==false){
+							f.waitTimer = 2 + Math.random() * 3;
+							f.nibbling = true;
+						}else {
+
+							f.mode = 'sadwander';
+							f.nibbling = false;
+							f.targetPosX = Math.random() * 4;
+							f.targetPosY = Math.random() * 4;
+						}
 					}
 				}
 			}
