@@ -172,7 +172,7 @@ export class FishingGame {
 
 		// if a user already cast, GTFO
 		if (this.casts.find(c => c.userID === userID)){
-			handshake.reject('You already have a cast out!');
+			handshake.reject(`${username}: you already have a cast out!`);
 			return;
 		}
 
@@ -213,7 +213,7 @@ export class FishingGame {
 		// if the user doesn't have a cast, GTFO
 		const cast = this.casts.find(c => c.userID === userID);
 		if (!cast){
-			handshake.reject('You don\'t have a cast out!');
+			handshake.reject(`${username}: you don\'t have a cast out!`);
 			return;
 		}
 
@@ -227,10 +227,10 @@ export class FishingGame {
 			// Simplified strength logic
 			const fishStrength = 50 + Math.random() * 50; 
 			if (strength > fishStrength + 20) {
-				this.log('Line snapped!');
+				this.log(`${username}'s line snapped!`);
 
 			} else if (strength < fishStrength - 20) {
-				this.log("Fish didn't even feel that.");
+				this.log(`${username}'s fish didn't even feel that tug.`);
 				
 				// accept the command which updates the database
 				handshake.accept();
@@ -239,7 +239,7 @@ export class FishingGame {
 				return;
 
 			} else {
-				this.log(`Caught a ${nearbyFish.name}!`);
+				this.log(`${username} caught a ${nearbyFish.name}!`);
 				this.catchFn({ cast, fish: nearbyFish });
 
 				// remove caught fish!
@@ -342,23 +342,6 @@ export class FishingGame {
 				this.log(`${cast.username}'s line reeled in automatically.`);
 				this.casts = this.casts.filter(c => c !== cast);
 			}
-
-			// debug logic to move thing back and fourth to test coordinates
-			// if(cast.dir==0){
-			// 	cast.castX-=0.05;
-			// 	if(cast.castX <= 0){
-			// 		cast.castX = 0;
-			// 		cast.dir = 1;
-			// 	}
-			// }else{
-			// 	cast.castX+=0.05;
-			// 	if(cast.castX >= 4){
-			// 		cast.castX = 4;
-			// 		cast.dir = 0;
-			// 	}
-			// }
-			// const { screenX, screenY } = this.toScreenCoords(cast.castX, cast.castY);
-			// cast.screenX = screenX;
 
 		}// next cast
 

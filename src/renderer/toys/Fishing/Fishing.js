@@ -80,8 +80,39 @@ export default class Fishing extends Toy {
 		this.fishingGame.onLog((log)=>{
 			this.chatToysApp.log.info(log);
 		});
+
+		// make state var for 'catches' to show in the widget when a chatter catches a fish
+		this.catches = socketShallowRef(this.static.slugify('catches'), []);
+
+		// when user catches a fish, add it to the catches list for UI to render
 		this.fishingGame.onCatch((fish)=>{
-			console.log('Caught a fish!', fish);
+
+			// get the points from the fish so we can reward the user
+			const easyMoney = fish.fish.points;
+			window.ytctDB.updateUser(fish.cast.userID, {
+				relativePoints: easyMoney,
+			});
+
+			// push details about the fish on the list
+			const newCatches = [...this.catches.value,
+				{
+					id: uuidv4(),
+					userID: fish.cast.userID,
+					username: fish.cast.username,
+					fishName: fish.fish.name,
+					fishImage: this.getAssetPath(fish.fish.image),
+					fishScale: fish.fish.scale,
+					fishPoints: fish.fish.points,
+					time: Date.now(),
+				}
+			];
+
+			// trim size
+			while(newCatches.length > 20)
+				newCatches.shift();
+			
+			// update socket state
+			this.catches.value = newCatches;
 		});
 
 	}
@@ -182,9 +213,6 @@ export default class Fishing extends Toy {
 	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
-
-		// log it:
-		console.log('Fishing found', commandSlug, 'from', msg.author, 'with params', params);
 
 		// only allow cast or reel commands
 		if (commandSlug !== 'cast' && commandSlug !== 'reel') {

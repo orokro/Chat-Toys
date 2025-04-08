@@ -21,6 +21,7 @@
 				v-if="ready"
 				class="fishingWidget"				
 			>
+				<!-- animated gif of caustics -->
 				<div class="caustics"></div>
 
 				<!-- show the fish -->
@@ -77,10 +78,47 @@
 					
 				</div>
 
+				<!-- some hard-coded ripple locations -->
 				<div class="ripple tl"><div class="inner"></div></div>
 				<div class="ripple tr"><div class="inner"></div></div>
 				<div class="ripple l"><div class="inner"></div></div>
 				<div class="ripple br"><div class="inner"></div></div>
+
+				<!-- the message box for when chatter catches a fish -->
+				<div 
+					v-if="currentCatch!=null" 
+					class="catchMessage"
+				>
+
+					<!-- our bobble image & fishing line -->
+					<div class="bobbleBig">
+						<div class="line"></div>
+					</div>
+
+					<!-- the image of the caught fish -->
+					<img
+						:src="currentCatch.fishImage" 
+						class="fishImage" 
+						:width="70*currentCatch.fishScale"
+					/>
+
+					<!-- top message -->
+					<div class="message fishText">
+						<span class="username">{{ currentCatch.username }}</span>
+						<br>
+						<span class="username">
+							<span class="caughtA">caught a </span>
+							<span class="fishName">{{ currentCatch.fishName }}!</span>
+						</span>
+					</div>	
+
+					<!-- the points -->
+					<div class="points fishText">
+						<span>+{{ currentCatch.fishPoints }}</span> points
+					</div>
+
+				</div>
+
 			</div>
 		</div>
 	</AutoSizer>
@@ -117,6 +155,8 @@ const props = defineProps({
 
 });
 
+
+// helper method to see if a specific bobble is being nibbled
 const bobbleIsBeingNibbled = function(bobble) {
 	return this.gameState.fish.some((fish) => {
 		return fish.nibbling && fish.targetCast.userID == bobble.userID;
@@ -131,12 +171,66 @@ const socketSettingsRef = useToySettings('fishing', 'widgetBox', emit, () => {
 
 // gets live sockets
 const gameState = socketShallowRefReadOnly(slugify('gameState'), '');
+const catches = socketShallowRefReadOnly(slugify('catches'), '');
 
-watch(gameState, (newVal) => {
-	if (newVal) {
-		// console.log('gameState', newVal);
+
+// keep a time stamp of the last catch we saw, so we don't double spawn
+let lastCatchTime = 0;
+
+// keep an array queue of catches to show on screen, serially
+const catchQueue = [];
+
+// reactive variable for current catch
+const currentCatch = ref(null);
+
+// watch for when our state catch list changes
+watch(catches, (newVal) => {
+
+	if (newVal) {		
+
+		// filter out any ones that are newer than the last one we saw
+		const filtered = newVal.filter((catchObj) => {
+			return catchObj.time > lastCatchTime;
+		});
+
+		// loop to add the filtered catches to the queue & update the last time
+		for (let i = 0; i < filtered.length; i++) {
+			catchQueue.push(filtered[i]);
+			lastCatchTime = Math.max(lastCatchTime, filtered[i].time);
+		}// next i
+
+		// if our catch queue is not empty, show the first one & start loop
+		if(catchQueue.length > 0) {
+			showCatch();
+		}
 	}
+
 }, { deep: true });
+
+
+// show the next catch in the queue
+function showCatch(){
+
+	// get the first item in the queue
+	const catchObj = catchQueue.shift();
+	if (catchObj) {
+
+		// set the current catch
+		currentCatch.value = catchObj;
+
+		// set a timeout to clear the current catch
+		setTimeout(() => {
+			currentCatch.value = null;
+			if (catchQueue.length > 0) {
+
+				setTimeout(() => {
+					showCatch();
+				}, 100);
+			}
+		}, 4000);
+	}
+}
+
 
 </script>
 <style lang="scss" scoped>
@@ -258,6 +352,7 @@ watch(gameState, (newVal) => {
 				top: -12px;
 				transform: scale(0.7, 0.3);
 			}
+			
 			// the bobble image, centered
 			.image {
 
@@ -382,8 +477,165 @@ watch(gameState, (newVal) => {
 
 		}// .ripple
 
+		// the box with the catch messages
+		.catchMessage {
+
+			--text-opacity: 1;
+
+			// fixed position
+			position: absolute;
+			left: 50%;
+			top: 15%;
+			transform: translate(-50%, 0%);
+
+			// fixed size w/ padding on top to push fish image down
+			width: 150px;
+			padding-top: 15px;
+
+			// text settings
+			text-align: center;
+
+			// text settings
+			.fishText {
+
+				opacity: var(--text-opacity);
+
+				font-size: 14px;
+				font-weight: bolder;
+				color: white;
+				text-align: center;
+				line-height: 19px;
+				text-shadow: 3px 2px 0px black;
+
+			}// .fishText
+
+			// the top message w/ users name & message
+			.message {
+
+				position: absolute;
+				inset: 0px 0px auto 0px;
+
+				.username {					
+					white-space: nowrap;
+					color: yellow;
+					background: rgba(0, 0, 0, 0.5);
+					border-radius: 25px;
+					padding: 0px 5px;
+				}
+
+				.caughtA {
+					color: white;
+				}
+				.fishName {
+					white-space: nowrap;
+					color: lime;
+				}
+
+			}// .message
+
+			.points {
+				position: absolute;
+				inset: auto 0px 0px 0px;
+
+				/* background: rgba(0, 0, 0, 0.5);
+				padding: 0px 5px;
+				border-radius: 25px; */
+
+				span {
+					color: lime;
+					font-size: 30px;
+				}
+
+			}// .points
+
+			// bobble
+			.bobbleBig {
+
+				// fixed position
+				position: absolute;
+				left: 50%;
+				top: 0px;
+				transform: translate(-60%, -45%);
+				z-index: 0;
+
+				// fixed size
+				width: 30px;
+				height: 40px;
+
+				// animated bobble image
+				background: url('/assets/fishing/bobble.png') no-repeat center center;
+				background-size: 100% 100%;
+				transform-origin: center center;
+				
+				// div that fades out as it goes upward
+				.line {
+
+					position: absolute;
+					bottom: 35px;
+					left: 14px;
+					width: 3px;
+					height: 250px;
+
+					background: black;
+					
+					// fade out towards distance
+					mask-image:
+						linear-gradient(rgb(0, 0, 0, 0) 20%, rgba(0, 0, 0, 1) 100%);
+
+				}// .line
+
+			}// .bobbleBig
+
+
+			// the image of the caught fish
+			.fishImage {
+
+				position: relative;
+				transform-origin: top center;
+				
+				// animated fish image
+				animation: fishHang 1s infinite ease-in-out alternate;
+				
+			}// .fishImage
+
+			animation: showCatch 4s forwards ease-in-out;
+
+		}// .catchMessage
+
 	}// .fishingWidget
 
+	@keyframes showCatch {
+		0% {
+			transform: translate(-50%, 180%);
+			--text-opacity: 0;
+		}
+		20% {
+			transform: translate(-50%, 0%);
+			--text-opacity: 0;
+		}
+		25% {
+			transform: translate(-50%, 0%);
+			--text-opacity: 1;
+		}
+		75% {
+			transform: translate(-50%, 0%);
+			--text-opacity: 1;
+		}
+		80% {
+			transform: translate(-50%, 0%);
+			--text-opacity: 0;
+		}
+		100% {
+			transform: translate(-50%, -150%);
+			--text-opacity: 0;
+		}		
+	}
+
+	
+	@keyframes fishHang {
+		0%   { transform: rotate(-3deg) scale(1); }
+		100% { transform: rotate(3deg) scale(1); }
+	}
 
 	@keyframes spinBg {
 		0%   { transform: rotate(-30deg) scale(1); }
