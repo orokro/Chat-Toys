@@ -46,11 +46,12 @@
 					<input type="text" v-model="pointsInput" @input="validatePoints" />
 				</td>
 				<td>
-					<input type="text" v-model="rarityInput" @input="validateRarity" />
+					<input type="text" v-model="rarityInput" @input="validateRarity" @blur="e=>validateRarity(e, true)" />
 				</td>
 			</tr>
 
 			<!-- second row is the buttons / sliders -->
+
 			<tr>
 				<td colspan="1">
 					<div class="buttonSpread">
@@ -68,7 +69,7 @@
 					/>
 				</td>
 				<td></td>
-				<td></td>
+				<td>Odds: {{ percentage }}%</td>
 			</tr>
 		</tbody>
 	</table>
@@ -129,11 +130,13 @@ const nameInput = ref(props.value.name);
 const scaleInput = ref(props.value.scale);
 const pointsInput = ref(props.value.points);
 const rarityInput = ref(props.value.rarity);
+const percentage = ref(props.value.percentage);
 watch(() => props.value, (newValue) => {
 	nameInput.value = newValue.name;
 	scaleInput.value = newValue.scale;
 	pointsInput.value = newValue.points;
 	rarityInput.value = newValue.rarity;
+	percentage.value = newValue.percentage;
 });
 
 // emit the entire object when any of the inputs change
@@ -142,8 +145,9 @@ const emitChange = () => {
 		name: nameInput.value,
 		scale: scaleInput.value,
 		points: pointsInput.value,
-		rarity: rarityInput.value,
+		rarity: rarityInput.value!='' ? rarityInput.value : 0,
 		image: props.value.image,
+		percentage: percentage.value,
 	});
 };
 
@@ -174,11 +178,13 @@ const validatePoints = async () => {
 	}
 };
 
-const validateRarity = async () => {
+const validateRarity = async (e, forceFix=false) => {
 	try {
 		await numberSchema.validate(rarityInput.value);
 		emitChange();
 	} catch (err) {
+		if(rarityInput.value=='' && forceFix==false)
+			return;
 		rarityInput.value = props.value.rarity;
 	}
 };

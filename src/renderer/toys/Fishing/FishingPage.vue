@@ -37,6 +37,28 @@
 			<p>A random number will be picked, this is the maximum wait time.</p>
 		</SettingsInputRow>
 
+		<SettingsInputRow
+			type="number"
+			:min="1"
+			v-model="maxFish"
+		>
+			<h3>Max Fish</h3>
+			<p>The Maximum number of fish that should be spawned on screen at once.</p>
+		</SettingsInputRow>
+
+		<SettingsInputRow
+			type="number"
+			:min="1"
+			v-model="castTimeout"
+		>
+			<h3>Cast Timeout</h3>
+			<p>
+				The came will automatically reel in a users reel after this number of seconds.
+				(consider if the user leaves the stream or goes off line... their cast will
+				eventually timeout and auto-reel back in.)
+			</p>
+		</SettingsInputRow>
+
 		<SettingsRow>
 			<h1>Fish List</h1>
 			<p>Customize the list of fish that can be caught.</p>
@@ -54,7 +76,8 @@
 						image: '21',
 						scale: 1,
 						points: 0,
-						rarity: 1
+						rarity: 1,
+						percentage: -1,
 					};
 				}"				
 			/>
@@ -66,7 +89,7 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, inject } from 'vue';
+import { ref, shallowRef, watch, inject, nextTick } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 
 // components
@@ -89,8 +112,47 @@ const toy = ctApp.toyManager.toys[Fishing.slug];
 // our local ref settings
 const {
 	fishSpawnInterval,
+	maxFish,
+	castTimeout,
 	fishList,
 } = toy.settings;
+
+let skipCompute = false;
+watch(
+	() => fishList,
+	(newVal) => {
+
+		if(skipCompute)
+			return;
+		
+		skipCompute = true;
+		
+		let updated = [...fishList.value];
+
+		// calculate the total rarity
+		let totalRarity = 0;
+		for (const fish of fishList.value)
+			totalRarity += parseInt(fish.rarity, 10);
+		
+		// update the percentage for each fish
+		for(const fish of fishList.value)
+			if (totalRarity > 0)
+				fish.percentage = parseInt(Math.round((parseInt(fish.rarity, 10) / totalRarity) * 100), 10);
+			else
+				fish.percentage = 0;
+		
+		
+		// re-assign the value
+		fishList.value = [...fishList.value.map(fish => {
+			return {...fish}
+		})];
+
+		// allow the watcher to run again
+		nextTick(() => {
+			skipCompute = false;
+		});
+	}
+, { deep: true });
 
 </script>
 <style lang="scss" scoped>	

@@ -140,7 +140,7 @@ watch(() => props.fileId, generatePreview);
 		}// &.border
 
 		&.image {
-			background: url('../assets/alpha_checkers.png');
+			background: url('assets/alpha_checkers.png');
 			background-size: 10px;
 		}// &.image
 
