@@ -61,6 +61,9 @@
 						top: bobble.screenY + 'px',
 					}"
 				>
+					<div class="ripple">
+						<div class="inner"></div>
+					</div>
 					<div class="image">
 						<div 
 							class="line"
@@ -74,6 +77,10 @@
 					
 				</div>
 
+				<div class="ripple tl"><div class="inner"></div></div>
+				<div class="ripple tr"><div class="inner"></div></div>
+				<div class="ripple l"><div class="inner"></div></div>
+				<div class="ripple br"><div class="inner"></div></div>
 			</div>
 		</div>
 	</AutoSizer>
@@ -198,21 +205,11 @@ watch(gameState, (newVal) => {
 
 		// a fish
 		.fish {
-
 			pointer-events: initial;
 			cursor: pointer;
 
-			// fill the whole box
-			/* position: absolute; */
-
 			// entire fish slightly transparent
 			opacity: 0.5;
-			
-			/* transform: translate(-10px, 0px); */
-			
-			/* border: 10px solid red;
-			width: 1px;
-			height: 1px; */
 
 			// a number of circles that trail off and get smaller to show fish path
 			.fishShape {
@@ -255,42 +252,49 @@ watch(gameState, (newVal) => {
 			height: 1px;
 			transform: translate(0px, -10px);
 			
+			// the ripple
+			.ripple {
+				left: -25px;
+				top: -12px;
+				transform: scale(0.7, 0.3);
+			}
 			// the bobble image, centered
 			.image {
+
 				width: 15px;
 				height: 20px;
-				/* transform: translate(-50%, -65%); */
-				animation: bobbleFloat 5s infinite ease-in-out;
 
+				animation: bobbleFloat 5s infinite ease-in-out;
 				background: url('/assets/fishing/bobble.png') no-repeat center center;
 				background-size: 100% 100%;
-				/* opacity: 0.5; */
 
 				.line {
 
+					// fixed rectangle based on top of the bobble image
 					position: absolute;
 					bottom: 15px;
 					left: 5px;
-
 					width: 70px;
 					height: 250px;
 
+					// background image
 					background: url('/assets/fishing/line.png') no-repeat center center;
 					background-size: 100% 100%;
 
+					// slight height variation
 					&.altLine {
 						
 						height: 175px;
 					}
 
+					// flipped line
 					&.flip {
 						transform: scaleX(-1);
 						left: auto;
 						right: 5px;
 					}
 
-					
-				}
+				}// .line
 
 			}// .image
 			
@@ -322,7 +326,76 @@ watch(gameState, (newVal) => {
 
 		}//. bobble
 
+
+		// ripple box
+		.ripple {
+
+			// fixed position
+			position: absolute;
+			top: 100px;
+			left: 100px;
+			width: 50px;
+			height: 50px;
+
+			// default scale
+			transform: scaleY(0.4);
+
+			// specific named ripples for the scene
+			&.tl {
+				top: 67px;
+				left: 4px;
+			}
+			&.tr {
+				top: 65px;
+				left: 193px;
+			}
+			&.l {
+				top: 110px;
+				left: -10px;
+			}
+			&.br {
+				top: 173px;
+				left: 192px;
+				transform: scale(1.5, 0.6);
+			}
+
+			// fade out
+			mask-image:
+				radial-gradient(circle, rgb(0, 0, 0, 1) 50%,
+					rgba(0, 0, 0, 0) 70%,
+					rgba(0, 0, 0, 0) 100%);
+
+			// animated ripple image
+			.inner {
+				width: 50px;
+				height: 50px;
+
+				background: url('/assets/fishing/ripples.png') no-repeat center center;
+				background-size: 100% 100%;
+
+				// bg image for ripple
+				background-position: center;
+				transform-origin: center center;
+				animation: spinBg 1s infinite ease-in-out alternate,
+						zoomBg 1s infinite ease-in-out alternate;
+			}// .inner
+
+		}// .ripple
+
 	}// .fishingWidget
+
+
+	@keyframes spinBg {
+		0%   { transform: rotate(-30deg) scale(1); }
+		50%  { transform: rotate(0deg) scale(1); }
+		100% { transform: rotate(30deg) scale(1); }
+	}
+
+	@keyframes zoomBg {
+		0%   { transform: scale(1.05) rotate(-30deg); }
+		50%  { transform: scale(0.97) rotate(0deg); }
+		100% { transform: scale(1.05) rotate(30deg); }
+	}
 
 	@keyframes bobbleFloat {
 		0%   { transform: translate(-50%, 0); }
