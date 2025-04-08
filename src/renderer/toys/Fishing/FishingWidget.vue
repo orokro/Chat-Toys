@@ -27,33 +27,51 @@
 				<div
 					v-for="(fish, index) in gameState.fish"
 					:key="index"
-					class="fish"					
-					:class="{
-						// debugColors: true,	
-						nibble: fish.nibbling,
-						attract: fish.mode=='attract' && fish.nibbling==false,
-						wander: fish.mode=='wander',
-						sadWander: fish.mode=='sadwander',			
-					}"
-					:style="{
-						left: fish.screenPosX + 'px',
-						top: fish.screenPosY + 'px',
-					}"
+					class="fish"	
 				>
+					<div 
+						v-for="(pos, j) in fish.oldPositions"
+						:style="{
+							left: pos[0] + 'px',
+							top: pos[1] + 'px',
+							transform: `translate(-50%, -50%) scale(${(j/20)+0.2})`,
+						}"
+						class="fishShape"
+						:class="{
+							debugColors: false,	
+							nibble: fish.nibbling,
+							attract: fish.mode=='attract' && fish.nibbling==false,
+							wander: fish.mode=='wander',
+							sadWander: fish.mode=='sadwander',			
+						}"	
+					>
+					</div>
 				</div>
 
 				<!-- show the cast bobbles -->
 				<div 
 					v-for="(bobble, index) in gameState.casts"
 					:key="index"
-					class="bobble"					
+					class="bobble"				
+					:class="{
+						nibble: bobbleIsBeingNibbled(bobble),
+					}"	
 					:style="{
 						left: bobble.screenX + 'px',
 						top: bobble.screenY + 'px',
 					}"
 				>
-					<div class="image"></div>
+					<div class="image">
+						<div 
+							class="line"
+							:class="{
+								altLine: (bobble.number%2==0),
+								flip: ((1+bobble.number%2==0) ^ (bobble.number%5==0)),								
+							}"
+						></div>
+					</div>
 					<div class="name">{{ bobble.username }}</div>
+					
 				</div>
 
 			</div>
@@ -92,6 +110,11 @@ const props = defineProps({
 
 });
 
+const bobbleIsBeingNibbled = function(bobble) {
+	return this.gameState.fish.some((fish) => {
+		return fish.nibbling && fish.targetCast.userID == bobble.userID;
+	});
+};
 
 // gets our settings
 const ready = ref(false);
@@ -180,31 +203,46 @@ watch(gameState, (newVal) => {
 			cursor: pointer;
 
 			// fill the whole box
-			position: absolute;
-			transform: translate(-50%, -50%);
+			/* position: absolute; */
 
-			// gray transparent circle
-			width: 25px;
-			height: 25px;
-			border-radius: 50%;
-			background-color: rgba(0, 0, 0, 0.5);
-
-			// debug color
-			color: white;
-			font-size: 10px;
+			// entire fish slightly transparent
+			opacity: 0.5;
 			
-			// fade out towards distance
-			mask-image:
-				radial-gradient(circle, rgb(0, 0, 0, 1) 20%,
-					rgba(0, 0, 0, 0) 70%,
-					rgba(0, 0, 0, 0) 100%);
+			/* transform: translate(-10px, 0px); */
+			
+			/* border: 10px solid red;
+			width: 1px;
+			height: 1px; */
 
-			&.debugColors {
-				&.attract { background-color: rgba(0, 255, 242, 0.5); }
-				&.nibble { background-color: rgba(0, 255, 0, 0.5) !important; }
-				&.wander { background-color: rgba(39, 22, 87, 0.5); }
-				&.sadWander { background-color: rgba(83, 16, 16, 0.5); }
-			}
+			// a number of circles that trail off and get smaller to show fish path
+			.fishShape {
+
+				// fixed pos
+				position: absolute;
+
+				// gray transparent circle
+				width: 25px;
+				height: 25px;
+				border-radius: 50%;
+				background-color: rgba(0, 0, 0, 1);
+
+				// fade out towards distance
+				mask-image:
+					radial-gradient(circle, rgb(0, 0, 0, 1) 20%,
+						rgba(0, 0, 0, 0) 70%,
+						rgba(0, 0, 0, 0) 100%);
+
+				// show fish stat via debugging
+				&.debugColors {
+				
+					&.attract { background-color: rgba(0, 255, 242, 0.5); }
+					&.nibble { background-color: rgba(0, 255, 0, 0.5) !important; }
+					&.wander { background-color: rgba(39, 22, 87, 0.5); }
+					&.sadWander { background-color: rgba(83, 16, 16, 0.5); }
+
+				}// &.debugColors
+
+			}// .fishShape
 
 		}// .fish
 
@@ -227,7 +265,35 @@ watch(gameState, (newVal) => {
 				background: url('/assets/fishing/bobble.png') no-repeat center center;
 				background-size: 100% 100%;
 				/* opacity: 0.5; */
+
+				.line {
+
+					position: absolute;
+					bottom: 15px;
+					left: 5px;
+
+					width: 70px;
+					height: 250px;
+
+					background: url('/assets/fishing/line.png') no-repeat center center;
+					background-size: 100% 100%;
+
+					&.altLine {
+						
+						height: 175px;
+					}
+
+					&.flip {
+						transform: scaleX(-1);
+						left: auto;
+						right: 5px;
+					}
+
+					
+				}
+
 			}// .image
+			
 			
 			// the name of the cast
 			.name {
@@ -246,6 +312,13 @@ watch(gameState, (newVal) => {
 				white-space: nowrap;
 
 			}// .name
+			
+			// nibble animation
+			&.nibble { 
+				.image {
+					animation: bobbleFloatNibble 2s infinite ease-in-out;
+				}
+			}
 
 		}//. bobble
 
@@ -260,6 +333,17 @@ watch(gameState, (newVal) => {
 		75%  { transform: translate(-50%, -5px); }
 		90%  { transform: translate(-50%, -1px); }
 		100% { transform: translate(-50%, 0); }
+    }
+
+	@keyframes bobbleFloatNibble {
+		0%   { transform: translate(-50%, 0px); }
+		15%  { transform: translate(-52%, -2px); }
+		30%  { transform: translate(-50%, -1px); }
+		45%  { transform: translate(-47%, -3px); }
+		60%  { transform: translate(-50%, -0px); }
+		75%  { transform: translate(-53%, -2px); }
+		90%  { transform: translate(-49%, -3px); }
+		100% { transform: translate(-51%, -1px); }
     }
 
 </style>

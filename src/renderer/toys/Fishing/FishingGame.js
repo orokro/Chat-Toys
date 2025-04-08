@@ -9,6 +9,9 @@
 // main class!
 export class FishingGame {
 
+	// for numbering casts
+	static castCounter = 0;
+
 	/**
 	 * Constructs the FishingGame object
 	 * 
@@ -132,7 +135,7 @@ export class FishingGame {
 		const tempX = gameX / 4;
 		const tempY = gameY / 4;
 		const localWidth = topEdgeWidth + widthDelta * tempY;
-		const screenX = BL.x + (widthDelta / 2) * tempY + localWidth * tempX;
+		const screenX = BL.x + (widthDelta / 2) * (1-tempY) + localWidth * tempX;
 		const screenY = TL.y + tempY * gridHeight;
 
 		// return the screen coordinates
@@ -180,6 +183,7 @@ export class FishingGame {
 
 		// add to our list of casts
 		this.casts.push({
+			number: FishingGame.castCounter++,
 			userID,
 			username,
 			castX: x,
@@ -188,6 +192,7 @@ export class FishingGame {
 			screenY,
 			timer: this.castTimeout.value,
 			nibbling: false,
+			dir: 0,
 		});
 
 		// this will move nearby fish away
@@ -315,11 +320,15 @@ export class FishingGame {
 				const newFish = this.getRandomFish();
 				newFish.posX = Math.random() * 4;
 				newFish.posY = Math.random() * 4;
+				newFish.screenPosX = this.toScreenCoords(newFish.posX, newFish.posY).screenX;
+				newFish.screenPosY = this.toScreenCoords(newFish.posX, newFish.posY).screenY;
 				newFish.targetPosX = Math.random() * 4;
 				newFish.targetPosY = Math.random() * 4;
 				newFish.mode = 'wander';
 				newFish.waitTimer = 0;
 				newFish.nibbling = false;
+				newFish.targetCast = null;
+				newFish.oldPositions = [[newFish.screenPosX, newFish.screenPosY]];
 				this.fish.push(newFish);
 			}
 		}
@@ -333,6 +342,23 @@ export class FishingGame {
 				this.log(`${cast.username}'s line reeled in automatically.`);
 				this.casts = this.casts.filter(c => c !== cast);
 			}
+
+			// debug logic to move thing back and fourth to test coordinates
+			// if(cast.dir==0){
+			// 	cast.castX-=0.05;
+			// 	if(cast.castX <= 0){
+			// 		cast.castX = 0;
+			// 		cast.dir = 1;
+			// 	}
+			// }else{
+			// 	cast.castX+=0.05;
+			// 	if(cast.castX >= 4){
+			// 		cast.castX = 4;
+			// 		cast.dir = 0;
+			// 	}
+			// }
+			// const { screenX, screenY } = this.toScreenCoords(cast.castX, cast.castY);
+			// cast.screenX = screenX;
 
 		}// next cast
 
@@ -419,8 +445,12 @@ export class FishingGame {
 
 			// update our screen coords
 			const { screenX, screenY } = this.toScreenCoords(f.posX, f.posY);
+			f.oldPositions.push([f.screenPosX, f.screenPosY]);
 			f.screenPosX = screenX;
 			f.screenPosY = screenY;
+
+			if(f.oldPositions.length > 10)
+				f.oldPositions.shift();
 
 		}// next f
 

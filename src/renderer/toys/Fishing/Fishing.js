@@ -192,6 +192,11 @@ export default class Fishing extends Toy {
 			return;
 		}
 
+		if(params.x===undefined || isNaN(params.x))
+			delete params.x;
+		if(params.y===undefined || isNaN(params.y))
+			delete params.y;
+		
 		// pack command into object for fishing game
 		const fishingCommand = {
 			userID: msg.authorUniqueID,

@@ -335,7 +335,7 @@ export class CommandProcessor {
 				return false;
 			}
 			
-			if(val!==undefined){
+			if(val!==undefined && !def.optional){
 
 				if (!val && def.type === 'number' && isNaN(parseFloat(val, 10))) {
 					console.log(val, parseInt(val, 10), isNaN(parseInt(val, 10)));
