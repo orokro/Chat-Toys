@@ -181,6 +181,12 @@ class BuddySystem {
 		return state;
 	}
 
+	/**
+	 * Clean up the buddy system
+	 */
+	end(){
+		// optional clean up
+	}
 }
 
 
@@ -421,7 +427,7 @@ class Buddy {
 					this.gotoState('idle');
 					this.targetUserID = null;
 				}
-				
+
 			}else {
 
 				// get the target buddy

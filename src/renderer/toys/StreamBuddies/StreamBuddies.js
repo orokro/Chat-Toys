@@ -13,6 +13,7 @@ import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'soc
 
 // our app
 import Toy from "../Toy";
+import { BuddySystem } from './BuddySystem';
 
 // components
 import StreamBuddiesPage from './StreamBuddiesPage.vue';
@@ -48,9 +49,30 @@ export default class StreamBuddies extends Toy {
 		super(toyManager);
 
 		// list of commands to perform on the renderer
+		this.buddiesState = socketShallowRef(this.static.slugify('buddiesState'), []);
 		this.commandQueue = socketShallowRef(this.static.slugify('commandQueue'), []);
+		this.activeBuddies = shallowRef([]);
+		
+		// build new buddy system
+		this.buddySystem = new BuddySystem(
+			this,
+			this.activeBuddies,
+			this.settings.widgetBox,
+		); 
 
-		// 
+		// set up repeating interval to call the buddy system game tick function
+		this.buddyInterval = window.setElectronInterval(()=>{
+			this.buddiesState.value = {...this.buddySystem.tick()};
+		}, 100);
+	}
+	
+
+	/**
+	 * Clean up
+	 */
+	end(){
+		window.clearElectronInterval(this.buddyInterval);
+		this.buddySystem.end();
 	}
 	
 
@@ -105,7 +127,7 @@ export default class StreamBuddies extends Toy {
 			{
 				command: 'jump',
 				params: [
-					{ name: 'amount', type: 'string', optional: true, desc: 'Either "left" or "right"' },
+					{ name: 'direction', type: 'string', optional: true, desc: 'Either "left" or "right"' },
 				],
 				description: 'Make their character jump up, or optionally, a direction.',
 			},
@@ -147,10 +169,61 @@ export default class StreamBuddies extends Toy {
 	onCommand(commandSlug, msg, user, params, handshake) {
 
 		// log it:
-		console.log('StreamBuddies found', commandSlug, 'from', msg.author, 'with params', params);
+		// console.log('StreamBuddies found', commandSlug, 'from', msg.author, 'with params', params);
+
+		// save these
+		const userID = msg.authorUniqueID;
+		const username = msg.author;
+
+		// handle commands based on which params they require
+		switch(commandSlug){
+
+			// no params
+			case 'join':
+			case 'leave':
+			case 'sit':
+			case 'fart':
+				this.buddySystem.doCommand(userID, username, commandSlug );
+				handshake.accept();
+				return;
+
+			// optional amount:
+			case 'left':
+			case 'right':
+				const amtIsUndefined = params.amount === undefined || isNaN(params.amount);
+				const amt = amtIsUndefined ? null : parseInt(params.amount, 10);
+				this.buddySystem.doCommand(userID, username, commandSlug, amt);
+				handshake.accept();
+				return;
+
+			// optional direction
+			case 'jump':
+				const dir = params.direction === undefined ? null : params.direction.toLowerCase();
+				if(dir !== null && dir !== 'left' && dir !== 'right'){
+					this.chatToysApp.log.error(`${username}: Invalid direction for jump command`);
+					handshake.reject();
+					return;
+				}
+				this.buddySystem.doCommand(userID, username, commandSlug, dir);
+				handshake.accept();
+				return;
+
+			// required user
+			case 'hug':
+			case 'attack':
+				if(params.user === undefined || params.user === null){
+					this.chatToysApp.log.error(`${username}: Missing user parameter for hug/attack command`);
+					handshake.reject();
+					return;
+				}
+				this.buddySystem.doCommand(userID, username, commandSlug, params.user);
+				handshake.accept();
+				return;
+			
+		}// switch
 
 		// accept the command which updates the database
-		handshake.accept();
+		handshake.reject(`${username}: Invalid buddy command`);
 	}
 	
 }
