@@ -62,8 +62,10 @@ const tabs = [
 	{ title: 'Help', icon: 'help', slug: 'help' },
 	{ title: 'General Settings', icon: 'settings', slug: 'settings' },
 	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
-	{ title: 'layout', icon: 'monitor', slug: 'layout' },
-	{ title: 'Showtime Buttons Board', icon: 'dialpad', slug: 'buttons' },
+	{ title: 'Layout', icon: 'monitor', slug: 'layout' },
+
+	// deprecated page
+	// { title: 'Showtime Buttons Board', icon: 'dialpad', slug: 'buttons' },
 ];
 
 // the index of the active tab
