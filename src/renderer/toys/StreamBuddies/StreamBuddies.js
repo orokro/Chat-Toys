@@ -9,13 +9,14 @@
 
 // vue
 import { ref, shallowRef } from 'vue';
+import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
 import Toy from "../Toy";
 
 // components
 import StreamBuddiesPage from './StreamBuddiesPage.vue';
-import DummyWidget from '../DummyWidget.vue';
+import StreamBuddiesWidget from './StreamBuddiesWidget.vue';
 
 // main export
 export default class StreamBuddies extends Toy {
@@ -26,7 +27,14 @@ export default class StreamBuddies extends Toy {
 	static desc = 'Let viewers spawn buddies on your stream.';
 	static optionsPageComponent = StreamBuddiesPage;
 	static themeColor = '#B59EDE';
-	static widgetComponents = [];
+	static widgetComponents = [
+		{
+			component: StreamBuddiesWidget,
+			key: 'widgetBox',
+			allowResize: true,
+			lockAspectRatio: false,
+		}
+	];
 
 
 	/**
@@ -38,6 +46,11 @@ export default class StreamBuddies extends Toy {
 
 		// call the parent constructor
 		super(toyManager);
+
+		// list of commands to perform on the renderer
+		this.commandQueue = socketShallowRef(this.static.slugify('commandQueue'), []);
+
+		// 
 	}
 	
 
@@ -51,6 +64,12 @@ export default class StreamBuddies extends Toy {
 
 			maxBuddyCount: ref(5),
 			buddySize: ref(1.0),
+			widgetBox: shallowRef({
+				x: 20,
+				y: 20,
+				width: 1880,
+				height: 1040
+			}),
 		});
 	}
 
@@ -122,7 +141,7 @@ export default class StreamBuddies extends Toy {
 	 * @param {String} commandSlug - the slug of the command
 	 * @param {Object} msg - details about the chat message that invoked the command
 	 * @param {Object} user - details about the user that invoked the command (could be dummy if not in database yet)
-	 * @param {Array<String>} params - the parameters passed to the command
+	 * @param {Object} params - the parameters passed to the command
 	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
