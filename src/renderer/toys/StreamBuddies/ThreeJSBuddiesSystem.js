@@ -45,14 +45,16 @@ export class ThreeJSBuddiesSystem {
 	 * @param {Ref} canvasContainerRef - the canvas container reference
 	 * @param {ShallowRef} state - the vue3 shallow ref to the state
 	 * @param {Number} buddySize - the size of the buddies
+	 * @param {Ref} modelPath - ref to the path to the model for avatars
 	 */
-	constructor(canvasContainerRef, state, buddySize) {
+	constructor(canvasContainerRef, state, buddySize, modelPath) {
 
 		// save our refs
 		this.containerRef = canvasContainerRef;
 		this.state = state;
 		this.buddySize = buddySize;
-
+		this.modelPath = modelPath;
+		
 		// our instantiated buddies
 		this.buddiesMap = new Map();
 
@@ -135,7 +137,8 @@ export class ThreeJSBuddiesSystem {
 			if (!this.buddiesMap.has(buddyInfo.userID)){
 			
 				// make a new buddy
-				const avatarPath = 'assets/buddies/avatar.fbx';
+				// const avatarPath = 'assets/buddies/avatar.fbx';
+				const avatarPath = unref(this.modelPath);
 				const buddy = new ThreeBuddy(this, avatarPath, this.aniLibrary);
 				
 				// add to our map & to the scene

@@ -8,7 +8,7 @@
 */
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
 import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
@@ -64,6 +64,14 @@ export default class StreamBuddies extends Toy {
 		this.buddyInterval = window.setElectronInterval(()=>{
 			this.buddiesState.value = {...this.buddySystem.tick()};
 		}, 10);
+
+		this.avatarPath = socketShallowRef(this.static.slugify('avatarPath'), '');
+		watch(this.settings.modelId, (newVal) => {
+			setTimeout(()=>{
+				this.avatarPath.value = this.getAssetPath(newVal);
+				this.settings.modelPath.value = this.getAssetPath(newVal);
+			}, 1000);
+		});
 	}
 	
 
@@ -86,6 +94,8 @@ export default class StreamBuddies extends Toy {
 
 			maxBuddyCount: ref(5),
 			buddySize: ref(1.0),
+			modelId: ref('23'),
+			modelPath: ref(''),
 			widgetBox: shallowRef({
 				x: 20,
 				y: 20,

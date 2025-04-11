@@ -12,11 +12,12 @@
 	>
 		<p>
 			The Stream Buddies system lets chatters appear on screen as a character.
-			<br>
+		</p>
+		<InfoBox icon="warning">
 			This is the most advanced system, and has the most settings to configure.
 			However, at the time of writing, this system is considered "experimental" and may have bugs.
-		</p>
-		
+		</InfoBox>
+
 		<SectionHeader title="Command Triggers"/>
 		<p>
 			Below you can customize the commands that users can type to interact with the Stream Buddies system.
@@ -43,6 +44,13 @@
 			<h3>Buddy Scale</h3>
 			<p>Just this to adjust the size of the characters on screen. Default is 1.</p>
 		</SettingsInputRow>
+		<SettingsAssetRow
+			v-model="modelId"
+			:kind-filter="'3d'"
+		>
+			<h3>Avatar For Characters</h3>
+			<p>Must be an FBX with a Mixamo skeleton.</p>
+		</SettingsAssetRow>
 
 		<CatsumIpsum :paragraphs="1" :sentences="5" :brOnly="true"/>
 	</PageBox>
@@ -59,6 +67,7 @@ import SectionHeader from '@components/options/SectionHeader.vue';
 import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import SettingsAssetRow from '../../components/options/SettingsAssetRow.vue';
 import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 
 // our app
@@ -68,11 +77,11 @@ import StreamBuddies from './StreamBuddies';
 const ctApp = inject('ctApp');
 const toy = ctApp.toyManager.toys[StreamBuddies.slug];
 
-
 // our local ref settings for this system
 const { 
 	maxBuddyCount,
 	buddySize,
+	modelId,
 } = toy.settings;
 
 </script>

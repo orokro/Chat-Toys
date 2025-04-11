@@ -99,7 +99,6 @@ const generatePreview = async () => {
 	// gets a JavaScript File object representing the file
 	const file = await props.assetManager.getFile(props.fileId);	
 	if (!file) return;
-
 	
 	// get the file type & generate a preview
 	const fileType = file.type;

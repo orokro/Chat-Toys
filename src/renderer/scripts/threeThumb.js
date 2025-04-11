@@ -51,7 +51,7 @@ export async function getThumb(file, width = 300, height = 200) {
 	// async wrapper cuz we loading stuffs
 	return new Promise((resolve, reject) => {
 
-		// set up a basic threeJS scene with camera, remderer, and lights
+		// set up a basic threeJS scene with camera, renderer, and lights
 		const scene = new THREE.Scene();
 		const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
 		const renderer = new THREE.WebGLRenderer({ alpha: true });

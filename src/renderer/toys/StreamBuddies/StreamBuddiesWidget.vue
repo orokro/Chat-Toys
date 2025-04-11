@@ -106,19 +106,19 @@ const slugify = (text) => {
 // ref to the canvas container
 const canvasContainerRef = ref(null);
 
-// make new instance of the drag helper
-const dragHelper = new DragHelper();
-
 const emit = defineEmits([
 	'boxChange'
 ]);
 
+const modelPath = chromeRef('model-path', '');
 
 // define some props
 const props = defineProps({
 
 });
 
+// path to 3d model for avatar
+// const avatarPath = socketShallowRefReadOnly(slugify('avatarPath'), {});
 
 // gets our settings
 const ready = ref(false);
@@ -130,11 +130,18 @@ const socketSettingsRef = useToySettings('stream-buddies', 'widgetBox', emit, ()
 });
 
 // copy to local refs for legibility
-
 watch(socketSettingsRef, (newVal) => {
 	if(newVal == null)
 		return;
 	buddySize.value = socketSettingsRef.value.buddySize;
+
+	if(modelPath.value != socketSettingsRef.value.modelPath){
+		modelPath.value = socketSettingsRef.value.modelPath;
+		console.log('model path changed', modelPath.value);
+
+		// refresh the current page
+		window.location.reload();
+	}
 });
 
 
@@ -142,7 +149,6 @@ watch(socketSettingsRef, (newVal) => {
 watch(socketSettingsRef, (newVal) => {
 	// modelsAvailable.value = socketSettingsRef.value.tosserAssets;
 });
-
 
 // watch when new items are scheduled to be tossed
 let lastCommandTimeStamp = 0;
@@ -165,6 +171,7 @@ watch(canvasContainerRef, (newVal)=>{
 			canvasContainerRef,
 			buddiesState,
 			buddySize,
+			modelPath,
 		);
 
 		// expose on window for debug
@@ -284,7 +291,6 @@ onBeforeUnmount(() => {
 						transform: scaleX(-1);
 					}
 				}
-
 
 				// debug text
 				.debugStuff {

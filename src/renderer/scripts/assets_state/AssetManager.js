@@ -196,7 +196,7 @@ export class AssetManager {
 			const response = await fetch(filePath);
 			if (response.ok) {
 				const blob = await response.blob();
-				return new File([blob], assetData.name, { type: this.getMimeType(assetData.kind) });
+				return new File([blob], assetData.name, { type: this.getMimeType(assetData) });
 			}
 		}
 
@@ -211,7 +211,11 @@ export class AssetManager {
 	 * @param {string} kind - The asset kind
 	 * @returns {string} - Corresponding MIME type
 	 */
-	getMimeType(kind) {
+	getMimeType(assetData) {
+		
+		// if it's .fbx, return that
+		if (assetData.name.endsWith('.fbx'))
+			return 'model/fbx';
 
 		const mimeTypes = {
 			'image': 'image/png',
@@ -220,7 +224,7 @@ export class AssetManager {
 			'any': '*/*'
 		};
 
-		return mimeTypes[kind] || '*/*';
+		return mimeTypes[assetData.kind] || '*/*';
 	}
 
 
@@ -382,5 +386,11 @@ const builtInAssets = [
 		name: 'generic_chat.png',
 		kind: 'image',
 		tags: ['chat'],
+	},
+	{
+		id: 23,
+		name: 'avatar.fbx',
+		kind: '3d',
+		tags: ['avatar'],
 	}
 ];

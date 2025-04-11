@@ -28,7 +28,7 @@ function setupAssetImportHandler(win) {
 
 		// show the file picker dialog with the supported file types
 		const { canceled, filePaths } = await dialog.showOpenDialog(win, {
-			filters: [{ name: 'Supported Files', extensions: ['png', 'gif', 'mp3', 'wav', 'glb'] }],
+			filters: [{ name: 'Supported Files', extensions: ['png', 'gif', 'mp3', 'wav', 'glb', 'fbx'] }],
 			properties: ['openFile']
 		});
 

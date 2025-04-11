@@ -557,6 +557,7 @@ class Buddy {
 								if(targetBuddy.attacking)
 									targetBuddy.attacking = false;
 								targetBuddy.gotoState('knockback');
+
 							}, 530);
 						}
 					}
@@ -577,7 +578,6 @@ class Buddy {
 				this.gotoState('moving');
 			}
 		}
-
 	};
 
 
