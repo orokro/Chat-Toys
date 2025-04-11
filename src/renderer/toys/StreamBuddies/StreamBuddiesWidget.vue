@@ -120,6 +120,15 @@ watch(socketSettingsRef, (newVal) => {
 });
 
 
+// watch when new items are scheduled to be tossed
+let lastCommandTimeStamp = 0;
+const buddiesState = socketShallowRefReadOnly(slugify('buddiesState'), {});
+watch(buddiesState, (newVal) => {
+
+	// console.log(newVal);
+});
+
+
 // wait for our ref to exist & then make the tosser system
 let buddiesSystem = null;
 watch(canvasContainerRef, (newVal)=>{
@@ -130,6 +139,7 @@ watch(canvasContainerRef, (newVal)=>{
 		// make new tosser system
 		buddiesSystem = new ThreeJSBuddiesSystem(
 			canvasContainerRef,
+			buddiesState
 		);
 
 		// expose on window for debug
@@ -138,13 +148,6 @@ watch(canvasContainerRef, (newVal)=>{
 });
 
 
-// watch when new items are scheduled to be tossed
-let lastCommandTimeStamp = 0;
-const buddiesState = socketShallowRefReadOnly(slugify('buddiesState'), []);
-watch(buddiesState, (newVal) => {
-
-	// console.log(newVal);
-});
 
 
 // when this component is unmounted, destroy the tosser system

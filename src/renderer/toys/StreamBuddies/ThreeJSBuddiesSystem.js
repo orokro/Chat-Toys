@@ -30,6 +30,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { int } from 'three/src/nodes/TSL.js';
 import { watch, unref } from 'vue';
 
+// our app
+import { AnimationLibrary, ThreeBuddy } from './ThreeBuddy';
+
 
 /**
  * Main class to manager the tosser system state for the Tosser toy.
@@ -40,15 +43,20 @@ export class ThreeJSBuddiesSystem {
 	 * Constructor for the ThreeJSTosserSystem class.
 	 * 
 	 * @param {Ref} canvasContainerRef - the canvas container reference
+	 * @param {ShallowRef} state - the vue3 shallow ref to the state
 	 */
-	constructor(canvasContainerRef) {
+	constructor(canvasContainerRef, state) {
 
 		// save our refs
 		this.containerRef = canvasContainerRef;
+		this.state = state;
+
+		// our instantiated buddies
+		this.buddiesMap = new Map();
 
 		// useful for timekeeping
 		this.clock = new Clock();
-		
+
 		// build our ThreeJS scene (lights, camera, etc)
 		this.buildScene();
 
@@ -56,8 +64,15 @@ export class ThreeJSBuddiesSystem {
 		// (ie. container resize, list of models, etc)
 		this.subscribeWatches();
 
+		// true when animations are ready
+		this.aniLibrary = null;
+		this.animationsReady = false;
+
 		// load our models initially once on start
 		this.loadModels();
+
+		// set up buddies at least once on start up
+		this.updateBuddies(this.state.value);
 
 		// kick off the recursive (on animation frame) render loop
 		this.renderLoop();
@@ -67,27 +82,88 @@ export class ThreeJSBuddiesSystem {
 	/**
 	 * Sets up all the watchers we need to monitor
 	 */
-	subscribeWatches(){
+	subscribeWatches() {
 
 		// set up a resize observer for the container element
 		// so we can update the canvas size when it changes
 		this.resizeObserver = new ResizeObserver(() => this.onResize());
 		this.resizeObserver.observe(this.containerRef.value);
 		this.onResize();
+
+		// watch state & update the model list
+		watch(this.state, (newVal) => {
+			this.updateBuddies(newVal);
+		}, { deep: true });
+	}
+
+
+	/**
+	 * Synchronizes our instantiated ThreeBuddy objects with the state
+	 * 
+	 * @param {Object} newVal - from our state variable
+	 */
+	updateBuddies(newVal) {
+
+		// if our animations aren't ready yet, gtfo
+		if (this.animationsReady === null)
+			return;
+
+		// get the data
+		if (newVal.buddies === undefined)
+			return;
+		const buddies = newVal.buddies;
+
+		// get the current list of ID's we have instantiated
+		const currentIDs = new Set(buddies.map(b => b.userID));
+
+		// Remove old buddies
+		for (const [id, buddy] of this.buddiesMap.entries())
+			if (!currentIDs.has(id)){
+
+				// get the buddy from our map
+				const buddy = this.buddiesMap.get(id);
+
+				// remove from the scene & then delete the buddy
+				this.scene.remove(buddy);
+				this.buddiesMap.delete(id);
+			}
+
+		// Add new buddies
+		for (const buddyInfo of buddies)
+			if (!this.buddiesMap.has(buddyInfo.userID)){
+			
+				// make a new buddy
+				const avatarPath = 'assets/buddies/avatar.fbx';
+				const buddy = new ThreeBuddy(this, avatarPath, this.aniLibrary);
+				
+				// add to our map & to the scene
+				this.buddiesMap.set(buddyInfo.userID, buddy);
+				this.scene.add(buddy);
+			}
+
+		// loop over the buddies and update their state
+		for (const buddyInfo of buddies) {
+
+			// get the buddy from our map
+			const buddy = this.buddiesMap.get(buddyInfo.userID);
+
+			// update the buddy's state
+			buddy.updateState(buddyInfo);
+		}
 	}
 
 
 	/**
 	 * Sets up all the ThreeJS scene stuff (e.g. camera, lights, renderer, etc.)
 	 */
-	buildScene(){
+	buildScene() {
 
 		// make our loaders
 		this.loader = new GLTFLoader();
 
 		// build the scene
 		this.scene = new Scene();
-		
+
 		// set up camera & audio listener
 		this.listener = new AudioListener();
 		this.camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
@@ -119,8 +195,10 @@ export class ThreeJSBuddiesSystem {
 		// for debug, show the collider
 		this.debugCollider = null;
 		// this.setupDebug();
+
+		this.onResize();
 	}
-	
+
 
 	/**
 	 * Add a wireframe box to the scene to show the collider area
@@ -155,14 +233,33 @@ export class ThreeJSBuddiesSystem {
 	}
 
 
-
 	/**
 	 * Load models we need
 	 */
-	loadModels() {
+	async loadModels() {
 
+		this.aniLibrary = new AnimationLibrary(
+			'assets/buddies/ani/',
+			[
+				'attack_fist',
+				'attack_kick',
+				'dance_hiphop',
+				'dance_spin',
+				'dance_swing',
+				'dance_twerk',
+				'fireball',
+				'idle_dwarf',
+				'idle_generic',
+				'idle_happy',
+				'jumping',
+				'knockback',
+				'sitting',
+				'walking'
+			]);
+
+		await this.aniLibrary.ready;
+		this.animationsReady = true;
 	}
-
 
 
 	/**
@@ -189,6 +286,6 @@ export class ThreeJSBuddiesSystem {
 		this.scene.clear();
 		this.resizeObserver.disconnect();
 	}
-	
+
 }
 

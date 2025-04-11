@@ -1,0 +1,202 @@
+/*
+	ThreeBuddy.js
+	-------------
+
+	This class handles the Three.js buddy system for the StreamBuddies toy.
+*/
+
+// three imports
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
+import { AnimationMixer, Object3D, LoopRepeat, LoopOnce } from 'three';
+import { ThreeJSBuddiesSystem } from './ThreeJSBuddiesSystem';
+
+/**
+ * Helper class to load and manage animations.
+ */
+export class AnimationLibrary {
+
+	/**
+	 * Constructs the animation library
+	 * 
+	 * @param {String} basePath - base path to load the animations from
+	 * @param {Array<String>} animationFBXPaths - list of file names (without the .fbx) to load
+	 */
+	constructor(basePath, animationFBXPaths) {
+
+		// save our base path
+		this.basePath = basePath;
+
+		// make a new threeJS FBX loader
+		this.loader = new FBXLoader();
+
+		// we'll store our loaded ani models here, with their name as the key
+		this.animations = new Map();
+
+		// load the animations
+		this.ready = this.loadAnimations(animationFBXPaths);
+	}
+
+
+	/**
+	 * Loads the animation
+	 * 
+	 * @param {Array<String>} paths - list of file names (without the .fbx) to load
+	 * @returns {Promise} - a promise that resolves when all animations are loaded
+	 */
+	async loadAnimations(paths) {
+
+		// load the animations
+		const promises = paths.map(async (name) => {
+
+			// load the file with the animation in it
+			const path = `${this.basePath}${name}.fbx`;
+			const anim = await this.loader.loadAsync(path);
+
+			// get the first animation clip and add it to our map
+			const clip = anim.animations[0];
+
+			// save it to our map
+			this.animations.set(name, clip);
+		});
+		await Promise.all(promises);
+	}
+
+
+	/**
+	 * get the animation by name
+	 * 
+	 * @param {String} name - name of the animation to get
+	 * @returns {AnimationClip} - the animation clip
+	 */
+	get(name) {
+		return this.animations.get(name);
+	}
+}
+
+
+/**
+ * Class to represent one of the buddy characters on screen
+ */
+export class ThreeBuddy extends Object3D {
+
+	/**
+	 * Constructs a buddy on screen
+	 * 
+	 * @param {ThreeJSBuddiesSystem} threeBuddySystem - the buddy system to use
+	 * @param {String} modelPath - path to the avatar model to use
+	 * @param {AnimationLibrary} animationLibrary - the animation library to use
+	 */
+	constructor(threeBuddySystem, modelPath, animationLibrary) {
+
+		// call the parent constructor
+		super();
+
+		// members
+		this.system = threeBuddySystem;
+		this.loader = new FBXLoader();
+		this.model = null;
+		this.mixer = null;
+		this.currentAction = null;
+		this.lastState = null;
+		this.animationLibrary = animationLibrary;
+
+		// 
+		this.animationMap = {
+			idle: ['idle_generic', 'idle_happy', 'idle_dwarf'],
+			moving: 'walking',
+			jumping: 'jumping',
+			knockback: 'knockback',
+			sitting: 'sitting',
+			hugging: 'fireball',
+			attacking: ['attack_fist', 'attack_kick'],
+		};
+
+		this.danceAnimations = ['dance_hiphop', 'dance_spin', 'dance_swing', 'dance_twerk'];
+
+		this.loader.load(modelPath, (fbx) => {
+			this.model = fbx;
+			this.model.scale.set(0.25, 0.25, 0.25);
+			this.mixer = new AnimationMixer(fbx);
+			this.add(fbx);
+		});
+	}
+
+
+	/**
+	 * Sets up and plays one of our animations
+	 * 
+	 * @param {String} name - key/name of the animation to pull from our loaded animations in the library
+	 * @param {Boolean} loop - whether to loop the animation or not
+	 * @returns 
+	 */
+	playAnimation(name, loop = true) {
+		const clip = this.animationLibrary.get(name);
+		if (!clip || !this.mixer) return;
+
+		const action = this.mixer.clipAction(clip);
+		action.reset();
+		action.setLoop(loop ? LoopRepeat : LoopOnce, Infinity);
+		action.clampWhenFinished = !loop;
+		action.play();
+
+		if (this.currentAction && this.currentAction !== action) {
+			this.currentAction.stop();
+		}
+		this.currentAction = action;
+	}
+
+
+	/**
+	 * Updates the animation and facing direction of the character based on the state	
+	 * 
+	 * @param {Object} newState - object with state of the buddy based on the state
+	 */
+	updateState(newState) {
+		if (!this.model || !this.mixer) return;
+
+		// console.log('poop', newState);
+
+		const changed = !this.lastState || JSON.stringify(this.lastState) !== JSON.stringify(newState);
+		this.lastState = { ...newState };
+		if (!changed) return;
+
+		const xPos = (newState.x - this.system.canvasWidth/2);
+		const yPos = -(this.system.canvasHeight/2) + (newState.y - this.system.canvasHeight);
+		this.position.set(xPos, yPos, 0);
+
+		let rotY = 0;
+		if (["moving", "jumping", "hugging", "attacking", "knockback"].includes(newState.stateMode)) {
+			rotY = newState.dir === 'right' ? Math.PI / 2 : -Math.PI / 2;
+		}
+		this.rotation.y = rotY;
+
+		let ani = '';
+		let loop = true;
+
+		if (newState.stateMode === 'idle') {
+			ani = this.animationMap.idle[Math.floor(Math.random() * 3)];
+		} else if (newState.stateMode === 'dancing') {
+			ani = `dance_${newState.dance}`;
+		} else if (['hugging', 'attacking'].includes(newState.stateMode) && newState[newState.stateMode]) {
+			ani = newState.stateMode === 'hugging'
+				? this.animationMap.hugging
+				: this.animationMap.attacking[Math.floor(Math.random() * 2)];
+			loop = false;
+		} else {
+			ani = this.animationMap[newState.stateMode];
+			loop = !['jumping', 'knockback'].includes(newState.stateMode);
+		}
+
+		if (ani) this.playAnimation(ani, loop);
+	}
+
+	/**
+	 * Updates the animation mixer
+	 * 
+	 * @param {Number} delta - delta time
+	 */
+	tick(delta) {
+		if (this.mixer)
+			this.mixer.update(delta);
+	}
+}
