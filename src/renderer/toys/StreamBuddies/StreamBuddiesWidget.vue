@@ -16,57 +16,56 @@
 				ref="canvasContainerRef"	
 				class="canvasContainer"
 		></div>
+		
+		<pre>
+			{{ buddiesState }}
+		</pre>
+		
+		<!-- loop to draw buddy boxxies (i.e. their name and optional chat messages)-->
+		<div
+			v-for="(buddy, index) in buddiesState.buddies"
+			:key="index"
+			class="buddyBox"
+			:style="{
+				left: buddy.x + 'px',
+				top: buddy.y + 'px',
+			}"
+		>
+			<div class="buddy">
 
-			buddies yo1
-			<pre>
-				{{ buddiesState }}
-			</pre>
-			
-			<!-- loop to draw buddy boxxies (i.e. their name and optional chat messages)-->
-			<div
-				v-for="(buddy, index) in buddiesState.buddies"
-				:key="index"
-				class="buddyBox"
-				:style="{
-					left: buddy.x + 'px',
-					top: buddy.y + 'px',
-				}"
-			>
-				<div class="buddy">
+				<!-- the stylized name above the buddy -->
+				<div class="buddyName">{{ buddy.username }}</div>
 
-					<!-- the stylized name above the buddy -->
-					<div class="buddyName">{{ buddy.username }}</div>
-
-					<!-- chat bubble show message -->
-					<div class="chatBubble"
-						:class="{
-							active: buddy.chatMessageTime>0
-						}"
-					>
-						<div class="arrow arrowUnder"></div>
-						<div class="bubbleOuter">
-							<div class="bubbleInner">
-								{{ buddy.chatMessage }}
-							</div>
+				<!-- chat bubble show message -->
+				<div class="chatBubble"
+					:class="{
+						active: buddy.chatMessageTime>0
+					}"
+				>
+					<div class="arrow arrowUnder"></div>
+					<div class="bubbleOuter">
+						<div class="bubbleInner">
+							{{ buddy.chatMessage }}
 						</div>
-						<div class="arrow arrowOver"></div>
 					</div>
-
-					<!-- debug infos -->
-					<template v-if="true">
-						<div class="debugStuff">
-							<div>{{ buddy.stateMode }}</div>
-							<div>{{ buddy.dir }}</div>
-							<div v-if="buddy.hugging">hugging</div>
-							<div v-if="buddy.attacking">attacking</div>
-							<div v-if="buddy.farting">farting</div>
-							<div v-if="buddy.knockback">knockback</div>
-							<div v-if="buddy.dancing">dancing</div>
-							<div v-if="buddy.inAir">in air</div>
-						</div>
-					</template>
+					<div class="arrow arrowOver"></div>
 				</div>
+
+				<!-- debug infos -->
+				<template v-if="true">
+					<div class="debugStuff">
+						<div>{{ buddy.stateMode }}</div>
+						<div>{{ buddy.dir }}</div>
+						<div v-if="buddy.hugging">hugging</div>
+						<div v-if="buddy.attacking">attacking</div>
+						<div v-if="buddy.farting">farting</div>
+						<div v-if="buddy.knockback">knockback</div>
+						<div v-if="buddy.dancing">dancing</div>
+						<div v-if="buddy.inAir">in air</div>
+					</div>
+				</template>
 			</div>
+		</div>
 
 	</div>
 
