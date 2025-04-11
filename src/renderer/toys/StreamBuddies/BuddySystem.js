@@ -281,19 +281,39 @@ class Buddy {
 
 			case 'dance':
 				this.dancing = true;
-				this.dance = param || '';
+				this.dance = param || 'default';
 				this.stateTimer = 10;
 				this.gotoState('dancing');
 				break;
 
 			case 'hug':
-				this.gotoState('hugging', 5);
-				this.targetUserID = param;
+
+				// search for the target buddy by username
+				const hugBuddy = this.system.activeBuddies.value.find(b => b.name === param);
+				if (!hugBuddy) {
+					console.log(`Buddy ${param} not found for hug.`);
+					this.targetUserID = null;
+					return;
+				}
+
+				// if we found the buddy, set our target userID to the buddy's ID & begin hug process
+				this.targetUserID = hugBuddy.id;
+				this.gotoState('hugging', 5);			
 				break;
 
 			case 'attack':
+
+				// search for the target buddy by username
+				const targetBuddy = this.system.activeBuddies.value.find(b => b.name === param);
+				if (!targetBuddy) {
+					console.log(`Buddy ${param} not found for hug.`);
+					this.targetUserID = null;
+					return;
+				}
+
+				// if we found the buddy, set our target userID to the buddy's ID & begin attack process
+				this.targetUserID = targetBuddy.id;
 				this.gotoState('attacking', 5);
-				this.targetUserID = param;
 				break;
 
 			case 'chat':
