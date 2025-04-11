@@ -22,7 +22,7 @@
 				{{ buddiesState }}
 			</pre>
 			
-			<!-- loop to draw buddy boxies (i.e. their name and optional chat messages)-->
+			<!-- loop to draw buddy boxxies (i.e. their name and optional chat messages)-->
 			<div
 				v-for="(buddy, index) in buddiesState.buddies"
 				:key="index"
@@ -33,14 +33,36 @@
 				}"
 			>
 				<div class="buddy">
+
+					<!-- the stylized name above the buddy -->
 					<div class="buddyName">{{ buddy.username }}</div>
-					<div>{{ buddy.stateMode }}</div>
-					<div v-if="buddy.hugging">hugging</div>
-					<div v-if="buddy.attacking">attacking</div>
-					<div v-if="buddy.farting">farting</div>
-					<div v-if="buddy.knockback">knockback</div>
-					<div v-if="buddy.dancing">dancing</div>
-					<div v-if="buddy.inAir">in air</div>
+
+					<!-- chat bubble show message -->
+					<div class="chatBubble"
+						:class="{
+							active: buddy.chatMessageTime>0
+						}"
+					>
+						<div class="arrow arrowUnder"></div>
+						<div class="bubbleOuter">
+							<div class="bubbleInner">
+								{{ buddy.chatMessage }}
+							</div>
+						</div>
+						<div class="arrow arrowOver"></div>
+					</div>
+
+					<!-- debug infos -->
+					<template v-if="true">
+						<div>{{ buddy.stateMode }}</div>
+						<div>{{ buddy.dir }}</div>
+						<div v-if="buddy.hugging">hugging</div>
+						<div v-if="buddy.attacking">attacking</div>
+						<div v-if="buddy.farting">farting</div>
+						<div v-if="buddy.knockback">knockback</div>
+						<div v-if="buddy.dancing">dancing</div>
+						<div v-if="buddy.inAir">in air</div>
+					</template>
 				</div>
 			</div>
 
@@ -156,7 +178,7 @@ onBeforeUnmount(() => {
 			inset: 0px;
 		}
 
-		// CSS box for the buddy (non TrheeJS part)
+		// CSS box for the buddy (non ThreeJS part)
 		.buddyBox {
 
 			// fixed positioning
@@ -200,6 +222,97 @@ onBeforeUnmount(() => {
 					white-space: nowrap;
 
 				}// .buddyName
+
+				// the chat bubble above the user when they're chatting
+				.chatBubble {
+
+					// fixed above center
+					position: absolute;
+					top: -40px;
+					left: 50%;
+					width: 200px;
+					height: 1px;
+					transform: translateX(-50%);
+
+					// the bottom center for scaling
+					transform-origin: bottom left;
+
+					// for animating in-and-out
+					scale: 0;
+					transition: scale 0.25s ease-in-out;
+					&.active {
+						scale: 1;
+					}
+
+					// wrapper to move the bubble up
+					.bubbleOuter {
+						
+						// position on bottom so text pushes up
+						position: absolute;
+						bottom: 0px;						
+						width: 100%;
+						text-align: center;
+
+						// the actual text will be centered in this div, which will
+						// max its width at he the size 2 levels up (.chatBubble)
+						.bubbleInner {
+
+							// so we center
+							display: inline-block;
+
+							// white bubble settings
+							background: white;
+							border-radius: 5px;
+							border: 2px solid black;
+							padding: 1px 5px;
+							
+							// text setting
+							font-size: 12px;
+							line-height: 12px;
+							font-family: monospace;
+							color: black;
+
+						}// .bubbleInner
+						
+					}// .bubbleOuter
+
+					// the arrow layers
+					.arrow {
+						position: absolute;
+						left: 50%;
+						bottom: -4px;
+
+						width: 12px;
+						height: 12px;
+						box-sizing: content-box;
+
+						// rotate the box pointing down
+						transform: translateX(-50%) rotate(45deg);
+
+						// the top arrow is white with no border
+						&.arrowOver {
+							
+							background: white;
+							mask-image:
+								linear-gradient(
+									135deg,
+									rgb(0, 0, 0, 0) 50%,
+									rgba(0, 0, 0, 1) 51%,
+									rgba(0, 0, 0, 1) 100%);
+
+						}// &.arrowOver
+
+						// the bottom arrow is black with a border
+						&.arrowUnder {
+							bottom: -6px;
+							background: black;
+							border: 2px solid black;
+
+						}// &.arrowUnder
+
+					}// &.arrow
+
+				} // chatBubble
 
 			}// .buddy
 

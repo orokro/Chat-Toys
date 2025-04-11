@@ -51,6 +51,35 @@ class BuddySystem {
 		// look at our initial list of active buddies & create them. Also manage the buddies if the list changes
 		this.syncBuddies();
 		watch(this.activeBuddies, () => this.syncBuddies());
+
+		// listen for new chat messages and if one is for one of our buddies, show their chat for some time
+		this.handleIncomingChats = this.handleIncomingChats.bind(this);
+		this.streamBuddies.chatToysApp.chatProcessor.onNewChats(this.handleIncomingChats);
+	}
+
+
+	/**
+	 * Handle when we get new chat messages
+	 * 
+	 * @param {Array<Object>} chats - list of new messages
+	 */
+	handleIncomingChats(chats) {
+
+		// loop over all the new messages
+		for (const chat of chats) {
+
+			// if the message is for one of our buddies, show their chat message for a few seconds
+			if (this.buddiesMap.has(chat.authorUniqueID)) {
+				const buddy = this.buddiesMap.get(chat.authorUniqueID);
+				buddy.showChatMessage(chat.messageText);
+			}
+
+		}// next chat
+
+		this.streamBuddies.buddiesState.value = this.tick();
+		this.streamBuddies.commandQueue.value = this.commandQueue.value;
+		this.commandQueue.value = [];
+
 	}
 
 
@@ -181,11 +210,17 @@ class BuddySystem {
 		return state;
 	}
 
+
 	/**
 	 * Clean up the buddy system
 	 */
 	end(){
-		// optional clean up
+		
+		// stop listening to the chat processor
+		this.streamBuddies.chatToysApp.chatProcessor.removeNewChatsListener(this.handleIncomingChats);
+
+		// clear the buddy map
+		this.buddiesMap.clear();
 	}
 }
 
@@ -526,6 +561,17 @@ class Buddy {
 
 
 	/**
+	 * Sets message text so our renderer can show it
+	 * 
+	 * @param {String} message - text to show in the chat bubble
+	 */
+	showChatMessage(message) {
+		this.chatMessage = message;
+		this.chatMessageTime = 5;
+	}
+
+
+	/**
 	 * Get the current state of this buddy
 	 * 
 	 * @return {Object} - the current state of this buddy
@@ -539,6 +585,7 @@ class Buddy {
 			inAir: this.inAir,
 			x: this.x,
 			y: this.y,
+			dir: (this.x < this.targetX) ? 'right' : 'left',
 			targetX: this.targetX,
 			targetY: this.targetY,
 			targetUserID: this.targetUserID,
