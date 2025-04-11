@@ -23,6 +23,28 @@
 		</p>
 		<CommandsConfigBox :toy="toy" />
 		
+		<SectionHeader title="Settings"/>
+		<SettingsInputRow
+			type="number"
+			:min="1"
+			v-model="maxBuddyCount"
+		>
+			<h3>Max Buddy Count</h3>
+			<p>The maximum number of buddies allowed on screen.</p>
+			<p>Adjust this based either on your performance needs, or clutter tolerance.</p>
+		</SettingsInputRow>
+		<SettingsInputRow
+			type="float"
+			:min="0.01"
+			:max="10"
+			:step="0.01"
+			v-model="buddySize"
+		>
+			<h3>Buddy Scale</h3>
+			<p>Just this to adjust the size of the characters on screen. Default is 1.</p>
+		</SettingsInputRow>
+
+		<CatsumIpsum :paragraphs="1" :sentences="5" :brOnly="true"/>
 	</PageBox>
 
 </template>
@@ -36,6 +58,8 @@ import PageBox from '@components/options/PageBox.vue';
 import SectionHeader from '@components/options/SectionHeader.vue';
 import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
+import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 
 // our app
 import StreamBuddies from './StreamBuddies';
@@ -47,6 +71,8 @@ const toy = ctApp.toyManager.toys[StreamBuddies.slug];
 
 // our local ref settings for this system
 const { 
+	maxBuddyCount,
+	buddySize,
 } = toy.settings;
 
 </script>

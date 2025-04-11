@@ -51,7 +51,6 @@ export default class StreamBuddies extends Toy {
 
 		// list of commands to perform on the renderer
 		this.buddiesState = socketShallowRef(this.static.slugify('buddiesState'), []);
-		this.commandQueue = socketShallowRef(this.static.slugify('commandQueue'), []);
 		this.activeBuddies = chromeShallowRef('activeBuddies', []);
 		
 		// build new buddy system

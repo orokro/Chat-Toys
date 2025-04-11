@@ -17,9 +17,9 @@
 				class="canvasContainer"
 		></div>
 		
-		<pre>
+		<!-- <pre>
 			{{ buddiesState }}
-		</pre>
+		</pre> -->
 		
 		<!-- loop to draw buddy boxxies (i.e. their name and optional chat messages)-->
 		<div
@@ -29,6 +29,7 @@
 			:style="{
 				left: buddy.x + 'px',
 				top: buddy.y + 'px',
+				transform: 'scale(' + buddySize + ')',
 			}"
 		>
 			<div class="buddy">
@@ -108,9 +109,19 @@ const props = defineProps({
 
 // gets our settings
 const ready = ref(false);
+const buddySize = ref(1);
 const socketSettingsRef = useToySettings('stream-buddies', 'widgetBox', emit, () => {
 	ready.value = true;	
 	console.log('buddies settings', socketSettingsRef.value);
+	buddySize.value = socketSettingsRef.value.buddySize;
+});
+
+// copy to local refs for legibility
+
+watch(socketSettingsRef, (newVal) => {
+	if(newVal == null)
+		return;
+	buddySize.value = socketSettingsRef.value.buddySize;
 });
 
 
@@ -139,15 +150,14 @@ watch(canvasContainerRef, (newVal)=>{
 		// make new tosser system
 		buddiesSystem = new ThreeJSBuddiesSystem(
 			canvasContainerRef,
-			buddiesState
+			buddiesState,
+			buddySize,
 		);
 
 		// expose on window for debug
 		window.bs = buddiesSystem;
 	}
 });
-
-
 
 
 // when this component is unmounted, destroy the tosser system

@@ -5,6 +5,9 @@
 	This class handles the Three.js buddy system for the StreamBuddies toy.
 */
 
+// vue
+import { watch } from 'vue';
+
 // three imports
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import { AnimationMixer, Object3D, LoopRepeat, LoopOnce, AnimationClip } from 'three';
@@ -118,6 +121,13 @@ export class ThreeBuddy extends Object3D {
 			this.model.scale.set(0.11, 0.11, 0.11);
 			this.mixer = new AnimationMixer(fbx);
 			this.add(fbx);
+		});
+
+		// watch global scale ref to adjust our own scale when it changes
+		const s = this.system.buddySize.value;
+		this.scale.set(s, s, s);
+		watch(this.system.buddySize, (newVal) => {
+			this.scale.set(newVal, newVal, newVal);
 		});
 	}
 

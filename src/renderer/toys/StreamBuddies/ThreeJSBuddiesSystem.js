@@ -44,12 +44,14 @@ export class ThreeJSBuddiesSystem {
 	 * 
 	 * @param {Ref} canvasContainerRef - the canvas container reference
 	 * @param {ShallowRef} state - the vue3 shallow ref to the state
+	 * @param {Number} buddySize - the size of the buddies
 	 */
-	constructor(canvasContainerRef, state) {
+	constructor(canvasContainerRef, state, buddySize) {
 
 		// save our refs
 		this.containerRef = canvasContainerRef;
 		this.state = state;
+		this.buddySize = buddySize;
 
 		// our instantiated buddies
 		this.buddiesMap = new Map();

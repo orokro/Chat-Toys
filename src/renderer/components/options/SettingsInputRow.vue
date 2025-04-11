@@ -17,7 +17,8 @@
 		<!-- Input Field -->
 		<input 
 			v-if="type !== 'boolean' && type !== 'options' && type !== 'radio'"
-			:type="type === 'color' ? 'text' : type"
+			:type="type === 'color' ? 'text' : (type==='float' ? 'number' : type)"
+			:step="step"
 			v-model="internalValue" @blur="handleBlur"
 			class="settings-input"
 		/>
@@ -76,6 +77,7 @@ const props = defineProps({
 	options: { type: Array, required: false },
 	min: { type: Number, required: false },
 	max: { type: Number, required: false },
+	step: { type: Number, required: false, default: 1 },
 	schema: { type: Object, required: false }, // Optional Yup schema
 });
 
@@ -105,6 +107,14 @@ const getSchema = () => {
 			.number()
 			.typeError('Must be a valid number')
 			.integer('Must be an integer')
+			.min(props.min ?? -Infinity, `Must be at least ${props.min}`)
+			.max(props.max ?? Infinity, `Must be at most ${props.max}`)
+			.required('This field is required');
+	
+	} else if (props.type === 'float') {
+		baseSchema = yup
+			.number()
+			.typeError('Must be a valid number')
 			.min(props.min ?? -Infinity, `Must be at least ${props.min}`)
 			.max(props.max ?? Infinity, `Must be at most ${props.max}`)
 			.required('This field is required');
