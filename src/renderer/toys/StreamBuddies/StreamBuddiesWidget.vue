@@ -54,14 +54,16 @@
 
 					<!-- debug infos -->
 					<template v-if="true">
-						<div>{{ buddy.stateMode }}</div>
-						<div>{{ buddy.dir }}</div>
-						<div v-if="buddy.hugging">hugging</div>
-						<div v-if="buddy.attacking">attacking</div>
-						<div v-if="buddy.farting">farting</div>
-						<div v-if="buddy.knockback">knockback</div>
-						<div v-if="buddy.dancing">dancing</div>
-						<div v-if="buddy.inAir">in air</div>
+						<div class="debugStuff">
+							<div>{{ buddy.stateMode }}</div>
+							<div>{{ buddy.dir }}</div>
+							<div v-if="buddy.hugging">hugging</div>
+							<div v-if="buddy.attacking">attacking</div>
+							<div v-if="buddy.farting">farting</div>
+							<div v-if="buddy.knockback">knockback</div>
+							<div v-if="buddy.dancing">dancing</div>
+							<div v-if="buddy.inAir">in air</div>
+						</div>
 					</template>
 				</div>
 			</div>
@@ -188,9 +190,6 @@ onBeforeUnmount(() => {
 			width: 1px;
 			height: 1px;
 
-			// for debugging
-			border: 1px solid red;
-
 			// box for the actual user
 			.buddy {
 
@@ -203,8 +202,17 @@ onBeforeUnmount(() => {
 				bottom: 0px;
 				left: -35px;
 
-				font-size: 12px;
-				background: rgba(230, 230, 250, 0.205);
+				// debug text
+				.debugStuff {
+					font-size: 12px;
+					line-height: 12px;
+					font-family: 'Courier New', Courier, monospace;
+					opacity: 0.5;
+
+				}// .debugStuff
+
+				// for debug
+				/* background: rgba(230, 230, 250, 0.205); */
 			
 				// the user name above the user
 				.buddyName {
@@ -216,6 +224,7 @@ onBeforeUnmount(() => {
 
 					// text settings
 					font-size: 12px;
+					font-family: 'Open Sans', sans-serif;
 					text-align: center;
 					color: white;
 					text-shadow: 1px 1px 0px rgba(0, 0, 0, 1);

@@ -68,6 +68,10 @@ class BuddySystem {
 		// loop over all the new messages
 		for (const chat of chats) {
 
+			// if the message text starts with ! as if it's a command, then skip it
+			if (chat.messageText.startsWith('!'))
+				continue;
+
 			// if the message is for one of our buddies, show their chat message for a few seconds
 			if (this.buddiesMap.has(chat.authorUniqueID)) {
 				const buddy = this.buddiesMap.get(chat.authorUniqueID);
@@ -75,10 +79,6 @@ class BuddySystem {
 			}
 
 		}// next chat
-
-		this.streamBuddies.buddiesState.value = this.tick();
-		this.streamBuddies.commandQueue.value = this.commandQueue.value;
-		this.commandQueue.value = [];
 
 	}
 
@@ -444,8 +444,6 @@ class Buddy {
 
 			// decrement time and disable state flag when done
 			this.chatMessageTime -= deltaTime;
-			if (this.chatMessageTime <= 0)
-				this.chatMessage = '';
 		}
 
 		// if we're dancing, decrement our state timer
