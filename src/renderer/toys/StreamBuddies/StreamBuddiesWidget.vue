@@ -17,7 +17,25 @@
 				class="canvasContainer"
 		></div>
 
-			buddies yo
+			buddies yo1
+			<pre>
+				{{ buddiesState }}
+			</pre>
+			
+			<!-- loop to draw buddy boxies (i.e. their name and optional chat messages)-->
+			<div
+				v-for="(buddy, index) in buddiesState.buddies"
+				:key="index"
+				class="buddyBox"
+				:style="{
+					left: buddy.x + 'px',
+					top: buddy.y + 'px',
+				}"
+			>
+				<div class="buddy">
+					<div class="buddyName">{{ buddy.username }}</div>
+				</div>
+			</div>
 
 	</div>
 
@@ -92,10 +110,10 @@ watch(canvasContainerRef, (newVal)=>{
 
 // watch when new items are scheduled to be tossed
 let lastCommandTimeStamp = 0;
-const commandQueue = socketShallowRefReadOnly(slugify('commandQueue'), []);
-watch(commandQueue, (newVal) => {
+const buddiesState = socketShallowRefReadOnly(slugify('buddiesState'), []);
+watch(buddiesState, (newVal) => {
 
-	console.log(newVal);
+	// console.log(newVal);
 });
 
 
@@ -123,12 +141,42 @@ onBeforeUnmount(() => {
 		position: relative;
 
 		background: rgba(255, 255, 255, 0.1);
+		color: white;
 
 		// place to spawn threeJS canvas
 		.canvasContainer {
 			position: absolute;
 			inset: 0px;
 		}
+
+		// CSS box for the buddy (non TrheeJS part)
+		.buddyBox {
+
+			// fixed positioning
+			position: absolute;
+
+			// we'll be a small 1x1 square and then overflow the actual box & other things
+			width: 1px;
+			height: 1px;
+
+			// for debugging
+			border: 1px solid red;
+
+			// box for the actual user
+			.buddy {
+
+				// fixed size for now
+				width: 100px;
+				height: 200px;
+
+				// overflow up out of our 1x1 box
+				position: absolute;
+				bottom: 0px;
+				left: -50px;
+
+				background: rgba(230, 230, 250, 0.205);
+			}
+		}// .buddyBox
 
 	}// .buddiesWidget
 	

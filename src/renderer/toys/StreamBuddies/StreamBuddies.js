@@ -18,6 +18,7 @@ import { BuddySystem } from './BuddySystem';
 // components
 import StreamBuddiesPage from './StreamBuddiesPage.vue';
 import StreamBuddiesWidget from './StreamBuddiesWidget.vue';
+import { chromeShallowRef } from '../../scripts/chromeRef';
 
 // main export
 export default class StreamBuddies extends Toy {
@@ -51,7 +52,7 @@ export default class StreamBuddies extends Toy {
 		// list of commands to perform on the renderer
 		this.buddiesState = socketShallowRef(this.static.slugify('buddiesState'), []);
 		this.commandQueue = socketShallowRef(this.static.slugify('commandQueue'), []);
-		this.activeBuddies = shallowRef([]);
+		this.activeBuddies = chromeShallowRef('activeBuddies', []);
 		
 		// build new buddy system
 		this.buddySystem = new BuddySystem(

@@ -19,6 +19,7 @@
 // vue imports
 import { watch, shallowRef } from 'vue';
 import StreamBuddies from './StreamBuddies';
+import { FALSE } from 'sass';
 
 // the main money
 class BuddySystem {
@@ -69,18 +70,18 @@ class BuddySystem {
 	 */
 	syncBuddies() {
 
-		// get list of active buddies IDs as provided by our vue shallowRef
-		const currentIDs = new Set(this.activeBuddies.value);
+		const currentIDs = new Set(this.activeBuddies.value.map(b => b.id));
 
-		// Remove old buddies from our internal list (map)
+		// Remove old buddies
 		for (const [id, buddy] of this.buddiesMap.entries())
 			if (!currentIDs.has(id))
 				this.buddiesMap.delete(id);
-			
-		// Add new buddies to our internal list (map)
-		for (const id of currentIDs)
-			if (!this.buddiesMap.has(id))
-				this.buddiesMap.set(id, new Buddy(id, this));7			
+
+
+		// Add new buddies
+		for (const buddyInfo of this.activeBuddies.value) 
+			if (!this.buddiesMap.has(buddyInfo.id))
+				this.buddiesMap.set(buddyInfo.id, new Buddy(buddyInfo.id, buddyInfo.name, this));
 	}
 
 
@@ -100,32 +101,32 @@ class BuddySystem {
 		if (command === 'join') {
 
 			// if the user is already in the active buddies list, return false
-			if (this.activeBuddies.value.includes(userID)) {
+			if (this.activeBuddies.value.find(user=>user.id==userID)!==undefined) {
 				console.log(`User ${userID} already in active buddies.`);
 				return false;
 			}
 
 			// add the user to the active buddies list
-			this.activeBuddies.value = [...this.activeBuddies.value, (userID)];
+			this.activeBuddies.value = [...this.activeBuddies.value, ({id:userID, name:username})];
 			console.log(`User ${userID} joined the active buddies.`);	
 			return true;
 
 		}else if (command === 'leave') {
 
 			// if the user is not in the active buddies list, return false
-			if (!this.activeBuddies.value.includes(userID)) {
+			if (this.activeBuddies.value.find(user=>user.id==userID)==undefined) {
 				console.log(`User ${userID} not found in active buddies.`);
 				return false;
 			}
 
 			// remove the user from the active buddies list
-			this.activeBuddies.value = this.activeBuddies.value.filter(id => id !== userID);
+			this.activeBuddies.value = this.activeBuddies.value.filter(user => user.id !== userID);
 			console.log(`User ${userID} left the active buddies.`);
 			return true;
 		}		
 
 		// if the user is not in the active buddies list, return false
-		if (!this.activeBuddies.value.includes(userID)) {
+		if (this.activeBuddies.value.find(user=>user.id==userID)==undefined) {
 			console.log(`User ${userID} not found in active buddies.`);
 			return false;
 		}
@@ -201,13 +202,14 @@ class Buddy {
 	 * Constructs a new Buddy instance
 	 * 
 	 * @param {String} userID - the unique user ID for this buddy
+	 * @param {String} username - the name of the user
 	 * @param {BuddySystem} system - a reference to the BuddySystem instance
 	 */
-	constructor(userID, system) {
+	constructor(userID, username, system) {
 
 		// save our references
 		this.userID = userID;
-		this.username = '';
+		this.username = username;
 		this.system = system;
 
 		// our movement variables
@@ -331,16 +333,18 @@ class Buddy {
 	 * @returns 
 	 */
 	tick(deltaTime) {
+		
+		const moveSpeed = 50;
 
 		// apply gravity always (if the window is resized avatars will fall, etc)
 		this.velocityY += this.gravity * deltaTime;
 		this.y += this.velocityY * deltaTime;
 
 		// if we're in the air, this will remain true
-		this.inAir = false;
+		this.inAir = true;
 
 		// check if we hit the ground & clamp back up
-		if (this.y >= this.system.containerHeight) {
+		if (this.y >= this.system.containerHeight && this.velocityY >= 0) {
 			this.y = this.system.containerHeight;
 			this.velocityY = 0;
 			this.inAir = false;
@@ -355,7 +359,7 @@ class Buddy {
 			// our gravity code at the top of the function already checked if we hit the ground
 			// so this.inAir will be false if we did. However, for jumping, we should only care about the .inAir
 			// variable if our velocityY is positive (we're going down)
-			if (this.inAir==false && this.velocityY > 0) {
+			if (this.inAir==false && false) {
 
 				// clamp y & return to the ground
 				this.y = this.system.containerHeight;
@@ -409,7 +413,7 @@ class Buddy {
 
 			// otherwise move towards the target
 			else 
-				this.x += Math.sign(dx) * Math.min(200 * deltaTime, Math.abs(dx));
+				this.x += Math.sign(dx) * Math.min(moveSpeed * deltaTime, Math.abs(dx));
 			
 			this.clampPosition();
 		}
@@ -438,7 +442,7 @@ class Buddy {
 					const dx = targetBuddy.x - this.x;
 					if (Math.abs(dx) > 30) {
 
-						this.x += Math.sign(dx) * Math.min(200 * deltaTime, Math.abs(dx));
+						this.x += Math.sign(dx) * Math.min(moveSpeed * deltaTime, Math.abs(dx));
 						this.clampPosition();
 
 					// otherwise, we're close enough to hug/attack
@@ -508,6 +512,7 @@ class Buddy {
 		return {
 			userID: this.userID,
 			username: this.username,
+			inAir: this.inAir,
 			x: this.x,
 			y: this.y,
 			targetX: this.targetX,
