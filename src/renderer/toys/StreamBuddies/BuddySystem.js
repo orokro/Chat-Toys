@@ -126,7 +126,7 @@ class BuddySystem {
 
 		// if the user is not in the active buddies list, return false
 		if (this.activeBuddies.value.find(user=>user.id==userID)==undefined) {
-			console.log(`User ${userID} not found in active buddies.`);
+			this.streamBuddies.chatToysApp.log.error(`${username}: type '!join' to use this command.`);
 			return false;
 		}
 
@@ -289,9 +289,10 @@ class Buddy {
 			case 'hug':
 
 				// search for the target buddy by username
-				const hugBuddy = this.system.activeBuddies.value.find(b => b.name === param);
+				const hugBuddy = this.system.activeBuddies.value.find(b => b.name.toLowerCase() === param.toLowerCase());
 				if (!hugBuddy) {
 					console.log(`Buddy ${param} not found for hug.`);
+					this.system.streamBuddies.chatToysApp.log.error(`${this.username}: Buddy ${param} not found for hug.`);
 					this.targetUserID = null;
 					return;
 				}
@@ -304,9 +305,10 @@ class Buddy {
 			case 'attack':
 
 				// search for the target buddy by username
-				const targetBuddy = this.system.activeBuddies.value.find(b => b.name === param);
+				const targetBuddy = this.system.activeBuddies.value.find(b => b.name.toLowerCase() === param.toLowerCase());
 				if (!targetBuddy) {
 					console.log(`Buddy ${param} not found for hug.`);
+					this.system.streamBuddies.chatToysApp.log.error(`${this.username}: Buddy ${param} not found for attack.`);
 					this.targetUserID = null;
 					return;
 				}
@@ -489,6 +491,8 @@ class Buddy {
 							targetBuddy.velocityX = knockBackVelo;
 							targetBuddy.velocityY = -500;
 							targetBuddy.knockback = true;
+							if(targetBuddy.attacking)
+								targetBuddy.attacking = false;
 							targetBuddy.gotoState('knockback', 5);
 						}
 					}

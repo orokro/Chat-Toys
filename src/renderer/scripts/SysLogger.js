@@ -80,6 +80,17 @@ export class SysLogger {
 
 
 	/**
+	 * Adds error message to the log
+	 * 
+	 * @param {string} message - the error message to add
+	 */
+	error(message) {		
+		this.pushMessage('error', message);
+	}
+
+
+
+	/**
 	 * Log info message
 	 */
 	info(message) {
