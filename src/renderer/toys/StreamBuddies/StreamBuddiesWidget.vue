@@ -17,9 +17,9 @@
 				class="canvasContainer"
 		></div>
 		
-		<!-- <pre>
+		<pre>
 			{{ buddiesState }}
-		</pre> -->
+		</pre>
 		
 		<!-- loop to draw buddy boxxies (i.e. their name and optional chat messages)-->
 		<div

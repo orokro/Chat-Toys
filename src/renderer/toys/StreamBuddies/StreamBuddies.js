@@ -219,10 +219,10 @@ export default class StreamBuddies extends Toy {
 			// optional dance name
 			case 'dance':
 				const dance = params.dance_name === undefined ? null : params.dance_name.toLowerCase();
-				if(dance == null || (dance !== 'twerk' && dance !== 'hiphop')){
-					handshake.reject(`${username}: Invalid dance name for dance command`);
-					return;
-				}
+				// if(dance == null || ['twerk', 'hiphop', 'spin', 'swing'].includes(dance) === false){
+				// 	handshake.reject(`${username}: Invalid dance name for dance command`);
+				// 	return;
+				// }
 				
 				this.buddySystem.doCommand(userID, username, commandSlug, dance);
 				handshake.accept();

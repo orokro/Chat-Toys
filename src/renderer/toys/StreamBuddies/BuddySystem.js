@@ -317,10 +317,21 @@ class Buddy {
 
 			case 'dance':
 				this.dancing = true;
-				this.dance = param || 'default';
-				console.log('dance param', param, this.dance);
-				this.stateTimer = 10;
-				this.gotoState('dancing');
+
+				// custom times:
+				const timeMap = {
+					'hiphop': 13 + 27/30,
+					'spin': 4 + 2/30,
+					'swing': 5 + 7/30,
+					'twerk': 15 + 7/30,
+				}
+				const timeMapKeys = Object.keys(timeMap);
+
+				// use param or pick random from our time map
+				this.dance = param || timeMapKeys[Math.floor(Math.random() * timeMapKeys.length)];
+
+				// play animation with correct time
+				this.gotoState('dancing', timeMap[this.dance]);
 				break;
 
 			case 'hug':
@@ -336,7 +347,7 @@ class Buddy {
 
 				// if we found the buddy, set our target userID to the buddy's ID & begin hug process
 				this.targetUserID = hugBuddy.id;
-				this.gotoState('hugging', 5);			
+				this.gotoState('hugging', 2);			
 				break;
 
 			case 'attack':
@@ -352,7 +363,7 @@ class Buddy {
 
 				// if we found the buddy, set our target userID to the buddy's ID & begin attack process
 				this.targetUserID = targetBuddy.id;
-				this.gotoState('attacking', 5);
+				this.gotoState('attacking', 2);
 				break;
 
 			case 'chat':
@@ -530,14 +541,16 @@ class Buddy {
 							this.targetX = targetBuddy.x;
 							targetBuddy.targetX = this.x;
 
-							// set target to being knocked back
-							const knockBackVelo = (this.x < targetBuddy.x) ? 100 : -100;
-							targetBuddy.velocityX = knockBackVelo;
-							targetBuddy.velocityY = -500;
-							targetBuddy.knockback = true;
-							if(targetBuddy.attacking)
-								targetBuddy.attacking = false;
-							targetBuddy.gotoState('knockback', 5);
+							setTimeout(() => {
+								// set target to being knocked back
+								const knockBackVelo = (this.x < targetBuddy.x) ? 100 : -100;
+								targetBuddy.velocityX = knockBackVelo;
+								targetBuddy.velocityY = -500;
+								targetBuddy.knockback = true;
+								if(targetBuddy.attacking)
+									targetBuddy.attacking = false;
+								targetBuddy.gotoState('knockback');
+							}, 530);
 						}
 					}
 				

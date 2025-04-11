@@ -229,7 +229,7 @@ export class ThreeBuddy extends Object3D {
 
 			if(newState[newState.stateMode]){
 				ani = newState.stateMode === 'hugging'
-					? 'hugging'
+					? this.animationMap['hugging']
 					: 'attacking'
 				loop = false;
 			}else{
