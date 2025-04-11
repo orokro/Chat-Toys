@@ -449,6 +449,7 @@ class Buddy {
 		// if we're dancing, decrement our state timer
 		if (this.stateMode === 'dancing') {
 
+			this.stateTimer -= deltaTime;
 			if (this.stateTimer <= 0) {
 				this.dancing = false;
 				this.dance = '';

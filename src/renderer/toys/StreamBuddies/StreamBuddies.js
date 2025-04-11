@@ -147,6 +147,13 @@ export default class StreamBuddies extends Toy {
 				description: 'Make their character attack another user.',
 			},
 			{
+				command: 'dance',
+				params: [
+					{ name: 'dance_name', type: 'string', optional: true, desc: 'dance to perform, or random if not specified' },
+				],
+				description: 'Make their character attack another user.',
+			},
+			{
 				command: 'sit',
 				description: 'Make character sit down.',
 			},
@@ -206,6 +213,18 @@ export default class StreamBuddies extends Toy {
 					return;
 				}
 				this.buddySystem.doCommand(userID, username, commandSlug, dir);
+				handshake.accept();
+				return;
+
+			// optional dance name
+			case 'dance':
+				const dance = params.direction === undefined ? null : params.direction.toLowerCase();
+				if(dance !== null && dance !== 'twerk' && dance !== 'hiphop'){
+					this.chatToysApp.log.error(`${username}: Invalid dance name for dance command`);
+					handshake.reject();
+					return;
+				}
+				this.buddySystem.doCommand(userID, username, commandSlug, dance);
 				handshake.accept();
 				return;
 
