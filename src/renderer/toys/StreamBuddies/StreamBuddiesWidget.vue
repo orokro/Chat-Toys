@@ -203,7 +203,7 @@ onBeforeUnmount(() => {
 		// reset stacking context
 		position: relative;
 
-		background: rgba(255, 255, 255, 0.1);
+		/* background: rgba(255, 255, 255, 0.1); */
 		color: white;
 
 		// place to spawn threeJS canvas
