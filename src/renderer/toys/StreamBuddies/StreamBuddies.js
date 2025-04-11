@@ -64,7 +64,7 @@ export default class StreamBuddies extends Toy {
 		// set up repeating interval to call the buddy system game tick function
 		this.buddyInterval = window.setElectronInterval(()=>{
 			this.buddiesState.value = {...this.buddySystem.tick()};
-		}, 100);
+		}, 10);
 	}
 	
 
@@ -218,12 +218,12 @@ export default class StreamBuddies extends Toy {
 
 			// optional dance name
 			case 'dance':
-				const dance = params.direction === undefined ? null : params.direction.toLowerCase();
-				if(dance !== null && dance !== 'twerk' && dance !== 'hiphop'){
-					this.chatToysApp.log.error(`${username}: Invalid dance name for dance command`);
-					handshake.reject();
+				const dance = params.dance_name === undefined ? null : params.dance_name.toLowerCase();
+				if(dance == null || (dance !== 'twerk' && dance !== 'hiphop')){
+					handshake.reject(`${username}: Invalid dance name for dance command`);
 					return;
 				}
+				
 				this.buddySystem.doCommand(userID, username, commandSlug, dance);
 				handshake.accept();
 				return;

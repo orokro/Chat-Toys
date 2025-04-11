@@ -17,9 +17,9 @@
 				class="canvasContainer"
 		></div>
 		
-		<pre>
+		<!-- <pre>
 			{{ buddiesState }}
-		</pre>
+		</pre> -->
 		
 		<!-- loop to draw buddy boxxies (i.e. their name and optional chat messages)-->
 		<div
@@ -52,7 +52,7 @@
 				</div>
 
 				<!-- debug infos -->
-				<template v-if="true">
+				<template v-if="false">
 					<div class="debugStuff">
 						<div>{{ buddy.stateMode }}</div>
 						<div>{{ buddy.dir }}</div>
@@ -220,7 +220,7 @@ onBeforeUnmount(() => {
 				.buddyName {
 
 					position: absolute;
-					top: -20px;
+					top: -5px;
 					left: 50%;
 					transform: translateX(-50%);
 
@@ -239,7 +239,7 @@ onBeforeUnmount(() => {
 
 					// fixed above center
 					position: absolute;
-					top: -40px;
+					top: -10px;
 					left: 50%;
 					width: 200px;
 					height: 1px;
@@ -291,7 +291,7 @@ onBeforeUnmount(() => {
 					.arrow {
 						position: absolute;
 						left: 50%;
-						bottom: -4px;
+						bottom: -1px;
 
 						width: 12px;
 						height: 12px;
@@ -315,7 +315,7 @@ onBeforeUnmount(() => {
 
 						// the bottom arrow is black with a border
 						&.arrowUnder {
-							bottom: -6px;
+							bottom: -2px;
 							background: black;
 							border: 2px solid black;
 

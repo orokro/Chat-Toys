@@ -303,6 +303,7 @@ class Buddy {
 				this.gotoState('jumping');
 				this.velocityY = -500;
 				this.velocityX = param === 'left' ? -100 : param === 'right' ? 100 : 0;
+				this.targetX = this.x + this.velocityX;
 				break;
 
 			case 'sit':
@@ -317,6 +318,7 @@ class Buddy {
 			case 'dance':
 				this.dancing = true;
 				this.dance = param || 'default';
+				console.log('dance param', param, this.dance);
 				this.stateTimer = 10;
 				this.gotoState('dancing');
 				break;
@@ -494,6 +496,8 @@ class Buddy {
 				const targetBuddy = this.system.buddiesMap.get(this.targetUserID);
 				if (targetBuddy) {
 
+					this.targetX = targetBuddy.x;
+
 					// if we're too far, keep moving towards them
 					const dx = targetBuddy.x - this.x;
 					if (Math.abs(dx) > 30) {
@@ -510,6 +514,9 @@ class Buddy {
 							// we've arrived, so now this flag is true until time runs out
 							this.hugging = true;1
 
+							this.targetX = targetBuddy.x;
+							targetBuddy.targetX = this.x;
+
 							// set the target buddy's hugging flag and state
 							targetBuddy.hugging = true;
 							targetBuddy.gotoState('hugging', 5);
@@ -519,6 +526,9 @@ class Buddy {
 
 							// we've arrived, so now this flag is true until time runs out
 							this.attacking = true;
+
+							this.targetX = targetBuddy.x;
+							targetBuddy.targetX = this.x;
 
 							// set target to being knocked back
 							const knockBackVelo = (this.x < targetBuddy.x) ? 100 : -100;

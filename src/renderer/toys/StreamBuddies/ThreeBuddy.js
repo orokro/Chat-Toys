@@ -7,7 +7,7 @@
 
 // three imports
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-import { AnimationMixer, Object3D, LoopRepeat, LoopOnce } from 'three';
+import { AnimationMixer, Object3D, LoopRepeat, LoopOnce, AnimationClip } from 'three';
 import { ThreeJSBuddiesSystem } from './ThreeJSBuddiesSystem';
 
 /**
@@ -115,7 +115,7 @@ export class ThreeBuddy extends Object3D {
 
 		this.loader.load(modelPath, (fbx) => {
 			this.model = fbx;
-			this.model.scale.set(0.25, 0.25, 0.25);
+			this.model.scale.set(0.11, 0.11, 0.11);
 			this.mixer = new AnimationMixer(fbx);
 			this.add(fbx);
 		});
@@ -130,8 +130,18 @@ export class ThreeBuddy extends Object3D {
 	 * @returns 
 	 */
 	playAnimation(name, loop = true) {
+
+		// if we don't have a clip, or no mixer, GTFO
 		const clip = this.animationLibrary.get(name);
-		if (!clip || !this.mixer) return;
+		if (!clip || !this.mixer)
+			return;
+
+		// if the name isn't different don't replay
+		if (this.currentAnimation === name)
+			return;
+
+		// save the current animation name
+		this.currentAnimation = name;
 
 		const action = this.mixer.clipAction(clip);
 		action.reset();
@@ -152,43 +162,88 @@ export class ThreeBuddy extends Object3D {
 	 * @param {Object} newState - object with state of the buddy based on the state
 	 */
 	updateState(newState) {
-		if (!this.model || !this.mixer) return;
+
+		// GTFO if we're not ready yet
+		if (!this.model || !this.mixer) 
+			return;
 
 		// console.log('poop', newState);
 
 		const changed = !this.lastState || JSON.stringify(this.lastState) !== JSON.stringify(newState);
 		this.lastState = { ...newState };
-		if (!changed) return;
+		if (!changed)
+			return;
 
 		const xPos = (newState.x - this.system.canvasWidth/2);
-		const yPos = -(this.system.canvasHeight/2) + (newState.y - this.system.canvasHeight);
+		const yPos = -(this.system.canvasHeight/2) - (newState.y - this.system.canvasHeight);
 		this.position.set(xPos, yPos, 0);
 
 		let rotY = 0;
 		if (["moving", "jumping", "hugging", "attacking", "knockback"].includes(newState.stateMode)) {
-			rotY = newState.dir === 'right' ? Math.PI / 2 : -Math.PI / 2;
+			rotY = newState.dir === 'right' ? (Math.PI / 2) * 0.6 : (-Math.PI / 2) * 0.6;
 		}
 		this.rotation.y = rotY;
+
+		// figure out what animation kind to play
+		let {ani, loop} = this.pickAnimationKind(newState);
+
+		// initial set if undefined
+		if(this.lastAniKind===undefined)
+			this.lastAniKind = '';
+
+		// if the _kind_ of animation changed, we can run some extra logic for the type
+		if(this.lastAniKind !== ani){
+
+			this.lastAniKind = ani;
+
+			if(ani=='idle')
+				ani = this.animationMap.idle[Math.floor(Math.random() * 3)];
+
+			if(ani=='attacking')
+				ani = this.animationMap.attacking[Math.floor(Math.random() * 2)];
+
+			if (ani) 
+				this.playAnimation(ani, loop);
+		}
+	}
+
+
+	/**
+	 * Picks the animation kind to play, no random picks yet
+	 * 
+	 * @param {Object} newState - new state of the buddy
+	 * @returns {Object} -  with the animation clip or string to play and if it should loop
+	 */
+	pickAnimationKind(newState){
 
 		let ani = '';
 		let loop = true;
 
 		if (newState.stateMode === 'idle') {
-			ani = this.animationMap.idle[Math.floor(Math.random() * 3)];
+			ani = 'idle';
+
 		} else if (newState.stateMode === 'dancing') {
 			ani = `dance_${newState.dance}`;
-		} else if (['hugging', 'attacking'].includes(newState.stateMode) && newState[newState.stateMode]) {
-			ani = newState.stateMode === 'hugging'
-				? this.animationMap.hugging
-				: this.animationMap.attacking[Math.floor(Math.random() * 2)];
-			loop = false;
+
+		} else if (['hugging', 'attacking'].includes(newState.stateMode)) {
+
+			if(newState[newState.stateMode]){
+				ani = newState.stateMode === 'hugging'
+					? 'hugging'
+					: 'attacking'
+				loop = false;
+			}else{
+				ani = this.animationMap['moving'];
+			}
+
 		} else {
 			ani = this.animationMap[newState.stateMode];
 			loop = !['jumping', 'knockback'].includes(newState.stateMode);
 		}
 
-		if (ani) this.playAnimation(ani, loop);
+		return {ani, loop};
 	}
+
 
 	/**
 	 * Updates the animation mixer
@@ -196,6 +251,7 @@ export class ThreeBuddy extends Object3D {
 	 * @param {Number} delta - delta time
 	 */
 	tick(delta) {
+
 		if (this.mixer)
 			this.mixer.update(delta);
 	}

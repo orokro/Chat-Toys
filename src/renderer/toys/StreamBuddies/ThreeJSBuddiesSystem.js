@@ -177,20 +177,10 @@ export class ThreeJSBuddiesSystem {
 		this.containerRef.value.appendChild(this.renderer.domElement);
 
 		// set up some basic lighting
-		this.scene.add(new AmbientLight(0xffffff, 0.5));
+		this.scene.add(new AmbientLight(0xffffff, 1.75));
 		const dirLight = new DirectionalLight(0xffffff, 1);
-		dirLight.position.set(5, 10, 7.5);
+		dirLight.position.set(5, 10, 17.5);
 		this.scene.add(dirLight);
-
-		// add a teal cube to the center of the scene to test rendering is live
-		const geo = new BoxGeometry(100, 100, 100);
-		const mat = new MeshBasicMaterial({ color: 0x00ABAE, wireframe: true });
-		this.debugCube = new Mesh(geo, mat);
-		this.debugCube.position.set(0, 0, 0);
-		this.debugCube.rotation.x = Math.PI / 4;
-		this.debugCube.rotation.y = Math.PI / 4;
-		this.debugCube.rotation.z = Math.PI / 4;
-		this.scene.add(this.debugCube);
 
 		// for debug, show the collider
 		this.debugCollider = null;
@@ -204,10 +194,15 @@ export class ThreeJSBuddiesSystem {
 	 * Add a wireframe box to the scene to show the collider area
 	 */
 	setupDebug() {
-		// const mat = new MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-		// const geo = new BoxGeometry(1, 1, 1);
-		// this.debugCollider = new Mesh(geo, mat);
-		// this.scene.add(this.debugCollider);
+		// add a teal cube to the center of the scene to test rendering is live
+		const geo = new BoxGeometry(100, 100, 100);
+		const mat = new MeshBasicMaterial({ color: 0x00ABAE, wireframe: true });
+		this.debugCube = new Mesh(geo, mat);
+		this.debugCube.position.set(0, 0, 0);
+		this.debugCube.rotation.x = Math.PI / 4;
+		this.debugCube.rotation.y = Math.PI / 4;
+		this.debugCube.rotation.z = Math.PI / 4;
+		this.scene.add(this.debugCube);
 	}
 
 
@@ -271,7 +266,13 @@ export class ThreeJSBuddiesSystem {
 		requestAnimationFrame(() => this.renderLoop());
 
 		// console.log('Rendering...');
-		this.debugCube.rotation.z -= 0.01;
+		if(this.debugCube)
+			this.debugCube.rotation.z -= 0.01;
+
+		// get our delta time & up the buddies
+		const deltaTime = this.clock.getDelta();
+		for (const buddy of this.buddiesMap.values())
+			buddy.tick(deltaTime);
 
 		// render the scene
 		this.renderer.render(this.scene, this.camera);
