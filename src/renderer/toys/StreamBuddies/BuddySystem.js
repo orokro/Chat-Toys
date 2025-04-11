@@ -134,6 +134,13 @@ class BuddySystem {
 				return false;
 			}
 
+			// do not allow joining if we're full
+			if (this.activeBuddies.value.length >= this.streamBuddies.settings.maxBuddyCount.value) {
+				this.streamBuddies.chatToysApp.log.error(
+					`${username}: Sorry, the buddy system is full. Please try again later.`);
+				return false;
+			}
+
 			// add the user to the active buddies list
 			this.activeBuddies.value = [...this.activeBuddies.value, ({id:userID, name:username})];
 			console.log(`User ${userID} joined the active buddies.`);	
