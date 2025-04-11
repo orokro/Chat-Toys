@@ -25,17 +25,30 @@
 		<div
 			v-for="(buddy, index) in buddiesState.buddies"
 			:key="index"
-			class="buddyBox"
+			class="buddyBox"			
 			:style="{
 				left: buddy.x + 'px',
 				top: buddy.y + 'px',
 				transform: 'scale(' + buddySize + ')',
 			}"
 		>
-			<div class="buddy">
+			<div 
+				class="buddy"
+				:class="{
+					left: buddy.dir == 'left',
+					right: buddy.dir == 'right',
+					sitting: buddy.stateMode == 'sitting',
+				}"
+			>
 
 				<!-- the stylized name above the buddy -->
 				<div class="buddyName">{{ buddy.username }}</div>
+
+				<!-- animated fart -->
+				<div 
+					v-if="buddy.farting"
+					class="fart"
+				></div>
 
 				<!-- chat bubble show message -->
 				<div class="chatBubble"
@@ -214,6 +227,65 @@ onBeforeUnmount(() => {
 				bottom: 0px;
 				left: -35px;
 
+				// fart sprite
+				.fart {
+
+					// fixed size /p position
+					position: absolute;
+					bottom: 20px;
+					right: 40px;
+					width: 20px;
+					height: 20px;
+
+					opacity: 0.5;
+					
+					// background sprite sheet settings
+					background-image: url('assets/buddies/fart_sprite_sheet.png');
+					background-size: 300% 300%;
+					background-position: 100% 0%;
+					background-repeat: no-repeat;
+
+					// use keyframes to animate the sprite
+					animation: fartSpriteAnimation forwards 1s steps(1);
+				
+				}// .fart
+
+				// css sprite key frames for the fart
+				@keyframes fartSpriteAnimation {
+					0%   { background-position: 0% 0%; }
+					11.11% { background-position: 50% 0%; }
+					22.22% { background-position:100% 0%; }
+					33.33% { background-position: 0% 50%; }
+					44.44% { background-position: 50% 50%; }
+					55.55% { background-position:100% 50%; }
+					66.66% { background-position: 0% 100%; }
+					77.77% { background-position: 50% 100%; }
+					88.88% { background-position:100% 100%; }
+					100%  { background-position:100% 100%; }
+				}
+
+				&.sitting {
+					.fart {
+						bottom: 0px;
+					}
+				}
+				&.left {
+					.fart {
+						left: 45px;
+						right: auto;
+
+					}
+				}
+				&.right {
+					.fart {
+						right: 45px;
+						left: auto;
+						/* background: red !important; */
+						transform: scaleX(-1);
+					}
+				}
+
+
 				// debug text
 				.debugStuff {
 					font-size: 12px;
@@ -222,9 +294,6 @@ onBeforeUnmount(() => {
 					opacity: 0.5;
 
 				}// .debugStuff
-
-				// for debug
-				/* background: rgba(230, 230, 250, 0.205); */
 			
 				// the user name above the user
 				.buddyName {

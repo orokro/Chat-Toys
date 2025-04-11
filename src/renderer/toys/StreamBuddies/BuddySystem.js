@@ -319,7 +319,7 @@ class Buddy {
 
 			case 'fart':
 				this.farting = true;
-				this.fartTime = 2;
+				this.fartTime = 1.1;
 				break;
 
 			case 'dance':
