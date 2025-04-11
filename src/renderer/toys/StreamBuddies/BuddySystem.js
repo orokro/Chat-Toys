@@ -19,7 +19,6 @@
 // vue imports
 import { watch, shallowRef } from 'vue';
 import StreamBuddies from './StreamBuddies';
-import { FALSE } from 'sass';
 
 // the main money
 class BuddySystem {
@@ -220,6 +219,7 @@ class Buddy {
 		this.velocityX = 0;
 		this.velocityY = 0;
 		this.gravity = 980; // px/s^2
+		this.inAir = true;
 		this.targetUserID = null;
 
 		// our state modes
@@ -334,7 +334,7 @@ class Buddy {
 	 */
 	tick(deltaTime) {
 		
-		const moveSpeed = 50;
+		const moveSpeed = 25;
 
 		// apply gravity always (if the window is resized avatars will fall, etc)
 		this.velocityY += this.gravity * deltaTime;
@@ -359,7 +359,7 @@ class Buddy {
 			// our gravity code at the top of the function already checked if we hit the ground
 			// so this.inAir will be false if we did. However, for jumping, we should only care about the .inAir
 			// variable if our velocityY is positive (we're going down)
-			if (this.inAir==false && false) {
+			if (this.inAir==false) {
 
 				// clamp y & return to the ground
 				this.y = this.system.containerHeight;

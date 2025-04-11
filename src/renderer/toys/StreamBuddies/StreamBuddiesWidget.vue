@@ -34,6 +34,13 @@
 			>
 				<div class="buddy">
 					<div class="buddyName">{{ buddy.username }}</div>
+					<div>{{ buddy.stateMode }}</div>
+					<div v-if="buddy.hugging">hugging</div>
+					<div v-if="buddy.attacking">attacking</div>
+					<div v-if="buddy.farting">farting</div>
+					<div v-if="buddy.knockback">knockback</div>
+					<div v-if="buddy.dancing">dancing</div>
+					<div v-if="buddy.inAir">in air</div>
 				</div>
 			</div>
 
@@ -166,16 +173,36 @@ onBeforeUnmount(() => {
 			.buddy {
 
 				// fixed size for now
-				width: 100px;
-				height: 200px;
+				width: 70px;
+				height: 100px;
 
 				// overflow up out of our 1x1 box
 				position: absolute;
 				bottom: 0px;
-				left: -50px;
+				left: -35px;
 
+				font-size: 12px;
 				background: rgba(230, 230, 250, 0.205);
-			}
+			
+				// the user name above the user
+				.buddyName {
+
+					position: absolute;
+					top: -20px;
+					left: 50%;
+					transform: translateX(-50%);
+
+					// text settings
+					font-size: 12px;
+					text-align: center;
+					color: white;
+					text-shadow: 1px 1px 0px rgba(0, 0, 0, 1);
+					white-space: nowrap;
+
+				}// .buddyName
+
+			}// .buddy
+
 		}// .buddyBox
 
 	}// .buddiesWidget
