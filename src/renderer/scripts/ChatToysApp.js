@@ -44,7 +44,24 @@ export default class ChatToysApp {
 
 		// integrated logging for on screen messages
 		this.log = new SysLogger(this);
+
+		// true when we wanna render widgets in demo mode
+		this.demoMode = socketShallowRef('demoMode', false);
+
+		// port number for the obs server stuff
+		this.serverPort = shallowRef(0);
+
+		// unrelated to our logger above, we'll also receive messages from from the OBS server
+		this.obsServerMessages = shallowRef([]);
 		
+		// Hook up to Electron API
+		window.electronAPI.onServerLog((message)=>{
+			const messages = [...this.obsServerMessages.value, message];
+			while(messages.length > 100)
+				messages.shift();
+			this.obsServerMessages.value = messages;
+		});
+
 		// but a regular ref for the active toy (if any), since
 		// this doesn't need to persist across tabs or even refreshes
 		this.selectedToy = chromeRef('selectedToy', null);

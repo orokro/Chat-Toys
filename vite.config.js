@@ -36,6 +36,7 @@ const config = defineConfig({
 			input: {
 				main: Path.join(__dirname, 'src', 'renderer', 'index.html'),
 				live: Path.join(__dirname, 'src', 'renderer', 'live.html'),
+				test: Path.join(__dirname, 'src', 'renderer', 'obsTestPage.html'),
 			},
 		},
 	},

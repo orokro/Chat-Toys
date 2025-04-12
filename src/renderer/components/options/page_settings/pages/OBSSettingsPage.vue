@@ -20,7 +20,7 @@
 		<SectionHeader title="Widget Demo Mode"/>
 		<SettingsInputRow
 			type="boolean"
-			v-model="demoMode"
+			v-model="ctApp.demoMode"
 		>
 			<h3>Widget Demo Mode</h3>
 			<p>When enabled, the various Chat Toy's Widgets will display in "<strong>demo mode</strong>".</p>
@@ -39,7 +39,7 @@
 		<SectionHeader title="Server Settings"/>
 		<SettingsInputRow
 			type="number"
-			v-model="serverPort"
+			v-model="ctApp.serverPort"
 		>
 			<h3>Server Port</h3>
 			<p>If you don't know what this is, feel free to ignore it.</p>
@@ -67,7 +67,12 @@
 
 		<SectionHeader title="Server Output Log"/>
 		<div class="logBox">
-
+			<div 
+				v-for="(line, index) in ctApp.obsServerMessages.value"
+				:key="index"
+			>
+				{{ line }}
+			</div>
 		</div>
 	</PageBox>
 
@@ -90,27 +95,21 @@ import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
-// this variable will determine if we are in "demo mode" for widgets
-// so we can render them easier while testing
-const demoMode = socketShallowRef('demoMode', false);
-
-// this ref will mirror the port of the server
-const serverPort = shallowRef(0);
-
 // get server port from the app
 async function getServerPort() {
 	const port = await window.electronAPI.invoke('get-server-port');
-	serverPort.value = port;
+	ctApp.serverPort.value = port;
 }
 
 // when server port changes from our model, tell the backend
-watch(serverPort, (newPort) => {
+watch(ctApp.serverPort, (newPort) => {
 	if (newPort !== 0) {
 		window.electronAPI.invoke('set-server-port', newPort);
 	}
 });
 
 onMounted(() => {
+
 	// get the server port when the component is mounted
 	getServerPort();
 });
@@ -123,6 +122,11 @@ function restartServer(){
 
 	// restart the server
 	window.electronAPI.invoke('restart-servers');
+
+	setTimeout(() => {
+		// get the server port when the server is restarted
+		window.location.reload();
+	}, 1000);
 }
 
 
@@ -153,18 +157,22 @@ function restartServer(){
 	// box to show the server output log
 	.logBox {
 
-		// console log style
 		background: black;
 		color: white;
 		font-family: 'Courier New', Courier, monospace;
+		font-size: 12px;
 
-		// box settings
 		padding: 30px;
 		margin: 30px 0px;
-		min-height: 600px;
-		overflow-y: scroll;
+		min-height: 300px;
+		max-height: 600px;
+		overflow-y: auto; // 'auto' instead of 'scroll' is usually better UX
 		margin-bottom: 300px;
-	
-	}// .logbox
+
+		// REMOVE flex settings
+		// Instead, use this trick:
+		display: block;
+
+	}// .logBox
 
 </style>

@@ -1,11 +1,11 @@
 /*
-	live.js
-	-------
+	obsTestPage.js
+	--------------
 
-	Basic JS file to bootstrap the dev page.
+	Basic JS file to bootstrap the test page page.
 */
 import { createApp } from 'vue'
-import Live from './pages/Live.vue'
+import OBSTestPage from './pages/OBSTestPage.vue'
 import 'material-icons/iconfont/material-icons.css';
 import { setGlobalSocketRefPort, enableConnectionLogs } from 'socket-ref';
 
@@ -19,4 +19,4 @@ const socketPort = (location.port==8080) ? paramPortOrDefault : hostPort;
 setGlobalSocketRefPort(socketPort);
 // enableConnectionLogs(true);
 
-createApp(Live).mount('#app');
+createApp(OBSTestPage).mount('#app');

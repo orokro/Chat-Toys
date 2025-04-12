@@ -16,12 +16,13 @@ import { join } from 'path';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
+import { createHttpTerminator } from 'http-terminator';
 const { socketRefServer } = require('socket-ref/server');
 const serveIndex = require('serve-index');
 const Store = require('electron-store');
 const store = new Store();
-import { createHttpTerminator } from 'http-terminator';
-  
+const fs = require('fs');
+
 
 /**
  * Class to set up the servers for the live page.
@@ -43,6 +44,17 @@ class OBSViewServer {
 
 		// start our servers
 		this.startServers();
+
+		// kill servers when main window is closed
+		this.mainWindow.on('close', () => {
+
+			console.log('AIDS Closing OBSViewServer...');
+			this.killServers();
+
+			setTimeout(()=>{
+				process.exit(0);
+			}, 1000)
+		});
 	}
 
 
@@ -99,11 +111,9 @@ class OBSViewServer {
 
 
 	/**
-	 * Restarts the servers.
+	 * Kills the servers.
 	 */
-	async restartServers() {
-
-		console.log('Restarting OBSViewServer...');
+	async killServers(){
 
 		// Close HTTP server first (since WebSockets depend on it)
 		// await close(this.server, 'HTTP server');
@@ -113,6 +123,19 @@ class OBSViewServer {
 		// Try closing WebSocket interface if it's separate (for safety)
 		await this.terminatorWS.terminate();
 		this.wss = null;
+	}
+
+
+	/**
+	 * Restarts the servers.
+	 */
+	async restartServers() {
+
+		console.log('Restarting OBSViewServer...');
+		this.logToFE('Restarting OBSViewServer...');
+
+		// kill the servers
+		await this.killServers();		
 
 		// Allow port to be released
 		await new Promise((res) => setTimeout(res, 300));
@@ -120,9 +143,20 @@ class OBSViewServer {
 		this.startServers();
 
 		console.log('🚀 OBSViewServer restarted');
+		this.logToFE('🚀 OBSViewServer restarted');
 	}
 
-	
+
+	/**
+	 * Sends server log to Frontend
+	 * 
+	 * @param {String} msg - message
+	 */
+	logToFE(msg) {
+		this.mainWindow.webContents.send('server-log', msg);
+	}
+
+
 	/**
 	 * Starts both the http and websocket servers.
 	 */
@@ -130,19 +164,42 @@ class OBSViewServer {
 
 		// get default port
 		const port = store.get('port', 3001);
-		console.log('Found OBSViewServer port in storage: ' + port);
+		this.logToFE('Found OBSViewServer port in storage: ' + port);
 
 		// try to start the servers
 		try {
 
 			// set up a basic express server and a WebSocket server
 			const expressApp = express();
+
+			// log every request to Frontend
+			expressApp.use((req, res, next) => {
+				this.logToFE(`[HTTP] ${req.method} ${req.url}`);
+				next();
+			});
+
 			this.server = http.createServer(expressApp);
 
 			// using our socket-ref server, that syncs socketRefs
 			this.wss = socketRefServer({ server: this.server, port });
+
+			// web socket server loggin
+			this.wss.on('connection', (ws, req) => {
+				const ip = req.socket.remoteAddress;
+				this.logToFE(`[WS] New connection from ${ip}`);
+
+				// ws.on('message', (message) => {
+				// 	this.logToFE(`[WS] Message from ${ip}: ${message}`);
+				// });
+
+				ws.on('close', () => {
+					this.logToFE(`[WS] Connection closed from ${ip}`);
+				});
+			});
+
 			this.startEchoServer();
 
+			// set up the terminators so we can close the servers cleanly
 			this.terminatorHTTP = createHttpTerminator({ server: this.server });
 			this.terminatorWS = createHttpTerminator({ server: this.wss });
 
@@ -178,6 +235,16 @@ class OBSViewServer {
 					index: false,
 				}));
 
+				// Serve obsTestPage.html manually when accessing /obsTestPage/
+				expressApp.get('/obsTestPage/', (req, res) => {
+					res.sendFile('obsTestPage.html', { root: rendererPath });
+				});
+
+				// Serve static assets, but disable default index.html serving
+				expressApp.use('/obsTestPage', express.static(rendererPath, {
+					index: false,
+				}));
+
 				// our custom imported user-assets folder needs to statically serve as well
 				const assetFolder = join(app.getPath('userData'), 'custom_assets');
 				expressApp.use('/live/custom_assets',
@@ -185,13 +252,15 @@ class OBSViewServer {
 					serveIndex(assetFolder, { icons: true })
 				);
 			}
-			
+
 			this.server.listen(port, () => {
 				console.log(`Server listening at http://127.0.0.1:${port}`);
+				this.logToFE(`Server listening at http://127.0.0.1:${port}`);
 			});
 
 		} catch (e) {
 			console.error(e);
+			this.logToFE(`Error ${e.message}`);
 		}
 	}
 
