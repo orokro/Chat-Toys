@@ -92,7 +92,7 @@ const countSentence = computed(() => {
 		// the row for each URL
 		.urlRow {
 
-			padding: 10px 20px;
+			padding: 10px 20px 20px 20px;
 
 			// alternate BG colors
 			&:nth-child(odd) {

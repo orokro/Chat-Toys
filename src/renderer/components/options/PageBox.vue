@@ -119,7 +119,6 @@ function generateGradient(colorHex) {
 
 		}// .pageHeader
 
-
 		// content
 		.pageContent {
 			padding: 20px;
@@ -148,6 +147,17 @@ function generateGradient(colorHex) {
 
 		:deep(.infoBox) {
 			background-color: var(--tColor);
+		}
+
+		:deep(.settings-row) {
+
+			padding: 20px;
+			&:nth-child(odd) {
+				background: rgba(0, 0, 0, 0.05);
+			}
+			&:nth-child(even) {
+				background: rgba(0, 0, 0, 0.1);
+			}
 		}
 		
 	}// .pageBox
