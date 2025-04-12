@@ -82,7 +82,7 @@ import { ref, computed } from 'vue';
 
 // components
 import ModalWindowFrame from './ModalWindowFrame.vue';
-import CustomDataTable from './page_settings/CustomDataTable.vue';
+import CustomDataTable from './page_database/CustomDataTable.vue';
 import FilePreview from './FilePreview.vue';
 
 // lib misc

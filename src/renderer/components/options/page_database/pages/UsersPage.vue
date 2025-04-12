@@ -1,39 +1,35 @@
 <!--
-	GeneralSettingsPage.vue
-	-----------------------
+	UsersPage.vue
+	-------------
 
-	Page to show settings that don't fit more specifically anywhere else.
+	Let's the user browse all the users that have interacted with the extension.
 -->
 <template>
 
 	<PageBox
-		title="General Settings"
-		themeColor="lightblue"
+		title="Users Database"
+		themeColor="#69457f"
 	>
+		
 		<p>
-			General settings
+			Users
 		</p>
 
 		<SectionHeader title="CatsumIpsum"/>
-		<p>
-			{{ ctApp.chatProcessor.screenMessages.value }}
-		</p>
+		<CatsumIpsum :paragraphs="5" :sentences="10"/>
 	</PageBox>
 
 </template>
 <script setup>
 
 // vue
-import { ref, inject } from 'vue';
+import { ref } from 'vue';
 
 // components
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
-
-// fetch the main app state context
-const ctApp = inject('ctApp');
 
 </script>
 <style lang="scss" scoped>	

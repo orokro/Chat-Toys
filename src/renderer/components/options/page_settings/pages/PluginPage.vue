@@ -1,34 +1,40 @@
 <!--
-	UsersPage.vue
-	-------------
+	PluginPage.vue
+	--------------
 
-	Let's the user browse all the users that have interacted with the extension.
+	Page to show plugin details.
 -->
 <template>
 
 	<PageBox
-		title="Users Database"
-		themeColor="lightblue"
+		title="Plugin Settings"
+		themeColor="black"
 	>
 		<p>
-			Users
+			General settings
 		</p>
 
-		<SectionHeader title="CatsumIpsum"/>
-		<CatsumIpsum :paragraphs="5" :sentences="10"/>
+		<SectionHeader title="Live Raw Chat"/>
+		<pre>
+
+			{{ ctApp.chatProcessor.screenMessages.value }}
+		</pre>
 	</PageBox>
 
 </template>
 <script setup>
 
 // vue
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 
 // components
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
+
+// fetch the main app state context
+const ctApp = inject('ctApp');
 
 </script>
 <style lang="scss" scoped>	

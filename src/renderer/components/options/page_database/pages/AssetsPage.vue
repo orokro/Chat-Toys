@@ -8,8 +8,8 @@
 <template>
 
 	<PageBox
-		title="Assets"
-		themeColor="lightblue"
+		title="Assets Database"
+		themeColor="#69457f"
 		:limitWidth="true"
 	>
 		<p>Below you will find the complete list of assets available..</p>

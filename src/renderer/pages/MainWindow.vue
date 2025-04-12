@@ -30,10 +30,10 @@
 		<div class="tabPagesWrapper">
 
 			<HelpPage v-if="activeTab === 0" />
-			<SettingsPage v-if="activeTab === 1" />
+			<SettingsPage v-if="activeTab === 1" />			
 			<ToyBoxPage v-if="activeTab === 2" />
-			<LayoutPage v-if="activeTab === 3" />
-			<ButtonsPage v-if="activeTab === 4" />		
+			<LayoutPage v-if="activeTab === 3" />	
+			<DatabasePage v-if="activeTab === 4" />
 
 		</div>
 
@@ -50,7 +50,7 @@ import HelpPage from '../components/options/page_help/HelpPage.vue'
 import SettingsPage from '../components/options/page_settings/SettingsPage.vue'
 import ToyBoxPage from '../components/options/page_toy_box/ToyBoxPage.vue'
 import LayoutPage from '../components/options/page_layout/LayoutPage.vue'
-import ButtonsPage from '../components/options/page_buttons/ButtonsBoardPage.vue'
+import DatabasePage from '../components/options/page_database/DatabasePage.vue'
 import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
 
 // our app scripts
@@ -60,9 +60,10 @@ let ctApp = null;
 // we'll define our tabs here
 const tabs = [
 	{ title: 'Help', icon: 'help', slug: 'help' },
-	{ title: 'General Settings', icon: 'settings', slug: 'settings' },
+	{ title: 'Connection Settings', icon: 'settings_ethernet', slug: 'settings' },	
 	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
 	{ title: 'Layout', icon: 'monitor', slug: 'layout' },
+	{ title: 'Database', icon: 'storage', slug: 'settings' },
 
 	// deprecated page
 	// { title: 'Showtime Buttons Board', icon: 'dialpad', slug: 'buttons' },

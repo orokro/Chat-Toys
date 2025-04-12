@@ -28,7 +28,8 @@
 
 		<!-- title of the tab -->
 		<div class="title">
-			{{ title }}
+			<span class="spacer">{{ title }}</span>
+			<span class="visual">{{ title }}</span>			
 		</div>
 
 	</div>
@@ -112,7 +113,9 @@ const events = defineEmits([
 			background: white;
 			height: 38px;
 			.title {
-				font-weight: bold;
+				.visual{
+					font-weight: bold;
+				}
 			}
 		}
 
@@ -126,7 +129,7 @@ const events = defineEmits([
 
 			// fixed on left
 			position: absolute;
-			left: 10px;
+			left: 15px;
 			top: 5px;
 			font-size: 20px;
 
@@ -135,15 +138,31 @@ const events = defineEmits([
 		// title
 		.title {
 
+			position: relative;
 			// same height as tab
 			height: 35px;
 
 			// spacing
-			padding: 5px 15px 0 5px;
+			padding: 5px 30px 0px 15px;
 
 			// text styles
 			font-size: 16px;
 			
+			.spacer {
+				opacity: 0;
+			}
+
+			// the visual harder-coded text that we can change bold on without reflowing layotu
+			.visual {
+				position: absolute;
+				top: 4px;
+				left: 48%;
+				transform: translate(-50%, 0);
+				width: 100%;
+				text-align: center;				
+				white-space: nowrap;
+
+			}// .visual
 
 		}// .title
 

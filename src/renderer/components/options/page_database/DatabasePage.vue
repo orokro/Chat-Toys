@@ -1,19 +1,18 @@
 <!--
-	SettingsPage.vue
+	DatabasePage.vue
 	----------------
 
-	This is the top level component for when the "Settings" tab is active.
+	This is the top level component for when the "Database" tab is active.
 -->
 <template>
-	
+	ads
 	<VerticalItemsPage
 		:verticalItems="pageItems"
 		:selectedTab="selectedPage"
 		@changeTab="(tab)=>selectedPage = tab"
 	>	
-		<OBSSettingsPage v-if="selectedPage === 'obsSettings'" />
-		<PluginPage v-if="selectedPage === 'plugin'" />
-		
+		<AssetsPage v-if="selectedPage === 'assets_db'" />
+		<UsersPage v-if="selectedPage === 'users_db'" />
 	</VerticalItemsPage>
 
 </template>
@@ -24,23 +23,23 @@ import { ref } from 'vue';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
-import OBSSettingsPage from './pages/OBSSettingsPage.vue';
-import PluginPage from './pages/PluginPage.vue';
+import AssetsPage from './pages/AssetsPage.vue';
+import UsersPage from './pages/UsersPage.vue';
 
 // this will generate the icons for the vertical strip items
 const pageItems = [
 	{
-		slug: 'obsSettings',
-		name: 'General Settings',
+		slug: 'assets_db',
+		name: 'Assets',
 	},
 	{
-		slug: 'plugin',
-		name: 'Plugin Settings',
+		slug: 'users_db',
+		name: 'Users',
 	},
 ];
 
 // refs
-const selectedPage = ref('obsSettings');
+const selectedPage = ref('assets_db');
 
 </script>
 <style lang="scss" scoped>
