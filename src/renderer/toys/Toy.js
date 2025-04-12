@@ -331,4 +331,52 @@ export default class Toy {
 		return '';
 	}
 
+
+	/**
+	 * Generates an array of URLS for single widgets
+	 * 
+	 * @returns {Array<String>} - array of urls for the widgets
+	 */
+	getWidgetURLs(){
+
+		// loop over the widget components defined on this toy (if any)
+		if(!this.static.widgetComponents)
+			return [];
+
+		// break out for legibility
+		const isDev = window.env.isDev;
+
+		// check if we're using a non standard port:
+		const serverPort = this.chatToysApp.serverPort.value
+		const showPort = (serverPort !== 3001);
+	
+		// if dev, host port is different
+		const hostPort = isDev ? 8080 : serverPort;
+
+		const urls = [];
+		for(let widget of this.static.widgetComponents){
+
+			let url = `http://localhost:${hostPort}/`;
+			
+			url += isDev ? 'live.html?' : '/live/?';
+
+			url += showPort ? `port=${serverPort}&` : '';
+
+			url += 'single=true&';
+
+			url += `toy=${this.slug}&widget=${widget.slug}`;
+
+			const desc = widget.description;
+
+			urls.push({
+				url,
+				desc
+			});
+
+		}// next widget
+
+		// return the urls
+		return urls;
+	}
+
 }

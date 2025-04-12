@@ -36,7 +36,7 @@ export default class HeadPat extends Toy {
 			key: 'streamerWidgetBox',
 			allowResize: true,
 			lockAspectRatio: true,
-			description: 'This widget should go over the streamers avatar or webcam feed.',
+			description: 'This head-pat widget should be placed over the streamers avatar or webcam feed.',
 			slug: 'streamer'
 		},
 		{
@@ -44,7 +44,7 @@ export default class HeadPat extends Toy {
 			key: 'chatterWidgetBox',
 			allowResize: true,
 			lockAspectRatio: true,			
-			description: 'This widget will show a pat over a generic profile picture of a chatter, and can be placed anywhere.',
+			description: 'This widget will show a head-pat over a generic profile picture of a chatter, and can be placed anywhere.',
 			slug: 'chat'
 		}
 	];

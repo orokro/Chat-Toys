@@ -26,6 +26,8 @@
 		</p>
 		<CommandsConfigBox :toy="toy" />
 			
+		<WidgetSection :toy="toy" />
+		
 		<SectionHeader title="Settings"/>
 		<SettingsInputRow
 			type="number"
@@ -101,6 +103,7 @@ import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayFishEdit from './ArrayFishEdit.vue';
+import WidgetSection from '@components/options/WidgetSection.vue';
 
 // our app
 import Fishing from './Fishing';

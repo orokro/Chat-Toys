@@ -28,6 +28,8 @@
 		</p>
 		<CommandsConfigBox :toy="toy" />
 			
+		<WidgetSection :toy="toy" />
+		
 		<SectionHeader title="Settings"/>
 
 		<SettingsRow>
@@ -115,6 +117,7 @@ import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayTextInput from '@components/options/ArrayTextInput.vue';
 import ArrayColorInput from '@components/options/ArrayColorInput.vue';
 import PrizeWheelWidget from './PrizeWheelWidget.vue';
+import WidgetSection from '@components/options/WidgetSection.vue';
 
 // lib/misc
 import * as yup from 'yup';

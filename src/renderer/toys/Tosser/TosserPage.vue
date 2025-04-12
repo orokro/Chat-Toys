@@ -50,6 +50,8 @@
 			:toy="toy"
 			:enableCustomCommands="true"
 		/>
+
+		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
 		<SettingsInputRow
@@ -107,6 +109,7 @@ import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayTosserEdit from './ArrayTosserEdit.vue';
+import WidgetSection from '@components/options/WidgetSection.vue';
 
 // our app
 import Tosser from './Tosser';

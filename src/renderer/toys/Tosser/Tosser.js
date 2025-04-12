@@ -36,6 +36,10 @@ export default class Tosser extends Toy {
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
+			description: `
+				This should be a browser source layer that is full screen. 
+				It shows the 3d objects tossed at the set collider.`,
+			slug: 'tosserLayer'
 		}
 	];
 

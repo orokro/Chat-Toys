@@ -35,6 +35,10 @@ export default class StreamBuddies extends Toy {
 			key: 'widgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
+			description: `
+				This should be a browser source layer that is full screen. 
+				It shows the buddies walking along the bottom of the screen.`,
+			slug: 'streamBuddiesLayer',
 		}
 	];
 

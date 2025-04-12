@@ -43,6 +43,8 @@
 		</p>
 		<CommandsConfigBox :toy="toy" />
 
+		<WidgetSection :toy="toy" />
+		
 		<SectionHeader title="Theme Colors"/>
 
 		<SettingsInputRow
@@ -216,6 +218,7 @@ import ArrayTextInput from '../../components/options/ArrayTextInput.vue';
 import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import ConfirmModal from '@components/options/ConfirmModal.vue';
 import ResolveGambaModal from './ResolveGambaModal.vue';
+import WidgetSection from '@components/options/WidgetSection.vue';
 
 // our app
 import Gamba from './Gamba';

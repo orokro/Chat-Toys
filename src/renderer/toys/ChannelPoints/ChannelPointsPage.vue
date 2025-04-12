@@ -39,6 +39,8 @@
 		</p>
 		<CommandsConfigBox :toy="toy" />
 		
+		<WidgetSection :toy="toy" />
+
 		<SectionHeader title="Settings"/>
 
 		<SettingsInputRow
@@ -175,6 +177,7 @@ import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import ChannelPointsWidget from './ChannelPointsWidget.vue';
+import WidgetSection from '@components/options/WidgetSection.vue';
 
 // our app
 import ChannelPoints from './ChannelPoints';

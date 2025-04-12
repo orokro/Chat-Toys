@@ -32,6 +32,8 @@
 		</p>
 		<CommandsConfigBox :toy="toy" />
 		
+		<WidgetSection :toy="toy" />
+		
 		<SectionHeader title="Settings"/>
 		<SettingsInputRow
 			type="boolean"
@@ -131,6 +133,7 @@ import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
+import WidgetSection from '@components/options/WidgetSection.vue';
 
 // our app
 import Chat from './Chat';

@@ -33,6 +33,8 @@
 			:enable-custom-commands="true"
 		/>
 
+		<WidgetSection :toy="toy" />
+		
 		<SectionHeader title="Settings"/>
 		<SettingsRow>
 			<h3>Media</h3>
@@ -74,6 +76,7 @@ import SettingsRow from '@components/options/SettingsRow.vue';
 import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayMediaEdit from './ArrayMediaEdit.vue';
+import WidgetSection from '@components/options/WidgetSection.vue';
 
 // our app
 import Media from './Media';

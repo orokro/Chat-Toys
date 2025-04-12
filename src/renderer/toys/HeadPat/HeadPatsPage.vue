@@ -22,6 +22,8 @@
 		</p>
 		<CommandsConfigBox :toy="toy" />
 
+		<WidgetSection :toy="toy" />
+		
 		<SectionHeader title="Settings"/>
 		<SettingsInputRow
 			type="boolean"
@@ -55,6 +57,7 @@ import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
+import WidgetSection from '@components/options/WidgetSection.vue';
 
 // our app
 import HeadPat from './HeadPat';
