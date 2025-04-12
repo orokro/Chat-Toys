@@ -20,6 +20,7 @@ import { createHttpTerminator } from 'http-terminator';
 const { socketRefServer } = require('socket-ref/server');
 const serveIndex = require('serve-index');
 const Store = require('electron-store');
+
 const store = new Store();
 const fs = require('fs');
 

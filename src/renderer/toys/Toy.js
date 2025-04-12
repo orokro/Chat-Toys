@@ -307,7 +307,7 @@ export default class Toy {
 		if(fileData.internal)
 			return `builtin/${fileData.name}`;
 		else
-			return `http://localhost:3001/${fileData.file_path}`;
+			return `http://localhost:${this.chatToysApp.serverPort.value}/${fileData.file_path}`;
 	}
 
 

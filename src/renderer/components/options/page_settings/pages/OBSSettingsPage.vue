@@ -151,7 +151,8 @@ function restartServer(){
 			color: black;
 			cursor: pointer;
 		}
-	}
+		
+	}// .restartButton
 
 
 	// box to show the server output log

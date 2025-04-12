@@ -49,7 +49,7 @@ export default class ChatToysApp {
 		this.demoMode = socketShallowRef('demoMode', false);
 
 		// port number for the obs server stuff
-		this.serverPort = shallowRef(0);
+		this.serverPort = shallowRef(window.initPort);
 
 		// unrelated to our logger above, we'll also receive messages from from the OBS server
 		this.obsServerMessages = shallowRef([]);
@@ -72,7 +72,7 @@ export default class ChatToysApp {
 
 		// we'll load our assets from the AssetManager here in the Options class
 		// the popup will also have it's own assets manager ref
-		this.assetsMgr = new AssetManager();
+		this.assetsMgr = new AssetManager(this);
 		
 		// make a new chat processor to handle all incoming chats from outside
 		// note: this will handle messages coming from IPC messages from the electron

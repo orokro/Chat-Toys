@@ -14,13 +14,14 @@ async function startMain(){
 
 	// get port from the main process
 	const port = await window.electronAPI.invoke('get-server-port');
+	window.initPort = port;
 	console.log("Before Creating Main Window, Starting with Port: " + port);
 
 	// set the socket port for the library globally
 	setGlobalSocketRefPort(port);
 
 	// enable connection logs
-	enableConnectionLogs(true);
+	// enableConnectionLogs(true);
 
 	// now we'll create the main window, so the socketRefs use the correct port
 	createApp(MainWindow).mount('#app');

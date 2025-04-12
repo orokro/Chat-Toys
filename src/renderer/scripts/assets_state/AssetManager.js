@@ -35,8 +35,13 @@ export class AssetManager {
 
 	/**
 	 * Constructor
+	 * 
+	 * @param {ChatToysApp} ctApp - reference to the main app
 	 */
-	constructor() {
+	constructor(ctApp) {
+
+		// save our reference to the main app
+		this.ctApp = ctApp;
 
 		// get our built-in assets, pre-processed on start up
 		this.builtInAssets = this.preprocessAssets(builtInAssets);
@@ -188,7 +193,7 @@ export class AssetManager {
 		if (assetData.internal) {
 			filePath = `builtin/${assetData.name}`;
 		} else {
-			filePath = `http://localhost:3001/${assetData.file_path}`;
+			filePath = `http://localhost:${this.ctApp.serverPort.value}/${assetData.file_path}`;
 		}
 
 		// if we have a file path, let's fetch it

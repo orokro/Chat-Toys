@@ -7,6 +7,8 @@
 
 // Electron
 const { app, Menu, shell, ipcMain, BrowserWindow } = require('electron');
+const Store = require('electron-store');
+const store = new Store();
 
 /**
  * Builds our main menus for the app
@@ -62,9 +64,10 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 				{
 					label: 'Show Live Window',
 					click: () => {
+						const port = store.get('port', 3001);
 						const url = isDev
 							? 'http://localhost:8080/live.html'
-							: 'http://localhost:3001/live/';
+							: `http://localhost:${port}/live/`;
 						shell.openExternal(url);
 					}
 				},
