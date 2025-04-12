@@ -12,6 +12,7 @@
 		themeColor="#69457f"
 		:limitWidth="true"
 	>
+		<br><br>
 		<p>Below you will find the complete list of assets available..</p>
 		<p>This includes built-in assets, as well as ones you previously imported.</p>
 		
@@ -29,7 +30,7 @@
 			class="importButton"
 			@click="handleImportAssets"
 		>Import Assets</button>
-		<AssetsView
+		<CustomDataTable
 			:data="ctApp.assetsMgr.assets.value"
 			:selected_id="selectedRow"			
 			:ignoreColumns="['id', 'file_path']"
@@ -52,7 +53,7 @@ import ConfirmModal from '../../ConfirmModal.vue';
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
-import AssetsView from '../CustomDataTable.vue';
+import CustomDataTable from '../CustomDataTable.vue';
 import FilePreview from '../../FilePreview.vue';
 
 // lib/ misc

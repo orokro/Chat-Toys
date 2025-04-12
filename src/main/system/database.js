@@ -176,6 +176,37 @@ class DatabaseManager {
 
 
 	/**
+	 * Gets all of the users 100%
+	 * 
+	 * @returns {Array<Object>} - list of all users in the database
+	 */
+	getAllUsersFull(){
+		const users = this.db.prepare(`SELECT * FROM users`).all();
+		if (!users) return null;
+
+		const allUsers = users.map((user) => {
+			const streams = this.db
+				.prepare(`SELECT stream_id FROM user_streams WHERE youtube_id = ?`)
+				.all(user.youtube_id)
+				.map((row) => row.stream_id);
+
+			const commands = this.db
+				.prepare(`SELECT command_name, usage_count FROM user_commands WHERE youtube_id = ?`)
+				.all(user.youtube_id)
+				.map((row) => `${row.command_name}:${row.usage_count}`);
+
+			return {
+				...user,
+				streams,
+				commands
+			};
+		});
+
+		return allUsers;
+	}
+
+
+	/**
 	 * Get a user by display name (basic info)
 	 * 
 	 * @param {String} display_name - The display name of the user
