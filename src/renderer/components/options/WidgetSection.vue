@@ -21,30 +21,7 @@
 			:key="`widget-url-${i}`"
 		>
 			
-			<div class="urlRow">
-
-				<div class="desc"><em>{{ url.desc }}</em></div>
-				<div class="inputRow">
-					<!-- a read only input that can be copied from: -->
-					<input 
-						type="text" 
-						:value="url.url" 
-						readonly
-						@focus="$event.target.select()"
-						@click="$event.target.select()"
-						@copy="$event.target.select()"
-					></input>
-					<div class="copyButton">
-						<span 
-							class="material-icons"
-							@click="$event.target.closest('.inputRow').querySelector('input').select()"
-						>
-							content_copy
-						</span>
-					</div>
-
-				</div>
-			</div>
+			<WidgetRow :urlData="url" />
 
 		</template>
 	</div>
@@ -58,6 +35,7 @@ import { ref, inject, computed } from 'vue';
 // components
 import PageBox from '@components/options/PageBox.vue';
 import SectionHeader from '@components/options/SectionHeader.vue';
+import WidgetRow from './WidgetRow.vue';
 
 const props = defineProps({
 
@@ -89,81 +67,8 @@ const countSentence = computed(() => {
 
 	.widgetURLs {
 
-		// the row for each URL
-		.urlRow {
-
-			padding: 10px 20px 20px 20px;
-
-			// alternate BG colors
-			&:nth-child(odd) {
-				background: rgba(0, 0, 0, 0.05);
-			}
-			&:nth-child(even) {
-				background: rgba(0, 0, 0, 0.1);
-			}
-
-			.desc{
-				padding: 10px 0px;
-			}
-
-			// row with the text box & the copy button
-			.inputRow {
-
-				// reset stacking context
-				position: relative;
-
-				// fixed height & look like a box
-				height: 40px;
-				background: white;
-				padding: 5px 15px;
-				border-radius: 5px;
-				border: 2px solid black;
-				
-				// inner shadow
-				box-shadow: inset 0px 0px 5px rgba(0, 0, 0, 0.5);
-
-				// actual text input
-				input {
-
-					// fill container
-					position: absolute;
-					inset: 0px;
-					font-size: medium;
-					font-family: monospace;
-					padding: 0px 10px;
-				}
-
-				// the copy button
-				.copyButton {
-
-					// position it to the right
-					position: absolute;
-					inset: 0px 0px 0px auto;
-					top: 0px;
-					width: 40px;
-					cursor: pointer;
-					border-left: 2px solid black;
-
-					&:hover {
-						background: black;
-						span {
-							color: white;
-						}
-					}
-
-					// icon
-					span {
-						font-size: 1.5em;
-						position: relative;
-						top: 5px;
-						left: 7px;
-						color: black;
-					}
-
-				}// .copyButton
-			}// .inputRow
-
-		}// .urlRow
+		// stuff
+		line-height: inherit;
 
 	}// .widgetURLs
 

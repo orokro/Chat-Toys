@@ -370,7 +370,9 @@ export default class Toy {
 
 			urls.push({
 				url,
-				desc
+				desc,
+				toySlug: this.slug,
+				widgetSlug: widget.slug,
 			});
 
 		}// next widget
