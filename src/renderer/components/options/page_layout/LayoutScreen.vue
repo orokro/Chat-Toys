@@ -75,7 +75,7 @@
 <script setup>
 
 // vue
-import { ref, onMounted, onBeforeUnmount, watch, inject } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, provide, inject } from 'vue'
 
 // components
 import LayoutWidgets from './LayoutWidgets.vue';
@@ -99,6 +99,8 @@ const containerHeight = ref(0);
 
 // the scale value applied to the layout screen to fit the container
 const scale = ref(1);
+
+provide('layoutScreenScale', scale);
 
 // accept some props
 const props = defineProps({

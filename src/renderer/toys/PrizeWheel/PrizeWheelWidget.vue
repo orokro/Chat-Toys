@@ -125,6 +125,10 @@ keepAliveSocket(thisSlug, widgetSlug);
 // autosize scale
 const scale = ref(1);
 
+watch(scale, (newVal) => {
+	// set the scale on the widget
+	console.log('scale', newVal);
+});
 const emit = defineEmits([
 	'boxChange'
 ]);

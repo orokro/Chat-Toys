@@ -365,7 +365,7 @@ function computeAspectMins(aspectRatio, minEdgeSide) {
 		.children {
 
 			border: 2px solid yellow;
-			
+
 			// fill parent
 			position: absolute;
 			inset: 0;
