@@ -199,6 +199,7 @@ export class ThreeJSBuddiesSystem {
 	 * Add a wireframe box to the scene to show the collider area
 	 */
 	setupDebug() {
+		
 		// add a teal cube to the center of the scene to test rendering is live
 		const geo = new BoxGeometry(100, 100, 100);
 		const mat = new MeshBasicMaterial({ color: 0x00ABAE, wireframe: true });

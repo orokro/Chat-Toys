@@ -293,7 +293,7 @@ export class CommandProcessor {
 		// gather some data we need
 		const now = Date.now();
 		const slug = commandData.slug;
-		const userKey = `${slug}:${user.id}`;
+		const userKey = `${commandData.slug}:${user.id}`;
 
 		// Cooldowns
 		if (commandData.coolDown) {
@@ -301,8 +301,14 @@ export class CommandProcessor {
 			// check if the time since the last time THIS user ran THIS command
 			// is less than the cooldown time, if so, GTFO
 			const last = this.userCooldowns.get(userKey);
+
 			if (last && (now - last) < commandData.coolDown * 1000) {
+
 				console.error('User cooldown not met');
+
+				const timeToTryAgain = Math.ceil(commandData.coolDown - ((now - last)/ 1000) );
+				this.chatToysApp.log.err(`${user.display_name}: try again in ${timeToTryAgain} seconds`);
+
 				return false;
 			}
 		}
@@ -315,6 +321,10 @@ export class CommandProcessor {
 			const last = this.groupCooldowns.get(slug);
 			if (last && (now - last) < commandData.groupCoolDown * 1000) {
 				console.error('Group cooldown not met');
+
+				const timeToTryAgain = Math.ceil(commandData.groupCoolDown - ((now - last)/ 1000) );
+				this.chatToysApp.log.err(`${commandData.command}: is on group-cooldown, try again in ${timeToTryAgain} seconds`);
+
 				return false;
 			}
 		}
