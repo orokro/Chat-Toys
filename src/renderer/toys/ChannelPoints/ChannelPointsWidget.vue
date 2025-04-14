@@ -110,6 +110,7 @@ import AutoSizer from '@components/AutoSizer.vue';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
+import { keepAliveSocket } from '../keepAliveSocket.js';
 
 // inherit scale from AutoSizer
 const scale = ref(1);
@@ -119,6 +120,8 @@ const widgetSlug = 'points';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
+
+keepAliveSocket(thisSlug, widgetSlug);
 
 const emit = defineEmits([
 	'boxChange'

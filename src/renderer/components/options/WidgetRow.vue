@@ -12,7 +12,9 @@
 		<div 
 			class="statusLight"
 			:class="{
-				'live': isLive
+				'live': isLive,
+				'obs': statusCode === 'O',
+				'browser': statusCode === 'B',
 			}"
 		></div>
 
@@ -38,7 +40,7 @@
 
 // vue
 import { ref, inject, computed } from 'vue';
-import { socketRef, socketShallowRef, socketRefAsync, bindRef, bindRefs } from 'socket-ref';
+import { socketRef, socketShallowRef, socketShallowRefReadOnly, socketRefAsync, bindRef, bindRefs } from 'socket-ref';
 
 // define some props
 const props = defineProps({
@@ -52,11 +54,33 @@ const props = defineProps({
 
 // make a socket ref looking for the live-state of the toy
 const socketSlug = `live-state-${props.urlData.toySlug}-${props.urlData.widgetSlug}`;
-const liveStatus = socketShallowRef(socketSlug, 0);
+const liveStatus = socketShallowRefReadOnly(socketSlug, 'U_0');
 
-// method ot keep track if the toy is in a live state or not
+// keep now ref updated so we can trigger the computed
+const now = ref(Date.now());
+const interval = setInterval(() => {
+	now.value = Date.now();
+}, 1000);
+
+// computed property keep track if the toy is in a live state or not
 const isLive = computed(() => {
-	return (Date.now() - liveStatus.value) > 10;
+
+	// get the time stored in the socket value
+	const statusTime = parseInt(liveStatus.value.split('_')[1]);
+	// console.log(socketSlug, liveStatus.value, (now.value - statusTime));
+	return (now.value - statusTime) < (10*1000);
+});
+
+// computed property to get the status code
+const statusCode = computed(() => {
+
+	// U - Uninitialized
+	// B - Browser (not OBS)
+	// O - OBS
+
+	// get the time and method stored in the socket value
+	const statusCode = liveStatus.value.split('_')[0];
+	return statusCode;
 });
 
 </script>
@@ -88,8 +112,8 @@ const isLive = computed(() => {
 
 			// position it to the left
 			position: absolute;
-			top: 65px;
-			left: 10px;
+			top: 60px;
+			left: 11px;
 
 			// round gray circle when 'off'
 			border: 2px solid black;
@@ -98,8 +122,12 @@ const isLive = computed(() => {
 			border-radius: 40px;
 			background: gray;
 
-			&.isLive {
+			&.live {
 				background: rgb(171, 236, 17);
+
+				&.browser {
+					background: rgb(255, 208, 0);
+				}
 			}
 		}// .statusLight
 
