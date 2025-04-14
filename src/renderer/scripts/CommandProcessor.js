@@ -118,8 +118,8 @@ export class CommandProcessor {
 		// loop through each message
 		for (const msg of messages) {
 
-			// get the message text and author
-			const { messageText, authorUniqueID } = msg;
+			// get the message text, author, if they're a member, and if its a super chat
+			const { messageText, authorUniqueID, isMember, isSuper } = msg;
 
 			// must contain and start with '!' to be a command
 			if (messageText.startsWith('!') == false)
@@ -144,6 +144,16 @@ export class CommandProcessor {
 			// make sure this command is able to be run
 			if (this.validateCommand(commandData, user, params) == false)
 				continue;
+
+			// lastly we need to check super chat and member status, if required
+			if(commandData.memberOnly==true && isMember==false){
+				this.chatToysApp.log.err(`${msg.author}: "${commandData.command}" is a member-only command`);
+				continue;
+			}
+			if(commandData.superOnly==true && isSuper==false){
+				this.chatToysApp.log.err(`${msg.author}: "${commandData.command}" is a Super-Chat-only command`);
+				continue;
+			}
 
 			// split the command slug into toy and command parts
 			const [toySlug, commandSlug] = commandData.slug.split(/__/, 2);
