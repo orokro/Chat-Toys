@@ -28,7 +28,7 @@
 
 			<div class="copyButton">
 				<span class="material-icons"
-					@click="$event.target.closest('.inputRow').querySelector('input').select()">
+					@click="copyURL">
 					content_copy
 				</span>
 			</div>
@@ -53,15 +53,18 @@ const props = defineProps({
 	}
 });
 
+
 // make a socket ref looking for the live-state of the toy
 const socketSlug = `live-state-${props.urlData.toySlug}-${props.urlData.widgetSlug}`;
 const liveStatus = socketShallowRefReadOnly(socketSlug, 'U_0');
+
 
 // keep now ref updated so we can trigger the computed
 const now = ref(Date.now());
 const interval = setInterval(() => {
 	now.value = Date.now();
 }, 1000);
+
 
 // computed property keep track if the toy is in a live state or not
 const isLive = computed(() => {
@@ -71,6 +74,7 @@ const isLive = computed(() => {
 	// console.log(socketSlug, liveStatus.value, (now.value - statusTime));
 	return (now.value - statusTime) < (10*1000);
 });
+
 
 // computed property to get the status code
 const statusCode = computed(() => {
@@ -83,6 +87,7 @@ const statusCode = computed(() => {
 	const statusCode = liveStatus.value.split('_')[0];
 	return statusCode;
 });
+
 
 // computed property to get the live status text tooltip
 const liveStatusText = computed(() => {
@@ -99,6 +104,18 @@ const liveStatusText = computed(() => {
 		return 'Not Live';
 	}
 });
+
+
+/**
+ * Copy the URL to the clipboard
+ * 
+ * @param event - the event that triggered the copy
+ */
+const copyURL = (event)=>{
+    const input = event.target.closest('.inputRow').querySelector('input');
+    input.select();
+    document.execCommand('copy');
+}
 
 </script>
 <style lang="scss" scoped>
