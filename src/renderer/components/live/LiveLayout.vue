@@ -4,7 +4,7 @@
 
 	The Live Screen will use this component to layout multiple of the chat toys widgets on the screen.
 
-	NOTE: widgets can also be loaded invidually to use OBS browser layout tools.
+	NOTE: widgets can also be loaded individually to use OBS browser layout tools.
 
 	The main Live.vue page will not load this component if it finds a slug in it's query string,
 	and will instead load the individual widget.

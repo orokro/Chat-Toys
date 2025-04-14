@@ -7,8 +7,9 @@
 <template>
 
 	<!-- auto sizer so we can lazily scale the widget lol -->
-	<AutoSizer
+	<FixedAutoSizer
 		:targetWidth="200"
+		:targetHeight="222"
 		v-model="scale"
 	>
 
@@ -95,7 +96,7 @@
 
 			</div>
 		</div>
-	</AutoSizer>
+	</FixedAutoSizer>
 
 </template>
 <script setup>
@@ -106,6 +107,7 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 
 // other components
 import AutoSizer from '@components/AutoSizer.vue';
+import FixedAutoSizer from '@components/FixedAutoSizer.vue';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
@@ -265,6 +267,9 @@ const slices = computed(() => {
 
 	// the main box for the widget
 	.prizeWheelWidget {
+
+		border: 2px solid cyan;
+
 
 		// fixed size
 		width: 200px;

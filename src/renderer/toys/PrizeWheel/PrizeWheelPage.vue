@@ -170,8 +170,8 @@ const {
 			.widgetBox {
 				
 				width: 300px;
-				height: 200px;
-			
+				height: 400px;
+				/* border: 1px solid red; */
 			}// .widgetBox
 
 		}// .previewBox

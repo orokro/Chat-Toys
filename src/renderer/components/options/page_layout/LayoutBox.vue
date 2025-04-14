@@ -364,6 +364,8 @@ function computeAspectMins(aspectRatio, minEdgeSide) {
 		// disable pointer events on children
 		.children {
 
+			border: 2px solid yellow;
+			
 			// fill parent
 			position: absolute;
 			inset: 0;

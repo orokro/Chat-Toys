@@ -52,7 +52,6 @@ export function useToySettings(slug, key, emits, ready){
 
 		// gtfo if this ever happens
 		if (newVal === 'uninitialized'){
-			console.log('wtf')
 			return;
 		}
 		emitBoxData();		

@@ -49,7 +49,6 @@ class OBSViewServer {
 		// kill servers when main window is closed
 		this.mainWindow.on('close', () => {
 
-			console.log('AIDS Closing OBSViewServer...');
 			this.killServers();
 
 			setTimeout(()=>{

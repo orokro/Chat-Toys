@@ -21,7 +21,6 @@
 
 		<!-- otherwise, load just the single widget -->
 		<template v-else>
-			
 			<component :is="widgetComponent" />
 		</template>
 	</div>
@@ -34,6 +33,7 @@ import { socketRef, socketShallowRef } from 'socket-ref';
 
 // components
 import LiveLayout from '@components/live/LiveLayout.vue';
+import SizeFixer from '@components/live/SizeFixer.vue';
 
 // app
 import { toysData } from '@toys/toysData.js';
