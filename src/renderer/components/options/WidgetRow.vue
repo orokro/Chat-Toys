@@ -11,6 +11,7 @@
 		
 		<div 
 			class="statusLight"
+			:title="liveStatusText"
 			:class="{
 				'live': isLive,
 				'obs': statusCode === 'O',
@@ -81,6 +82,22 @@ const statusCode = computed(() => {
 	// get the time and method stored in the socket value
 	const statusCode = liveStatus.value.split('_')[0];
 	return statusCode;
+});
+
+// computed property to get the live status text tooltip
+const liveStatusText = computed(() => {
+
+	if (isLive.value) {
+		if(statusCode.value === 'O') {
+			return 'Live, detected in OBS';
+		} else if (statusCode.value === 'B') {
+			return 'Live, detected in some Browser';
+		} else {
+			return 'Live';
+		}
+	} else {
+		return 'Not Live';
+	}
 });
 
 </script>

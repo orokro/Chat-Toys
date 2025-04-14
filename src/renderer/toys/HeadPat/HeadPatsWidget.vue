@@ -71,6 +71,7 @@ import AutoSizer from '@components/AutoSizer.vue';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
+import { keepAliveSocket } from '../keepAliveSocket.js';
 
 // inherit scale from AutoSizer
 const scale = ref(1);
@@ -94,11 +95,20 @@ const props = defineProps({
 		default: false
 	},
 
+	// disable the keep-alive code for this widget
 	noKeepAlive: {
 		type: Boolean,
 		default: false
 	}
 });
+
+
+// set up our live-light code
+if(props.noKeepAlive === false){
+
+	// keep alive the socket
+	keepAliveSocket(thisSlug, widgetSlug);
+}
 
 // gets our settings
 const ready = ref(false);

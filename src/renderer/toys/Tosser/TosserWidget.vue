@@ -50,12 +50,16 @@ import { ThreeJSTosserSystem } from './ThreeJSTosserSystem';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
+import { keepAliveSocket } from '../keepAliveSocket.js';
 
 const thisSlug = 'tosser';
 const widgetSlug = 'tosserLayer';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
+
+// set up our live-light code
+keepAliveSocket(thisSlug, widgetSlug);
 
 // ref to the canvas container
 const canvasContainerRef = ref(null);

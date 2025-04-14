@@ -8,6 +8,7 @@
 <template>
 	<HeadPatsWidget
 		:showProfilePicture="true"
+		:noKeepAlive="true"
 		@boxChange="reEmitBoxChange"
 	/>
 </template>
@@ -18,8 +19,13 @@ import { ref, watch, computed, inject } from 'vue';
 
 // other components
 import HeadPatsWidget from './HeadPatsWidget.vue';
+import { keepAliveSocket } from '../keepAliveSocket.js';
 
+const thisSlug = 'headPat';
 const widgetSlug = 'chat';
+
+// set up our live-light code
+keepAliveSocket(thisSlug, widgetSlug);
 
 const emit = defineEmits([
 	'boxChange'

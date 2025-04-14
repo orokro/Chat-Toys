@@ -31,11 +31,19 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
+import { keepAliveSocket } from '../keepAliveSocket.js';
 
 const thisSlug = 'chat';
 const widgetSlug = 'shoutBox';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
+}
+
+// set up our live-light code
+try {
+	keepAliveSocket(thisSlug, widgetSlug);
+}catch(e){
+	console.error(e);
 }
 
 const emit = defineEmits([

@@ -97,12 +97,16 @@ import { ThreeJSBuddiesSystem } from './ThreeJSBuddiesSystem';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
+import { keepAliveSocket } from '../keepAliveSocket.js';
 
 const thisSlug = 'streamBuddies';
 const widgetSlug = 'streamBuddiesLayer';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
+
+// set up our live-light code
+keepAliveSocket(thisSlug, widgetSlug);
 
 // ref to the canvas container
 const canvasContainerRef = ref(null);

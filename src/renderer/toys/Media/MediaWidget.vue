@@ -38,12 +38,16 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
+import { keepAliveSocket } from '../keepAliveSocket.js';
 
 const thisSlug = 'media';
 const widgetSlug = 'mediaBox';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
+
+// set up our live-light code
+keepAliveSocket(thisSlug, widgetSlug);
 
 const emit = defineEmits([
 	'boxChange'

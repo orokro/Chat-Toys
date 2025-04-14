@@ -137,6 +137,7 @@ import AutoSizer from '@components/AutoSizer.vue';
 
 // our app
 import { useToySettings } from '@toys/useToySettings';
+import { keepAliveSocket } from '../keepAliveSocket.js';
 
 // inherit scale from AutoSizer
 const scale = ref(1);
@@ -146,6 +147,9 @@ const widgetSlug = 'scene';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
+
+// set up our live-light code
+keepAliveSocket(thisSlug, widgetSlug);
 
 const emit = defineEmits([
 	'boxChange'

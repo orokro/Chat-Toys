@@ -121,6 +121,7 @@ const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
 
+// set up our live-light code
 keepAliveSocket(thisSlug, widgetSlug);
 
 const emit = defineEmits([

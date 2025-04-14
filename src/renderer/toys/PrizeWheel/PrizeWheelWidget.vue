@@ -109,12 +109,16 @@ import AutoSizer from '@components/AutoSizer.vue';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
+import { keepAliveSocket } from '../keepAliveSocket.js';
 
 const thisSlug = 'prizeWheel';
 const widgetSlug = 'wheel';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
+
+// set up our live-light code
+keepAliveSocket(thisSlug, widgetSlug);
 
 // autosize scale
 const scale = ref(1);
