@@ -40,6 +40,7 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 import { useToySettings } from '@toys/useToySettings';
 
 const thisSlug = 'media';
+const widgetSlug = 'mediaBox';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }

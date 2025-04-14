@@ -52,6 +52,7 @@ import { ThreeJSTosserSystem } from './ThreeJSTosserSystem';
 import { useToySettings } from '@toys/useToySettings';
 
 const thisSlug = 'tosser';
+const widgetSlug = 'tosserLayer';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }

@@ -115,6 +115,7 @@ import { useToySettings } from '@toys/useToySettings';
 const scale = ref(1);
 
 const thisSlug = 'channelPoints';
+const widgetSlug = 'points';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }

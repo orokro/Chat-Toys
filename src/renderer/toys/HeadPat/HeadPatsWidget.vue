@@ -76,6 +76,7 @@ import { useToySettings } from '@toys/useToySettings';
 const scale = ref(1);
 
 const thisSlug = 'headPat';
+const widgetSlug = 'streamer';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
@@ -92,6 +93,11 @@ const props = defineProps({
 		type: Boolean,
 		default: false
 	},
+
+	noKeepAlive: {
+		type: Boolean,
+		default: false
+	}
 });
 
 // gets our settings

@@ -57,6 +57,7 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 import { useToySettings } from '@toys/useToySettings';
 
 const thisSlug = 'chat';
+const widgetSlug = 'liveChat';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }

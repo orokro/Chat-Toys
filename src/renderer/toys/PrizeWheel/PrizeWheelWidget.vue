@@ -111,6 +111,7 @@ import AutoSizer from '@components/AutoSizer.vue';
 import { useToySettings } from '@toys/useToySettings';
 
 const thisSlug = 'prizeWheel';
+const widgetSlug = 'wheel';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }

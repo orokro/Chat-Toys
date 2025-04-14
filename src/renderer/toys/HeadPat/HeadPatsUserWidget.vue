@@ -19,6 +19,8 @@ import { ref, watch, computed, inject } from 'vue';
 // other components
 import HeadPatsWidget from './HeadPatsWidget.vue';
 
+const widgetSlug = 'chat';
+
 const emit = defineEmits([
 	'boxChange'
 ]);

@@ -142,6 +142,7 @@ import { useToySettings } from '@toys/useToySettings';
 const scale = ref(1);
 
 const thisSlug = 'fishing';
+const widgetSlug = 'scene';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }

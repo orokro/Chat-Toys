@@ -99,6 +99,7 @@ import { ThreeJSBuddiesSystem } from './ThreeJSBuddiesSystem';
 import { useToySettings } from '@toys/useToySettings';
 
 const thisSlug = 'streamBuddies';
+const widgetSlug = 'streamBuddiesLayer';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }

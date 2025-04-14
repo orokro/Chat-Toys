@@ -142,6 +142,7 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 import { useToySettings } from '@toys/useToySettings';
 
 const thisSlug = 'gamba';
+const widgetSlug = 'bet';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
