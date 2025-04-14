@@ -69,7 +69,10 @@ const dragHelper = new DragHelper();
 
 // we'll store the settings in a chrome ref for now
 // until a better solution is found
-const colliderBox = chromeShallowRef('tosserColliderPos', {
+const tosserName = new URLSearchParams(window.location.search).get('name') || '';
+
+const colliderBoxKey = tosserName=='' ? 'tosserColliderPos' : `tosserColliderPos_${tosserName}`;
+const colliderBox = chromeShallowRef(colliderBoxKey, {
 	x: 0,
 	y: 0,
 	width: 748 * 0.2,
