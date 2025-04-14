@@ -7,7 +7,7 @@
 <template>
 
 	<!-- auto sizer so we can lazily scale the widget lol -->
-	<AutoSizer :targetWidth="250" v-model="scale">
+	<FixedAutoSizer :targetWidth="250" :targetHeight="250" v-model="scale">
 
 		<!-- box to scale -->
 		<div
@@ -121,7 +121,7 @@
 
 			</div>
 		</div>
-	</AutoSizer>
+	</FixedAutoSizer>
 
 </template>
 <script setup>
@@ -134,6 +134,7 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 
 // other components
 import AutoSizer from '@components/AutoSizer.vue';
+import FixedAutoSizer from '@components/FixedAutoSizer.vue';
 
 // our app
 import { useToySettings } from '@toys/useToySettings';

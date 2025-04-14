@@ -125,10 +125,6 @@ keepAliveSocket(thisSlug, widgetSlug);
 // autosize scale
 const scale = ref(1);
 
-watch(scale, (newVal) => {
-	// set the scale on the widget
-	console.log('scale', newVal);
-});
 const emit = defineEmits([
 	'boxChange'
 ]);
@@ -170,6 +166,7 @@ let audio = null;
 watch(wheelSoundPath, (newVal) => {
 	audio = new Audio(wheelSoundPath.value);
 });
+
 
 // we only want to play the sound when we switch from IDLE to PLAY
 watch(spinItem, (newVal) => {
@@ -272,8 +269,8 @@ const slices = computed(() => {
 	// the main box for the widget
 	.prizeWheelWidget {
 
-		border: 2px solid cyan;
-
+		// debug border
+		/* border: 2px solid cyan; */
 
 		// fixed size
 		width: 200px;
