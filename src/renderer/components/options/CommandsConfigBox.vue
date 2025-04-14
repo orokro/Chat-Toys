@@ -27,7 +27,15 @@
 				<div
 					class="cellEnabled cell"
 					title="Enable or Disable Commands"
-				>Enable</div>					
+				>Enable</div>		
+				<div
+					class="cellSuper cell"
+					title="Command is only available to Super Chat messages"
+				>Super Only</div>		
+				<div
+					class="cellMember cell"
+					title="Command is only available to Members"
+				>Member Only</div>					
 				<div 
 					class="cellCmd cell" 
 					title="The command/trigger string"
@@ -77,6 +85,20 @@
 							type="checkbox"
 							v-model="command.enabled"
 							@input="handleEnabledCheckbox(command)"
+						>
+					</div>
+					<div class="cellSuper cell">
+						<input
+							type="checkbox"
+							v-model="command.superOnly"
+							@input="handleSuperChatOnlyCheckbox(command)"
+						>
+					</div>
+					<div class="cellMember cell">
+						<input
+							type="checkbox"
+							v-model="command.memberOnly"
+							@input="handleMemberOnlyCheckbox(command)"
 						>
 					</div>					
 					<div class="cellCmd cell">
@@ -263,6 +285,32 @@ function handleEnabledCheckbox(command){
 	
 	// update the commands ref
 	command.enabled = !command.enabled;
+	commandsRef.value = { ...commandsRef.value, [command.slug]: command };
+}
+
+
+/**
+ * Handle when the super chat only checkbox is toggled
+ * 
+ * @param {Object} command the command object to update
+ */
+function handleSuperChatOnlyCheckbox(command){
+	
+	// update the commands ref
+	command.superOnly = !command.superOnly;
+	commandsRef.value = { ...commandsRef.value, [command.slug]: command };
+}
+
+
+/**
+ * Handle when the member only checkbox is toggled
+ * 
+ * @param {Object} command the command object to update
+ */
+function handleMemberOnlyCheckbox(command){
+	
+	// update the commands ref
+	command.memberOnly = !command.memberOnly;
 	commandsRef.value = { ...commandsRef.value, [command.slug]: command };
 }
 
@@ -524,8 +572,43 @@ async function deleteCustomCommand(slug){
 						border-radius: 5px;
 					}
 				}
-				.cellCmd {
+
+				.cellSuper {
+
 					left: 50px;
+					width: 46px;
+
+					// black checkbox
+					input {
+						width: 20px;
+						height: 20px;
+						
+						// set input theming to black
+						accent-color: black;
+						outline: none;
+						border-radius: 5px;
+					}
+				}
+
+				.cellMember {
+
+					left: 96px;
+					width: 58px;
+
+					// black checkbox
+					input {
+						width: 20px;
+						height: 20px;
+						
+						// set input theming to black
+						accent-color: black;
+						outline: none;
+						border-radius: 5px;
+					}
+				}
+
+				.cellCmd {
+					left: 154px;
 					width: 150px;
 
 					.cmdText {
@@ -539,7 +622,7 @@ async function deleteCustomCommand(slug){
 					}// .cmdText
 				}
 				.cellParams {
-					left: 200px;
+					left: 304px;
 					width: 150px;
 
 					.paramText {
@@ -559,19 +642,19 @@ async function deleteCustomCommand(slug){
 
 				}
 				.cellCost {
-					left: 350px;
-					width: 70px;
+					left: 454px;
+					width: 66px;
 				}
 				.cellCoolDown {
-					left: 420px;
-					width: 100px;
-				}
-				.cellGroupCoolDown {
 					left: 520px;
 					width: 100px;
 				}
-				.cellDesc {
+				.cellGroupCoolDown {
 					left: 620px;
+					width: 100px;
+				}
+				.cellDesc {
+					left: 720px;
 					right: 0px;
 
 					.descText {
