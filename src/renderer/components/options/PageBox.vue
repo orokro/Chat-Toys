@@ -14,7 +14,7 @@
 		class="pageBox"
 		:style="{ 
 			background: gradientCSS,
-			'--tColor': themeColor
+			'--tColor': newColor
 		}"
 	>
 
@@ -66,12 +66,15 @@ const props = defineProps({
 
 // compute the gradient CSS once
 const gradientCSS = computed(() => generateGradient(props.themeColor));
+const newColor = chroma.mix(chroma(props.themeColor), "#ffffff", 60 / 255).hex(); // More color retained
 
 // generate a gradient from a base color
 function generateGradient(colorHex) {
 
     // Convert to chroma color object
     const baseColor = chroma(colorHex);
+
+	
 
     // Adjust the mix ratios for better color retention
     const lightened1 = chroma.mix(baseColor, "#ffffff", 100 / 255).hex(); // More color retained
@@ -80,8 +83,8 @@ function generateGradient(colorHex) {
 	const white = 'white';
 
 	return `linear-gradient(to bottom, 
-        ${colorHex} 0px, 
-        ${colorHex} 54px,
+        ${newColor} 0px, 
+        ${newColor} 69px,
 		${lightened1} 55px, 
         ${lightened2} 85px, 
         ${lightened2} 100%)`;
@@ -109,13 +112,15 @@ function generateGradient(colorHex) {
 		.pageHeader {
 
 			// fixed height 
-			height: 55px;
-			padding: 8px 20px 0px;
+			height: 70px;
+			padding: 4px 20px 0px;
 			border-bottom: 2px solid white;
 			
 			// text settings
+			font-size: 24px;
 			color: white;
-			text-shadow: 2px 1px 0px rgba(0, 0, 0, 0.5);
+
+			text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
 
 		}// .pageHeader
 

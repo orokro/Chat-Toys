@@ -44,12 +44,14 @@ const props = defineProps({
 	
 	.sectionHeader {
 
-		height: 33px;
-		margin-bottom: 10px !important;
-		margin-top: 100px !important;
+		height: 50px;
+		margin-bottom: 30px !important;
+		margin-top: 60px !important;
 
 		h3 {
 			width: 1000px;
+			padding: 5px 0;
+			font-size: 24px;
 			text-align: left;
 		}
 
