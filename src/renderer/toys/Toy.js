@@ -161,7 +161,7 @@ export default class Toy {
 		this.stopSettingsSocketWatch = watch(this.settingsStorRef, (newVal) => {
 			this.settingsSocketRef.value = newVal;
 		});
-		setTimeout(()=>
+		window.setElectronTimeout(()=>
 			this.settingsSocketRef.value = this.settingsStorRef.value, 1000);
 	}
 

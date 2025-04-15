@@ -71,7 +71,7 @@ export default class StreamBuddies extends Toy {
 
 		this.avatarPath = socketShallowRef(this.static.slugify('avatarPath'), '');
 		watch(this.settings.modelId, (newVal) => {
-			setTimeout(()=>{
+			window.setElectronTimeout(()=>{
 				this.avatarPath.value = this.getAssetPath(newVal);
 				this.settings.modelPath.value = this.getAssetPath(newVal);
 			}, 1000);

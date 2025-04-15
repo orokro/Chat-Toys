@@ -548,7 +548,7 @@ class Buddy {
 							this.targetX = targetBuddy.x;
 							targetBuddy.targetX = this.x;
 
-							setTimeout(() => {
+							window.setElectronTimeout(() => {
 								// set target to being knocked back
 								const knockBackVelo = (this.x < targetBuddy.x) ? 100 : -100;
 								targetBuddy.velocityX = knockBackVelo;

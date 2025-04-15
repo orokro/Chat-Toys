@@ -158,7 +158,7 @@ export default class Media extends Toy {
 		this.message.value = mediaItem.message;
 		this.soundPath.value = mediaItem.soundPath;
 		this.imagePath.value = mediaItem.imagePath;
-		setTimeout(()=>{
+		window.setElectronTimeout(()=>{
 			this.mode.value = 'PLAY';
 		}, 100);
 	}

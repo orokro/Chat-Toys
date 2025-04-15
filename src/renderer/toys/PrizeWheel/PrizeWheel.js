@@ -289,7 +289,7 @@ export default class PrizeWheel extends Toy {
 		this.chatToysApp.log.msg(item.chatter + ' spun the wheel and got ' + this.spinItem.value);
 
 		// return to idle
-		setTimeout(() => {
+		window.setElectronTimeout(() => {
 			this.wheelMode.value = 'IDLE';
 		}, 2000);
 	}
