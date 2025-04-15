@@ -72,7 +72,7 @@ export default class ChannelPoints extends Toy {
 		this.timeLeft = 0;
 
 		// starts logic for this item
-		setTimeout(()=>{
+		window.setElectronTimeout(()=>{
 			this.start();
 		}, 1000);
 	}
@@ -219,7 +219,7 @@ export default class ChannelPoints extends Toy {
 
 		// if there's no claims left, return to idle mode
 		if(this.claimsLeft.value <= 0)
-			setTimeout(()=>{
+			window.setElectronTimeout(()=>{
 				this.startGetMode();
 			}, 1000);
 
@@ -353,7 +353,7 @@ export default class ChannelPoints extends Toy {
 		this.startGetMode();
 
 		// universal tick
-		this.tickInterval = setInterval(()=>{
+		this.tickInterval = window.setElectronInterval(()=>{
 
 			this.tick();
 		}, 500);
