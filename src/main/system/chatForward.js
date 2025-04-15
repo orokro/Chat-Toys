@@ -36,4 +36,21 @@ export function chatForward(wss, mainWindow) {
 		});
 	});
 
+	// set up a way to forward chats from another window in the app
+	ipcMain.handle('local-chat-forward', async (e, ...args) => {
+
+		// get the message from the args
+		let msg = args[0];
+		console.log('chat-forward', msg);
+
+		// if the main window is closed, we can't send messages
+		if (!mainWindow || mainWindow.isDestroyed())
+			return;
+
+		// forward the message to the renderer
+		// msg = JSON.parse(msg);
+		mainWindow.webContents.send('chat-message', msg);
+		return true;
+	});
+
 }

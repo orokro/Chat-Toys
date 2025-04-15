@@ -40,7 +40,7 @@ const pageItems = [
 ];
 
 // refs
-const selectedPage = ref('obsSettings');
+const selectedPage = ref('plugin');
 
 </script>
 <style lang="scss" scoped>

@@ -24,9 +24,10 @@ function createChatTesterWindow() {
 		width: 500,
 		height: 700,
 		webPreferences: {
-			preload: join(__dirname, 'preload.js'),
+			preload: join(__dirname, 'chatPreload.js'),
 			nodeIntegration: false,
 			contextIsolation: true,
+			sandbox: false
 		},
 		show: false,
 		autoHideMenuBar: true,

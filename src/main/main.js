@@ -4,7 +4,7 @@
 
 	Main file for kicking off & setting up the Electron side of things.
 */
- 
+
 // node/electron imports
 import { app, BrowserWindow, ipcMain, session } from 'electron';
 
@@ -27,6 +27,14 @@ let tray = null;
 
 // list of our spawned windows
 let openedWindows = [];
+
+console.error = (...args) => {
+	if (
+	  typeof args[0] === 'string' &&
+	  args[0].includes("'Autofill.enable' wasn't found")
+	) return;
+	process.stderr.write(args.join(' ') + '\n');
+  };
 
 // for debugging
 process.on('uncaughtException', console.error);
@@ -53,7 +61,7 @@ app.whenReady().then(() => {
 
 	// Create the app menu.
 	createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows);
-	
+
 	// make system tray icon so our main window can be hidden and shown
 	tray = createSystemTray(mainWindow, destroyAllWindows);
 
@@ -61,16 +69,33 @@ app.whenReady().then(() => {
 	obsViewServer = new OBSViewServer(mainWindow);
 
 	chatForward(obsViewServer.wss, mainWindow);
-	
+
 	// Set up the CSP all windows
-	session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-		callback({
-			responseHeaders: {
-				...details.responseHeaders,
-				'Content-Security-Policy': ['script-src \'self\'']
-			}
-		})  
-	})
+	// session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+	// 	callback({
+	// 		responseHeaders: {
+	// 			...details.responseHeaders,
+	// 			'Content-Security-Policy': [
+	// 				"default-src 'self'; " +
+	// 				"script-src 'self'; " +
+	// 				"frame-src https://www.youtube.com https://www.youtube-nocookie.com; " +
+	// 				"child-src https://www.youtube.com https://www.youtube-nocookie.com; " +
+	// 				"style-src 'self' 'unsafe-inline'; " + // needed by some embeds
+	// 				"img-src 'self' https://* data: blob:; " + // YouTube thumbnails etc.
+	// 				"font-src 'self' https://fonts.gstatic.com;"
+	// 			]
+	// 		}
+	// 	});
+	// })
+
+	// session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+	// 	callback({
+	// 		responseHeaders: {
+	// 			...details.responseHeaders,
+	// 			'Content-Security-Policy': ["script-src 'self' 'https://youtube.com'; default-src * 'unsafe-inline' data: blob:;"]
+	// 		}
+	// 	});
+	// });
 
 });
 
