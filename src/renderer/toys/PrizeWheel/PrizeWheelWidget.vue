@@ -27,6 +27,7 @@
 				class="prizeWheelWidget" 
 				:class="{ 
 					idle: (wheelMode === 'IDLE') && (socketSettingsRef?.alwaysShowWheel == false),
+					demoMode: demoMode,
 				}"
 				:style="{
 					backgroundImage: `url(${wheelImagePath})`,
@@ -152,6 +153,7 @@ const svgSize = diameter + 10;
 const defaultColors = ['#d3d3d3', '#808080', '#ffffff'];
 
 // gets live sockets
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 const wheelImagePath = socketShallowRefReadOnly(slugify('wheelImagePath'), null);
 const wheelSoundPath = socketShallowRefReadOnly(slugify('wheelSoundPath'), null);
 const wheelMode = socketShallowRefReadOnly(slugify('wheelMode'), 'IDLE');
@@ -292,6 +294,11 @@ const slices = computed(() => {
 		transform: scale(1);
 		&.idle {
 			transform: scale(0);
+		}
+
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+			transform: scale(1);
 		}
 
 		// the SVG wheel

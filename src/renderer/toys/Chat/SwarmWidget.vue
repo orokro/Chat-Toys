@@ -13,11 +13,12 @@
 		:class="{
 			disableBG: socketSettingsRef?.enableChatBoxImage==false,
 			idle: swarmMode === 'IDLE',
+			demoMode: demoMode,
 		}"	
 	>
 	
 		<div 
-			v-for="(message, index) in swarmLog"
+			v-for="(message, index) in (demoMode ? demoSwarm : swarmLog)"
 			:key="message.id"
 			class="messageText"
 			:style="{
@@ -49,7 +50,7 @@
 <script setup>
 
 // vue
-import { ref, watch, computed, inject } from 'vue';
+import { ref, shallowRef, watch, computed, inject } from 'vue';
 import { socketShallowRefReadOnly } from 'socket-ref';
 
 // our settings system
@@ -81,8 +82,42 @@ const socketSettingsRef = useToySettings('chat', 'swarmWidgetBox', emit, () => {
 });
 
 // gets live sockets
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 const swarmLog = socketShallowRefReadOnly(slugify('swarmLog'), '');
 const swarmMode = socketShallowRefReadOnly(slugify('swarmMode'), null);
+
+// set up demo logic if we're in demo mode.
+const demoSwarm = shallowRef([]);
+let demoInterval = 0;
+watch(demoMode, (newVal) => {
+
+	if (newVal) {
+		demoInterval = setInterval(()=>{
+			const swarmItems = [...demoSwarm.value];
+
+			// pick a random % position to show the message
+			const x = parseInt(Math.random()*60, 10)+20;
+			const y = parseInt(Math.random()*60, 10)+20;
+			swarmItems.push({
+				id: Math.floor(Math.random() * 1000000),
+				timestamp: Date.now(),
+				userName: ['Dude', 'Demo Girl', 'Buddy4Real', 'gOOber', 'sn@rk'][Math.floor(Math.random() * 5)],
+				userID: Math.floor(Math.random() * 1000000),
+				message: ['Hi hi', 'Whats up', 'I love this', 'tuesday', 'true', 'no u'][Math.floor(Math.random() * 6)],
+				pos: { x, y },
+			});
+
+			while(swarmItems.length > 10)
+				swarmItems.shift();
+			demoSwarm.value = swarmItems;
+
+		}, 1000);
+		
+	} else {		
+		clearInterval(demoInterval);
+		demoSwarm.value = [];
+	}
+});
 
 </script>
 <style lang="scss" scoped>
@@ -103,6 +138,11 @@ const swarmMode = socketShallowRefReadOnly(slugify('swarmMode'), null);
 			opacity: 0;
 		}
 
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+			opacity: 1 !important;
+		}
+		
 		// text settings
 		.messageText {
 

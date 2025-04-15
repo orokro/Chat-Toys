@@ -10,6 +10,9 @@
 	<div 
 		v-if="ready"
 		class="tosserWidget" 
+		:class="{
+			demoMode: demoMode,
+		}"
 	>
 
 		<div 
@@ -40,7 +43,7 @@
 <script setup>
 
 // vue
-import { ref, watch, computed, inject, onMounted, onBeforeUnmount, shallowRef } from 'vue';
+import { ref, shallowRef, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 import { socketShallowRefReadOnly } from 'socket-ref';
 
@@ -91,6 +94,8 @@ const props = defineProps({
 });
 
 
+const demoMode = socketShallowRefReadOnly('demoMode', false);
+
 // store models available locally
 const modelsAvailable = shallowRef([]);
 
@@ -130,7 +135,7 @@ watch(canvasContainerRef, (newVal)=>{
 
 // watch when new items are scheduled to be tossed
 const tossQueue = socketShallowRefReadOnly(slugify('tossQueue'), []);
-const localTossHistory = [];
+const localTossHistory = chromeShallowRef('localTossHistory', []);
 watch(tossQueue, (newVal) => {
 
 	// loop over the new value and toss items we haven't se in local history
@@ -139,14 +144,14 @@ watch(tossQueue, (newVal) => {
 		const item = newVal[i];
 
 		// if we haven't seen this item before, toss it
-		if(!localTossHistory.includes(item.id)){
+		if(!localTossHistory.value.includes(item.id)){
 
 			// toss the item
 			if(tosserSystem != null)
 				tosserSystem.tossItem(item.item);
 
 			// add to local history
-			localTossHistory.push(item.id);
+			localTossHistory.value = [...localTossHistory.value, item.id];
 		}
 
 	}// next i
@@ -226,6 +231,13 @@ function doDrag(keys){
 		// fill parent
 		width: 100%;
 		height: 100%;
+
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+			.colliderImage {
+				opacity: 1;
+			}
+		}
 
 		// reset stacking context
 		position: relative;

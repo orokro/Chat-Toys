@@ -12,6 +12,7 @@
 		class="chatBoxWidget"
 		:class="{
 			disableBG: socketSettingsRef?.enableChatBoxImage==false,
+			demoMode: demoMode
 		}"
 		:style="{
 			border: '30 solid transparent',
@@ -22,7 +23,7 @@
 	>
 		<div class="messageText">
 			<div 
-				v-for="(message, index) in chatLog"
+				v-for="(message, index) in (demoMode ? demoChat : chatLog)"
 				:key="message.id"
 				class="msgRow"
 			>
@@ -50,7 +51,7 @@
 <script setup>
 
 // vue
-import { ref, watch, computed, inject } from 'vue';
+import { ref, shallowRef, watch, computed, inject } from 'vue';
 import { socketShallowRefReadOnly } from 'socket-ref';
 
 // our settings system
@@ -82,9 +83,37 @@ const socketSettingsRef = useToySettings('chat', 'chatWidgetBox', emit, () => {
 });
 
 // gets live sockets
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 const chatLog = socketShallowRefReadOnly(slugify('chatLog'), '');
 const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
 
+
+// set up demo logic if we're in demo mode.
+const demoChat = shallowRef([]);
+let demoInterval = 0;
+watch(demoMode, (newVal) => {
+
+	if (newVal) {
+		demoInterval = setInterval(()=>{
+			const chatItems = [...demoChat.value];
+			chatItems.push({
+				"id": Math.floor(Math.random() * 1000000),
+				"author": ['Dude', 'Demo Girl', 'Buddy4Real', 'gOOber', 'sn@rk'][Math.floor(Math.random() * 5)],
+				"message": ['Hi hi', 'Whats up', 'I love this', 'tuesday', 'true', 'no u'][Math.floor(Math.random() * 6)],
+				"isMember": false
+			});
+			while(chatItems.length > 10)
+				chatItems.shift();
+			demoChat.value = chatItems;
+
+		}, 1000);
+		
+	} else {
+		
+		clearInterval(demoInterval);
+		demoChat.value = [];
+	}
+});
 </script>
 <style lang="scss" scoped>
 
@@ -105,7 +134,7 @@ const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
 		transform: scale(1);
 		&.idle {
 			transform: scale(0);
-		}
+		}		
 
 		// try css slicing
 		border: 60px solid transparent; 
@@ -116,6 +145,11 @@ const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
 			background: none !important;
 			border: 0px none !important;
 			border-image: none !important;
+
+			&.demoMode {
+				border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+				transform: scale(1);
+			}
 		}
 
 		// text settings

@@ -80,20 +80,20 @@
 			<div class="statusRow">
 				<div class="status">
 					<span v-if="socketSettingsRef.gambaStateMode=='CLOSED'">Betting is closed!</span>
-					<span v-else-if="socketSettingsRef.gambaStateMode=='OPEN'">Betting is open!</span>
+					<span v-else-if="demoMode || socketSettingsRef.gambaStateMode=='OPEN'">Betting is open!</span>
 					<span v-else-if="socketSettingsRef.gambaStateMode=='PAID'">Betting is over!</span>
 					<span v-else>No active bet!</span>
 				</div>
 				<div 
-					v-if="socketSettingsRef.gambaStateMode=='OPEN'"
+					v-if="demoMode || socketSettingsRef.gambaStateMode=='OPEN'"
 					class="timeLeft"
 				>
-					<span v-if="timeToBet > 0">Time Left: {{ timeToBet }} seconds</span>
+					<span v-if="demoMode || timeToBet > 0">Time Left: {{ !demoMode ? timeToBet : Math.ceil(60-(Date.now()/1000%60)) }} seconds</span>
 				</div>				
 			</div>
 
 			<!-- don't show the rest if there's no active bet -->
-			<template v-if="socketSettingsRef.gambaStateMode!='OFF'">
+			<template v-if="demoMode || socketSettingsRef.gambaStateMode!='OFF'">
 
 				<!-- the options available and their stats -->
 				<div class="optionsBox">
@@ -101,10 +101,10 @@
 					<!-- the prompt -->
 					<div class="prompt">
 						<div class="bg"></div>
-						<div class="text">{{ socketSettingsRef.gambaPrompt }}</div>
+						<div class="text">{{ demoMode ? 'Streamer Will Beat High Score?' : socketSettingsRef.gambaPrompt }}</div>
 					</div>
 
-					<template v-for="(option, index) in optionStats" :key="index">
+					<template v-for="(option, index) in (demoMode ? demoData : optionStats)" :key="index">
 						<div class="option">
 							<div class="optionName"> 
 								<strong>{{ String.fromCharCode(65+index) }}) </strong>{{ option.text }}
@@ -123,7 +123,7 @@
 				</div>
 
 				<!-- betting loop amount -->
-				<div class="pool">Total Pool: ₱ {{ bettingPool }}</div>
+				<div class="pool">Total Pool: ₱ {{ demoMode ? 2250 : bettingPool }}</div>
 				
 			</template>
 		</div>
@@ -168,12 +168,36 @@ const socketSettingsRef = useToySettings('gamba', 'widgetBox', emit, () => {
 	ready.value = true;
 });
 
+const demoData = [
+    {
+        "text": "Yes",
+        "total": 1000,
+        "percentage": 44
+    },
+    {
+        "text": "No",
+        "total": 1650,
+        "percentage": 73
+    },
+    {
+        "text": "Tie",
+        "total": 500,
+        "percentage": 22
+    }
+];
+
+
 // gets live sockets
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 const betsPlaced = socketShallowRefReadOnly(slugify('betsPlaced'), []);
 const timeToBet = socketShallowRefReadOnly(slugify('timeToBet'), 0);
 const bettingPool = socketShallowRefReadOnly(slugify('bettingPool'), 0);
 const optionStats = socketShallowRefReadOnly(slugify('optionStats'), []);
 const results = socketShallowRefReadOnly(slugify('results'), null);
+
+watch(optionStats, (newVal) => {
+	console.log('optionStats changed:', newVal);
+});
 
 watch(optionStats, (newVal) => {
 	console.log('optionStats changed:', newVal);

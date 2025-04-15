@@ -9,7 +9,10 @@
 	<!-- just a simple box -->
 	<div 
 		v-if="ready"
-		class="buddiesWidget" 
+		class="buddiesWidget"
+		:class="{
+			demoMode: demoMode,
+		}"
 	>
 
 		<div 
@@ -155,13 +158,10 @@ watch(socketSettingsRef, (newVal) => {
 	// modelsAvailable.value = socketSettingsRef.value.tosserAssets;
 });
 
-// watch when new items are scheduled to be tossed
-let lastCommandTimeStamp = 0;
+// socket data
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 const buddiesState = socketShallowRefReadOnly(slugify('buddiesState'), {});
-watch(buddiesState, (newVal) => {
 
-	// console.log(newVal);
-});
 
 
 // wait for our ref to exist & then make the tosser system
@@ -215,6 +215,10 @@ onBeforeUnmount(() => {
 		.canvasContainer {
 			position: absolute;
 			inset: 0px;
+		}
+
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
 		}
 
 		// CSS box for the buddy (non ThreeJS part)

@@ -12,6 +12,7 @@
 		<!-- box to scale -->
 		<div
 			class="scaleBox"
+			:class="{ demoMode: demoMode }"	
 			:style="{
 				transform: `translate(-50%, -50%) scale(${scale})`
 			}"
@@ -19,7 +20,8 @@
 			<!-- the main box for the widget -->
 			<div 
 				v-if="ready"
-				class="fishingWidget"				
+				class="fishingWidget"			
+				
 			>
 				<!-- animated gif of caustics -->
 				<div class="caustics"></div>
@@ -176,12 +178,13 @@ const socketSettingsRef = useToySettings('fishing', 'widgetBox', emit, () => {
 });
 
 // gets live sockets
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 const gameState = socketShallowRefReadOnly(slugify('gameState'), '');
 const catches = socketShallowRefReadOnly(slugify('catches'), '');
 
 
 // keep a time stamp of the last catch we saw, so we don't double spawn
-let lastCatchTime = 0;
+let lastCatchTime = chromeShallowRef('lastCatchTime', 0);
 
 // keep an array queue of catches to show on screen, serially
 const catchQueue = [];
@@ -196,13 +199,13 @@ watch(catches, (newVal) => {
 
 		// filter out any ones that are newer than the last one we saw
 		const filtered = newVal.filter((catchObj) => {
-			return catchObj.time > lastCatchTime;
+			return catchObj.time > lastCatchTime.value;
 		});
 
 		// loop to add the filtered catches to the queue & update the last time
 		for (let i = 0; i < filtered.length; i++) {
 			catchQueue.push(filtered[i]);
-			lastCatchTime = Math.max(lastCatchTime, filtered[i].time);
+			lastCatchTime.value = Math.max(lastCatchTime.value, filtered[i].time);
 		}// next i
 
 		// if our catch queue is not empty, show the first one & start loop
@@ -253,6 +256,11 @@ function showCatch(){
 		top: 50%;
 		left: 50%;
 		
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+			transform: scale(1);
+		}
+
 	}// .scaleBox
 
 	// the main box for the widget
@@ -264,6 +272,8 @@ function showCatch(){
 
 		// reset stacking context
 		position: relative;
+
+		
 
 		// make circle with fadeout mask
 		border-radius: 50%;

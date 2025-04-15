@@ -24,7 +24,8 @@
 				class="headPatsWidget"
 				:class="{ 
 					idle: mode === 'IDLE',
-					showProfilePicture: showProfilePicture
+					showProfilePicture: showProfilePicture,
+					demoMode: demoMode,
 				}"
 				:style="{
 					height: showProfilePicture ? '250px' : '200px'
@@ -39,7 +40,7 @@
 						width="120"
 					/>
 					<div class="targetUserName">
-						{{ currentPatData?.pattee }}
+						{{ demoMode ? 'YooHooZaHurr' : currentPatData?.pattee }}
 					</div>
 				</template>
 
@@ -52,7 +53,7 @@
 
 				<!-- the name of the user doing the pat -->
 				<div class="patUserName">
-					<span>{{ currentPatData?.patter }}</span> pats
+					<span>{{ demoMode ? 'McPattin' : currentPatData?.patter }}</span> pats
 				</div>
 
 			</div>
@@ -133,6 +134,7 @@ const currentPatData = computed(()=>{
 });
 
 // // gets live sockets
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 // const claimCommand = socketShallowRefReadOnly(slugify('claimCommand'), '');
 // const claimsLeft = socketShallowRefReadOnly(slugify('claimsLeft'), 0);
 const userImagePath = socketShallowRefReadOnly(slugify('userImagePath'), '');
@@ -167,6 +169,11 @@ const currentChatterPat = socketShallowRefReadOnly(slugify('currentChatterPat'),
 		transform: scale(1);
 		&.idle {
 			transform: scale(0);
+		}
+
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+			transform: scale(1);
 		}
 
 		color: white;

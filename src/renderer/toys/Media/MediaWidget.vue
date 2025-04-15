@@ -12,19 +12,20 @@
 		class="mediaWidget"
 		:class="{ 
 			idle: mode === 'IDLE',
+			demoMode: demoMode,
 		}"
 	>
 		<!-- the main money - head pat gif -->
 		<img 
-			v-if="imagePath !== null"
+			v-if="demoMode || imagePath !== null"
 			width="100%"
 			class="mediaImage"
-			:src="imagePath"
+			:src="demoMode ? 'builtin/yay.gif' : imagePath"
 		/>
 
 		<!-- the name of the user doing the pat -->
 		<div class="messageText">
-			{{ message }}
+			{{ demoMode ? 'yay! lets goooooo!' : message }}
 		</div>
 
 	</div>
@@ -65,6 +66,7 @@ const socketSettingsRef = useToySettings('media', 'widgetBox', emit, () => {
 });
 
 // gets live sockets
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 const mode = socketShallowRefReadOnly(slugify('mode'), 'IDLE');
 const message = socketShallowRefReadOnly(slugify('message'), '');
 const soundPath = socketShallowRefReadOnly(slugify('soundPath'), null);
@@ -96,6 +98,11 @@ watch(mode, (newVal) => {
 		transform: scale(1);
 		&.idle {
 			transform: scale(0);
+		}
+
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+			transform: scale(1);
 		}
 
 		// text settings

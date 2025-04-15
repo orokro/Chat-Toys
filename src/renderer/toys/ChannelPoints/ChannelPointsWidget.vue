@@ -20,7 +20,10 @@
 			<div 
 				v-if="ready"
 				class="channelPointsWidget"
-				:class="{ idle: mode === 'IDLE' }"
+				:class="{ 
+					idle: mode === 'IDLE',
+					demoMode: demoMode
+				}"
 				:style="{
 					'--widget-color': socketSettingsRef.widgetColorTheme || 'red'
 				}"
@@ -156,6 +159,7 @@ const socketSettingsRef = useToySettings('channel-points', 'widgetBox', emit, ()
 });
 
 // gets live sockets
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 const claimCommand = socketShallowRefReadOnly(slugify('claimCommand'), '');
 const claimsLeft = socketShallowRefReadOnly(slugify('claimsLeft'), 0);
 const mode = socketShallowRefReadOnly(slugify('mode'), 'idle');
@@ -196,6 +200,10 @@ const widgetIconPath = socketShallowRefReadOnly(slugify('widgetIconPath'), null)
 			transform: scale(0);
 		}
 		/* mix-blend-mode: overlay; */
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5);
+			transform: scale(1);
+		}
 
 		.textOverlay {
 

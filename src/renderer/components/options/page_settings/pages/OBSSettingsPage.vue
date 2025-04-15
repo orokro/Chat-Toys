@@ -20,7 +20,7 @@
 		<SectionHeader title="Widget Demo Mode"/>
 		<SettingsInputRow
 			type="boolean"
-			v-model="ctApp.demoMode"
+			v-model="ctApp.demoMode.value"
 		>
 			<h3>Widget Demo Mode</h3>
 			<p>When enabled, the various Chat Toy's Widgets will display in "<strong>demo mode</strong>".</p>

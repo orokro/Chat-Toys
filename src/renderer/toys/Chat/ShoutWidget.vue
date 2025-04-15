@@ -16,10 +16,11 @@
 		class="shoutWidget"
 		:class="{ 
 			idle: shoutMode === 'IDLE',
+			demoMode: demoMode
 		}"
 	>
 		<div class="messageText">
-			<span class="user">{{ shoutMessage.user }}:</span> {{ shoutMessage.message }}
+			<span class="user">{{ demoMode ? 'DudeMcGuy' : shoutMessage.user }}:</span> {{ demoMode ? 'Yooooo, no way!' :  shoutMessage.message }}
 		</div>
 	</div>
 </template>
@@ -62,6 +63,7 @@ const socketSettingsRef = useToySettings('chat', 'shoutWidgetBox', emit, () => {
 });
 
 // gets live sockets
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 const shoutMode = socketShallowRefReadOnly(slugify('shoutMode'), 'IDLE');
 const shoutMessage = socketShallowRefReadOnly(slugify('shoutMessage'), '');
 const soundPath = socketShallowRefReadOnly(slugify('soundPath'), null);
@@ -95,6 +97,11 @@ watch(shoutMode, (newVal) => {
 		transform: scale(1);
 		&.idle {
 			transform: scale(0);
+		}
+
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+			transform: scale(1);
 		}
 
 		// text settings
