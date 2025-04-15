@@ -319,7 +319,7 @@ export default class Chat extends Toy {
 		// stop interval & gtfo
 		if(this.testingSwarm==false){
 			if(this.swarmTimeout !== null)
-				clearTimeout(this.swarmTimeout);
+				window.clearElectronTimeout(this.swarmTimeout);
 			return;
 		}
 
@@ -335,7 +335,7 @@ export default class Chat extends Toy {
 			this.swarmLogic.newMessage(username, id, message);
 
 			const randomTime = Math.floor(Math.random() * 1500) + 500;
-			this.swarmTimeout = setTimeout(randomMessage, randomTime);
+			this.swarmTimeout = window.setElectronTimeout(randomMessage, randomTime);
 		}
 
 		// start the random message

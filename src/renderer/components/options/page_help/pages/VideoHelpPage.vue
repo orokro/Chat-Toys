@@ -18,7 +18,7 @@
 		<iframe 
 			width="560"
 			height="315"
-			src="https://www.youtube-nocookie.com/embed/IVWIaGUFSPI?si=c4184fgy297NiD8l"
+			src="https://www.youtube.com/embed/IVWIaGUFSPI?si=c4184fgy297NiD8l"
 			sandbox="allow-scripts allow-same-origin"
 			allowfullscreen
 		></iframe>

@@ -70,15 +70,18 @@ app.whenReady().then(() => {
 
 	chatForward(obsViewServer.wss, mainWindow);
 
+	// I had to turn off CSP because YouTube embeds don't work with it on, and every
+	// permutation I tried didn't work. So, for now, it's off.
+
 	// Set up the CSP all windows
 	// session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
 	// 	callback({
 	// 		responseHeaders: {
 	// 			...details.responseHeaders,
 	// 			'Content-Security-Policy': [
-	// 				"default-src 'self'; " +
-	// 				"script-src 'self'; " +
-	// 				"frame-src https://www.youtube.com https://www.youtube-nocookie.com; " +
+	// 				"default-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; " +
+	// 				"script-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; " +
+	// 				"frame-src youtube.com www.youtube.com; " +
 	// 				"child-src https://www.youtube.com https://www.youtube-nocookie.com; " +
 	// 				"style-src 'self' 'unsafe-inline'; " + // needed by some embeds
 	// 				"img-src 'self' https://* data: blob:; " + // YouTube thumbnails etc.
