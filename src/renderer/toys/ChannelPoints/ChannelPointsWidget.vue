@@ -85,7 +85,7 @@
 					<div class="userClaims">
 						<div
 							v-if="socketSettingsRef.showUserClaims"
-							v-for="claim in userClaims"
+							v-for="claim in claimsVisible"
 							class="claimText"
 							:key="claim.id"
 						>
@@ -103,7 +103,7 @@
 <script setup>
 
 // vue
-import { ref, watch, computed, inject } from 'vue';
+import { ref, shallowRef, watch, computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 import { RefAggregator } from '../../scripts/RefAggregator';
 import { socketShallowRefReadOnly } from 'socket-ref';
@@ -166,6 +166,32 @@ const mode = socketShallowRefReadOnly(slugify('mode'), 'idle');
 const timeLeftNormalised = socketShallowRefReadOnly(slugify('timeLeftNormalised'), 0);
 const userClaims = socketShallowRefReadOnly(slugify('userClaims'), []);
 const widgetIconPath = socketShallowRefReadOnly(slugify('widgetIconPath'), null);
+
+
+const claimsSeenHistory = chromeShallowRef('claimsSeenHistory', []);
+const claimsVisible = shallowRef([]);
+watch(userClaims, (newClaims) => {
+	
+	// loop over the new value and claim items we haven't se in local history
+	for(let i=0; i<newClaims.length; i++){
+
+		const claim = newClaims[i];
+
+		// if we haven't seen this item before, show it on screen
+		if(!claimsSeenHistory.value.includes(claim.id)){
+
+			// add to our list
+			claimsVisible.value = [...claimsVisible.value, claim];
+
+			// add to local history
+			const newHistory = [...claimsSeenHistory.value, claim.id];
+			while(newHistory.length > 100)
+				newHistory.shift();
+			claimsSeenHistory.value = newHistory;
+		}
+
+	}// next i
+});
 
 </script>
 <style lang="scss" scoped>

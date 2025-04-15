@@ -151,7 +151,10 @@ watch(tossQueue, (newVal) => {
 				tosserSystem.tossItem(item.item);
 
 			// add to local history
-			localTossHistory.value = [...localTossHistory.value, item.id];
+			const newHistory = [...localTossHistory.value, item.id];
+			while(newHistory.length > 100)
+				newHistory.shift();
+			localTossHistory.value = newHistory;
 		}
 
 	}// next i

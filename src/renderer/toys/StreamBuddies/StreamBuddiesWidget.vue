@@ -401,8 +401,8 @@ onBeforeUnmount(() => {
 							mask-image:
 								linear-gradient(
 									135deg,
-									rgb(0, 0, 0, 0) 50%,
-									rgba(0, 0, 0, 1) 51%,
+									rgb(0, 0, 0, 0) 48%,
+									rgba(0, 0, 0, 1) 49%,
 									rgba(0, 0, 0, 1) 100%);
 
 						}// &.arrowOver

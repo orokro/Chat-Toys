@@ -8,7 +8,7 @@
 
 	<!-- just a simple box -->
 	<div 
-		v-if="ready"
+		v-if="ready && socketSettingsRef?.enableChatBox"
 		class="chatBoxWidget"
 		:class="{
 			disableBG: socketSettingsRef?.enableChatBoxImage==false,
@@ -81,6 +81,7 @@ const ready = ref(false);
 const socketSettingsRef = useToySettings('chat', 'chatWidgetBox', emit, () => {
 	ready.value = true;
 });
+
 
 // gets live sockets
 const demoMode = socketShallowRefReadOnly('demoMode', false);
