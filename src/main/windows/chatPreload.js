@@ -7,10 +7,9 @@
 
 // Import the necessary modules
 import { contextBridge, ipcRenderer } from 'electron';
-const path = require("path");
 const isDev = process.env.NODE_ENV === 'development';
 
-import 'electron-interval-system/preload.js'; 
+import 'electron-interval-system/preload.js';
 
 contextBridge.exposeInMainWorld('env', {
 	isDev,
