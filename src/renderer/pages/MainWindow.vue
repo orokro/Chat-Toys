@@ -98,6 +98,8 @@ onBeforeMount(() => {
 		// default bg
 		background: #424242;
 		/* background: #00abae; */
+		background: url('/assets/testbg.png') repeat;
+
 
 		// top tab bar forced to top
 		.topTabBar {

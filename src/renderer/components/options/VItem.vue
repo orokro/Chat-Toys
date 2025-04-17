@@ -141,6 +141,9 @@ const itemIconPath = computed(() => {
 			inset: 5px -200px 5px 10px;
 			border-radius: 10px 0px 0px 10px;
 
+			/* background: rgba(255, 255, 255, 0.15);
+			box-shadow: 5px 5px 5px 0px rgba(0, 0, 0, 0.25); */
+
 			.icon {
 				// animate left
 				transition: left 0.5s;
