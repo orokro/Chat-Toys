@@ -80,12 +80,16 @@ const emit = defineEmits(['changeTab', 'addItem', 'removeItem']);
 
 		.contentPageArea {
 
+			/* border: 1px solid magenta; */			
+
 			// fill right side of screen
 			position: absolute;
 			inset: 0px 0px 0px 100px;
 			overflow: hidden;
 			overflow-y: auto;
 
+			transition: inset 0.4s ease-in-out;
+			
 			// force tool strip on left side
 			.vItemsStrip {
 				position: absolute;

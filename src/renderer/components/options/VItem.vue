@@ -32,6 +32,11 @@
 				/>
 			</div>
 
+			<!-- name row -->
+			<div class="nameRow">
+				{{ item.name }}
+			</div>
+
 			<!-- the delete button -->
 			<div
 				v-if="showDelete"
@@ -101,7 +106,7 @@ const itemIconPath = computed(() => {
 		// the strip is 100, so make the items 100% width, square
 		width: 100px;
 		height: 80px;
-
+		
 		// center the icon
 		display: flex;
 		justify-content: center;
@@ -109,20 +114,38 @@ const itemIconPath = computed(() => {
 
 		// look clickable
 		cursor: pointer;
+		
+		.nameRow {
+
+			position: absolute;
+			inset: 23px auto 0px 80px;
+			width: 150px;
+			/* border: 1px slateblue solid; */
+
+			opacity: 0;
+			transition: opacity 0.4s;
+
+			// text settings
+			color: white;
+			font-weight: bolder;
+			text-shadow: 2px 2px 0px black;
+			text-align: center;
+
+		}// .nameRow
 
 		// the inner box
 		.innerBox {
 
 			// tab styles
 			position: absolute;
-			inset: 5px -100px 5px 10px;
+			inset: 5px -200px 5px 10px;
 			border-radius: 10px 0px 0px 10px;
 
 			.icon {
 				// animate left
 				transition: left 0.5s;
 				position: relative;
-				top: 2px;
+				top: 4px;
 				left: 6px;
 
 				.iconImage {
@@ -191,6 +214,30 @@ const itemIconPath = computed(() => {
 				}
 
 			}// .innerBox
+
+
+			.nameRow {
+				color: black;
+				text-shadow: none;				
+			}
+
+			// the delete button
+			.deleteButton {
+				scale: 0;
+			}
+
+			// the icon
+			.icon {
+				// animate left
+				transition: left 0.5s;
+				position: relative;
+				top: 4px;
+				left: 6px;
+
+				.iconImage {
+					filter: drop-shadow(2px 4px 4px rgba(0, 0, 0, 0.5));
+				}
+			}// .icon
 
 		}// &.selected
 

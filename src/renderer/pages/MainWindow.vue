@@ -94,7 +94,7 @@ onBeforeMount(() => {
 		// fill screen
 		position: absolute;
 		inset: 0px 0px 0px 0px;
-
+		
 		// default bg
 		background: #424242;
 		/* background: #00abae; */
@@ -112,8 +112,10 @@ onBeforeMount(() => {
 
 			// fill bottom under top tabs
 			position: absolute;
-			inset: 42px 0px 0px calc(50vw - 800px);
+			inset: 42px 0px 0px calc(50vw - 800px);			
 			
+			/* transition: inset 0.4s ease-in-out; */
+
 			padding: 10px 10px 0px 10px;
 			border-style: 15px;
 

@@ -14,10 +14,9 @@
 			demoMode: demoMode,
 		}"
 	>
-
 		<div 
-				ref="canvasContainerRef"	
-				class="canvasContainer"
+			ref="canvasContainerRef"	
+			class="canvasContainer"
 		></div>
 		
 		<!-- <pre>
@@ -43,7 +42,6 @@
 					sitting: buddy.stateMode == 'sitting',
 				}"
 			>
-
 				<!-- the stylized name above the buddy -->
 				<div class="buddyName">{{ buddy.username }}</div>
 
@@ -158,10 +156,10 @@ watch(socketSettingsRef, (newVal) => {
 	// modelsAvailable.value = socketSettingsRef.value.tosserAssets;
 });
 
+
 // socket data
 const demoMode = socketShallowRefReadOnly('demoMode', false);
 const buddiesState = socketShallowRefReadOnly(slugify('buddiesState'), {});
-
 
 
 // wait for our ref to exist & then make the tosser system
