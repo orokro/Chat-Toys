@@ -10,6 +10,12 @@
 		title="Media Settings"
 		:themeColor="toy.static.themeColor"
 	>
+		<div class="picBox" :style="{ height: '350px',}">
+			<img src="/assets/half_tone/media.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
+
 		<p>
 			The Media system lets chatters trigger things such as images, gifs, or sounds, or both at the same time!
 			<br>

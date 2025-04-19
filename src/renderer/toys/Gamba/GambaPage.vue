@@ -13,6 +13,12 @@
 			'--color-primary': toy.static.themeColor,
 		}"
 	>
+		<div class="picBox" :style="{ height: '450px',}">
+			<img src="/assets/half_tone/gamba.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
+
 		<p>
 			The Gamba system lets chatters gamble their points away!
 			<br>

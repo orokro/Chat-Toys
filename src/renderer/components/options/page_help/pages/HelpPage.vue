@@ -10,6 +10,11 @@
 		title="Help"
 		themeColor="#00ABAE"
 	>
+		<div class="picBox" :style="{ height: '350px',}">
+			<img src="/assets/half_tone/help.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
 		<p>
 			Welcome to the ToyBox plugin! This plugin is designed to help you interact with your viewers in fun and engaging ways.
 		</p>

@@ -11,6 +11,11 @@
 		:themeColor="toy.static.themeColor"
 		class="channelPointsPage"
 	>
+		<div class="picBox" :style="{ height: '500px',}">
+			<img src="/assets/half_tone/channelPoints.png" height="300px" style="float:right"/>
+		</div>
+
+		<br>
 		<p>
 			While optional, the Channel Points system is the best way to leverage the various other toys in this system.
 

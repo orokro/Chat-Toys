@@ -83,6 +83,17 @@ span.cmd {
 	border-radius: 5px;
 }
 
+.picBox {
+	height: 500px;
+	width: 300px;
+	float: right;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-left: 40px;
+}
+
+
 @media (min-width: 2000px) {
 
 	.mainWindowWrapper .tabPagesWrapper {

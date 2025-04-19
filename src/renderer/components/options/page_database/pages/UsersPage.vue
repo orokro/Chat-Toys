@@ -11,6 +11,11 @@
 		themeColor="#69457f"
 		:limitWidth="true"
 	>
+		<div class="picBox" :style="{ height: '350px',}">
+			<img src="/assets/half_tone/users_db.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
 		<br><br>
 		<p>Below you will find the complete list of users that have interacted previously.</p>
 		<p>Currently this is read only, but in the future may be editing or support more user-features..</p>

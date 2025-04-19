@@ -10,6 +10,11 @@
 		title="Tosser Settings"
 		:themeColor="toy.static.themeColor"
 	>
+		<div class="picBox" :style="{ height: '500px',}">
+			<img src="/assets/half_tone/tosser.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
 		<p>
 			The Tosser system lets chatters throw things at you, like tomatoes, pies, and more!
 		</p>

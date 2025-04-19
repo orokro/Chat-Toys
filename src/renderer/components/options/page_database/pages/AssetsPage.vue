@@ -12,6 +12,11 @@
 		themeColor="#69457f"
 		:limitWidth="true"
 	>
+		<div class="picBox" :style="{ height: '350px',}">
+			<img src="/assets/half_tone/assets_db.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
 		<br><br>
 		<p>Below you will find the complete list of assets available..</p>
 		<p>This includes built-in assets, as well as ones you previously imported.</p>

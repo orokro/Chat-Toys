@@ -10,6 +10,10 @@
 		title="Chat Box Settings"
 		:themeColor="toy.static.themeColor"
 	>
+		<div class="picBox" :style="{ height: '350px',}">
+			<img src="/assets/half_tone/chat.png" height="300px" style="float:right"/>
+		</div>
+		<br><br>
 		<p>
 			The Chat Box system allows you to show a customized chat capture on screen.
 			However, it also has two special chat commands:

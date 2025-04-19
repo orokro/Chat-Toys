@@ -11,6 +11,12 @@
 		:themeColor="toy.static.themeColor"
 		class="prizeWheelPage"
 	>
+		<div class="picBox" :style="{ height: '350px',}">
+			<img src="/assets/half_tone/prizeWheel.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
+
 		<p>
 			The Prize Wheel is a fun way to reward your viewers with points, prizes, and more!
 		</p>
@@ -19,7 +25,7 @@
 		</p>
 		<p>
 			You can either keep the prize wheel always active, available to be spun at any time, 
-			or you can toggle in on/off in the show time page.
+			or you can have it appear only when the user spins it.
 		</p>
 		
 		<SectionHeader title="Command Triggers"/>

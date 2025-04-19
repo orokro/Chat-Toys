@@ -52,7 +52,7 @@ const props = defineProps({
 
 			overflow: hidden;
 
-			display: inline-block;
+			/* display: inline-block; */
 			// solid pill shape
 			/* background: black; */
 			border-radius: 30px;

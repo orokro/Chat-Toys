@@ -10,7 +10,19 @@
 		title="Fishing Settings"
 		:themeColor="toy.static.themeColor"
 	>
-		<p>The Fishing Toy is a mini game your viewers can play in chat.</p>
+		<div class="picBox" :style="{ height: '350px',}">
+			<img src="/assets/half_tone/fishing.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
+		<p>
+			The Fishing Toy is a mini game your viewers can play in chat.
+			<br>
+			The users can cast their line, with optional x/y coordinates, and then wait for a fish to bite.
+			<br>
+			Once a fish bites, the user can reel it in by typing with reel command and optional strength.
+			<br>
+			You can set channel points for catches, or just have it be a fun game.		</p>
 		<p>You can customize the list of fish, including:</p>
 		<ul>
 			<li>Fish Names</li>

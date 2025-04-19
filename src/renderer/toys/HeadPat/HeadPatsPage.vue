@@ -10,10 +10,25 @@
 		title="Head Pats Settings"
 		:themeColor="toy.static.themeColor"
 	>
+		<div class="picBox" :style="{ height: '350px',}">
+			<img src="/assets/half_tone/headPat.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
+
 		<p>
 			The Head Pats system lets chatters give you head pats!
-			<br>
-			Or, each other!
+			<br><br>
+			If the user type <span class="cmd">!{{ pat_command }}</span> command by itself, the head-pat media GIF will play
+			along with the users name who triggered it.
+			<br><br>
+			However, if the user types <span class="cmd">!{{ pat_command }} &lt;user&gt;</span>, then the head-pat media GIF will play
+			along with the name of the user they specified and it will show a generic user profile.
+			<br><br>
+			In the future, the user-pat system might support loading the user profile image of the user specified,
+			but for now just a generic user profile will be shown.
+			<br><br>
+			NOTE: this system provides two widgets! One for each mode.
 		</p>
 		
 		<SectionHeader title="Command Triggers"/>

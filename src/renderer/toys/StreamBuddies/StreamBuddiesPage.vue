@@ -10,11 +10,16 @@
 		title="Stream Buddies Settings"
 		:themeColor="toy.static.themeColor"
 	>
+		<div class="picBox" :style="{ height: '350px',}">
+			<img src="/assets/half_tone/buddies.png" height="300px" style="float:right"/>
+		</div>
+		
+		<br>
 		<p>
 			The Stream Buddies system lets chatters appear on screen as a character.
 		</p>
 		<InfoBox icon="warning">
-			This is the most advanced system, and has the most settings to configure.
+			This is the most advanced system, and has the most commands to configure.
 			However, at the time of writing, this system is considered "experimental" and may have bugs.
 		</InfoBox>
 
