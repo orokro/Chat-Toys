@@ -92,7 +92,7 @@
 <script setup>
 
 // vue
-import { ref, shallowRef, computed, inject } from 'vue';
+import { ref, shallowRef, computed, inject, watch } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 
 // components
@@ -125,14 +125,17 @@ const {
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
 
+watch(commandsRef, () => {
+	console.log(commandsRef.value);
+}, { immediate: true });
+
 // get the command used for tossing items
 const echo_command = computed(() => {
-	return commandsRef.value.chat__echo?.command || '';
+	return commandsRef.value.log__echo?.command || '';
 });
 const me_command = computed(() => {
-	return commandsRef.value.channelPoints_me?.command || '';
+	return commandsRef.value.channelPoints__me?.command || '';
 });
-
 
 </script>
 <style lang="scss" scoped>	
