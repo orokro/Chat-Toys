@@ -80,6 +80,22 @@ export default class PrizeWheel extends Toy {
 
 
 	/**
+	 * Perform clean up when the toy is destroyed
+	 */
+	end(){
+		super.end();
+		
+		// clear the spin interval
+		if(this.spinInterval)
+			window.clearElectronInterval(this.spinInterval);
+
+		// clear the timeout
+		if(this.finishSpinTimeout)
+			window.clearElectronTimeout(this.finishSpinTimeout);
+	}
+	
+
+	/**
 	 * Initialize the settings for this toy
 	 */
 	initSettings() {
@@ -237,14 +253,14 @@ export default class PrizeWheel extends Toy {
 		this.spinMessage.value = item.chatter;
 
 		// use our electron interval so we don't throttle
-		const spinInterval = window.setElectronInterval(() => {
+		this.spinInterval = window.setElectronInterval(() => {
 
 			// compute delta time
 			const deltaTime = (new Date() - now);
 
 			// GTFO if we're outta time
 			if (deltaTime > item.spinTime) {
-				window.clearElectronInterval(spinInterval);
+				window.clearElectronInterval(this.spinInterval);
 				this.finishSpin(item);
 				return;
 			}
@@ -289,7 +305,7 @@ export default class PrizeWheel extends Toy {
 		this.chatToysApp.log.msg(item.chatter + ' spun the wheel and got ' + this.spinItem.value);
 
 		// return to idle
-		window.setElectronTimeout(() => {
+		this.finishSpinTimeout = window.setElectronTimeout(() => {
 			this.wheelMode.value = 'IDLE';
 		}, 2000);
 	}

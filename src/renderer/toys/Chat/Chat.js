@@ -130,6 +130,16 @@ export default class Chat extends Toy {
 
 
 	/**
+	 * Clean up
+	 */
+	end(){
+		super.end();
+		this.chatToysApp.chatProcessor.removeNewChatsListener(this.onNewChats);
+		window.clearElectronTimeout(this.swarmTimeout);
+	}
+
+
+	/**
 	 * Initialize the settings for this toy
 	 */
 	initSettings() {
@@ -294,14 +304,6 @@ export default class Chat extends Toy {
 		// otherwise we're in SHOWING mode
 		this.shoutMode.value = 'SHOWING';
 		this.shoutMessage.value = item.message;
-	}
-
-
-	/**
-	 * Clean up
-	 */
-	end(){
-		this.chatToysApp.chatProcessor.removeNewChatsListener(this.onNewChats);
 	}
 
 

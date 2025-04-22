@@ -110,11 +110,21 @@ export default class Gamba extends Toy {
 		bindRef(this.bettingOptionStats).to(this.optionStats);		
 
 		// reset some things when we start up
-		window.setElectronTimeout(()=>{
+		this.resetTimeout = window.setElectronTimeout(()=>{
 			this.betsPlaced.value = [];
 			this.timeToBet.value = 0;
 			this.settings.gambaStateMode.value = Gamba.MODE.OFF;
 		}, 1000);
+	}
+
+
+	/**
+	 * Perform clean up when the toy is destroyed
+	 */
+	end(){
+		super.end();
+		if(this.resetTimeout)
+			window.clearElectronTimeout(this.resetTimeout);
 	}
 
 

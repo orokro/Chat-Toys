@@ -71,10 +71,26 @@ export default class ChannelPoints extends Toy {
 		// internal state vars
 		this.timeLeft = 0;
 
+		this.clearAbleTimeouts = [];
+
 		// starts logic for this item
-		window.setElectronTimeout(()=>{
+		this.clearAbleTimeouts.push(window.setElectronTimeout(()=>{
 			this.start();
-		}, 1000);
+		}, 1000));
+	}
+
+
+	/**
+	 * Perform clean up when the toy is destroyed
+	 */
+	end(){
+		super.end();
+
+		// clear the interval
+		window.clearElectronInterval(this.tickInterval);
+		this.clearAbleTimeouts.forEach((timeout) => {
+			window.clearElectronTimeout(timeout);
+		});
 	}
 
 
@@ -219,9 +235,9 @@ export default class ChannelPoints extends Toy {
 
 		// if there's no claims left, return to idle mode
 		if(this.claimsLeft.value <= 0)
-			window.setElectronTimeout(()=>{
+			this.clearAbleTimeouts.push(window.setElectronTimeout(()=>{
 				this.startGetMode();
-			}, 1000);
+			}, 1000));
 
 		// update the user's points and other data
 		window.ytctDB.updateUser(msg.authorUniqueID, {
@@ -354,7 +370,6 @@ export default class ChannelPoints extends Toy {
 
 		// universal tick
 		this.tickInterval = window.setElectronInterval(()=>{
-
 			this.tick();
 		}, 500);
 	}

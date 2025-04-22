@@ -122,6 +122,7 @@ export default class Fishing extends Toy {
 	 * Clean up
 	 */
 	end(){
+		super.end();
 		window.clearElectronInterval(this.fishingInterval);
 	}
 

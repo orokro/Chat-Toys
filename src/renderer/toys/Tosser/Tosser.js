@@ -58,9 +58,18 @@ export default class Tosser extends Toy {
 		this.tossQueue = socketShallowRef(this.static.slugify('tossQueue'), []);
 
 		// reset the toss queue
-		window.setElectronTimeout(() => {
+		this.resetTimeout = window.setElectronTimeout(() => {
 			this.tossQueue.value = [];
 		}, 2000);
+	}
+
+
+	/**
+	 * Perform clean up when the toy is destroyed
+	 */
+	end(){
+		super.end();
+		window.clearElectronTimeout(this.resetTimeout);
 	}
 
 

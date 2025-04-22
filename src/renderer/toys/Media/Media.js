@@ -64,6 +64,16 @@ export default class Media extends Toy {
 
 
 	/**
+	 * Perform clean up when the toy is destroyed
+	 */
+	end(){
+		super.end();
+		if(this.stateTimeout)
+			window.clearTimeout(this.stateTimeout);
+	}
+
+
+	/**
 	 * Initialize the settings for this toy
 	 */
 	initSettings() {
@@ -158,7 +168,7 @@ export default class Media extends Toy {
 		this.message.value = mediaItem.message;
 		this.soundPath.value = mediaItem.soundPath;
 		this.imagePath.value = mediaItem.imagePath;
-		window.setElectronTimeout(()=>{
+		this.stateTimeout = window.setElectronTimeout(()=>{
 			this.mode.value = 'PLAY';
 		}, 100);
 	}

@@ -59,6 +59,16 @@ class BuddySystem {
 
 
 	/**
+	 * Perform any cleanup when the buddy system is destroyed
+	 */
+	end(){
+		super.end();
+		if(this.knockBackTimeout)
+			window.clearTimeout(this.knockBackTimeout);
+	}
+	
+
+	/**
 	 * Handle when we get new chat messages
 	 * 
 	 * @param {Array<Object>} chats - list of new messages
@@ -548,7 +558,8 @@ class Buddy {
 							this.targetX = targetBuddy.x;
 							targetBuddy.targetX = this.x;
 
-							window.setElectronTimeout(() => {
+							this.knockBackTimeout = window.setElectronTimeout(() => {
+
 								// set target to being knocked back
 								const knockBackVelo = (this.x < targetBuddy.x) ? 100 : -100;
 								targetBuddy.velocityX = knockBackVelo;

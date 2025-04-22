@@ -92,6 +92,14 @@ export default class HeadPat extends Toy {
 
 
 	/**
+	 * Clean up
+	 */
+	end(){
+		super.end();
+	}
+
+
+	/**
 	 * Initialize the settings for this toy
 	 */
 	initSettings() {
