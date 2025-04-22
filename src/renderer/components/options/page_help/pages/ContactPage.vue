@@ -12,7 +12,7 @@
 		themeImage="assets/bg_tiles/contact.png"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
-			<img src="/assets/half_tone/help_contact.png" height="300px" style="float:right"/>
+			<img src="/assets/chat_solid/help_contact.png" height="300px" style="float:right"/>
 		</div>
 		
 		<br>

@@ -16,7 +16,7 @@
 */
 
 // vue
-import { ref, registerRuntimeCompiler, shallowRef, watch } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
 import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
@@ -148,7 +148,7 @@ export default class Chat extends Toy {
 	 */
 	initSettings() {
 
-		// channel points settings
+		// chat settings
 		this.buildSettingsBlock({
 
 			enableChatBox: ref(false),

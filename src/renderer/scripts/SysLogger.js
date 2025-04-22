@@ -47,6 +47,12 @@ export class SysLogger {
 	}
 
 
+	/**
+	 * Pushes a message to the log
+	 * 
+	 * @param {String} type - type of message (log, error, info)
+	 * @param {String} text - message text
+	 */
 	pushMessage(type, text) {
 		this.messages.value = [
 			...this.messages.value,

@@ -102,7 +102,7 @@ export default class PrizeWheel extends Toy {
 	 */
 	initSettings() {
 
-		// channel points settings
+		// prize wheel settings
 		this.buildSettingsBlock({
 
 			wheelItems: ref(['prize 1', 'prize 2', 'prize 3', 'prize 4', 'prize 5']),

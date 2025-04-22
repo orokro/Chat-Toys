@@ -135,7 +135,7 @@ export default class Gamba extends Toy {
 	 */
 	initSettings() {
 
-		// channel points settings
+		// gamba settings
 		this.buildSettingsBlock({
 
 			gambaStateMode: shallowRef('OFF'),

@@ -13,7 +13,7 @@
 		themeImage="assets/bg_tiles/usersDB.png"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
-			<img src="/assets/half_tone/users_db.png" height="300px" style="float:right"/>
+			<img src="/assets/chat_solid/users_db.png" height="300px" style="float:right"/>
 		</div>
 		
 		<br>

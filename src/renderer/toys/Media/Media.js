@@ -80,7 +80,7 @@ export default class Media extends Toy {
 	 */
 	initSettings() {
 
-		// channel points settings
+		// media settings
 		this.buildSettingsBlock({
 
 			mediaAssets: shallowRef([]),

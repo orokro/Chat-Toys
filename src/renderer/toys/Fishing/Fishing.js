@@ -132,7 +132,7 @@ export default class Fishing extends Toy {
 	 */
 	initSettings() {
 
-		// channel points settings
+		// fishing settings
 		this.buildSettingsBlock({
 
 			// our local settings

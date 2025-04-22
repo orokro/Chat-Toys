@@ -78,7 +78,7 @@ export default class Tosser extends Toy {
 	 */
 	initSettings() {
 
-		// channel points settings
+		// tosser settings
 		this.buildSettingsBlock({
 
 			// list of items that can be tossed

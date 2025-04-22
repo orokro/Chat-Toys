@@ -93,7 +93,7 @@ export default class StreamBuddies extends Toy {
 	 */
 	initSettings() {
 
-		// channel points settings
+		// stream buddies settings
 		this.buildSettingsBlock({
 
 			maxBuddyCount: ref(5),

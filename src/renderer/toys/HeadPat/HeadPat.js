@@ -106,7 +106,7 @@ export default class HeadPat extends Toy {
 	 */
 	initSettings() {
 
-		// channel points settings
+		// head pat settings
 		this.buildSettingsBlock({
 
 			allowUserPats: ref(true),
