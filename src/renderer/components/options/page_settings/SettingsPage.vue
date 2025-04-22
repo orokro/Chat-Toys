@@ -39,10 +39,10 @@ const pageItems = [
 		slug: 'chatSettings',
 		name: 'Chat Settings',
 	},
-	{
-		slug: 'plugin',
-		name: 'Plugin Settings',
-	},
+	// {
+	// 	slug: 'plugin',
+	// 	name: 'Plugin Settings',
+	// },
 ];
 
 // refs
