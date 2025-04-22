@@ -96,7 +96,7 @@
 		
 		</SettingsRow>
 
-		<CatsumIpsum :paragraphs="1" :sentences="5" :brOnly="true"/>
+		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 
 </template>

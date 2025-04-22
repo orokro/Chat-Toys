@@ -58,8 +58,8 @@
 			<h3>Chatter Image</h3>
 			<p>Image to use for the head patting chatter</p>
 		</SettingsAssetRow>
+		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
-
 </template>
 <script setup>
 
@@ -75,7 +75,7 @@ import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
-
+import CatsumIpsum from '@components/CatsumIpsum.vue';
 // our app
 import HeadPat from './HeadPat';
 

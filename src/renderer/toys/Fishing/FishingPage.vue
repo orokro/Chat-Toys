@@ -99,7 +99,7 @@
 				}"				
 			/>
 		</SettingsRow>
-
+		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 
 </template>
@@ -119,6 +119,7 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayFishEdit from './ArrayFishEdit.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
+import CatsumIpsum from '@components/CatsumIpsum.vue';
 
 // our app
 import Fishing from './Fishing';

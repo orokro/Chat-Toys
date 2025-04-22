@@ -122,7 +122,7 @@
 			</p>
 			<p>The number of users can be customized above...</p>
 		</SettingsInputRow>
-
+		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 
 </template>
@@ -141,6 +141,7 @@ import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
+import CatsumIpsum from '@components/CatsumIpsum.vue';
 
 // our app
 import Chat from './Chat';
