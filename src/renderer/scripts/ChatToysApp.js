@@ -97,19 +97,10 @@ export default class ChatToysApp {
 	buildSettings() {
 
 		// make general settings to store the output widget box
-		this.settings = {
-			outputWidgetBox: shallowRef({
-				x: 1280-150-300,
-				y: 720-150,
-				width: 300,
-				height: 150
-			}),
+		this.settings = {			
 			stageWidth: ref(1280),
 			stageHeight: ref(720),
-			enabledToys: this.enabledToys,
-			logBGColor: ref('white'),
-			logBGOpacity: ref(0.2),
-			logTextColor: ref('#FFFFFF'),
+			enabledToys: this.enabledToys,	
 		};
 		this.settingsStorRef = chromeShallowRef('general-settings', {});
 		this.settingsAggregator = new RefAggregator(this.settingsStorRef);
@@ -117,9 +108,9 @@ export default class ChatToysApp {
 
 		// now for some magic - we'll watch the settings object for changes
 		// and update a socket ref with the json, so our live page can update
-		this.settingsSocketRef = socketShallowRef('general-settings', this.settingsStorRef.value);
+		this.settingsSocketRef = socketShallowRef('general-settings', {...this.settingsStorRef.value});
 		this.stopSettingsSocketWatch = watch(this.settingsStorRef, (newVal) => {
-			this.settingsSocketRef.value = newVal;
+			this.settingsSocketRef.value = {...newVal};
 		});
 		window.setElectronTimeout(()=>
 			this.settingsSocketRef.value = this.settingsStorRef.value, 1000);

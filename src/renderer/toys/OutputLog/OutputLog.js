@@ -26,7 +26,7 @@ export default class OutputLog extends Toy {
 	// static info	
 	static name = 'Output Log';
 	static slug = 'log';
-	static desc = 'Show output from commands on screen.';
+	static desc = 'Show output from commands on screen, and give feed back to users on the status of their commands.';
 	static optionsPageComponent = OutputLogPage;
 	static themeColor = '#79AFA0';
 	static widgetComponents = [
@@ -77,6 +77,7 @@ export default class OutputLog extends Toy {
 			showLogBG: ref(true),
 			logBGColor: ref('#FFFFFF'),
 			logBGOpacity: ref(0.2),
+			logTextColor: ref('#FFFFFF'),
 			widgetBox: shallowRef({
 				x: 1280-150-300,
 				y: 720-150,

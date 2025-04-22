@@ -12,6 +12,9 @@
 	<!-- outermost log box -->
 	<div 
 		class="logBox"
+		:class="{ 
+			demoMode: demoMode,
+		}"
 		:style="{
 			'--logBGColor': socketSettingsRef?.logBGColor || 'white',
 			'--logBGOpacity': socketSettingsRef?.logBGOpacity || '0.5',
@@ -69,9 +72,9 @@ const socketSettingsRef = useToySettings('log', 'widgetBox', emit, () => {
 	ready.value = true;
 });
 
-//  the messages list
+// gets live sockets
 const messages = socketShallowRefReadOnly('syslog', []);
-
+const demoMode = socketShallowRefReadOnly('demoMode', false);
 
 </script>
 <style lang="scss" scoped>
@@ -90,6 +93,11 @@ const messages = socketShallowRefReadOnly('syslog', []);
 		overflow: hidden;
 		border-radius: 10px;
 
+		&.demoMode {
+			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
+			transform: scale(1);
+		}
+		
 		// for debug
 		/* border: 1px solid white; */
 

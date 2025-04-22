@@ -24,6 +24,7 @@ import OutputLog from "./OutputLog/OutputLog";
 // - description
 export const toysData = [
 	ChannelPoints,
+	OutputLog,
 	Chat,
 	Media,
 	Tosser,
@@ -31,8 +32,7 @@ export const toysData = [
 	Gamba,
 	HeadPat,
 	StreamBuddies,
-	Fishing,
-	OutputLog
+	Fishing,	
 ];
 
 // convert the array to an object for easier access

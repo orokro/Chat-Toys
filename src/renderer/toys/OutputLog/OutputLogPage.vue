@@ -59,6 +59,15 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
+		
+		<SettingsInputRow
+			type="color"
+			v-model="logTextColor"
+		>
+			<h3>Text Color</h3>
+			<p>The color to render the log text on the log widget.</p>
+		</SettingsInputRow>
+
 		<SettingsInputRow
 			type="boolean"
 			v-model="showLogBG"
@@ -85,6 +94,7 @@
 				Again, if the log box background is enabled, what opacity should it be?
 			</p>
 		</SettingsInputRow>
+		
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 
@@ -118,6 +128,7 @@ const {
 	showLogBG,
 	logBGColor,
 	logBGOpacity,
+	logTextColor,
 	logWidgetBox,
 } = toy.settings;
 

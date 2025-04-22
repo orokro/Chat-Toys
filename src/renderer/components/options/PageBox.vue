@@ -15,6 +15,7 @@
 		:style="{ 
 			background: gradientCSS,
 			'--tColor': newColor,
+			'--tColor2': props.themeColor,
 			'--bg': bgCSS,
 			'--bgSize': bgSize,
 			'--bgPos': bgThemePos!=null ? `0px ${bgThemePos}` : '0px -25px',
@@ -22,6 +23,11 @@
 	>
 		<div class="pageHeader" align="center">
 			<h2 class="title">
+				<div class="titleGradient">
+					<span>{{ title }}</span>
+				</div>
+			</h2>
+			<h2 class="titleTextV">
 				{{ title }}
 			</h2>
 		</div>
@@ -139,9 +145,11 @@ const bgCSS = computed(()=>{
 		// header
 		.pageHeader {
 
+			position: relative;
+
 			// fixed height 
 			height: 70px;
-			padding: 4px 20px 0px;
+			padding: 0px 20px 0px;
 			border-bottom: 2px solid white;
 			
 			// text settings
@@ -152,6 +160,29 @@ const bgCSS = computed(()=>{
 			background-size: var(--bgSize) var(--bgSize);
 			background-position: var(--bgPos);
 			text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+
+			.titleGradient {
+
+				display: inline-block;
+				padding: 5px 40px;
+
+				/* background: var(--tColor2); */
+				mask-image:
+					linear-gradient(90deg,rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, .7) 10%, rgba(0, 0, 0, .7) 90%, rgba(0, 0, 0, 0) 100%);
+				
+				mix-blend-mode: multiply;
+
+				span {
+					opacity: 1;
+				}
+			}
+
+			.titleTextV {
+				position: relative;
+				top: -79px;
+				/* left: 40px; */
+			}
+
 
 		}// .pageHeader
 
@@ -180,7 +211,11 @@ const bgCSS = computed(()=>{
 			background-position: var(--bgPos);
 			
 			color: white;
-			text-shadow: 2px 1px 0px rgba(0, 0, 0, 0.5);
+			text-shadow: 2px 2px 0px rgba(0, 0, 0, 1);
+
+			.titleText {
+				/* background: var(--tColor2); */
+			}
 		}
 
 		:deep(.infoBox) {

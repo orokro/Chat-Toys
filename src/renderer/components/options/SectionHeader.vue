@@ -13,7 +13,12 @@
 		align="center"
 	>
 		<h3 class="title">
-			{{ title }}
+			<div class="titleText">
+				<span>{{ title }}</span>
+			</div>
+			<div class="titleTextV">
+				<span>{{ title }}</span>
+			</div>
 		</h3>
 	</div>
 </template>
@@ -52,9 +57,36 @@ const props = defineProps({
 
 		h3 {
 			width: 1000px;
-			padding: 5px 0;
+			/* padding: 5px 0; */
 			font-size: 24px;
 			text-align: left;
+			overflow: hidden;
+
+			position: relative;
+
+			.titleText {
+				display: inline-block;
+				padding: 6px 40px;
+				/* background: #000000; */
+
+				/* background: linear-gradient(90deg,rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.25) 10%, rgba(0, 0, 0, 0.25) 90%, rgba(0, 0, 0, 0) 100%); */
+				mask-image:
+					linear-gradient(90deg,rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, .7) 10%, rgba(0, 0, 0, .7) 90%, rgba(0, 0, 0, 0) 100%);
+				
+				mix-blend-mode: multiply;
+
+				span {
+					opacity: 1;
+				}
+		
+			}
+
+			.titleTextV {
+				position: absolute;
+				top: 6px;
+				left: 40px;
+			}
+
 		}
 
 	}// .sectionHeader
