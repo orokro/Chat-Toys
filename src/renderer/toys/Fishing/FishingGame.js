@@ -94,17 +94,26 @@ export class FishingGame {
 
 		// from our list of fish, total the rarity and use that for our random number
 		const list = this.fishList.value;
-		const totalRarity = list.reduce((sum, fish) => sum + fish.rarity, 0);
+		const totalRarity = list.reduce((sum, fish) => sum + parseInt(fish.rarity, 10), 0);
 		const rand = Math.random() * totalRarity;
+
+		console.log('Fish List: ', list.map(f => f.name).join(', '));
+		console.log(`Total rarity: ${totalRarity}, random number: ${rand}`);
 
 		// basic on the number picked, we'll use the rarity of each fish as a 'range'
 		// and based on where our random number falls, we'll pick a fish
 		let acc = 0;
 		for (const fish of list) {
-			acc += fish.rarity;
-			if (rand < acc)
+			const fishRarity = parseInt(fish.rarity, 10);
+			acc += fishRarity;
+			console.log(`Fish "${fish.name}" has rarity ${fishRarity}, total so far: ${acc}`);
+			if (rand < acc){
+				console.log(`Fish "${fish.name}" picked ${acc} with random number ${rand}`);
 				return { ...fish };
+			}
 		}// next fish
+
+		console.log(`No fish picked with random number ${rand}`);
 
 		// if we get here, we didn't pick a fish, so just return the last one
 		return { ...list[list.length - 1] };
