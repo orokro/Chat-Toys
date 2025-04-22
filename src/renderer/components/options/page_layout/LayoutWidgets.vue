@@ -46,7 +46,6 @@ import { RefAggregator } from '../../../scripts/RefAggregator';
 // components
 import LayoutBox from './LayoutBox.vue';
 import ChannelPointsWidget from '../../../toys/ChannelPoints/ChannelPointsWidget.vue';
-import SysLogWidget from '@components/live/SysLogWidget.vue';
 import DummyWidget from '../../../toys/DummyWidget.vue';
 
 // fetch the main app state context
@@ -77,17 +76,6 @@ const props = defineProps({
 
 // we'll store a list of widgets that can be spawned in the layout
 const widgets = [
-
-	// settings isn't a toy in itself, so we'll hard code stuff for it's widget
-	{
-		slug: 'settings',
-		component: SysLogWidget,
-		settings: ctApp.settings,
-		key: 'outputWidgetBox',
-		allowResize: true,
-		lockAspectRatio: false,
-		color: '#FFFFFF'
-	},
 
 	// flatly merge in the rest of the widgets as defined on the toy's themselves
 	...(ctApp.enabledToys.value.flatMap(slug => {

@@ -163,8 +163,8 @@ const props = defineProps({
 // gets our settings
 const ready = ref(false);
 const socketSettingsRef = useToySettings('gamba', 'widgetBox', emit, () => {
-	console.log('settings updated');
-	console.log(socketSettingsRef.value);
+	// console.log('settings updated');
+	// console.log(socketSettingsRef.value);
 	ready.value = true;
 });
 
@@ -196,11 +196,11 @@ const optionStats = socketShallowRefReadOnly(slugify('optionStats'), []);
 const results = socketShallowRefReadOnly(slugify('results'), null);
 
 watch(optionStats, (newVal) => {
-	console.log('optionStats changed:', newVal);
+	// console.log('optionStats changed:', newVal);
 });
 
 watch(optionStats, (newVal) => {
-	console.log('optionStats changed:', newVal);
+	// console.log('optionStats changed:', newVal);
 });
 
 </script>

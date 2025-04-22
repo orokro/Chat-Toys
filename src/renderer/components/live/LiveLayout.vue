@@ -52,7 +52,6 @@ import { RefAggregator } from '../../scripts/RefAggregator';
 
 // components
 import LayoutBox from '@components/options/page_layout/LayoutBox.vue';
-import SysLogWidget from './SysLogWidget.vue';	
 
 // our toys data which includes the widget vue constructors
 import { toysData } from '@toys/ToysData';
@@ -119,13 +118,6 @@ function buildWidgetsList(){
 
 	// loop over the widgets for the toy with this slug
 	widgets.value = [
-		{
-			slug: 'settings',
-			key: 'outputWidgetBox',
-			boxKey: 'settings-outputWidgetBox',
-			component: SysLogWidget,
-			color: '#FFFFFF'
-		},
 		...enabledToys.flatMap(slug => {
 
 			// loop over the widgets for the toy with this slug

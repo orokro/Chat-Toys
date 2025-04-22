@@ -131,7 +131,7 @@ const ready = ref(false);
 const buddySize = ref(1);
 const socketSettingsRef = useToySettings('stream-buddies', 'widgetBox', emit, () => {
 	ready.value = true;	
-	console.log('buddies settings', socketSettingsRef.value);
+	// console.log('buddies settings', socketSettingsRef.value);
 	buddySize.value = socketSettingsRef.value.buddySize;
 });
 

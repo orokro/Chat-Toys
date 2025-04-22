@@ -89,17 +89,12 @@ const ctApp = inject('ctApp');
 
 // list of items to show in the vertical strip
 const verticalItems = computed(() => {
-	const system = {
-		name: "system",
-		slug: "settings",
-		desc: "System Widget.",
-	}
 	const toys = ctApp.enabledToys.value.map((slug)=>(ctApp.toysData.asObject[slug]));
-	return [system, ...toys];
+	return [...toys];
 });
 
 // what's the selected tab?
-const selectedTab = ref('settings');
+const selectedTab = ref(verticalItems.value[0]?.slug || '');
 
 </script>
 <style lang="scss" scoped>

@@ -66,15 +66,12 @@ const emit = defineEmits([
 // gets our settings
 const ready = ref(false);
 const socketSettingsRef = useToySettings('log', 'widgetBox', emit, () => {
-	console.log('gotSettings');
-	console.log(socketSettingsRef.value);
 	ready.value = true;
 });
 
 //  the messages list
 const messages = socketShallowRefReadOnly('syslog', []);
 
-// const generalSettings = socketShallowRefReadOnly('general-settings', {});
 
 </script>
 <style lang="scss" scoped>
