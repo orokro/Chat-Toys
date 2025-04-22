@@ -16,6 +16,9 @@ import { createSystemTray } from './system/SystemTray.js';
 import { createAppMenu } from './system/MainAppMenu.js';
 import { chatForward } from './system/chatForward.js';
 
+// load our window tests
+require('./system/WindowTests');
+
 // system to use backend for intervals
 import 'electron-interval-system/main.js';
 

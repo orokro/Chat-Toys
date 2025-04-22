@@ -67,7 +67,6 @@ const props = defineProps({
 			.titleText {
 				display: inline-block;
 				padding: 6px 40px;
-				/* background: #000000; */
 
 				/* background: linear-gradient(90deg,rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.25) 10%, rgba(0, 0, 0, 0.25) 90%, rgba(0, 0, 0, 0) 100%); */
 				mask-image:
