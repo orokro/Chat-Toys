@@ -98,7 +98,7 @@ onBeforeMount(() => {
 		// default bg
 		background: #424242;
 		/* background: #00abae; */
-		/* background: url('/assets/testbg.png') repeat; */
+		background: #424242 url('/assets/bg_tiles/main.png') repeat;
 
 
 		// top tab bar forced to top

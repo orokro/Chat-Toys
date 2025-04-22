@@ -109,6 +109,9 @@ const emit = defineEmits(['changeTab', 'addItem', 'removeItem']);
 				// padding for contents (which will always be a PageBox, etc)
 				padding: 20px 30px 30px 30px;
 
+				// drop shadow
+				box-shadow: 5px 5px 20px rgba(0, 0, 0, 1);
+
 			}// .actualContent
 
 		}// .contentPageArea
