@@ -13,7 +13,7 @@
 		themeImage="assets/bg_tiles/channelPoints.png"
 	>
 		<div class="picBox" :style="{ height: '500px',}">
-			<img src="/assets/half_tone/channelPoints.png" height="300px" style="float:right"/>
+			<img src="/assets/chat_solid/channelPoints.png" height="300px" style="float:right"/>
 		</div>
 
 		<br>

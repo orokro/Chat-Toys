@@ -13,7 +13,7 @@
 		bgThemePos="50px"
 	>
 		<div class="picBox" :style="{ height: '500px',}">
-			<img src="/assets/half_tone/tosser.png" height="300px" style="float:right"/>
+			<img src="/assets/chat_solid/tosser.png" height="300px" style="float:right"/>
 		</div>
 		
 		<br>

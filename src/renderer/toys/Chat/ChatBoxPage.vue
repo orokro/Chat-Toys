@@ -1,6 +1,6 @@
 <!--
-	Chat BoxPage.vue
-	----------------
+	ChatBoxPage.vue
+	---------------
 
 	This is the settings page for the Chat Box system.
 -->
@@ -14,7 +14,7 @@
 		bgThemePos="40px"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
-			<img src="/assets/half_tone/chat.png" height="300px" style="float:right"/>
+			<img src="/assets/chat_solid/chat.png" height="300px" style="float:right"/>
 		</div>
 		<br><br>
 		<p>

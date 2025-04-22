@@ -13,7 +13,7 @@
 		themeImage="assets/bg_tiles/gamba.png"
 	>
 		<div class="picBox" :style="{ height: '450px',}">
-			<img src="/assets/half_tone/gamba.png" height="300px" style="float:right"/>
+			<img src="/assets/chat_solid/gamba.png" height="300px" style="float:right"/>
 		</div>
 		
 		<br>

@@ -14,7 +14,7 @@
 		bgThemePos="25px"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
-			<img src="/assets/half_tone/buddies.png" height="300px" style="float:right"/>
+			<img src="/assets/chat_solid/buddies.png" height="300px" style="float:right"/>
 		</div>
 		
 		<br>
