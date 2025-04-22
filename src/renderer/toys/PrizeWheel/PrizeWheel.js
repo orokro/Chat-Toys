@@ -52,7 +52,8 @@ export default class PrizeWheel extends Toy {
 
 		// new queue for scheduling multiple requests to spin
 		this.spinQueue = new StateTickerQueue(this.handleSpinQueue.bind(this), 2, 10);
-		electronAPI.tick(() => this.spinQueue.tick());
+		this.tickFN = () => this.spinQueue.tick();
+		electronAPI.tick(this.tickFN);
 
 		// our socket state
 		this.wheelImagePath = socketShallowRef(
@@ -84,6 +85,7 @@ export default class PrizeWheel extends Toy {
 	 */
 	end(){
 		super.end();
+		electronAPI.clearTick(this.tickFN);
 		
 		// clear the spin interval
 		if(this.spinInterval)
@@ -93,7 +95,7 @@ export default class PrizeWheel extends Toy {
 		if(this.finishSpinTimeout)
 			window.clearElectronTimeout(this.finishSpinTimeout);
 	}
-	
+
 
 	/**
 	 * Initialize the settings for this toy

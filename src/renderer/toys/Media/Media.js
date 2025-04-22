@@ -52,7 +52,8 @@ export default class Media extends Toy {
 
 		// our state ticker queue
 		this.stateTickerQueue = new StateTickerQueue(this.handleStateChange.bind(this), 2, 5);
-		electronAPI.tick(() => this.stateTickerQueue.tick());
+		this.tickFN = () => this.stateTickerQueue.tick()
+		electronAPI.tick(this.tickFN);
 
 		// live socket settings
 		this.mode = socketShallowRef(this.static.slugify('mode'), 'IDLE');
@@ -68,6 +69,7 @@ export default class Media extends Toy {
 	 */
 	end(){
 		super.end();
+		electronAPI.clearTick(this.tickFN);
 		if(this.stateTimeout)
 			window.clearTimeout(this.stateTimeout);
 	}

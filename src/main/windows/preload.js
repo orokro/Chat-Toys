@@ -23,7 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	sendMessage: (message) => ipcRenderer.send('message', message),
 	onChatMessage: (callback) => ipcRenderer.on('chat-message', (event, data) => callback(data)),
 	onServerLog: (callback) => ipcRenderer.on('server-log', (event, data) => callback(data)),
-	tick: (callback) => ipcRenderer.on('tick', (event) => callback()),
+	tick: (callback) => ipcRenderer.on('tick', callback),
+	clearTick: (callback) => ipcRenderer.off('tick', callback),
 	invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
 });
 

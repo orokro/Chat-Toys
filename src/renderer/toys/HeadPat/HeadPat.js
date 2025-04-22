@@ -65,10 +65,11 @@ export default class HeadPat extends Toy {
 		this.chatterPatQueue = new StateTickerQueue(this.handleChatQueue.bind(this), 2, 10);
 		
 		// listen to ticks
-		electronAPI.tick(() => {
+		this.tickFN = () => {
 			this.streamerPatQueue.tick();
 			this.chatterPatQueue.tick();
-		});
+		};
+		electronAPI.tick(this.tickFN);
 
 		// the mode we're in, either 'IDLE', or 'SHOWING'
 		this.streamerMode = socketShallowRef(this.static.slugify('streamerMode'), 'IDLE');
@@ -96,6 +97,7 @@ export default class HeadPat extends Toy {
 	 */
 	end(){
 		super.end();
+		electronAPI.clearTick(this.tickFN);
 	}
 
 

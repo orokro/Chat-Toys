@@ -58,7 +58,8 @@ export default class Gamba extends Toy {
 		super(toyManager);
 
 		// subscribe to the tick event
-		electronAPI.tick(() => this.tick());
+		this.tickFN = () => this.tick();
+		electronAPI.tick(this.tickFN);
 
 		// will keep one array of all bets
 		this.betsPlaced = socketShallowRef(this.static.slugify('allBets'), []);
@@ -123,6 +124,7 @@ export default class Gamba extends Toy {
 	 */
 	end(){
 		super.end();
+		electronAPI.clearTick(this.tickFN);
 		if(this.resetTimeout)
 			window.clearElectronTimeout(this.resetTimeout);
 	}

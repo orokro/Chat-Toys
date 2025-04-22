@@ -82,8 +82,9 @@ export default class Chat extends Toy {
 
 		// we'll use a ticker for queuing up shout messages
 		this.shoutQueue = new StateTickerQueue(this.handleShoutQueue.bind(this), 2, 10);
-		electronAPI.tick(() => this.shoutQueue.tick());
-
+		this.tickFN = () => this.shoutQueue.tick();
+		electronAPI.tick(this.tickFN);
+		
 		// our socket state
 		this.soundPath = socketShallowRef(
 			this.static.slugify('soundPath'),
@@ -124,7 +125,8 @@ export default class Chat extends Toy {
 				}
 			}
 		);
-		electronAPI.tick(() => this.swarmLogic.tick());
+		this.tickFN = () => this.swarmLogic.tick();
+		electronAPI.tick(this.tickFN);
 
 	}
 
@@ -134,6 +136,8 @@ export default class Chat extends Toy {
 	 */
 	end(){
 		super.end();
+		electronAPI.clearTick(this.tickFN);
+		electronAPI.clearTick(this.tickFN);
 		this.chatToysApp.chatProcessor.removeNewChatsListener(this.onNewChats);
 		window.clearElectronTimeout(this.swarmTimeout);
 	}
