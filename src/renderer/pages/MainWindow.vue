@@ -105,7 +105,7 @@ onBeforeMount(() => {
 		.topTabBar {
 			
 			position: absolute;
-			inset: 0px 0px auto 0px;
+			inset: 0px 0px auto 11px;
 
 		}// .topTabBar
 

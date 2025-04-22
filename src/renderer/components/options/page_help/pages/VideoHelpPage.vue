@@ -9,6 +9,7 @@
 	<PageBox
 		title="Video Help"
 		themeColor="#00ABAE"
+		themeImage="assets/bg_tiles/videos.png"
 	>
 		<p>
 			Welcome to the ToyBox plugin! This plugin is designed to help you interact with your viewers in fun and engaging ways.

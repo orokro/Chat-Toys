@@ -12,7 +12,7 @@
 		@changeTab="(tab)=>selectedPage = tab"
 	>	
 		<OBSSettingsPage v-if="selectedPage === 'obsSettings'" />
-		<ChatPage v-if="selectedPage === 'chat'" />
+		<ChatPage v-if="selectedPage === 'chatSettings'" />
 		<PluginPage v-if="selectedPage === 'plugin'" />
 		
 	</VerticalItemsPage>
@@ -36,7 +36,7 @@ const pageItems = [
 		name: 'General Settings',
 	},
 	{
-		slug: 'chat',
+		slug: 'chatSettings',
 		name: 'Chat Settings',
 	},
 	{
@@ -46,7 +46,7 @@ const pageItems = [
 ];
 
 // refs
-const selectedPage = ref('chat');
+const selectedPage = ref('chatSettings');
 
 </script>
 <style lang="scss" scoped>

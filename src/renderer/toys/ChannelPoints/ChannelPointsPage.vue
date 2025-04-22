@@ -10,6 +10,7 @@
 		title="Channel Points"
 		:themeColor="toy.static.themeColor"
 		class="channelPointsPage"
+		themeImage="assets/bg_tiles/channelPoints.png"
 	>
 		<div class="picBox" :style="{ height: '500px',}">
 			<img src="/assets/half_tone/channelPoints.png" height="300px" style="float:right"/>

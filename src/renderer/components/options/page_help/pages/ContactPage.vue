@@ -9,6 +9,7 @@
 	<PageBox
 		title="Contact"
 		themeColor="#00ABAE"
+		themeImage="assets/bg_tiles/contact.png"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/half_tone/help_contact.png" height="300px" style="float:right"/>

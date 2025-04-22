@@ -9,6 +9,9 @@
 	<PageBox
 		title="Fishing Settings"
 		:themeColor="toy.static.themeColor"
+		themeImage="assets/bg_tiles/fishing.png"
+		bgSize="120px"
+		bgThemePos="35px"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/half_tone/fishing.png" height="300px" style="float:right"/>

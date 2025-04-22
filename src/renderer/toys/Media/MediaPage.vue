@@ -9,6 +9,8 @@
 	<PageBox
 		title="Media Settings"
 		:themeColor="toy.static.themeColor"
+		themeImage="assets/bg_tiles/media.png"
+		bgThemePos="-20px"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/half_tone/media.png" height="300px" style="float:right"/>

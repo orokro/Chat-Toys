@@ -63,7 +63,7 @@ const emits = defineEmits(['changeTab']);
 	// box styles
 	height: 40px;
 	min-width: 990px;
-
+	
 	// stack the children from left to right via flex
 	display: flex;
 	flex-direction: row;

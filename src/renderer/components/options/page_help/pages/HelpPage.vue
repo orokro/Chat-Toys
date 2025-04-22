@@ -9,6 +9,9 @@
 	<PageBox
 		title="Help"
 		themeColor="#00ABAE"
+		themeImage="assets/bg_tiles/help.png"
+		bgSize="120px"
+		bgThemePos="10px"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/half_tone/help.png" height="300px" style="float:right"/>

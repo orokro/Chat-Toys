@@ -14,10 +14,12 @@
 		class="pageBox"
 		:style="{ 
 			background: gradientCSS,
-			'--tColor': newColor
+			'--tColor': newColor,
+			'--bg': bgCSS,
+			'--bgSize': bgSize,
+			'--bgPos': bgThemePos!=null ? `0px ${bgThemePos}` : '0px -25px',
 		}"
 	>
-
 		<div class="pageHeader" align="center">
 			<h2 class="title">
 				{{ title }}
@@ -56,11 +58,29 @@ const props = defineProps({
 		default: 'rgb(199, 199, 199)'
 	},
 
+	// theme bg image
+	themeImage: {
+		type: String,
+		default: ''
+	},
+
 	// limit the width of the content
 	limitWidth: {
 		type: Boolean,
 		default: true
-	}
+	},
+
+	// size for image
+	bgSize: {
+		type: String,
+		default: '170px'
+	},
+
+	// for customizing theme position
+	bgThemePos: {
+		type: String,
+		default: null
+	},
 
 });
 
@@ -73,8 +93,6 @@ function generateGradient(colorHex) {
 
     // Convert to chroma color object
     const baseColor = chroma(colorHex);
-
-	
 
     // Adjust the mix ratios for better color retention
     const lightened1 = chroma.mix(baseColor, "#ffffff", 100 / 255).hex(); // More color retained
@@ -89,6 +107,16 @@ function generateGradient(colorHex) {
         ${lightened2} 85px, 
         ${lightened2} 100%)`;
 }
+
+const bgCSS = computed(()=>{
+
+	if(props.themeImage === '') {
+		return `${props.themeColor}`
+	}else{
+		return `${props.themeColor} url(${props.themeImage})`
+	}
+	
+});
 
 
 </script>
@@ -120,6 +148,9 @@ function generateGradient(colorHex) {
 			font-size: 24px;
 			color: white;
 
+			background: var(--bg);
+			background-size: var(--bgSize) var(--bgSize);
+			background-position: var(--bgPos);
 			text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
 
 		}// .pageHeader
@@ -144,8 +175,10 @@ function generateGradient(colorHex) {
 		:deep(.sectionHeader) {
 			margin: 0px -200px;
 			padding: 0px 20px 0px 20px;
-			background-color: var(--tColor);
-
+			background: var(--bg);
+			background-size: var(--bgSize) var(--bgSize);
+			background-position: var(--bgPos);
+			
 			color: white;
 			text-shadow: 2px 1px 0px rgba(0, 0, 0, 0.5);
 		}

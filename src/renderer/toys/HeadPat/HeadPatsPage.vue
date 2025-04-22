@@ -9,6 +9,8 @@
 	<PageBox
 		title="Head Pats Settings"
 		:themeColor="toy.static.themeColor"
+		themeImage="assets/bg_tiles/headpat.png"
+		bgThemePos="32px"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/half_tone/headPat.png" height="300px" style="float:right"/>

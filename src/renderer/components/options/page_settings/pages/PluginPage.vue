@@ -8,7 +8,8 @@
 
 	<PageBox
 		title="Plugin Settings"
-		themeColor="black"
+		themeColor="#262262"
+		themeImage="assets/bg_tiles/plugin.png"
 	>
 		<p>
 			General settings

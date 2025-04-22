@@ -9,6 +9,9 @@
 	<PageBox
 		title="Welcome"
 		themeColor="#00ABAE"
+		themeImage="assets/bg_tiles/welcome.png"
+		bgSize="120px"
+		bgThemePos="0px"
 	>
 		<p>
 			Welcome to the ToyBox plugin! This plugin is designed to help you interact with your viewers in fun and engaging ways.

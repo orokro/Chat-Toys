@@ -8,7 +8,10 @@
 
 	<PageBox
 		title="Chat Settings"
-		themeColor="black"
+		themeColor="#262262"
+		themeImage="assets/bg_tiles/chatSettings.png"
+		bgSize="120px"
+		bgThemePos="-10px"
 	>
 		<br><br>
 		<p>

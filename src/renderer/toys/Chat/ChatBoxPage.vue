@@ -9,6 +9,9 @@
 	<PageBox
 		title="Chat Box Settings"
 		:themeColor="toy.static.themeColor"
+		themeImage="assets/bg_tiles/chat.png"
+		bgSize="140px"
+		bgThemePos="40px"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/half_tone/chat.png" height="300px" style="float:right"/>

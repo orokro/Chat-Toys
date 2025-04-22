@@ -11,6 +11,7 @@
 		title="Assets Database"
 		themeColor="#69457f"
 		:limitWidth="true"
+		themeImage="assets/bg_tiles/assets.png"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/half_tone/assets_db.png" height="300px" style="float:right"/>

@@ -9,6 +9,8 @@
 	<PageBox
 		title="Tosser Settings"
 		:themeColor="toy.static.themeColor"
+		themeImage="assets/bg_tiles/tosser.png"
+		bgThemePos="50px"
 	>
 		<div class="picBox" :style="{ height: '500px',}">
 			<img src="/assets/half_tone/tosser.png" height="300px" style="float:right"/>

@@ -8,7 +8,10 @@
 
 	<PageBox
 		title="OBS Settings"
-		themeColor="black"
+		themeColor="#262262"
+		themeImage="assets/bg_tiles/obs.png"
+		bgSize="120px"
+		bgThemePos="35px"
 	>
 		<br/><br/>
 		<p>

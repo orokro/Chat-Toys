@@ -16,6 +16,7 @@
 			title="Layout"
 			theme="#777"
 			class="layoutPageBox"
+			themeImage="assets/bg_tiles/layout.png"
 		>
 			<!-- the main money -->
 			<LayoutScreen :activeTab="selectedTab" />

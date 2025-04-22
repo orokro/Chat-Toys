@@ -9,6 +9,9 @@
 	<PageBox
 		title="Stream Buddies Settings"
 		:themeColor="toy.static.themeColor"
+		themeImage="assets/bg_tiles/streamBuddies.png"
+
+		bgThemePos="25px"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/half_tone/buddies.png" height="300px" style="float:right"/>

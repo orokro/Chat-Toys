@@ -10,6 +10,7 @@
 		title="Prize Wheel Settings"
 		:themeColor="toy.static.themeColor"
 		class="prizeWheelPage"
+		themeImage="assets/bg_tiles/prizeWheel.png"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/half_tone/prizeWheel.png" height="300px" style="float:right"/>
