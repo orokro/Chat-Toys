@@ -22,7 +22,7 @@ let isBusy = false;
 // array of potential tests to run
 const testQueue = [];
 
-// how long before we should give up on a test for whatever reast
+// how long before we should give up on a test for whatever reason
 const TEST_TIMEOUT = 15000; // 15 seconds
 
 // Simple test scripts
@@ -38,8 +38,72 @@ const testScripts = {
 	checkForImages: `
 		const hasImg = document.querySelectorAll('img').length > 0;
 		console.log('result:' + hasImg);
+	`,
+
+	getLive: `
+		(() => {
+			try {
+				setTimeout(()=>{
+					const liveVideo = Array.from(document.querySelectorAll('a'))
+						.find(a => {
+							const href = a.getAttribute('href') || '';
+							const hasVideo = href.includes('/watch?v=');
+							const label = a.getAttribute('aria-label')?.toLowerCase() || '';
+							const text = a.textContent?.toLowerCase() || '';
+							const isLive = label.includes('live now') || text.includes('live now') || label.includes('streaming') || text.includes('streaming');
+							return hasVideo && isLive;
+						});
+
+					if (liveVideo) {
+						const url = new URL('https://www.youtube.com' + liveVideo.getAttribute('href'));
+						const videoId = url.searchParams.get('v');
+						console.log('result:' + JSON.stringify(videoId));
+					} else {
+						// fallback: check for yt-img-shadow with LIVE badge
+						const badge = Array.from(document.querySelectorAll('span, ytd-badge-supported-renderer')).find(el => {
+							const txt = el.textContent?.toLowerCase() || '';
+							return txt.includes('live now') || txt.trim() === 'live';
+						});
+
+						if (badge) {
+							const container = badge.closest('a[href*="/watch?v="]');
+							if (container) {
+								const url = new URL('https://www.youtube.com' + container.getAttribute('href'));
+								const videoId = url.searchParams.get('v');
+								console.log('result:' + JSON.stringify(videoId));
+								return;
+							}
+						}
+						console.log('result:null');
+					}
+				}, 1000);
+				
+			} catch (e) {
+				console.log('result:null');
+			}
+		})()
+	`,
+
+
+	chatIsLive: `
+		(() => {
+			try {
+				// YouTube's live chat will have a ytc-live-chat-frame element
+				const disabledText = Array.from(document.querySelectorAll('yt-formatted-string'))
+					.map(el => el.textContent)
+					.find(text => text?.toLowerCase().includes('chat is disabled'));
+
+				const isChatContainerPresent = document.querySelector('yt-live-chat-renderer') !== null;
+
+				const result = (!disabledText && isChatContainerPresent);
+				console.log('result:' + JSON.stringify(result));
+			} catch (e) {
+				console.log('result:false');
+			}
+		})()
 	`
 };
+
 
 /**
  * Create and configure the hidden test window
