@@ -77,7 +77,7 @@ const testScripts = {
 						console.log('result:null');
 					}
 				}, 1000);
-				
+
 			} catch (e) {
 				console.log('result:null');
 			}
@@ -128,6 +128,7 @@ function createTestWindow() {
 		testerWindow = null;
 	});
 }
+
 
 // Provide a way to test a URL with our of our predefined test scripts
 // This will be called from the renderer process
@@ -258,7 +259,6 @@ async function processQueue() {
 		}
 	};
 
-
 	// because we built our function above to read console log messages, let's subscribe it now before we load the test-URL
 	testerWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
 		logListener(event, 'log', [message]);
@@ -293,10 +293,12 @@ async function processQueue() {
 	}
 }
 
+
 // Initialize everything immediately once this file is included in main.js
 app.whenReady().then(() => {
 	createTestWindow();
 });
+
 
 // Clean up on exit
 app.on('before-quit', () => {
