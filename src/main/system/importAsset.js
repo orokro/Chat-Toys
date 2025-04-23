@@ -14,6 +14,7 @@ const fs = require('fs');
 const ASSET_DIR = path.join(app.getPath('userData'), 'custom_assets');
 if (!fs.existsSync(ASSET_DIR)) fs.mkdirSync(ASSET_DIR, { recursive: true });
 
+
 /**
  * Sets up the IPC handler for importing assets.
  * This will show a file picker dialog
