@@ -1,4 +1,4 @@
-# YouTube-Chat-Toys
+# Chat-Toys
 
 This project will provide some integrations with chat for YouTube streamers.
 
