@@ -33,7 +33,7 @@ body {
 	line-height: 1.6;
 	color: #333;
 
-	overflow: hidden;
+	overflow: clip;
 }
 
 /* Remove default styles for main elements */
@@ -98,7 +98,7 @@ span.cmd {
 
 	.mainWindowWrapper .tabPagesWrapper {
 
-		inset: 42px 0px 0px calc(50vw - 950px) !important;
+		inset: 52px 0px 0px calc(50vw - 950px) !important;
 		/* border: 1px solid lime; */
 	}
 

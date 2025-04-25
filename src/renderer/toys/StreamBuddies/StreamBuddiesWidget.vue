@@ -254,7 +254,7 @@ onBeforeUnmount(() => {
 					opacity: 0.5;
 					
 					// background sprite sheet settings
-					background-image: url('assets/buddies/fart_sprite_sheet.png');
+					background-image: url('/assets/buddies/fart_sprite_sheet.png');
 					background-size: 300% 300%;
 					background-position: 100% 0%;
 					background-repeat: no-repeat;

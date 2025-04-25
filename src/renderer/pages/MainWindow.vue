@@ -113,7 +113,7 @@ onBeforeMount(() => {
 
 			// fill bottom under top tabs
 			position: absolute;
-			inset: 42px 0px 0px calc(50vw - 800px);			
+			inset: 52px 0px 0px calc(50vw - 800px);			
 			
 			/* transition: inset 0.4s ease-in-out; */
 
@@ -149,7 +149,7 @@ onBeforeMount(() => {
 
 			.tabPagesWrapper {
 				position: absolute;
-				inset: 42px 0px 0px 0px !important;
+				inset: 52px 0px 0px 0px !important;
 			
 			}// .tabPagesWrapper
 

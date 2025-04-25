@@ -101,7 +101,7 @@ const events = defineEmits([
 		cursor: pointer;
 
 		// the actual box / corner styles of the tab
-		height: 35px;
+		height: 45px;
 		margin-top: 4px;
 		background: #d3d3d3;
 		border: 1px solid #CCC;
@@ -111,7 +111,7 @@ const events = defineEmits([
 		// if we're active, make the bottom border the same color as the background
 		&.active {
 			background: white;
-			height: 38px;
+			height: 48px;
 			.title {
 				.visual{
 					font-weight: bold;
@@ -129,8 +129,8 @@ const events = defineEmits([
 
 			// fixed on left
 			position: absolute;
-			left: 15px;
-			top: 5px;
+			left: 20px;
+			top: 10px;
 			font-size: 20px;
 
 		}// icon
@@ -140,7 +140,7 @@ const events = defineEmits([
 
 			position: relative;
 			// same height as tab
-			height: 35px;
+			height: 45px;
 
 			// spacing
 			padding: 5px 30px 0px 15px;
@@ -155,8 +155,8 @@ const events = defineEmits([
 			// the visual harder-coded text that we can change bold on without reflowing layotu
 			.visual {
 				position: absolute;
-				top: 4px;
-				left: 48%;
+				top: 10px;
+				left: 46%;
 				transform: translate(-50%, 0);
 				width: 100%;
 				text-align: center;				

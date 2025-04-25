@@ -106,7 +106,7 @@ const emit = defineEmits(['changeTab', 'addItem', 'removeItem']);
 
 			&:hover::-webkit-scrollbar-thumb,
 			&:active::-webkit-scrollbar-thumb {
-				background-color: rgba(140, 140, 140, 1);
+				background-color: rgba(120, 120, 120, 1);
 			}
 
 			transition: inset 0.4s ease-in-out;

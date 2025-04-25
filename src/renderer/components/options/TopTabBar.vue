@@ -61,7 +61,7 @@ const emits = defineEmits(['changeTab']);
 .topTabBar {
 
 	// box styles
-	height: 40px;
+	height: 50px;
 	min-width: 990px;
 	
 	// stack the children from left to right via flex

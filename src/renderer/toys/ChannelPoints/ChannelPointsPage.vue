@@ -232,7 +232,7 @@ const claimCommand = computed(() => {
 			border: 2px solid black;
 			border-radius: 10px;
 
-			background-image: url('../assets/channel_points/demo_bg.png');
+			background-image: url('/assets/channel_points/demo_bg.png');
 
 			// flex center
 			display: flex;

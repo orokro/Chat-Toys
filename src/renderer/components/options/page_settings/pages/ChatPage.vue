@@ -97,8 +97,6 @@
 				/>
 			</SettingsRow>
 
-
-			
 		</div>
 
 		<SectionHeader title="Live Raw Chat"/>
