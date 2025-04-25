@@ -83,6 +83,26 @@ const formatJSON = (obj) => {
 		// text settings
 		font-family: monospace;
 
+		// mac-style scrollbars
+		&::-webkit-scrollbar {
+			width: 8px;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background-color: rgba(120, 120, 120, 0.3);
+			border-radius: 6px;
+			transition: background-color 0.2s ease-in-out;
+		}
+
+		&:hover::-webkit-scrollbar-thumb,
+		&:active::-webkit-scrollbar-thumb {
+			background-color: rgba(120, 120, 120, 0.6);
+		}
+
 		// row for a chat data block
 		.chat-row {
 
