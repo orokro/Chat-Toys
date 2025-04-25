@@ -24,33 +24,63 @@
 			>
 
 				<!-- Enabled/Pending/Unavailable Status -->
-				<div class="chat-status rb">
+				<div class="chat-status">
 
-					<span v-if="chat.status_pending" class="material-icons spin">autorenew</span>
-					<span v-else-if="!chat.available" class="unavailable">unavailable</span>
+					<span 
+						v-if="chat.status_pending"
+						v-tippy="'Reviewing the chat source'"
+						class="material-icons spin"
+					>autorenew</span>
+
+					<span 
+						v-else-if="!chat.available"
+						v-tippy="'Chat source unavailable'"
+						class="unavailable"
+					>unavailable</span>
+
 					<ToggleCheck
 						v-else
 						v-model="chat.enabled"
+						v-tippy="'Enable/Disable chat source'"
 						@change="toggleEnabled(chat.youtube_id, !$event)"
 					/>
 				</div>
 
 				<!-- Thumbnail -->
 				<img
-					class="thumb rb"
+					class="thumb"
 					:src="`https://img.youtube.com/vi/${chat.youtube_id}/hqdefault.jpg`"
 					alt="thumbnail"
 				/>
 
 				<!-- YouTube ID (readonly input) -->
-				<div class="videoID rb">
+				<div class="videoID">
 					Stream ID:<br/>
-
-					<input type="text" class="youtube-id" :value="chat.youtube_id" readonly />
+					<input type="text" class="youtube-id" :value="chat.youtube_id" readonly /><br>
+					<div 
+						class="ytLink"
+						@click="openLink(`https://www.youtube.com/watch?v=${chat.youtube_id}`)"
+					>
+						http://youtu.be/{{ chat.youtube_id }}
+					</div>
 				</div>
+
 				<!-- Actions -->
-				<span class="material-icons action" @click="confirmRemove(chat.youtube_id)">delete</span>
-				<span v-if="chat.enabled" class="material-icons action open" @click="showChat(chat.youtube_id)">open_in_new</span>
+				 <span v-tippy="'Delete this chat source'"> 
+					<span
+						class="material-icons action"
+						@click="confirmRemove(chat.youtube_id)"
+						
+					>delete</span>
+				</span>
+				<span v-tippy="'Open the chat source window'">
+					<span
+						v-if="chat.enabled"
+						class="material-icons action open"
+						
+						@click="showChat(chat.youtube_id)"
+					>open_in_new</span>
+				</span>
 
 			</div>
 		</div>
@@ -61,6 +91,8 @@
 
 // vue
 import { shallowRef, onMounted } from 'vue';
+import { directive as VTippy } from 'vue-tippy';
+import 'tippy.js/dist/tippy.css';
 
 // components
 import ToggleCheck from '@components/ToggleCheck.vue';
@@ -154,6 +186,16 @@ const showChat = async (id) => {
 
 
 /**
+ * Open a link in the default browser
+ * 
+ * @param url {string} - The URL to open
+ */
+const openLink = (url) => {
+	electronAPI.openExternal(url);
+};
+
+
+/**
  * Extract YouTube video ID from any valid URL or ID
  * 
  * @param input {string} - The input to parse
@@ -200,8 +242,6 @@ onMounted(loadChats);
 		// stack column
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
-		padding: 1rem;
 		font-family: sans-serif;
 
 		// box with the chat sources
@@ -301,11 +341,13 @@ onMounted(loadChats);
 				padding: 0.5rem;
 				border-top: 2px solid black;
 
+				// left most column w/ status or toggle
 				.chat-status {
 					width: 140px;
 					text-align: center;
 				}
 
+				// label for when the chat is unavailable
 				.unavailable {
 					background: rgb(216, 9, 9);
 					border-radius: 30px;
@@ -318,8 +360,8 @@ onMounted(loadChats);
 					font-size: 0.9rem;
 				}
 
+				// youtube thumbnail
 				.thumb {
-
 					border: 2px solid black;
 					border-radius: 8px;
 
@@ -329,16 +371,31 @@ onMounted(loadChats);
 					border-radius: 4px;
 				}
 
+				// column with the stream id
 				.videoID {
 
-					width: 300px;
+					/* position: relative;
+					top: -12px; */
+
+					width: 400px;
 					padding-left: 30px;
 
 					.youtube-id {
-						width: 250px;
+						width: 350px;
+					}
+
+					.ytLink {
+						margin-top: 1px;
+						color: rgb(0, 47, 255);
+						font-style: italic;
+						cursor: pointer;
+						&:hover {
+							text-decoration: underline;
+						}
 					}
 				}
 
+				// the buttons for deleting and opening the chat
 				.material-icons.action {
 					cursor: pointer;
 					user-select: none;

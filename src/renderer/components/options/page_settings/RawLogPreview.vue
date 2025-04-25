@@ -72,6 +72,7 @@ const formatJSON = (obj) => {
 		overflow-y: scroll;
 
 		// box settings
+		min-height: 200px;
 		max-height: 600px;
 		background-color: #1e1e1e;
 		border: 2px solid black;

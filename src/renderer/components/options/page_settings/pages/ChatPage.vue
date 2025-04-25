@@ -18,9 +18,15 @@
 			Use this page to configure the chat sources you want to read commands from.
 		</p>
 		<SectionHeader title="Chat Sources"/>
-
-
-		
+		<p>
+			Below you can add or remove chat sources for the app to read.
+			<br>
+			<strong>NOTE:</strong> a chat source must be enabled for commands to work!
+			<br><br>
+			If a live stream ends or chat is disabled, the source will be "unavailable."
+			<br>
+			You cannot enable an unavailable source.
+		</p>
 		<ChatSourceManager/>
 
 		<SectionHeader title="Live Raw Chat"/>

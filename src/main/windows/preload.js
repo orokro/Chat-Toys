@@ -6,7 +6,7 @@
 */
 
 // Import the necessary modules
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, shell } from 'electron';
 const path = require("path");
 const { DatabaseManager } = require(path.join(__dirname, "../system/database"));
 const isDev = process.env.NODE_ENV === 'development';
@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	tick: (callback) => ipcRenderer.on('tick', callback),
 	clearTick: (callback) => ipcRenderer.off('tick', callback),
 	invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+	openExternal: (url) => shell.openExternal(url),
 });
 
 

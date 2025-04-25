@@ -32,13 +32,14 @@ import PluginPage from './pages/PluginPage.vue';
 // this will generate the icons for the vertical strip items
 const pageItems = [
 	{
-		slug: 'obsSettings',
-		name: 'General Settings',
-	},
-	{
 		slug: 'chatSettings',
 		name: 'Chat Settings',
 	},
+	{
+		slug: 'obsSettings',
+		name: 'General Settings',
+	},
+	
 	// {
 	// 	slug: 'plugin',
 	// 	name: 'Plugin Settings',

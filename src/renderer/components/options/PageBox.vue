@@ -138,7 +138,7 @@ const bgCSS = computed(()=>{
 		// At least full height of parent, but can expand
 		min-height: 100%; 
 		height: min-content;
-
+		overflow: clip;
 		// rounded corners just on top
 		border-radius: 10px 10px 10px 10px;
 

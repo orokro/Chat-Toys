@@ -310,6 +310,26 @@ class ChatSourceManager {
 
 
 	/**
+	 * Shows the chat window for a specific chat source
+	 * 
+	 * @param {String} youtube_id - the youtube id of the chat source to show
+	 */
+	showChatWindow(youtube_id){
+
+		// GTFO if we don't have this one
+		const chat = this.chatSources.get(youtube_id);
+		if (!chat)
+			return false;
+
+		// show the window
+		if (chat.window) {
+			chat.window.show();
+			chat.window.focus();
+		}
+	}
+
+
+	/**
 	 * Tell the main window with our FE Renderer about the status of our ChatSources
 	 */
 	notifyRenderer() {
@@ -331,6 +351,7 @@ class ChatSourceManager {
 		ipcMain.handle('CSM-enable-chat', async (e, youtube_id) => this.enableChatSource(youtube_id));
 		ipcMain.handle('CSM-disable-chat', async (e, youtube_id) => this.disableChatSource(youtube_id));
 		ipcMain.handle('CSM-get-chats', async () => this.getSerializedChatSources());
+		ipcMain.handle('CSM-show-chat', (e, youtube_id) => this.showChatWindow(youtube_id));
 	}
 }
 
