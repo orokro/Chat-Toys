@@ -29,6 +29,36 @@
 		</p>
 		<ChatSourceManager/>
 
+		<SectionHeader title="Auto Chat"/>
+		<p>
+			The following feature is experimental and may not work as expected.
+			<br>
+			Below you can paste in a link to your YouTube channel page.
+			<br>
+			If present, the app will attempt to detect when you're live in OBS, and if live,<br>
+			attempt to find the latest live stream on your channel and automatically add it as a source.
+			<br><br>
+			This can fail in two ways:
+		</p>
+		<ul>
+			<li>
+				The app may not be able to detect when you're live in OBS.
+			</li>
+			<li>
+				YouTube API may not be able to find the stream.
+			</li>			
+		</ul>
+		<p>
+			<br>
+			So, you might want to check this page after you go live to see if it's been added,
+			and if not you can add it manually.
+			<br>
+			Also, due to the nature of this program - if the channel page changes, this feature
+			might become broken.
+			<br><br>
+			<strong>Consider this feature a potential <em>convenience</em> and not a guarantee.</strong>
+		</p>
+
 		<SectionHeader title="Live Raw Chat"/>
 		<p>
 			Below you can see the live data that comes in from chatters.

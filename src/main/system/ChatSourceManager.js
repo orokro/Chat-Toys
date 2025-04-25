@@ -17,7 +17,93 @@ const Store = require('electron-store');
 const store = new Store();
 
 // the script to inject into chat windows to read chat
-const chatReaderScript = `console.log("reading chat")`;
+const chatReaderScript = `
+	// Flag to mark script injection
+	window.YTCTEnabled = true; // default to enabled on initial load
+
+	// WebSocket connection
+	let socket;
+	function connectSocket() {
+
+		// Don't connect if not enabled or already connected
+		if (!window.YTCTEnabled) return;
+		if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) return;
+
+		// Connect to the WebSocket server in Electron
+		socket = new WebSocket('ws://localhost:3001');
+
+		// when we first connect, send welcome message
+		socket.addEventListener('open', () => {
+			console.log('WebSocket connected');
+			socket.send(JSON.stringify({
+				type: 'chat',
+				data: { msg: 'connected' }
+			}));
+		});
+
+		// if we closed, try to reconnect (if enabled)
+		socket.addEventListener('close', () => {
+
+			console.warn('[YTCT] Socket closed. Will attempt reconnect if enabled.');
+
+			// Try reconnecting every 2.5s if still enabled
+			if (window.YTCTEnabled)
+				setTimeout(connectSocket, 2500);
+
+		});
+
+		socket.addEventListener('error', (err) => {
+			console.warn('[YTCT] Socket error:', err);
+		});
+	}
+	connectSocket();
+
+	// save original fetch function
+	const fetchFallback = window.fetch;
+	window.fetchFallback = fetchFallback;
+
+	// override fetch function to intercept chat messages
+	window.fetch = async (...args) => {
+
+		console.log('fetch', args);
+		
+		// get the request URL
+		const request = args[0];
+		const url = (typeof request === 'string') ? request : request.url;
+		const result = await fetchFallback(...args);
+
+		// check if the URL is a YouTube chat API endpoint
+		const currentDomain = location.protocol + '//' + location.host;
+		const ytApi = (end) => currentDomain + '/youtubei/v1/live_chat' + end;
+		const isReceiving = url.startsWith(ytApi('/get_live_chat'));
+		const isSending = url.startsWith(ytApi('/send_message'));
+
+		// if the URL is a chat API endpoint, parse the JSON and forward it to the main process
+		if (window.YTCTEnabled && (isReceiving || isSending)) {
+			try {
+				const cloned = result.clone();
+				const json = await cloned.json();
+				const response = JSON.stringify(json);
+
+				window.dispatchEvent(new CustomEvent(
+					isReceiving ? 'messageReceive' : 'messageSent',
+					{ detail: response }
+				));
+
+				if (isReceiving && socket && socket.readyState === WebSocket.OPEN) {
+					socket.send(JSON.stringify({
+						type: 'chat',
+						data: response
+					}));
+				}
+			} catch (e) {
+				console.warn('[fetch override] Failed to parse JSON:', e);
+			}
+		}
+
+		return result;
+	};
+`;
 
 
 /**
@@ -101,7 +187,7 @@ class ChatSource {
 			width: 500,
 			height: 700,
 			webPreferences: {
-				preload: join(__dirname, 'chatPreload.js'),
+				preload: join(__dirname, '../windows/chatPreload.js'),
 				nodeIntegration: false,
 				contextIsolation: true,
 				sandbox: false
@@ -118,11 +204,28 @@ class ChatSource {
 
 		// load the YouTube chat ID & inject the script to read the chat
 		await this.window.loadURL(this.chatURL);
-		await this.window.webContents.executeJavaScript(chatReaderScript);
 
+		const startAfter1Second = () => {
+
+			return new Promise((resolve) => {
+			
+				setTimeout(async ()=>{
+
+					resolve(true);
+					await this.window.webContents.executeJavaScript(chatReaderScript);
+					
+
+				}, 1000);
+			});
+		};
+
+		await startAfter1Second();
+		
 		// we gucci
 		this.enabled = true;
 		this.manager.notifyRenderer();
+
+
 	}
 
 

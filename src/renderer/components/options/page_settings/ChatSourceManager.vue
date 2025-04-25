@@ -61,7 +61,7 @@
 						class="ytLink"
 						@click="openLink(`https://www.youtube.com/watch?v=${chat.youtube_id}`)"
 					>
-						http://youtu.be/{{ chat.youtube_id }}
+						https://youtu.be/{{ chat.youtube_id }}
 					</div>
 				</div>
 
@@ -353,7 +353,7 @@ onMounted(loadChats);
 					border-radius: 30px;
 
 					color: white;
-					padding: 4px 8px;
+					padding: 4px 12px;
 
 					font-style: italic;
 					font-weight: bold;
@@ -411,6 +411,7 @@ onMounted(loadChats);
 					}
 				}
 
+				// spinner whilst the chat is being processed
 				.material-icons.spin {
 					animation: spin 1s linear infinite;
 				}

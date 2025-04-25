@@ -140,6 +140,8 @@ onBeforeMount(()=>{
 	// main page wrapper
 	.pageContainer {
 
+		overflow: clip;
+		
 		// fill area
 		position: absolute;
 		inset: 0px;
