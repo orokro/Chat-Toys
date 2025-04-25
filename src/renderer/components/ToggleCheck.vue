@@ -74,6 +74,9 @@ const setting = defineModel();
 			transition: left 0.2s ease-in-out;
 			top: 3px;
 			left: 3px;
+
+			// don't interfere with the click
+			pointer-events: none;
 			
 			// white circle
 			background: white;
@@ -106,5 +109,5 @@ const setting = defineModel();
 		}// &.enabled
 
 	}// .toggle-check
-	
+
 </style>
