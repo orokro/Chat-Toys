@@ -100,7 +100,6 @@ onBeforeMount(() => {
 		/* background: #00abae; */
 		background: #323232 url('/assets/bg_tiles/main.png') repeat;
 
-
 		// top tab bar forced to top
 		.topTabBar {
 			

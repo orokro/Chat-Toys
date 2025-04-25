@@ -64,6 +64,7 @@ contextBridge.exposeInMainWorld("assetDB", {
 // stuff for interacting with the chat source manager
 contextBridge.exposeInMainWorld('chatSourceAPI', {
 	add: (id) => ipcRenderer.invoke('CSM-add-chat', id),
+	show: (id) => ipcRenderer.invoke('CSM-show-chat', id),
 	remove: (id) => ipcRenderer.invoke('CSM-remove-chat', id),
 	enable: (id) => ipcRenderer.invoke('CSM-enable-chat', id),
 	disable: (id) => ipcRenderer.invoke('CSM-disable-chat', id),
