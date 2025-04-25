@@ -206,7 +206,14 @@ watch(internalValue, validate);
 			max-width: 300px;
 		}
 
-		
+		input[type="text"],
+		input[type="number"] {
+
+			padding: 8px 12px;
+			border: 2px solid black;
+			box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
+		}
+
 
 		input[type="checkbox"] {
 			width: 25px;
