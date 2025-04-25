@@ -196,9 +196,7 @@ watch(internalValue, validate);
 			border: 1px solid #ccc;
 			border-radius: 4px;
 			width: 100%;
-			max-width: 300px;
-
-			
+			max-width: 300px;			
 		}
 
 		select {

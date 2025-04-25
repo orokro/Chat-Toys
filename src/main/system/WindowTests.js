@@ -306,3 +306,10 @@ app.on('before-quit', () => {
 		testerWindow.destroy();
 	}
 });
+
+
+// Export the testURL function so we can call it from the renderer process
+module.exports = {
+	testURL,
+	testScripts
+};

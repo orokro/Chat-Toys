@@ -15,9 +15,10 @@ import { OBSViewServer } from './system/OBSViewServer.js';
 import { createSystemTray } from './system/SystemTray.js';
 import { createAppMenu } from './system/MainAppMenu.js';
 import { chatForward } from './system/chatForward.js';
+import ChatSourceManager from './system/ChatSourceManager.js';
 
 // load our window tests
-require('./system/WindowTests');
+const { testURL } = require('./system/WindowTests');
 
 // system to use backend for intervals
 import 'electron-interval-system/main.js';
@@ -26,6 +27,7 @@ import 'electron-interval-system/main.js';
 let mainWindow = null;
 let chatTesterWindow = null;
 let obsViewServer = null;
+let chatSourceMgr = null;
 let tray = null;
 
 // list of our spawned windows
@@ -71,7 +73,11 @@ app.whenReady().then(() => {
 	// Create the OBSViewServer.
 	obsViewServer = new OBSViewServer(mainWindow);
 
+	// set up system to forward chat messages from websocket to the main window
 	chatForward(obsViewServer.wss, mainWindow);
+
+	// set up the chat source manager to manage list of chats to read
+	chatSourceMgr = new ChatSourceManager(mainWindow, testURL);
 
 	// I had to turn off CSP because YouTube embeds don't work with it on, and every
 	// permutation I tried didn't work. So, for now, it's off.
