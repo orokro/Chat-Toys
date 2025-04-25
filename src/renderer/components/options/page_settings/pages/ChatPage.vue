@@ -56,8 +56,50 @@
 			Also, due to the nature of this program - if the channel page changes, this feature
 			might become broken.
 			<br><br>
-			<strong>Consider this feature a potential <em>convenience</em> and not a guarantee.</strong>
+			<strong>Consider this feature a potential <em>convenience</em> and <u>not</u> a guarantee.</strong>
 		</p>
+		<div class="autoChatRow">
+			
+			<div class="obsStatus">
+				OBS Status Detected: 
+				<span
+					class="status"
+					:class="{
+						live: ctApp.autoChatChecker.mode.value === AutoChatChecker.MODE.LIVE,
+					}"
+				>
+					{{ ctApp.autoChatChecker.mode.value }}
+				</span>
+			</div>
+			
+			<br>
+			<SettingsInputRow
+				type="boolean"
+				v-model="ctApp.enableAutoAdd.value"
+			>
+				<h3>Enable Auto Chat Mode</h3>
+				<p>
+					True if the app should try automatically searching for your live stream if/when it 
+					detects OBS is live. Again, no promises.
+				</p>
+			</SettingsInputRow>
+			<SettingsRow
+			>
+				<h3>Channel URL</h3>
+				<p>
+					Paste your Channel's page URL here.
+				</p>
+				<input
+					type="text"
+					id="autoChat"
+					v-model="ctApp.autoChatChannel.value"
+					placeholder="https://www.youtube.com/@YourChannelName"
+				/>
+			</SettingsRow>
+
+
+			
+		</div>
 
 		<SectionHeader title="Live Raw Chat"/>
 		<p>
@@ -79,7 +121,7 @@
 <script setup>
 
 // vue
-import { ref, inject } from 'vue';
+import { ref, computed,	inject } from 'vue';
 import { chromeShallowRef } from '@scripts/chromeRef';
 
 // components
@@ -89,12 +131,60 @@ import InfoBox from '../../InfoBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import RawLogPreview from '../RawLogPreview.vue';
 import ChatSourceManager from '../ChatSourceManager.vue';
+import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import SettingsRow from '@components/options/SettingsRow.vue';
+
+// our app
+import { AutoChatChecker } from '@scripts/AutoChatChecker.js';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
+
 </script>
 <style lang="scss" scoped>	
 
+	// row for setting up the auto chat
+	.autoChatRow {
+
+		// input box for channel
+		#autoChat {
+			width: 100%;
+			max-width: 600px;
+			height: 35px;
+
+			padding: 5px 20px;
+			border: 2px solid black;
+			border-radius: 5px;
+			box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
+
+			// text settings
+			font-family: 'Courier New', Courier, monospace;
+		
+		}// #autoChat
+
+		.obsStatus {
+			margin-top: 20px;
+			font-size: 18px;
+			font-weight: bold;
+
+			// default status
+			.status {
+				color: #FF0000;
+				background-color: #000000;
+				padding: 5px 10px;
+				border-radius: 5px;
+				font-weight: bold;
+			}
+
+			// live status
+			.status.live {
+				color: #00FF00;
+				background-color: #000000;
+			}
+
+		}// .obsStatus
+
+	}// .autoChatRow
 
 </style>

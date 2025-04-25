@@ -111,7 +111,7 @@ export async function keepAliveSocket(toySlug, widgetSlug) {
 	const socketRef = socketShallowRef(socketSlug, 'Z_0');
 
 	// make a socket ref for OBS global status
-	const initialTime = Date.now();
+	const initialTime = isInOBS() ? Date.now() : 0;
 	const initialStatus = await obsIsLive();
 	const osbSocketRef = socketShallowRef('obsStatus', `${initialTime}:${initialStatus}`);
 

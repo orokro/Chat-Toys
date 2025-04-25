@@ -18,6 +18,7 @@ import { ChatProcessor } from './ChatProcessor';
 import { CommandProcessor } from './CommandProcessor';
 import { ToyManager } from './ToyManager';
 import { SysLogger } from './SysLogger';
+import { AutoChatChecker } from './AutoChatChecker';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -44,6 +45,12 @@ export default class ChatToysApp {
 
 		// integrated logging for on screen messages
 		this.log = new SysLogger(this);
+
+		// the auto chat feature will check if the user is live and automatically
+		// add the chat to the list of enabled chats.
+		this.enableAutoAdd = chromeRef('enableAutoAdd', false);
+		this.autoChatChannel = chromeRef('autoChatChannel', null);
+		this.autoChatChecker = new AutoChatChecker(this);
 
 		// true when we wanna render widgets in demo mode
 		this.demoMode = socketShallowRef('demoMode', false);
