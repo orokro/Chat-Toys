@@ -2,7 +2,7 @@
 	ChatPage.vue
 	------------
 
-	Page to show scraping details.
+	Page to show chat reading configuration details
 -->
 <template>
 
@@ -15,8 +15,13 @@
 	>
 		<br><br>
 		<p>
-			General settingsz
+			Use this page to configure the chat sources you want to read commands from.
 		</p>
+		<SectionHeader title="Chat Sources"/>
+
+
+		
+		<ChatSourceManager/>
 
 		<SectionHeader title="Live Raw Chat"/>
 		<p>
@@ -29,7 +34,7 @@
 			If nobody is in your chat, you can post a message in your own chat and see if it shows up here to make sure all systems are working.
 			<br>
 		</p>
-		<RawChatPreview
+		<RawLogPreview
 			:messages="ctApp.chatProcessor.screenMessages.value"
 		/>
 	</PageBox>
@@ -46,7 +51,8 @@ import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
-import RawChatPreview from '../RawChatPreview.vue';
+import RawLogPreview from '../RawLogPreview.vue';
+import ChatSourceManager from '../ChatSourceManager.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');

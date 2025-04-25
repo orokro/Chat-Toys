@@ -69,14 +69,19 @@
 		</button>
 
 		<SectionHeader title="Server Output Log"/>
-		<div class="logBox">
-			<div 
-				v-for="(line, index) in ctApp.obsServerMessages.value"
-				:key="index"
-			>
-				{{ line }}
-			</div>
-		</div>
+		<p>
+			Below you can see the output from the server.
+			This is useful for debugging and testing.
+			<br>
+			You do not need to understand this log, it's just there for your information.
+			<br>
+			If you are having issues with the server, you can check this log to see if there are any errors.
+			<br>
+			You can also use this log to see if the server is running and if it is receiving data.
+		</p>
+		<RawLogPreview 
+			:messages="ctApp.obsServerMessages.value"
+		/>
 	</PageBox>
 
 </template>
@@ -94,6 +99,7 @@ import CatsumIpsum from '../../../CatsumIpsum.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
+import RawLogPreview from '../RawLogPreview.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
@@ -156,27 +162,5 @@ function restartServer(){
 		}
 		
 	}// .restartButton
-
-
-	// box to show the server output log
-	.logBox {
-
-		background: black;
-		color: white;
-		font-family: 'Courier New', Courier, monospace;
-		font-size: 12px;
-
-		padding: 30px;
-		margin: 30px 0px;
-		min-height: 300px;
-		max-height: 600px;
-		overflow-y: auto; // 'auto' instead of 'scroll' is usually better UX
-		margin-bottom: 300px;
-
-		// REMOVE flex settings
-		// Instead, use this trick:
-		display: block;
-
-	}// .logBox
 
 </style>

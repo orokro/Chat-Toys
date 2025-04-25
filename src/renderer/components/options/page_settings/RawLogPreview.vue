@@ -1,20 +1,19 @@
 <!--
-	RawChatPreview.vue
-	------------------
+	RawLogPreview.vue
+	-----------------
 
-	Component to make our chat settings page prettier with a formatted
-	live view of the chat data as it comes in.
+	Component to display an array as a live scrolling log, in a pretty widget.
 -->
 <template>
 
 	<!-- main container -->
-	<div ref="container" class="chat-container">
+	<div ref="container" class="log-container">
 
 		<!-- we'll reverse scroll and prioritize newer things on the bottom -->
 		<div
 			v-for="(msg, index) in messages.reverse()"
 			:key="msg.id"
-			:class="['chat-row', index % 2 === 0 ? 'bg-dark' : 'bg-darker']"
+			:class="['log-row', index % 2 === 0 ? 'bg-dark' : 'bg-darker']"
 		>
 			<!-- format the actual item with it's inherent white space -->
 			<pre class="json-text">{{ formatJSON(msg) }}</pre>
@@ -65,7 +64,7 @@ const formatJSON = (obj) => {
 <style lang="scss" scoped>
 
 	// main chat container
-	.chat-container {
+	.log-container {
 
 		// reverse the scroll / stacking direction for the rows via flex
 		display: flex;
@@ -104,7 +103,7 @@ const formatJSON = (obj) => {
 		}
 
 		// row for a chat data block
-		.chat-row {
+		.log-row {
 
 			// box settings
 			padding: 6px;
@@ -130,8 +129,8 @@ const formatJSON = (obj) => {
 				font-weight: bold;
 			}// .json-text
 
-		}// .chat-row
+		}// .log-row
 
-	}// .chat-container
+	}// .log-container
 	
 </style>

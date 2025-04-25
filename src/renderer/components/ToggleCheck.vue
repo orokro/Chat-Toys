@@ -13,7 +13,12 @@
 	>
 
 		<!-- the actual checkbox -->
-		<input type="checkbox" v-model="setting" class="toggle-check-input" />
+		<input
+			type="checkbox"
+			v-model="setting"
+			class="toggle-check-input"
+			@change="emit('change', setting)"
+		/>
 
 		<!-- slider to move back & fourth-->
 		<div class="toggle-check-slider">
@@ -30,6 +35,9 @@ import { ref, computed } from 'vue';
 // v-model binding (expects a ref/shallowRef)
 const setting = defineModel();
 
+// make change emit to forward
+const emit = defineEmits(['change']);
+
 </script>
 <style lang="scss">
 
@@ -38,8 +46,9 @@ const setting = defineModel();
 
 		// reset stacking context for positioning children absolutely
 		position: relative;
-
-		// fixed size
+		
+		// fixed size, inline
+		display: inline-block;
 		width: 60px;
 		height: 30px;
 		border-radius: 30px;
