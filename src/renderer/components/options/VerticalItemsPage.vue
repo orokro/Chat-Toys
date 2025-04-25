@@ -88,6 +88,27 @@ const emit = defineEmits(['changeTab', 'addItem', 'removeItem']);
 			overflow: hidden;
 			overflow-y: auto;
 
+
+			// mac-style scrollbars
+			&::-webkit-scrollbar {
+				width: 12px;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background-color: rgba(120, 120, 120, 1);
+				border-radius: 6px;
+				transition: background-color 0.2s ease-in-out;
+			}
+
+			&:hover::-webkit-scrollbar-thumb,
+			&:active::-webkit-scrollbar-thumb {
+				background-color: rgba(140, 140, 140, 1);
+			}
+
 			transition: inset 0.4s ease-in-out;
 			
 			// force tool strip on left side
