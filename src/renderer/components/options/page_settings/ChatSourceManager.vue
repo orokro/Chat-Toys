@@ -27,7 +27,7 @@
 				<div class="chat-status">
 
 					<span 
-						v-if="chat.status_pending"
+						v-if="chat.status_pending || chat.enabling"
 						v-tippy="'Reviewing the chat source'"
 						class="material-icons spin"
 					>autorenew</span>

@@ -132,6 +132,9 @@ class ChatSource {
 		// true when the user wants this chat source enabled
 		this.enabled = false;
 
+		// true when user is attempting to enable this chat source
+		this.enabling = false;
+
 		// true by default, while we check if the chat source is available
 		// (i.e. the stream is live and chat is not disabled)
 		this.status_pending = true;
@@ -180,7 +183,12 @@ class ChatSource {
 	async enable() {
 
 		// GTFO if we're not available, or we're pending, or already enabled
-		if (!this.available || this.status_pending || this.enabled) return;
+		if (!this.available || this.status_pending || this.enabling || this.enabled)
+			return;
+
+		// true until we're live
+		this.enabling = true;
+		this.manager.notifyRenderer();
 
 		// build a new browser window for this chat source
 		this.window = new BrowserWindow({
@@ -222,10 +230,9 @@ class ChatSource {
 		await startAfter1Second();
 		
 		// we gucci
+		this.enabling = false;
 		this.enabled = true;
 		this.manager.notifyRenderer();
-
-
 	}
 
 
@@ -266,6 +273,7 @@ class ChatSource {
 		return {
 			youtube_id: this.youtube_id,
 			enabled: this.enabled,
+			enabling: this.enabling,
 			status_pending: this.status_pending,
 			available: this.available
 		};
@@ -375,7 +383,8 @@ class ChatSourceManager {
 	 */
 	enableChatSource(youtube_id) {
 		const chat = this.chatSources.get(youtube_id);
-		if (chat) chat.enable();
+		if (chat)
+			chat.enable();
 	}
 
 
