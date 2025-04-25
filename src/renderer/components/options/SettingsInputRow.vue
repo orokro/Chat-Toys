@@ -34,7 +34,9 @@
 
 		<template v-else-if="type === 'boolean'">
 			<div align="left">
-				<input type="checkbox" v-model="setting">
+				<!-- disabled classic checkbox while testing out new custom toggle -->
+				<!-- <input type="checkbox" v-model="setting"> -->
+				<ToggleCheck v-model="setting" />
 			</div>
 		</template>
 		
@@ -61,12 +63,15 @@
 		</div>
 	</div>
 
-    
 </template>
-
 <script setup>
+
+// vue
 import { ref, watch, shallowRef } from 'vue';
 import * as yup from 'yup';
+
+// components
+import ToggleCheck from '@components/ToggleCheck.vue';
 
 // Define Props
 const props = defineProps({
@@ -169,7 +174,8 @@ watch(internalValue, validate);
 		flex-direction: column;
 		gap: 5px;
 		padding: 10px 0px;
-		/* border-bottom: 5px solid black; */
+		/* border-bottom: 5px solid
+		 black; */
 		max-width: 1200px;
 
 		:deep(h3) {
@@ -191,12 +197,16 @@ watch(internalValue, validate);
 			border-radius: 4px;
 			width: 100%;
 			max-width: 300px;
+
+			
 		}
 
 		select {
 			width: 100%;
 			max-width: 300px;
 		}
+
+		
 
 		input[type="checkbox"] {
 			width: 25px;
@@ -224,7 +234,7 @@ watch(internalValue, validate);
 				left: -10px;
 				width: 400px !important;
 				max-width: 400px !important;
-				height: 200px;
+				height: 60px;
 			}
 		}
 
