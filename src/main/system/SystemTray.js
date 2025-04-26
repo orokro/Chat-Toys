@@ -23,8 +23,8 @@ function createSystemTray(mainWindow, destroyAllWindows) {
 
 	// pick the icon path based on if we're in dev mode
 	const trayIconPath = isDev
-	? resolve(__dirname, '../../../src/main/main_assets/icon_128.png')
-	: join(process.resourcesPath, 'main_assets', 'icon_128.png');
+	? resolve(__dirname, '../../../src/main/main_assets/buddy_icon_128.png')
+	: join(process.resourcesPath, 'main_assets', 'buddy_icon_128.png');
 
 
 	// create the tray
