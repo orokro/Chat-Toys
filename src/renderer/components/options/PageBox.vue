@@ -114,14 +114,17 @@ function generateGradient(colorHex) {
         ${lightened2} 100%)`;
 }
 
+// compute the background color and/or image
 const bgCSS = computed(()=>{
 
 	if(props.themeImage === '') {
 		return `${props.themeColor}`
+
 	}else{
-		return `${props.themeColor} url('/${props.themeImage}')`
-	}
-	
+		const basePath = window.env.isDev ? '../../' : '../';
+		const resolvedImg = new URL(basePath + props.themeImage, import.meta.url).href;
+		return `${props.themeColor} url('${resolvedImg}')`;
+	}	
 });
 
 
