@@ -1,5 +1,5 @@
 {
-	"name": "YouTube-Chat-Toys",
+	"name": "Chat-Toys",
 	"version": "0.0.1",
 	"description": "A simple Electron app to play with YouTube chat messages",
 	"main": "main/main.js",
@@ -12,7 +12,7 @@
 		"rebuild": "electron-rebuild",
 		"postinstall": "electron-rebuild"
 	},
-	"repository": "https://github.com/orokro/YouTube-Chat-Toys",
+	"repository": "https://github.com/orokro/Chat-Toys",
 	"author": {
 		"name": "Greg Miller",
 		"url": "https://github.com/Orokro"

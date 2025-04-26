@@ -119,7 +119,7 @@ const bgCSS = computed(()=>{
 	if(props.themeImage === '') {
 		return `${props.themeColor}`
 	}else{
-		return `${props.themeColor} url(${props.themeImage})`
+		return `${props.themeColor} url('/${props.themeImage}')`
 	}
 	
 });
