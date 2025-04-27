@@ -41,23 +41,17 @@ const props = defineProps({
 	// invisible row to keep the info boxes from stacking
 	.infoBoxRow {
 
-		// for debug
-		/* border: 1px solid red; */
-
 		// space around
-		margin: 10px 0px;
+		margin: 25px 0px;
 
 		// styled box w/ content
 		.infoBox {
 
 			overflow: hidden;
 
-			/* display: inline-block; */
 			// solid pill shape
-			/* background: black; */
-			border-radius: 30px;
+			border-radius: 20px;
 			min-height: 50px;
-
 
 			// reset stacking context
 			position: relative;
@@ -77,8 +71,6 @@ const props = defineProps({
 				justify-content: center;
 				align-items: center;
 
-				border-right: 2px solid white;
-
 				// icon
 				span {
 					font-size: 30px;
@@ -89,7 +81,7 @@ const props = defineProps({
 			}// .icon
 
 			.content {
-				padding: 5px 10px;
+				padding: 15px 20px;
 				min-height: 50px;
 				/* opacity: 0.8; */
 

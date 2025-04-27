@@ -222,6 +222,11 @@ const bgCSS = computed(()=>{
 		}
 
 		:deep(.infoBox) {
+			border: 2px solid var(--tColor);
+			
+		}
+
+		:deep(.infoBox) {
 			background-color: var(--tColor);
 		}
 
