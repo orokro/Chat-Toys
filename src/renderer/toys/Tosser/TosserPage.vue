@@ -61,41 +61,42 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
-		<SettingsInputRow
-			type="boolean"
-			v-model="randomTossMode"
-		>
-			<h3>Random Toss Mode</h3>
-			<p>If no item is tossed with the <span class="cmd">!{{ toss_command }} &lt;item&gt;</span>
-				command, a random will be picked if this is mode is enabled.
-			</p>
-		</SettingsInputRow>
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="boolean"
+				v-model="randomTossMode"
+			>
+				<h3>Random Toss Mode</h3>
+				<p>If no item is tossed with the <span class="cmd">!{{ toss_command }} &lt;item&gt;</span>
+					command, a random will be picked if this is mode is enabled.
+				</p>
+			</SettingsInputRow>
 
-		<SettingsRow>
-			<h3>Tossable Objects</h3>
-			<p>Add/Edit 3d Models to Toss!</p>
-			<p><strong>NOTE: if no items are added, the toss command will not work in chat.</strong></p>
-			<p>You with the Asset Picker dialog, you can also import custom models from your computer.</p>
-			<br>
-			<ArrayEdit
-				v-model="tosserAssets"
-				:component="ArrayTosserEdit"
-				:rowProps="{ assetManager: ctApp.assetsMgr }"
-				:createItem="() => {
-					return {
-						model: '16',
-						modelPath: toy.getAssetPath('16'),
-						sound: '15',
-						soundPath: toy.getAssetPath('15'),
-						scale: 1,
-						slug: '',
-						cmd: '',
-					};
-				}"
-			/>
-		
-		</SettingsRow>
-
+			<SettingsRow>
+				<h3>Tossable Objects</h3>
+				<p>Add/Edit 3d Models to Toss!</p>
+				<p><strong>NOTE: if no items are added, the toss command will not work in chat.</strong></p>
+				<p>You with the Asset Picker dialog, you can also import custom models from your computer.</p>
+				<br>
+				<ArrayEdit
+					v-model="tosserAssets"
+					:component="ArrayTosserEdit"
+					:rowProps="{ assetManager: ctApp.assetsMgr }"
+					:createItem="() => {
+						return {
+							model: '16',
+							modelPath: toy.getAssetPath('16'),
+							sound: '15',
+							soundPath: toy.getAssetPath('15'),
+							scale: 1,
+							slug: '',
+							cmd: '',
+						};
+					}"
+				/>
+			
+			</SettingsRow>
+		</div>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 

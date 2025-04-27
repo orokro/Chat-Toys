@@ -73,29 +73,31 @@
 			</div>
 			
 			<br>
-			<SettingsInputRow
-				type="boolean"
-				v-model="ctApp.enableAutoAdd.value"
-			>
-				<h3>Enable Auto Chat Mode</h3>
-				<p>
-					True if the app should try automatically searching for your live stream if/when it 
-					detects OBS is live. Again, no promises.
-				</p>
-			</SettingsInputRow>
-			<SettingsRow
-			>
-				<h3>Channel URL</h3>
-				<p>
-					Paste your Channel's page URL here.
-				</p>
-				<input
-					type="text"
-					id="autoChat"
-					v-model="ctApp.autoChatChannel.value"
-					placeholder="https://www.youtube.com/@YourChannelName"
-				/>
-			</SettingsRow>
+			<div class="settingsBlock">
+				<SettingsInputRow
+					type="boolean"
+					v-model="ctApp.enableAutoAdd.value"
+				>
+					<h3>Enable Auto Chat Mode</h3>
+					<p>
+						True if the app should try automatically searching for your live stream if/when it 
+						detects OBS is live. Again, no promises.
+					</p>
+				</SettingsInputRow>
+				<SettingsRow
+				>
+					<h3>Channel URL</h3>
+					<p>
+						Paste your Channel's page URL here.
+					</p>
+					<input
+						type="text"
+						id="autoChat"
+						v-model="ctApp.autoChatChannel.value"
+						placeholder="https://www.youtube.com/@YourChannelName"
+					/>
+				</SettingsRow>
+		</div>
 
 		</div>
 

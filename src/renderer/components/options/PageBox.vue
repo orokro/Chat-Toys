@@ -235,6 +235,12 @@ const bgCSS = computed(()=>{
 				background: rgba(0, 0, 0, 0.1);
 			}
 		}
+
+		:deep(.settingsBlock) {
+			/* border: 1px solid red; */
+			overflow: clip;
+			border-radius: 10px;
+		}
 		
 	}// .pageBox
 

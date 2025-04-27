@@ -13,8 +13,8 @@
 	<p>Use the {{ countSentence.u }} below as an OBS browser source!</p>
 
 	<!-- the list of widget URLs -->
-	<div class="widgetURLs">
-
+	<div class="widgetURLs settingsBlock">
+		
 		<!-- loop through the widget URLs -->
 		<template 
 			v-for="(url, i) in toy.getWidgetURLs()"

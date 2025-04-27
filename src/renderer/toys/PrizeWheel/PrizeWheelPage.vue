@@ -39,58 +39,60 @@
 		
 		<SectionHeader title="Settings"/>
 
-		<SettingsRow>
-			<h3>Item Slots</h3>
-			<p>Add Items to the wheel!</p>
-			<p><strong>NOTE: if no items are added, the spin command will not work in chat.</strong></p>
+		<div class="settingsBlock">
+			<SettingsRow>
+				<h3>Item Slots</h3>
+				<p>Add Items to the wheel!</p>
+				<p><strong>NOTE: if no items are added, the spin command will not work in chat.</strong></p>
+				
+				<ArrayEdit
+					v-model="wheelItems"
+					:component="ArrayTextInput"
+					:schema="itemSchema"
+					:createItem="() => ''"
+				/>
 			
-			<ArrayEdit
-				v-model="wheelItems"
-				:component="ArrayTextInput"
-				:schema="itemSchema"
-				:createItem="() => ''"
-			/>
-		
-		</SettingsRow>
+			</SettingsRow>
 
-		<SettingsRow>
-			<h3>Wheel Colors</h3>
-			<p>These will be repeated throughout the wheel based on the number of items you have above.</p>
+			<SettingsRow>
+				<h3>Wheel Colors</h3>
+				<p>These will be repeated throughout the wheel based on the number of items you have above.</p>
+				
+				<ArrayEdit
+					v-model="wheelColors"
+					:component="ArrayColorInput"
+					:schema="colorSchema"
+					:createItem="() => '#00ABAE'"
+				/>
 			
-			<ArrayEdit
-				v-model="wheelColors"
-				:component="ArrayColorInput"
-				:schema="colorSchema"
-				:createItem="() => '#00ABAE'"
-			/>
+			</SettingsRow>
+
+			<SettingsAssetRow
+				v-model="wheelImageId"
+				:kind-filter="'image'"
+			>
+				<h3>Image File for Wheel</h3>
+				<p>You can Photoshop or commission a custom theme to use for the wheel.</p>
+			</SettingsAssetRow>
+			
+			<SettingsAssetRow
+				v-model="wheelSoundId"
+				:kind-filter="'sound'"
+			>
+				<h3>Click Sound for Wheel</h3>
+				<p>What sound to use for the spinning clicks.</p>
+			</SettingsAssetRow>
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="alwaysShowWheel"
+			>
+				<h3>Always Show Wheel</h3>
+				<p>If enabled, the wheel widget will always be visible.</p>
+				<p>If not enabled (default), the wheel will only appear when spun.</p>
+			</SettingsInputRow>
+		</div>
 		
-		</SettingsRow>
-
-		<SettingsAssetRow
-			v-model="wheelImageId"
-			:kind-filter="'image'"
-		>
-			<h3>Image File for Wheel</h3>
-			<p>You can Photoshop or commission a custom theme to use for the wheel.</p>
-		</SettingsAssetRow>
-		
-		<SettingsAssetRow
-			v-model="wheelSoundId"
-			:kind-filter="'sound'"
-		>
-			<h3>Click Sound for Wheel</h3>
-			<p>What sound to use for the spinning clicks.</p>
-		</SettingsAssetRow>
-
-		<SettingsInputRow
-			type="boolean"
-			v-model="alwaysShowWheel"
-		>
-			<h3>Always Show Wheel</h3>
-			<p>If enabled, the wheel widget will always be visible.</p>
-			<p>If not enabled (default), the wheel will only appear when spun.</p>
-		</SettingsInputRow>
-
 		<SectionHeader title="Widget Preview"/>
 		<p>Below is an example of the points widget as it will appear on the stage.</p>
 		<div class="previewBox">

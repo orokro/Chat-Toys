@@ -35,33 +35,35 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
-		<SettingsInputRow
-			type="number"
-			:min="1"
-			v-model="maxBuddyCount"
-		>
-			<h3>Max Buddy Count</h3>
-			<p>The maximum number of buddies allowed on screen.</p>
-			<p>Adjust this based either on your performance needs, or clutter tolerance.</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="float"
-			:min="0.01"
-			:max="10"
-			:step="0.01"
-			v-model="buddySize"
-		>
-			<h3>Buddy Scale</h3>
-			<p>Just this to adjust the size of the characters on screen. Default is 1.</p>
-		</SettingsInputRow>
-		<SettingsAssetRow
-			v-model="modelId"
-			:kind-filter="'3d'"
-		>
-			<h3>Avatar For Characters</h3>
-			<p>Must be an FBX with a Mixamo skeleton.</p>
-		</SettingsAssetRow>
-
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="number"
+				:min="1"
+				v-model="maxBuddyCount"
+			>
+				<h3>Max Buddy Count</h3>
+				<p>The maximum number of buddies allowed on screen.</p>
+				<p>Adjust this based either on your performance needs, or clutter tolerance.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="float"
+				:min="0.01"
+				:max="10"
+				:step="0.01"
+				v-model="buddySize"
+			>
+				<h3>Buddy Scale</h3>
+				<p>Just this to adjust the size of the characters on screen. Default is 1.</p>
+			</SettingsInputRow>
+			<SettingsAssetRow
+				v-model="modelId"
+				:kind-filter="'3d'"
+			>
+				<h3>Avatar For Characters</h3>
+				<p>Must be an FBX with a Mixamo skeleton.</p>
+			</SettingsAssetRow>
+		</div>
+		
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 

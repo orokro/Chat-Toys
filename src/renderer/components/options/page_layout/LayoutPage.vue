@@ -96,22 +96,25 @@
 			</p>
 			
 			<SectionHeader title="Widget Demo Mode"/>
-			<SettingsInputRow
-				type="boolean"
-				v-model="ctApp.demoMode.value"
-			>
-				<h3>Widget Demo Mode</h3>
-				<p>When enabled, the various Chat Toy's Widgets will display in "<strong>demo mode</strong>".</p>
-				<p>
-					This can help you adjust your layout in OBS or on this screen.
-					For example, some components like Media Items, or the Prize wheel will only appear when
-					they are activated by the chatters. With <strong>demo mode</strong> enabled, they will
-					be visible so you can see how they look on screen.
-				</p>
-				<p>
-					<strong>NOTE:</strong> make sure you disable <strong>demo mode</strong> before you go live!
-				</p>
-			</SettingsInputRow>
+			<div class="settingsBlock">
+				<SettingsInputRow
+					type="boolean"
+					v-model="ctApp.demoMode.value"
+				>
+					<h3>Widget Demo Mode</h3>
+					<p>When enabled, the various Chat Toy's Widgets will display in "<strong>demo mode</strong>".</p>
+					<p>
+						This can help you adjust your layout in OBS or on this screen.
+						For example, some components like Media Items, or the Prize wheel will only appear when
+						they are activated by the chatters. With <strong>demo mode</strong> enabled, they will
+						be visible so you can see how they look on screen.
+					</p>
+					<p>
+						<strong>NOTE:</strong> make sure you disable <strong>demo mode</strong> before you go live!
+					</p>
+				</SettingsInputRow>
+			</div>
+			<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 		</PageBox>
 	</VerticalItemsPage>
 
@@ -128,6 +131,7 @@ import PageBox from '../PageBox.vue';
 import SectionHeader from '../SectionHeader.vue';
 import SettingsInputRow from '../SettingsInputRow.vue';
 import URLCopyBox from '../URLCopyBox.vue';
+import CatsumIpsum from '@components/CatsumIpsum.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');

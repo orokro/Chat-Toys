@@ -15,6 +15,10 @@
 		class="array-edit"
 		:class="{ 'noAdd': !allowNewItems }"
 	>
+		<!-- one last row, for our add button -->
+		<div v-if="allowNewItems" class="row buttonRow" align="right">
+			<button @click="addItem" class="bg-blue-500 text-white px-4 py-2 rounded">Add Item</button>
+		</div>
 
 		<!-- the box that contains the item rows -->
 		<div class="items">
@@ -56,10 +60,7 @@
 
 		</div>
 
-		<!-- one last row, for our add button -->
-		<div v-if="allowNewItems" class="row buttonRow">
-			<button @click="addItem" class="bg-blue-500 text-white px-4 py-2 rounded">Add Item</button>
-		</div>
+		
 	</div>
 </template>
 <script setup>
@@ -137,10 +138,10 @@ const removeItem = (index) => {
 		background: rgb(172, 172, 172);
 
 		// make room for fixed header on top:
-		padding: 0px 0px 40px 0px;
+		padding: 40px 0px 0px 0px;
 
 		&.noAdd {
-			padding-bottom: 0px;
+			padding-top: 0px;
 		}
 		
 		// one of the rows to stack
@@ -188,7 +189,7 @@ const removeItem = (index) => {
 				// fix on bottom
 				display: block;
 				position: absolute;
-				inset: auto 0px 0px 0px;
+				inset: 0px 0px auto 0px;
 				padding: 5px;
 
 				// black bar w/ white text
@@ -215,6 +216,7 @@ const removeItem = (index) => {
 						background: white;
 						border: 2px solid rgba(255, 255, 255, 1);					
 					}
+
 				}// button
 
 			}// &.buttonRow

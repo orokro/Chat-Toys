@@ -59,42 +59,42 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
-		
-		<SettingsInputRow
-			type="color"
-			v-model="logTextColor"
-		>
-			<h3>Text Color</h3>
-			<p>The color to render the log text on the log widget.</p>
-		</SettingsInputRow>
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="color"
+				v-model="logTextColor"
+			>
+				<h3>Text Color</h3>
+				<p>The color to render the log text on the log widget.</p>
+			</SettingsInputRow>
 
-		<SettingsInputRow
-			type="boolean"
-			v-model="showLogBG"
-		>
-			<h3>Show Log Background</h3>
-			<p>Should there be a background box rendered behind the log text, or just the log text?</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="color"
-			v-model="logBGColor"
-		>
-			<h3>Background Color</h3>
-			<p>If the log box background is enabled, what color should it be?</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="float"
-			:min="0.1"
-			:max="1.0"
-			:step="0.1"
-			v-model="logBGOpacity"
-		>
-			<h3>Background Opacity</h3>
-			<p>
-				Again, if the log box background is enabled, what opacity should it be?
-			</p>
-		</SettingsInputRow>
-		
+			<SettingsInputRow
+				type="boolean"
+				v-model="showLogBG"
+			>
+				<h3>Show Log Background</h3>
+				<p>Should there be a background box rendered behind the log text, or just the log text?</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="logBGColor"
+			>
+				<h3>Background Color</h3>
+				<p>If the log box background is enabled, what color should it be?</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="float"
+				:min="0.1"
+				:max="1.0"
+				:step="0.1"
+				v-model="logBGOpacity"
+			>
+				<h3>Background Opacity</h3>
+				<p>
+					Again, if the log box background is enabled, what opacity should it be?
+				</p>
+			</SettingsInputRow>
+		</div>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 
@@ -135,10 +135,6 @@ const {
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
-
-watch(commandsRef, () => {
-	console.log(commandsRef.value);
-}, { immediate: true });
 
 // get the command used for tossing items
 const echo_command = computed(() => {

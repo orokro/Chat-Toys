@@ -44,28 +44,30 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
-		<SettingsRow>
-			<h3>Media</h3>
-			<p>
-				Each command can show
-			</p>
-			<ul>
-				<li>an image</li>
-				<li>a sound</li>
-				<li>or both</li>
-			</ul>
-			<p>
-				You can also set the duration that the image will be shown for.
-			</p>
+		<div class="settingsBlock">
+			<SettingsRow>
+				<h3>Media</h3>
+				<p>
+					Each command can show
+				</p>
+				<ul>
+					<li>an image</li>
+					<li>a sound</li>
+					<li>or both</li>
+				</ul>
+				<p>
+					You can also set the duration that the image will be shown for.
+				</p>
+				
+				<ArrayEdit
+					v-model="mediaAssets"
+					:component="ArrayMediaEdit"
+					:rowProps="{ assetManager: ctApp.assetsMgr }"
+					:allow-new-items="false"
+				/>
 			
-			<ArrayEdit
-				v-model="mediaAssets"
-				:component="ArrayMediaEdit"
-				:rowProps="{ assetManager: ctApp.assetsMgr }"
-				:allow-new-items="false"
-			/>
-		
-		</SettingsRow>
+			</SettingsRow>
+		</div>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 

@@ -153,8 +153,6 @@ const addChat = async () => {
  */
 const toggleEnabled = async (id, enabled) => {
 
-	console.log(enabled);
-
 	if (enabled)
 		await window.chatSourceAPI.enable(id);
 	else

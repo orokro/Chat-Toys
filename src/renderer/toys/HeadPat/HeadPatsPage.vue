@@ -42,22 +42,24 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
-		<SettingsInputRow
-			type="boolean"
-			v-model="allowUserPats"
-		>
-			<h3>Allow User Pats</h3>
-			<p>Allow a chatter to specify another user to head-pat with the command
-				<span class="cmd">!{{ pat_command }} &lt;user&gt;</span> </p>
-		</SettingsInputRow>
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="boolean"
+				v-model="allowUserPats"
+			>
+				<h3>Allow User Pats</h3>
+				<p>Allow a chatter to specify another user to head-pat with the command
+					<span class="cmd">!{{ pat_command }} &lt;user&gt;</span> </p>
+			</SettingsInputRow>
 
-		<SettingsAssetRow
-			v-model="headPatChatterImage"
-			:kind-filter="'image'"
-		>
-			<h3>Chatter Image</h3>
-			<p>Image to use for the head patting chatter</p>
-		</SettingsAssetRow>
+			<SettingsAssetRow
+				v-model="headPatChatterImage"
+				:kind-filter="'image'"
+			>
+				<h3>Chatter Image</h3>
+				<p>Image to use for the head patting chatter</p>
+			</SettingsAssetRow>
+		</div>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 </template>

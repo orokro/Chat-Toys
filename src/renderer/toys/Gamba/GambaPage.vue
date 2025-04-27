@@ -51,92 +51,94 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Theme Colors"/>
-
-		<SettingsInputRow
-			type="color"
-			v-model="windowHeaderColor"
-		>
-			<h3>Widget Header Color</h3>
-			<p>What color header of the widgets be?</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="color"
-			v-model="windowBodyColor"
-		>
-			<h3>Widget Body Color</h3>
-			<p>What color body of the widgets be?</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="color"
-			v-model="windowHeaderTextColor"
-		>
-			<h3>Widget Header Text Color</h3>
-			<p>What color header text of the widgets be?</p>	
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="color"
-			v-model="windowBodyTextColor"
-		>
-			<h3>Widget Body Text Color</h3>
-			<p>What color body text of the widgets be?</p>
-		</SettingsInputRow>
-
-		<SectionHeader title="Settings"/>
-
-		<div
-			class="gambaSettings"
-			:class="{
-				disabled: gambaStateMode !== 'OFF',
-			}"
-		>
-			<div class="blur">
-				<SettingsInputRow
-					type="text"
-					v-model="gambaPrompt"
-				>
-					<h3>Gamba Prompt</h3>
-					<p>
-						The topic for the options to bet on.
-					</p>
-					<p>The number of users can be customized above...</p>
-				</SettingsInputRow>
-
-				<SettingsRow>
-					<h3>Options</h3>
-					<p>Add at least 2 options</p>
-					<ArrayEdit
-						v-model="gambaOptions"
-						:component="ArrayTextInput"
-						:schema="itemSchema"
-						:createItem="() => ''"
-					/>
-				
-				</SettingsRow>
-
-				<SettingsInputRow
-					type="number"
-					:min="30"
-					v-model="gambaBetTime"
-				>
-					<h3>Betting Time</h3>
-					<p>
-						When you press "Begin Betting" below, how long should the timer on screen
-						allow users to place bets?
-					</p>
-					<p>Time below is in seconds:</p>
-					<ul>
-						<li>60 = 1 min</li>
-						<li>120 = 2 min</li>
-						<li>180 = 3 min</li>
-						<li>240 = 4 min</li>
-						<li>300 = 5 min</li>
-					</ul>
-				</SettingsInputRow>
-			</div>
-
-			<div class="disabledMessage">You cannot edit the settings during an active bet!</div>
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="color"
+				v-model="windowHeaderColor"
+			>
+				<h3>Widget Header Color</h3>
+				<p>What color header of the widgets be?</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="windowBodyColor"
+			>
+				<h3>Widget Body Color</h3>
+				<p>What color body of the widgets be?</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="windowHeaderTextColor"
+			>
+				<h3>Widget Header Text Color</h3>
+				<p>What color header text of the widgets be?</p>	
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="windowBodyTextColor"
+			>
+				<h3>Widget Body Text Color</h3>
+				<p>What color body text of the widgets be?</p>
+			</SettingsInputRow>
 		</div>
 
+		<SectionHeader title="Settings"/>
+		<div class="settingsBlock">
+			<div
+				class="gambaSettings"
+				:class="{
+					disabled: gambaStateMode !== 'OFF',
+				}"
+			>
+				<div class="blur">
+					<SettingsInputRow
+						type="text"
+						v-model="gambaPrompt"
+					>
+						<h3>Gamba Prompt</h3>
+						<p>
+							The topic for the options to bet on.
+						</p>
+						<p>The number of users can be customized above...</p>
+					</SettingsInputRow>
+
+					<SettingsRow>
+						<h3>Options</h3>
+						<p>Add at least 2 options</p>
+						<ArrayEdit
+							v-model="gambaOptions"
+							:component="ArrayTextInput"
+							:schema="itemSchema"
+							:createItem="() => ''"
+						/>
+					
+					</SettingsRow>
+
+					<SettingsInputRow
+						type="number"
+						:min="30"
+						v-model="gambaBetTime"
+					>
+						<h3>Betting Time</h3>
+						<p>
+							When you press "Begin Betting" below, how long should the timer on screen
+							allow users to place bets?
+						</p>
+						<p>Time below is in seconds:</p>
+						<ul>
+							<li>60 = 1 min</li>
+							<li>120 = 2 min</li>
+							<li>180 = 3 min</li>
+							<li>240 = 4 min</li>
+							<li>300 = 5 min</li>
+						</ul>
+					</SettingsInputRow>
+				</div>
+
+				<div class="disabledMessage">You cannot edit the settings during an active bet!</div>
+			</div>
+		</div>
+		
 		<SectionHeader title="Actions"/>
 
 		<div class="status">

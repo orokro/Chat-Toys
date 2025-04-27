@@ -42,86 +42,88 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
-		<SettingsInputRow
-			type="boolean"
-			v-model="enableChatBox"
-		>
-			<h3>Enable Onscreen Chat Box</h3>
-			<p>Show chat box on screen mirroring live chat (as opposed to other streaming services)</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="boolean"
-			v-model="enableChatBoxImage"
-		>
-			<h3>Enable Chat Box BG Image</h3>
-			<p>Use the image below to frame the chat box.</p>
-		</SettingsInputRow>
-		<SettingsAssetRow
-			v-model="chatBoxImage"
-			:kind-filter="'image'"
-		>
-			<h3>Image Frame</h3>
-			<p>Choose Image frame (sliceable in 3x3) for chat box.</p>
-		</SettingsAssetRow>
-		<SettingsInputRow
-			type="boolean"
-			v-model="filterCommands"
-		>
-			<h3>Filter !commands from Chat</h3>
-			<p>If using the custom streaming box, filter out the <span class="cmd">!Commands</span>.</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="boolean"
-			v-model="showChatterNames"
-		>
-			<h3>Show Chatter Names</h3>
-			<p>Disable to show messages only.</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="color"
-			v-model="chatNameColor"
-		>
-			<h3>User Name Chat Color</h3>
-			<p>What color to use for chat's user names?</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="color"
-			v-model="chatTextColor"
-		>
-			<h3>Chat Text Color.</h3>
-			<p>What color to use for message text?</p>
-		</SettingsInputRow>
-		<SettingsAssetRow
-			v-model="shoutSoundId"
-			:kind-filter="'sound'"
-		>
-			<h3>Shout Sound</h3>
-			<p>What sound effect should play when <span class="cmd">!{{ shout_command }}</span> command is used.</p>
-		</SettingsAssetRow>
-		<SettingsInputRow
-			type="number"
-			:min="1"
-			v-model="swarmSize"
-		>
-			<h3>Swarm Size</h3>
-			<p>
-				If the <span class="cmd">!{{ swarm_command }}</span> command is enabled, how many users need to use it
-				in a short period of time for a swarm to start?
-			</p>
-			<p>The time period can be customized below...</p>
-		</SettingsInputRow>
-		<SettingsInputRow
-			type="number"
-			:min="1"
-			v-model="swarmDuration"
-		>
-			<h3>Swarm Time Window</h3>
-			<p>
-				Used with the above setting, how long of window should be used to
-				count the number of users using the <span class="cmd">!{{ swarm_command }}</span> command?
-			</p>
-			<p>The number of users can be customized above...</p>
-		</SettingsInputRow>
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="boolean"
+				v-model="enableChatBox"
+			>
+				<h3>Enable Onscreen Chat Box</h3>
+				<p>Show chat box on screen mirroring live chat (as opposed to other streaming services)</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="enableChatBoxImage"
+			>
+				<h3>Enable Chat Box BG Image</h3>
+				<p>Use the image below to frame the chat box.</p>
+			</SettingsInputRow>
+			<SettingsAssetRow
+				v-model="chatBoxImage"
+				:kind-filter="'image'"
+			>
+				<h3>Image Frame</h3>
+				<p>Choose Image frame (sliceable in 3x3) for chat box.</p>
+			</SettingsAssetRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="filterCommands"
+			>
+				<h3>Filter !commands from Chat</h3>
+				<p>If using the custom streaming box, filter out the <span class="cmd">!Commands</span>.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="showChatterNames"
+			>
+				<h3>Show Chatter Names</h3>
+				<p>Disable to show messages only.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="chatNameColor"
+			>
+				<h3>User Name Chat Color</h3>
+				<p>What color to use for chat's user names?</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="chatTextColor"
+			>
+				<h3>Chat Text Color.</h3>
+				<p>What color to use for message text?</p>
+			</SettingsInputRow>
+			<SettingsAssetRow
+				v-model="shoutSoundId"
+				:kind-filter="'sound'"
+			>
+				<h3>Shout Sound</h3>
+				<p>What sound effect should play when <span class="cmd">!{{ shout_command }}</span> command is used.</p>
+			</SettingsAssetRow>
+			<SettingsInputRow
+				type="number"
+				:min="1"
+				v-model="swarmSize"
+			>
+				<h3>Swarm Size</h3>
+				<p>
+					If the <span class="cmd">!{{ swarm_command }}</span> command is enabled, how many users need to use it
+					in a short period of time for a swarm to start?
+				</p>
+				<p>The time period can be customized below...</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="number"
+				:min="1"
+				v-model="swarmDuration"
+			>
+				<h3>Swarm Time Window</h3>
+				<p>
+					Used with the above setting, how long of window should be used to
+					count the number of users using the <span class="cmd">!{{ swarm_command }}</span> command?
+				</p>
+				<p>The number of users can be customized above...</p>
+			</SettingsInputRow>
+		</div>
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 

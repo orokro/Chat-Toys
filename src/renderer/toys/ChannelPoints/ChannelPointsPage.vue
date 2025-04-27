@@ -48,111 +48,112 @@
 		<WidgetSection :toy="toy" />
 
 		<SectionHeader title="Settings"/>
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="number"
+				:min="1"
+				v-model="claimInterval"
+			>
+				<h3>Claim Interval</h3>
+				<p>How often should the option to appear to collect channel points? This setting is in seconds.</p>
+				<p>(60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes, etc.)</p>
+				<p>If this value is set to 0, the optional is basically always available, not recommended.</p>
+			</SettingsInputRow>
 
-		<SettingsInputRow
-			type="number"
-			:min="1"
-			v-model="claimInterval"
-		>
-			<h3>Claim Interval</h3>
-			<p>How often should the option to appear to collect channel points? This setting is in seconds.</p>
-			<p>(60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes, etc.)</p>
-			<p>If this value is set to 0, the optional is basically always available, not recommended.</p>
-		</SettingsInputRow>
+			<SettingsInputRow
+				type="number"
+				:min="0"
+				v-model="claimRandomness"
+			>
+				<h3>Claim Randomness</h3>
+				<p>Add random time to prevent users attempting to set a timer and snipe the points opportunity.</p>
+				<p>Default is 0 (no randomness)</p>
+				<p>A random amount of seconds will be ADDED to the above Claim Interval setting.</p>
+			</SettingsInputRow>
 
-		<SettingsInputRow
-			type="number"
-			:min="0"
-			v-model="claimRandomness"
-		>
-			<h3>Claim Randomness</h3>
-			<p>Add random time to prevent users attempting to set a timer and snipe the points opportunity.</p>
-			<p>Default is 0 (no randomness)</p>
-			<p>A random amount of seconds will be ADDED to the above Claim Interval setting.</p>
-		</SettingsInputRow>
+			<SettingsInputRow
+				type="number"
+				:min="10"
+				v-model="claimDuration"
+			>
+				<h3>Claim Duration</h3>
+				<p>How long should the claim-offer appear on screen for?</p>
+				<p>(60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes, etc.)</p>
+				<p>The default is 1 minute. The minimum is 10 seconds but keep in mind stream latency.</p>
+				<p><strong>NOTE: users can technically claim more than once, to prevent this make the user cool down longer than claim duration!</strong></p>		
+			</SettingsInputRow>
 
-		<SettingsInputRow
-			type="number"
-			:min="10"
-			v-model="claimDuration"
-		>
-			<h3>Claim Duration</h3>
-			<p>How long should the claim-offer appear on screen for?</p>
-			<p>(60 = 1 minute, 300 = 5 minutes, 600 = 10 minutes, etc.)</p>
-			<p>The default is 1 minute. The minimum is 10 seconds but keep in mind stream latency.</p>
-			<p><strong>NOTE: users can technically claim more than once, to prevent this make the user cool down longer than claim duration!</strong></p>		
-		</SettingsInputRow>
+			<SettingsInputRow
+				type="number"
+				:min="1"
+				v-model="pointsPerClaim"
+			>
+				<h3>Pay Out</h3>
+				<p>How many points should a chatter receive for a successful claim?</p>
+				<p>The default is 100, but you can make your your economy however you like.</p>		
+			</SettingsInputRow>
 
-		<SettingsInputRow
-			type="number"
-			:min="1"
-			v-model="pointsPerClaim"
-		>
-			<h3>Pay Out</h3>
-			<p>How many points should a chatter receive for a successful claim?</p>
-			<p>The default is 100, but you can make your your economy however you like.</p>		
-		</SettingsInputRow>
+			<SettingsInputRow
+				type="number"
+				:min="0"
+				v-model="maxClaims"
+			>
+				<h3>Max Claims</h3>
+				<p>When the claim opportunity appears, how many users can claim successfully before it goes away?</p>
+				<p>The default is set to '0' which means unlimited claims during the claim duration.</p>
+				<p><strong>NOTE: if claims run out, the graphic will disappear even if more time was available!</strong></p>
+			</SettingsInputRow>
 
-		<SettingsInputRow
-			type="number"
-			:min="0"
-			v-model="maxClaims"
-		>
-			<h3>Max Claims</h3>
-			<p>When the claim opportunity appears, how many users can claim successfully before it goes away?</p>
-			<p>The default is set to '0' which means unlimited claims during the claim duration.</p>
-			<p><strong>NOTE: if claims run out, the graphic will disappear even if more time was available!</strong></p>
-		</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="showTimerBar"
+			>
+				<h3>Show Timer Bar</h3>
+				<p>Should a timer bar be shown on the screen to indicate how much time is left to claim?</p>
+			</SettingsInputRow>
 
-		<SettingsInputRow
-			type="boolean"
-			v-model="showTimerBar"
-		>
-			<h3>Show Timer Bar</h3>
-			<p>Should a timer bar be shown on the screen to indicate how much time is left to claim?</p>
-		</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="showClaimsRemaining"
+			>
+				<h3>Show Claims Remaining</h3>
+				<p>Should a counter be shown on the screen to indicate how many claims are left?</p>
+			</SettingsInputRow>
 
-		<SettingsInputRow
-			type="boolean"
-			v-model="showClaimsRemaining"
-		>
-			<h3>Show Claims Remaining</h3>
-			<p>Should a counter be shown on the screen to indicate how many claims are left?</p>
-		</SettingsInputRow>
-
-		<SettingsInputRow
-			type="boolean"
-			v-model="showUserClaims"
-		>
-			<h3>Show User Claims</h3>
-			<p>Show the user names of successful claims near the graphic.</p>
-		</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="showUserClaims"
+			>
+				<h3>Show User Claims</h3>
+				<p>Show the user names of successful claims near the graphic.</p>
+			</SettingsInputRow>
 
 
-		<SettingsInputRow
-			type="boolean"
-			v-model="showTextPrompt"
-		>
-			<h3>Show Text Prompt</h3>
-			<p>Should a prompt be shown on the screen to indicate how to claim?</p>
-		</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="showTextPrompt"
+			>
+				<h3>Show Text Prompt</h3>
+				<p>Should a prompt be shown on the screen to indicate how to claim?</p>
+			</SettingsInputRow>
 
-		<SettingsInputRow
-			type="color"
-			v-model="widgetColorTheme"
-		>
-			<h3>Widget Color Theme</h3>
-			<p>What color should the widget be?</p>
-		</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="widgetColorTheme"
+			>
+				<h3>Widget Color Theme</h3>
+				<p>What color should the widget be?</p>
+			</SettingsInputRow>
 
-		<SettingsAssetRow
-			v-model="widgetIconId"
-			:kind-filter="'image'"
-		>
-			<h3>Channel Points Icon Image</h3>
-			<p>Choose an icon to show on the widget.</p>
-		</SettingsAssetRow>
-
+			<SettingsAssetRow
+				v-model="widgetIconId"
+				:kind-filter="'image'"
+			>
+				<h3>Channel Points Icon Image</h3>
+				<p>Choose an icon to show on the widget.</p>
+			</SettingsAssetRow>
+		</div>
+		
 		<SectionHeader title="Widget Preview"/>
 		<p>Below is an example of the points widget as it will appear on the stage.</p>
 		<div class="previewBox">
@@ -164,6 +165,7 @@
 			</div>
 			
 		</div>
+		
 		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
 	</PageBox>
 

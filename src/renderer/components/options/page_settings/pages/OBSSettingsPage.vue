@@ -25,61 +25,66 @@
 		</p>
 
 		<SectionHeader title="Test Page URL"/>
-		<SettingsRow>
-			<h3>Test Page URL</h3>
-			<p>To test the local OBS widget server, copy the URL below and load it in your Web Browser.</p>
-			<p>Or try it out in an OBS Browser source.</p>
-			<p>It should show a page that says "<strong>Chat Toys - Works!</strong>"</p>
-			<URLCopyBox :url="testPageURL" />
-		</SettingsRow>
-
+		<div class="settingsBlock">
+			<SettingsRow>
+				<h3>Test Page URL</h3>
+				<p>To test the local OBS widget server, copy the URL below and load it in your Web Browser.</p>
+				<p>Or try it out in an OBS Browser source.</p>
+				<p>It should show a page that says "<strong>Chat Toys - Works!</strong>"</p>
+				<URLCopyBox :url="testPageURL" />
+			</SettingsRow>
+		</div>
+		
 		<SectionHeader title="Widget Demo Mode"/>
-		<SettingsInputRow
-			type="boolean"
-			v-model="ctApp.demoMode.value"
-		>
-			<h3>Widget Demo Mode</h3>
-			<p>When enabled, the various Chat Toy's Widgets will display in "<strong>demo mode</strong>".</p>
-			<p>
-				This can help you adjust your layout in OBS.
-				For example, some components like Media Items, or the Prize wheel will only appear when
-				they are activated by the chatters. With <strong>demo mode</strong> enabled, they will
-				be visible so you can see how they look on screen.
-			</p>
-			<p>
-				<strong>NOTE:</strong> make sure you disable <strong>demo mode</strong> before you go live!
-			</p>
-		</SettingsInputRow>
-
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="boolean"
+				v-model="ctApp.demoMode.value"
+			>
+				<h3>Widget Demo Mode</h3>
+				<p>When enabled, the various Chat Toy's Widgets will display in "<strong>demo mode</strong>".</p>
+				<p>
+					This can help you adjust your layout in OBS.
+					For example, some components like Media Items, or the Prize wheel will only appear when
+					they are activated by the chatters. With <strong>demo mode</strong> enabled, they will
+					be visible so you can see how they look on screen.
+				</p>
+				<p>
+					<strong>NOTE:</strong> make sure you disable <strong>demo mode</strong> before you go live!
+				</p>
+			</SettingsInputRow>
+		</div>
 
 		<SectionHeader title="Server Settings"/>
-		<SettingsInputRow
-			type="number"
-			v-model="ctApp.serverPort"
-		>
-			<h3>Server Port</h3>
-			<p>If you don't know what this is, feel free to ignore it.</p>
-			<p>
-				Otherwise, if you need to configure the port number that Chat Toys will use to
-				serve the Toy Widgets, set below.
-			</p>
-			<p>
-				<strong>NOTE:</strong> This is the port that OBS will connect to, and it must be
-				available on your system. If you are using a firewall, you may need to allow this port.
-			</p>
-			<p>
-				<strong>NOTE:</strong> You will need to click the <strong>Restart Server</strong> button
-				or restart the entire application for port change to take effect.
-			</p>
-			<p>
-				<strong>ALSO NOTE:</strong> Changing the port number will break the URL's for the widgets,
-				so you will have to edit the browser sources in OBS to the new port number.
-			</p>
-			<p>
-				<strong>FINAL NOTE:</strong> Changing the port number is glitchy. It's recommended you change
-				the number, click "Restart Server" then restart the entire app.
-			</p>
-		</SettingsInputRow>
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="number"
+				v-model="ctApp.serverPort"
+			>
+				<h3>Server Port</h3>
+				<p>If you don't know what this is, feel free to ignore it.</p>
+				<p>
+					Otherwise, if you need to configure the port number that Chat Toys will use to
+					serve the Toy Widgets, set below.
+				</p>
+				<p>
+					<strong>NOTE:</strong> This is the port that OBS will connect to, and it must be
+					available on your system. If you are using a firewall, you may need to allow this port.
+				</p>
+				<p>
+					<strong>NOTE:</strong> You will need to click the <strong>Restart Server</strong> button
+					or restart the entire application for port change to take effect.
+				</p>
+				<p>
+					<strong>ALSO NOTE:</strong> Changing the port number will break the URL's for the widgets,
+					so you will have to edit the browser sources in OBS to the new port number.
+				</p>
+				<p>
+					<strong>FINAL NOTE:</strong> Changing the port number is glitchy. It's recommended you change
+					the number, click "Restart Server" then restart the entire app.
+				</p>
+			</SettingsInputRow>
+		</div>
 
 		<button 
 			type="button"
