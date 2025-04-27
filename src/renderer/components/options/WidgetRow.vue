@@ -19,21 +19,7 @@
 			}"
 		></div>
 
-		<div class="inputRow">
-
-			<!-- a read only input that can be copied from: -->
-			<input type="text" :value="urlData.url" readonly @focus="$event.target.select()" @click="$event.target.select()"
-				@copy="$event.target.select()"
-			></input>
-
-			<div class="copyButton">
-				<span class="material-icons"
-					@click="copyURL">
-					content_copy
-				</span>
-			</div>
-
-		</div>
+		<URLCopyBox class="urlBox" :url="urlData.url" />
 	</div>
 
 </template>
@@ -42,6 +28,9 @@
 // vue
 import { ref, inject, computed } from 'vue';
 import { socketRef, socketShallowRef, socketShallowRefReadOnly, socketRefAsync, bindRef, bindRefs } from 'socket-ref';
+
+// components
+import URLCopyBox from '@components/options/URLCopyBox.vue';
 
 // define some props
 const props = defineProps({
@@ -105,18 +94,6 @@ const liveStatusText = computed(() => {
 	}
 });
 
-
-/**
- * Copy the URL to the clipboard
- * 
- * @param event - the event that triggered the copy
- */
-const copyURL = (event)=>{
-    const input = event.target.closest('.inputRow').querySelector('input');
-    input.select();
-    document.execCommand('copy');
-}
-
 </script>
 <style lang="scss" scoped>
 
@@ -140,6 +117,9 @@ const copyURL = (event)=>{
 			padding: 10px 0px 5px 20px;
 		}
 
+		.urlBox {
+			margin-left: 20px;;
+		}
 
 		// live status light
 		.statusLight {
@@ -164,66 +144,6 @@ const copyURL = (event)=>{
 				}
 			}
 		}// .statusLight
-
-
-		// row with the text box & the copy button
-		.inputRow {
-
-			// reset stacking context
-			position: relative;
-
-			// fixed height & look like a box
-			height: 40px;
-			background: white;
-			padding: 5px 15px;
-			border-radius: 5px;
-			border: 2px solid black;
-			
-			// inner shadow
-			box-shadow: inset 0px 0px 5px rgba(0, 0, 0, 0.5);
-
-			margin-left: 20px;
-
-			// actual text input
-			input {
-
-				// fill container
-				position: absolute;
-				inset: 0px;
-				font-size: medium;
-				font-family: monospace;
-				padding: 0px 10px;
-			}
-
-			// the copy button
-			.copyButton {
-
-				// position it to the right
-				position: absolute;
-				inset: 0px 0px 0px auto;
-				top: 0px;
-				width: 40px;
-				cursor: pointer;
-				border-left: 2px solid black;
-
-				&:hover {
-					background: black;
-					span {
-						color: white;
-					}
-				}
-
-				// icon
-				span {
-					font-size: 1.5em;
-					position: relative;
-					top: 5px;
-					left: 7px;
-					color: black;
-				}
-
-			}// .copyButton
-		}// .inputRow
 
 	}// .urlRow
 

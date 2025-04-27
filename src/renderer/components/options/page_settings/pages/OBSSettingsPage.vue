@@ -15,11 +15,24 @@
 	>
 		<br/><br/>
 		<p>
-			Chat Toys uses a local web-server to provide custom Browser Sources for OBS.
+			Chat Toys works by creating a local webserver on your machine to host the widgets, as regular web pages.
+		</p>
+		<p>
+			In OBS, you can add these widgets to your scenes via Browser Sources, and this app will communciate to them.
 		</p>
 		<p>
 			Below you can configure and test the server settings.
 		</p>
+
+		<SectionHeader title="Test Page URL"/>
+		<SettingsRow>
+			<h3>Test Page URL</h3>
+			<p>To test the local OBS widget server, copy the URL below and load it in your Web Browser.</p>
+			<p>Or try it out in an OBS Browser source.</p>
+			<p>It should show a page that says "<strong>Chat Toys - Works!</strong>"</p>
+			<URLCopyBox :url="testPageURL" />
+		</SettingsRow>
+
 		<SectionHeader title="Widget Demo Mode"/>
 		<SettingsInputRow
 			type="boolean"
@@ -58,6 +71,14 @@
 				<strong>NOTE:</strong> You will need to click the <strong>Restart Server</strong> button
 				or restart the entire application for port change to take effect.
 			</p>
+			<p>
+				<strong>ALSO NOTE:</strong> Changing the port number will break the URL's for the widgets,
+				so you will have to edit the browser sources in OBS to the new port number.
+			</p>
+			<p>
+				<strong>FINAL NOTE:</strong> Changing the port number is glitchy. It's recommended you change
+				the number, click "Restart Server" then restart the entire app.
+			</p>
 		</SettingsInputRow>
 
 		<button 
@@ -88,7 +109,7 @@
 <script setup>
 
 // vue
-import { ref, inject, shallowRef, onMounted, watch } from 'vue';
+import { ref, inject, shallowRef, onMounted, watch, computed } from 'vue';
 import { socketShallowRef } from 'socket-ref';
 
 // components
@@ -100,9 +121,23 @@ import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import RawLogPreview from '../RawLogPreview.vue';
+import URLCopyBox from '@components/options/URLCopyBox.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
+
+
+// figure out which URL to show for the test page based on our mode
+const testPageURL = computed(() => {
+	
+	if (window.env.isDev) {
+		return 'http://localhost:8080/obsTestPage.html';
+	} else {
+		const port = ctApp.serverPort.value;
+		return `http://localhost:${port}/obsTestPage/`;
+	}
+});
+
 
 // get server port from the app
 async function getServerPort() {
@@ -110,12 +145,14 @@ async function getServerPort() {
 	ctApp.serverPort.value = port;
 }
 
+
 // when server port changes from our model, tell the backend
 watch(ctApp.serverPort, (newPort) => {
 	if (newPort !== 0) {
 		window.electronAPI.invoke('set-server-port', newPort);
 	}
 });
+
 
 onMounted(() => {
 
@@ -137,7 +174,6 @@ function restartServer(){
 		window.location.reload();
 	}, 1000);
 }
-
 
 </script>
 <style lang="scss" scoped>	
