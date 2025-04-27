@@ -16,6 +16,38 @@ const { join } = require('path');
 const Store = require('electron-store');
 const store = new Store();
 
+
+// script to switch to live chat (not top chat)
+const switchToLiveChatScript = `
+	(function() {
+		const openDropdown = document.querySelector('yt-dropdown-menu tp-yt-paper-menu-button #trigger');
+
+		if (openDropdown) {
+			openDropdown.click();
+
+			setTimeout(() => {
+			const paperListBox = document.querySelector('yt-dropdown-menu tp-yt-paper-menu-button tp-yt-iron-dropdown #contentWrapper tp-yt-paper-listbox');
+			
+			if (paperListBox) {
+				const items = paperListBox.querySelectorAll('tp-yt-paper-item');
+				const liveChatItem = Array.from(items).find(item => item.textContent.trim().startsWith('Live chat'));
+
+				if (liveChatItem) {
+				const parentLink = liveChatItem.closest('a');
+				const isSelected = parentLink?.getAttribute('aria-selected') === 'true';
+
+				if (!isSelected) {
+					liveChatItem.click();
+				}
+				}
+			}
+
+			openDropdown.click(); // Close the dropdown back
+			}, 200); // Wait for dropdown to fully render
+		}
+	})();
+`;
+
 // the script to inject into chat windows to read chat
 const chatReaderScript = `
 	// Flag to mark script injection
@@ -218,8 +250,13 @@ class ChatSource {
 			return new Promise((resolve) => {
 			
 				setTimeout(async ()=>{
-
+					
 					resolve(true);
+
+					// switch to live chat
+					await this.window.webContents.executeJavaScript(switchToLiveChatScript);
+
+					// enable the filtering
 					await this.window.webContents.executeJavaScript(chatReaderScript);
 					
 
