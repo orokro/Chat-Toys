@@ -78,6 +78,7 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import CatsumIpsum from '@components/CatsumIpsum.vue';
+
 // our app
 import HeadPat from './HeadPat';
 
