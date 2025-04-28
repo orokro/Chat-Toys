@@ -64,12 +64,26 @@
 				width="100"
 			/>
 			<div class="spacer"></div>
-			<h3>Discord</h3>
+			<h3>Email</h3>
 			<div
 				class="fakeLink"
 				@click="openLink(`mailto:chat.toys.contact@gmail.com`)"
 			>
 				chat.toys.contact@gmail.com
+			</div>
+		</div>
+		<div class="itemRow">
+			<img 
+				src="/assets/other/github_icon.png"
+				width="100"
+			/>
+			<div class="spacer"></div>
+			<h3>Github</h3>
+			<div
+				class="fakeLink"
+				@click="openLink(`https://github.com/orokro/Chat-Toys`)"
+			>
+				https://github.com/orokro/Chat-Toys
 			</div>
 		</div>
 
@@ -115,7 +129,10 @@ const openLink = (url) => {
 		}
 
 		.fakeLink {
-			
+
+			position: relative;
+			top: -20px;
+
 			margin-top: 1px;
 			color: rgb(0, 47, 255);
 			font-style: italic;
