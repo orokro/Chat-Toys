@@ -56,28 +56,28 @@
 				type="color"
 				v-model="windowHeaderColor"
 			>
-				<h3>Widget Header Color</h3>
+				<template #title>Widget Header Color</template #title>
 				<p>What color header of the widgets be?</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="color"
 				v-model="windowBodyColor"
 			>
-				<h3>Widget Body Color</h3>
+				<template #title>Widget Body Color</template #title>
 				<p>What color body of the widgets be?</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="color"
 				v-model="windowHeaderTextColor"
 			>
-				<h3>Widget Header Text Color</h3>
+				<template #title>Widget Header Text Color</template #title>
 				<p>What color header text of the widgets be?</p>	
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="color"
 				v-model="windowBodyTextColor"
 			>
-				<h3>Widget Body Text Color</h3>
+				<template #title>Widget Body Text Color</template #title>
 				<p>What color body text of the widgets be?</p>
 			</SettingsInputRow>
 		</div>
@@ -95,7 +95,7 @@
 						type="text"
 						v-model="gambaPrompt"
 					>
-						<h3>Gamba Prompt</h3>
+						<template #title>Gamba Prompt</template #title>
 						<p>
 							The topic for the options to bet on.
 						</p>
@@ -119,7 +119,7 @@
 						:min="30"
 						v-model="gambaBetTime"
 					>
-						<h3>Betting Time</h3>
+						<template #title>Betting Time</template #title>
 						<p>
 							When you press "Begin Betting" below, how long should the timer on screen
 							allow users to place bets?

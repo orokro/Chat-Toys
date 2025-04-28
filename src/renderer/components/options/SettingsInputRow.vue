@@ -10,56 +10,68 @@
 
 	<div class="settings-row">
 
-		<!-- Description -->
-		<div v-if="desc" class="desc">{{ desc }}</div>
-		<slot v-else></slot>
+		<div class="topRow">
 
-		<!-- Input Field -->
-		<input 
-			v-if="type !== 'boolean' && type !== 'options' && type !== 'radio'"
-			:type="type === 'color' ? 'text' : (type==='float' ? 'number' : type)"
-			:step="step"
-			v-model="internalValue" @blur="handleBlur"
-			class="settings-input"
-		/>
+			<div class="left">
+				<h3><slot name="title"></slot></h3>
+			</div>
+			<div class="right">
 
-		<!-- if color mode, also show color input -->
-		<div v-if="type === 'color'" class="colorWrapper">
-			<input 
-				type="color"
-				v-model="internalValue" @blur="handleBlur"
-				class="settings-input"
-			/>
+				<!-- Input Field -->
+				<input 
+					v-if="type !== 'boolean' && type !== 'options' && type !== 'radio'"
+					:type="type === 'color' ? 'text' : (type==='float' ? 'number' : type)"
+					:step="step"
+					v-model="internalValue" @blur="handleBlur"
+					class="settings-input"
+				/>
+
+				<!-- if color mode, also show color input -->
+				<div v-if="type === 'color'" class="colorWrapper">
+					<input 
+						type="color"
+						v-model="internalValue" @blur="handleBlur"
+						class="settings-input"
+					/>
+				</div>
+
+				<template v-else-if="type === 'boolean'">
+					<div align="right">
+						<!-- disabled classic checkbox while testing out new custom toggle -->
+						<!-- <input type="checkbox" v-model="setting"> -->
+						<ToggleCheck v-model="setting" />
+					</div>
+				</template>
+				
+				<template v-else-if="type === 'options'">
+					<select v-model="setting">
+						<option v-for="option in options" :key="option.value" :value="option.value">
+							{{ option.name }}
+						</option>
+					</select>
+				</template>
+
+				<template v-else-if="type === 'radio'">
+					<div v-for="option in options" :key="option.value">
+						<label>
+							<input type="radio" v-model="setting" :value="option.value">
+							{{ option.name }}
+						</label>
+					</div>
+				</template>
+
+				<!-- Error Message -->
+				<div v-if="errorMessage" class="error-message">
+					{{ errorMessage }}
+				</div>
+			</div>
+
 		</div>
-
-		<template v-else-if="type === 'boolean'">
-			<div align="left">
-				<!-- disabled classic checkbox while testing out new custom toggle -->
-				<!-- <input type="checkbox" v-model="setting"> -->
-				<ToggleCheck v-model="setting" />
-			</div>
-		</template>
-		
-		<template v-else-if="type === 'options'">
-			<select v-model="setting">
-				<option v-for="option in options" :key="option.value" :value="option.value">
-					{{ option.name }}
-				</option>
-			</select>
-		</template>
-
-		<template v-else-if="type === 'radio'">
-			<div v-for="option in options" :key="option.value">
-				<label>
-					<input type="radio" v-model="setting" :value="option.value">
-					{{ option.name }}
-				</label>
-			</div>
-		</template>
-
-		<!-- Error Message -->
-		<div v-if="errorMessage" class="error-message">
-			{{ errorMessage }}
+		<div class="bottomRow">
+			
+			<!-- Description -->
+			<div v-if="desc" class="desc">{{ desc }}</div>
+			<slot v-else></slot>
 		</div>
 	</div>
 
@@ -167,6 +179,35 @@ watch(internalValue, validate);
 </script>
 <style lang="scss" scoped>
 
+	.topRow {
+
+		margin-top: 5px;
+		h3 {
+			/* border: 1px solid red; */
+			/* border-bottom: 2px solid black; */
+			text-decoration: none !important
+		}
+		border-bottom: 5px solid rgba(0, 0, 0, 0.03);
+		padding-bottom: 5px;;
+
+		.left {
+			float: left;
+
+		}
+
+		.right {
+			float: right;
+			min-width: 500px;
+			
+			/* border: 1px solid red; */
+		}
+
+	}// .topRow
+
+	.bottomRow {
+		margin-bottom: 5px;
+	}
+
 	// main container
 	.settings-row {
 		
@@ -180,7 +221,7 @@ watch(internalValue, validate);
 
 		:deep(h3) {
 			margin-bottom: 0px;
-			text-decoration: underline;
+			/* text-decoration: underline; */
 		}
 		:deep(p) {
 			margin-top: 0px;
@@ -197,6 +238,11 @@ watch(internalValue, validate);
 			border-radius: 4px;
 			width: 100%;
 			max-width: 300px;			
+			
+		}
+
+		input {
+			float: right;
 		}
 
 		select {
@@ -210,8 +256,8 @@ watch(internalValue, validate);
 			padding: 8px 12px;
 			border: 2px solid black;
 			box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
+			float: right;
 		}
-
 
 		input[type="checkbox"] {
 			width: 25px;
@@ -225,14 +271,18 @@ watch(internalValue, validate);
 		}
 
 		.colorWrapper {
-			width: 300px;
-			height: 40px;
 
-			border: 2px solid black;
-			border-radius: 10px;
+			float: right;
+			width: 35px;
+			height: 35px;
+
+			border: 3px solid black;
+			border-radius: 40px;
 			overflow: hidden;
 			position: relative;
 
+			margin-right: 5px;
+			
 			input[type="color"] {
 				position: absolute;
 				top: -10px;

@@ -47,7 +47,7 @@
 				type="boolean"
 				v-model="allowUserPats"
 			>
-				<h3>Allow User Pats</h3>
+				<template #title>Allow User Pats</template #title>
 				<p>Allow a chatter to specify another user to head-pat with the command
 					<span class="cmd">!{{ pat_command }} &lt;user&gt;</span> </p>
 			</SettingsInputRow>

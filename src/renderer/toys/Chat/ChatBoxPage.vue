@@ -47,14 +47,14 @@
 				type="boolean"
 				v-model="enableChatBox"
 			>
-				<h3>Enable Onscreen Chat Box</h3>
+				<template #title>Enable Onscreen Chat Box</template #title>
 				<p>Show chat box on screen mirroring live chat (as opposed to other streaming services)</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="boolean"
 				v-model="enableChatBoxImage"
 			>
-				<h3>Enable Chat Box BG Image</h3>
+				<template #title>Enable Chat Box BG Image</template #title>
 				<p>Use the image below to frame the chat box.</p>
 			</SettingsInputRow>
 			<SettingsAssetRow
@@ -68,28 +68,28 @@
 				type="boolean"
 				v-model="filterCommands"
 			>
-				<h3>Filter !commands from Chat</h3>
+				<template #title>Filter !commands from Chat</template #title>
 				<p>If using the custom streaming box, filter out the <span class="cmd">!Commands</span>.</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="boolean"
 				v-model="showChatterNames"
 			>
-				<h3>Show Chatter Names</h3>
+				<template #title>Show Chatter Names</template #title>
 				<p>Disable to show messages only.</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="color"
 				v-model="chatNameColor"
 			>
-				<h3>User Name Chat Color</h3>
+				<template #title>User Name Chat Color</template #title>
 				<p>What color to use for chat's user names?</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="color"
 				v-model="chatTextColor"
 			>
-				<h3>Chat Text Color.</h3>
+				<template #title>Chat Text Color.</template #title>
 				<p>What color to use for message text?</p>
 			</SettingsInputRow>
 			<SettingsAssetRow
@@ -104,7 +104,7 @@
 				:min="1"
 				v-model="swarmSize"
 			>
-				<h3>Swarm Size</h3>
+				<template #title>Swarm Size</template #title>
 				<p>
 					If the <span class="cmd">!{{ swarm_command }}</span> command is enabled, how many users need to use it
 					in a short period of time for a swarm to start?
@@ -116,7 +116,7 @@
 				:min="1"
 				v-model="swarmDuration"
 			>
-				<h3>Swarm Time Window</h3>
+				<template #title>Swarm Time Window</template #title>
 				<p>
 					Used with the above setting, how long of window should be used to
 					count the number of users using the <span class="cmd">!{{ swarm_command }}</span> command?

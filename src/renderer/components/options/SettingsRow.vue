@@ -9,6 +9,7 @@
 	
 	<div class="settings-row">
 
+	
 		<!-- Description -->
 		<div v-if="desc" class="desc">{{ desc }}</div>
 		<slot v-else></slot>
@@ -46,7 +47,7 @@ const props = defineProps({
 		
 		:deep(h3) {
 			margin-bottom: 0px;
-			text-decoration: underline;
+			/* text-decoration: underline; */
 		}
 		:deep(p) {
 			margin-top: 0px;

@@ -78,7 +78,7 @@
 					type="boolean"
 					v-model="ctApp.enableAutoAdd.value"
 				>
-					<h3>Enable Auto Chat Mode</h3>
+					<template #title>Enable Auto Chat Mode</template #title>
 					<p>
 						True if the app should try automatically searching for your live stream if/when it 
 						detects OBS is live. Again, no promises.

@@ -101,7 +101,7 @@
 					type="boolean"
 					v-model="ctApp.demoMode.value"
 				>
-					<h3>Widget Demo Mode</h3>
+					<template #title>Widget Demo Mode</template #title>
 					<p>When enabled, the various Chat Toy's Widgets will display in "<strong>demo mode</strong>".</p>
 					<p>
 						This can help you adjust your layout in OBS or on this screen.

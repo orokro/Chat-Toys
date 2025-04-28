@@ -41,7 +41,7 @@
 				:min="1"
 				v-model="maxBuddyCount"
 			>
-				<h3>Max Buddy Count</h3>
+				<template #title>Max Buddy Count</template #title>
 				<p>The maximum number of buddies allowed on screen.</p>
 				<p>Adjust this based either on your performance needs, or clutter tolerance.</p>
 			</SettingsInputRow>
@@ -52,7 +52,7 @@
 				:step="0.01"
 				v-model="buddySize"
 			>
-				<h3>Buddy Scale</h3>
+				<template #title>Buddy Scale</template #title>
 				<p>Just this to adjust the size of the characters on screen. Default is 1.</p>
 			</SettingsInputRow>
 			<SettingsAssetRow
