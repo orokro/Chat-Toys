@@ -76,7 +76,15 @@
 					</div>
 					<div class="row">
 						<div class="key">Banned:</div>
-						<div class="value">{{ selectedUserData.banned }}</div>
+						<div class="value">
+							{{ selectedUserData.banned ? 'Yes' : 'No' }}
+
+							<ToggleCheck
+								class="banToggle"
+								v-model="selectedUserData.banned"
+								@change="e=>toggleUserBan(selectedUserData.youtube_id, !$event)"
+							/>
+						</div>
 					</div>
 					<div class="row">
 						<div class="key">Participated In:</div>
@@ -111,6 +119,7 @@
 import { ref, inject, shallowRef } from 'vue';
 
 // components
+import ToggleCheck from '@components/ToggleCheck.vue';
 import ConfirmModal from '../../ConfirmModal.vue';
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
@@ -148,7 +157,8 @@ function handleRefreshList(){
 	users.value = ytctDB.getAllUsersFull().map(user=>{
 		return {
 			id: user.youtube_id,
-			...user
+			...user,
+			last_seen: formatDate(user.last_seen, true),
 		}
 	});
 
@@ -242,6 +252,25 @@ async function handleShowCommands(userData){
 	const response = await promptModal(CommandsListModal, {
 		userData
 	});
+}
+
+
+/**
+ * Toggles the user ban status
+ * 
+ * @param userId {String} - the user ID to toggle
+ */
+async function toggleUserBan(userId){
+
+	// get users current ban status
+	const user = await ytctDB.getUserFull(userId);
+
+	// set it to the opposite
+	await (parseInt(user.banned, 10)==0) ? window.ytctDB.ban(userId) : window.ytctDB.unBan(userId);
+
+	// update both the list on the left and the user data block on the right column
+	handleRefreshList();
+	selectedUserData.value = await ytctDB.getUserFull(userId);
 }
 
 </script>
@@ -360,10 +389,15 @@ async function handleShowCommands(userData){
 				// text settings
 				font-size: 12px;
 
+				.banToggle {
+					float: right;
+					position: relative;
+					top: -5px;
+				}
+
 				button {
 					
 					position: relative;
-					/* top: -2px; */
 					float: right;
 
 					border-radius: 100px;
