@@ -175,10 +175,12 @@ export default class Gamba extends Toy {
 					{ name: 'option', type: 'string', optional: false, desc: 'Which option to gamble on' },
 				],
 				description: 'Gamble points on options set up by the Streamer',
+				userDesc: 'Place a bet on the streamers prompt',
 			},
 			{
 				command: 'cancel_bet',
 				description: 'Revokes bet before the game starts.',
+				userDesc: 'Cancel your bet (Only works before the round starts!)',
 			},
 		]);
 	}

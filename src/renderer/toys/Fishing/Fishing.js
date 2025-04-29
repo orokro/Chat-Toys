@@ -192,6 +192,7 @@ export default class Fishing extends Toy {
 					{ name: 'y', type: 'number', optional: true, desc: 'where on y axis to cast line' }
 				],
 				description: 'Cast your fishing line, optionally specify x and y coordinates',
+				userDesc: 'Cast your rod in the fishing mini game, with an optional location',
 			},
 			{
 				command: 'reel',
@@ -199,6 +200,7 @@ export default class Fishing extends Toy {
 					{ name: 'strength', type: 'number', optional: true, desc: 'how hard to reel in' },
 				],
 				description: 'Attempt to reel in your fishing line',
+				userDesc: 'Reel in your rod in the fishing mini game',
 			}
 		]);
 	}

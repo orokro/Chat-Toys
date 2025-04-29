@@ -80,6 +80,7 @@ export default class Toy {
             const {
                 command,
                 description,
+				userDesc,
                 slug = this.constructor.slugify(command),
                 params = [],
                 enabled = true,
@@ -100,6 +101,7 @@ export default class Toy {
             return {
                 command,
                 description,
+				userDesc,
                 slug,
                 params,
                 enabled,

@@ -14,7 +14,8 @@
 		<OBSSettingsPage v-if="selectedPage === 'obsSettings'" />
 		<ChatPage v-if="selectedPage === 'chatSettings'" />
 		<PluginPage v-if="selectedPage === 'plugin'" />
-		
+		<CommandsDescPage v-if="selectedPage === 'streamBuddies'" />
+
 	</VerticalItemsPage>
 
 </template>
@@ -28,6 +29,7 @@ import VerticalItemsPage from '../VerticalItemsPage.vue';
 import OBSSettingsPage from './pages/OBSSettingsPage.vue';
 import ChatPage from './pages/ChatPage.vue';
 import PluginPage from './pages/PluginPage.vue';
+import CommandsDescPage	 from './pages/CommandsDescPage.vue';
 
 // this will generate the icons for the vertical strip items
 const pageItems = [
@@ -39,7 +41,10 @@ const pageItems = [
 		slug: 'obsSettings',
 		name: 'General Settings',
 	},
-	
+	{
+		slug: 'streamBuddies',
+		name: 'Commands Desc',
+	}
 	// {
 	// 	slug: 'plugin',
 	// 	name: 'Plugin Settings',

@@ -139,6 +139,7 @@ export default class HeadPat extends Toy {
 					{ name: 'user', type: 'username', optional: true, desc: 'Which chatter to head pat' },
 				],
 				description: 'Show head pat graphic on streamer, or optionally a chatter.!',
+				userDesc: 'Give out head pats!',
 			},	
 		]);
 	}

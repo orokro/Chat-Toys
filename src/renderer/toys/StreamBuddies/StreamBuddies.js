@@ -119,10 +119,12 @@ export default class StreamBuddies extends Toy {
 			{
 				command: 'join',
 				description: 'Being on screen is optional, users can opt-in with this command.',
+				userDesc: 'Join the chatters on-screen!',
 			},
 			{
 				command: 'leave',
 				description: 'Being on screen is optional, users can opt-out with this command.',
+				userDesc: 'Leave the on-screen chatters!',
 			},
 			{
 				command: 'left',
@@ -130,6 +132,7 @@ export default class StreamBuddies extends Toy {
 					{ name: 'amount', type: 'number', optional: true, desc: 'Amount to walk left in pixels' },
 				],
 				description: 'Make their character walk left',
+				userDesc: 'Make your on-screen chatter go left, with an optional amount',
 			},
 			{
 				command: 'right',
@@ -137,6 +140,7 @@ export default class StreamBuddies extends Toy {
 					{ name: 'amount', type: 'number', optional: true, desc: 'Amount to walk right in pixels' },
 				],
 				description: 'Make their character walk right',
+				userDesc: 'Make your on-screen chatter go right, with an optional amount',
 			},
 			{
 				command: 'jump',
@@ -144,6 +148,7 @@ export default class StreamBuddies extends Toy {
 					{ name: 'direction', type: 'string', optional: true, desc: 'Either "left" or "right"' },
 				],
 				description: 'Make their character jump up, or optionally, a direction.',
+				userDesc: 'Make your on-screen character, with optional directly (left or right)',
 			},
 			{
 				command: 'hug',
@@ -151,6 +156,7 @@ export default class StreamBuddies extends Toy {
 					{ name: 'user', type: 'username', optional: false, desc: 'user to hug' },
 				],
 				description: 'Make their character hug another user.',
+				userDesc: 'Hug another on-screen chatter!',
 			},
 			{
 				command: 'attack',
@@ -158,21 +164,25 @@ export default class StreamBuddies extends Toy {
 					{ name: 'user', type: 'username', optional: false, desc: 'user to attack' },
 				],
 				description: 'Make their character attack another user.',
+				userDesc: 'Attack another on-screen chatter!!',
 			},
 			{
 				command: 'dance',
 				params: [
 					{ name: 'dance_name', type: 'string', optional: true, desc: 'dance to perform, or random if not specified' },
 				],
-				description: 'Make their character attack another user.',
+				description: 'Make character dance.',
+				userDesc: 'Make your on-screen character do a dance!',
 			},
 			{
 				command: 'sit',
 				description: 'Make character sit down.',
+				userDesc: 'Park your on-screen character',
 			},
 			{
 				command: 'fart',
 				description: 'Make character fart.',
+				userDesc: 'Make your on-screen character ... ',
 			}
 		]);
 	}

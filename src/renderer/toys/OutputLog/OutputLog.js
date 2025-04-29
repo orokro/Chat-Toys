@@ -100,6 +100,7 @@ export default class OutputLog extends Toy {
 					{ name: 'message', type: 'string', optional: false, desc: 'A message to show in the log box' },
 				],
 				description: 'Adds message to log box on screen.',
+				userDesc: 'Display something in the on-screen log',
 			},
 		]);
 	}

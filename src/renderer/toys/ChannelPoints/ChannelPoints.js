@@ -155,11 +155,13 @@ export default class ChannelPoints extends Toy {
 			{
 				command: 'get',
 				description: 'Claim points',
+				userDesc: 'Claim channel points!',
 				costEnabled: false,
 			},	
 			{
 				command: 'me',
 				description: 'Have on screen text show your points',
+				userDesc: 'Log your points total',
 				costEnabled: false,
 			},
 			{
@@ -169,6 +171,7 @@ export default class ChannelPoints extends Toy {
 					{ name: 'user', type: 'username', optional: false, desc: 'The user to give points to' },
 				],
 				description: 'One user can give points to another user',
+				userDesc: 'Give points to another user!',
 			},			
 		]);
 	}

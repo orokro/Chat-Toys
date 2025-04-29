@@ -132,6 +132,7 @@ export default class PrizeWheel extends Toy {
 					{ name: 'strength', type: 'number', optional: true, desc: 'How hard to spin' },
 				],
 				description: 'Lets the chatter spin the wheel!',
+				userDesc: 'Spin the prize wheel, with an optional strength!',
 			},
 		]);
 	}

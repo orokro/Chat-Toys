@@ -195,6 +195,7 @@ export default class Chat extends Toy {
 					{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "shout"' },
 				],
 				description: 'A chatter can shout a message in exchange for channel points',
+				userDesc: 'Like Super Chat, but spend channel points',
 			},
 			{
 				command: 'swarm',
@@ -202,6 +203,7 @@ export default class Chat extends Toy {
 					{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "swarm"' },
 				],
 				description: 'If enough chatters swarm at once, their messages will appear on screen',
+				userDesc: 'When many chatters use this at once, it may appear on steam',
 			}
 		]);
 	}

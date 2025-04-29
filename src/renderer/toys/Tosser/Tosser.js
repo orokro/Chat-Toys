@@ -125,6 +125,7 @@ export default class Tosser extends Toy {
 					{ name: 'item', type: 'string', optional: true, desc: 'Which item to toss' },
 				],
 				description: 'Lets the toss an item!',
+				userDesc: 'Toss at item at a user! (Optionally specify the item)',
 			},	
 		]);
 	}
