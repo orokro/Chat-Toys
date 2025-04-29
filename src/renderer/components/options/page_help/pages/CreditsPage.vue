@@ -193,8 +193,7 @@ const openLink = (url) => {
 		
 		&:hover {
 			text-decoration: underline;
-		}
-    
+		}    
 	
 	}// .fakeLink
 

@@ -46,7 +46,7 @@
 			<div class="rightColumn">
 
 				<div 
-					v-if="selectedRow!=''"
+					v-if="selectedRow!='' && selectedUserData!=null"
 					class="userInfo" 
 				>
 					<div class="header">User Info</div>
@@ -117,6 +117,7 @@ import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CustomDataTable from '../CustomDataTable.vue';
 import FilePreview from '../../FilePreview.vue';
+import StreamsListModal from '../StreamsListModal.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
@@ -128,7 +129,7 @@ const ctApp = inject('ctApp');
 const selectedRow = ref("");
 
 // when a user is selected, we will show their data in the right column
-const selectedUserData = shallowRef({});
+const selectedUserData = shallowRef(null);
 
 // list of users for the table
 const users = shallowRef(ytctDB.getAllUsersFull().map(user=>{
@@ -186,6 +187,13 @@ async function handleImportAssets(){
 	console.log('imported assets', imports);
 }
 
+
+/**
+ * Makes date formatting pretty
+ * 
+ * @param isoString {String} - the ISO string to format
+ * @param noTime {Boolean} - OPTIONAL; if true, don't show the time, default is fals
+ */
 function formatDate(isoString, noTime=false) {
 	const date = new Date(isoString);
 
@@ -204,6 +212,20 @@ function formatDate(isoString, noTime=false) {
 			minute: '2-digit',
 			hour12: true
 		});
+}
+
+
+/**
+ * Shows the modal list of streams the user has participated in
+ * 
+ * @param userData {Object} - the user data to show
+ */
+ async function handleShowStreams(userData){
+
+	// prompt the user to confirm the delete with our custom modal
+	const response = await promptModal(StreamsListModal, {
+		userData
+	});
 }
 
 </script>
