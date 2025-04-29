@@ -19,8 +19,28 @@
 		
 		<br>
 		<br><br>
-		<p>Below you will find the complete list of assets available..</p>
+		<p>Below you will find the complete list of assets available.</p>
 		<p>This includes built-in assets, as well as ones you previously imported.</p>
+		<InfoBox icon="info">
+			While you can preview the various assets below, at this time there are no options available for editing.
+			You can however delete assets - but only one's you've imported. You cannot delete built-in assets.
+			<br>
+			<hr>
+			Deleting assets may break some of your widgets if they are using them.
+			<br>Be careful!
+		</InfoBox>
+		<InfoBox icon="warning">
+			NOTE: 3D model support is limited. While you can import custom assets for the Tosser or characters
+			for the Stream Buddies system, there is no guarantee they will render correctly. GLTF with materials and
+			textures packed in are preferred for tosser, and an FBX with Mixamo rig in T-pose is preferred for
+			the Stream Buddies system.
+		</InfoBox>
+		<InfoBox icon="warning">
+			NOTE: the preview window for 3D models might not show avatar models correctly, same with 
+			the tossable models. You might have to experiment with more than one asset to show up correctly
+			in the widget.
+		</InfoBox>
+		
 		
 		<template v-if="selectedRow">
 			<SectionHeader title="Preview"/>

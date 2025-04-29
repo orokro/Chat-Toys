@@ -17,9 +17,29 @@
 		</div>
 		
 		<br>
-		<br><br>
 		<p>Below you will find the complete list of users that have interacted previously.</p>
-		<p>Currently this is read only, but in the future may be editing or support more user-features..</p>
+		<p>You can select any user by clicking their row in the table, <br>
+			and a box with more info will appear.</p>
+		<p>You can use this box to:</p>
+		<ul>
+			<li>Edit the users points.</li>
+			<li>View a list of all the streams they've participated in!</li>
+			<li>View a list & bar-chart of all the commands the user has run!</li>
+			<li>Ban or un-ban the user!</li>
+		</ul>
+		<InfoBox icon="warning">
+			NOTE: "Banning" a user in this context only bans them from participating with the Chat Toys system.
+			This has nothing to do with your Channel or anything else.
+		</InfoBox>
+		<InfoBox icon="info">
+			FYI, the database used is a SQLLite database stored in your systems <strong><em>%APPDATA%</em></strong> directory for this app.
+			<br>
+			Should you desire, you can connect to it with a database client such as DBeaver, and edit it directly.
+			<br/>
+			It is out-of-scope for this application to provide robust database tools, so feel free to poke around.
+			<br/>
+			But be warned! Always make a backup copy of the database before you start make changes.
+		</InfoBox>
 		
 		<SectionHeader title="Users"/>
 		<div 

@@ -285,7 +285,7 @@ watch(internalValue, validate);
 			
 			input[type="color"] {
 				position: absolute;
-				top: -10px;
+				top: -20px;
 				left: -10px;
 				width: 400px !important;
 				max-width: 400px !important;
