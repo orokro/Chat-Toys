@@ -17,7 +17,7 @@
 	>
 		<!-- one last row, for our add button -->
 		<div v-if="allowNewItems" class="row buttonRow" align="right">
-			<button @click="addItem" class="bg-blue-500 text-white px-4 py-2 rounded">Add Item</button>
+			<button @click="addItem">Add Item</button>
 		</div>
 
 		<!-- the box that contains the item rows -->

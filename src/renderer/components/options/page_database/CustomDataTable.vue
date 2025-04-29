@@ -9,6 +9,17 @@
 <template>
 	<div class="table-container">
 
+		<div class="titleHeader">
+			<div class="title">{{ title }}</div>
+			<button 
+				v-if="addButtonText"
+				class="add-btn"
+				@click="$emit('addClicked')"
+			>
+				{{ addButtonText }}
+			</button>
+		</div>
+
 		<!-- good 'ol tables - can't beat 'em -->
 		<table>
 
@@ -20,7 +31,7 @@
 						:key="key"
 						@click="sort(key)"
 					>
-						{{ key }}
+						<span>{{ key }}</span>
 						<span v-if="sortKey === key">{{ sortOrder === 1 ? '▲' : '▼' }}</span>
 					</th>
 					<th v-if="showDeleteColumn"></th>
@@ -67,6 +78,18 @@ import { ref, computed } from 'vue';
 
 // props
 const props = defineProps({
+
+	// the title of the table
+	title: {
+		type: String,
+		default: 'Table Title'
+	},
+
+	// if this is not empty, we'll show the add button with this text
+	addButtonText: {
+		type: String,
+		default: ''
+	},
 
 	// the raw data
 	data: Array,
@@ -142,23 +165,66 @@ const sort = (key) => {
 
 	.table-container {
 
-		padding: 16px;
+		border-radius: 10px;
+		overflow: clip;
+		border: 2px solid black;
+
+		.titleHeader {
+
+			position: relative;
+			height: 40px;
+			background: black;
+			color: white;
+
+			.title {
+				font-weight: bolder;
+				padding: 8px 15px;
+			}// .title
+
+			.add-btn {
+
+				position: absolute;
+				top: 5px;
+				right: 7px;
+
+				// box styles
+				background: #EFEFEF;
+				border: none;
+				border-radius: 40px;
+				padding: 5px 10px;
+				cursor: pointer;
+				border: 2px solid black;
+
+				// text settings
+				color: black;
+				font-weight: bolder;
+				
+				&:hover {
+					background: white;
+					border: 2px solid rgba(255, 255, 255, 1);					
+				}
+
+			}// .add-btn
+
+		}// .titleHeader
 
 		table {
 
 			width: 100%;
 			border-collapse: collapse;
-			border: 1px solid #ccc;
 			border-radius: 8px;
-		
+			
 			thead {
 				background-color: #f3f3f3;
 				text-align: left;
+
+				background: rgb(112, 112, 112);
+				color: white;;
 			}// thead
 
 			th, td {
-				padding: 8px;
-				border: 1px solid #ccc;
+				padding: 8px 8px;
+				/* border: 1px solid #ccc; */
 				position: relative;
 			}
 
@@ -167,13 +233,22 @@ const sort = (key) => {
 			}
 
 			th:hover {
-				background-color: #ddd;
+				background-color: #8f8d8d;
 			}
+
+			tr {
+				background: rgba(0, 0, 0, 0.1);
+				&:nth-child(odd) {
+					background: rgba(0, 0, 0, 0.05);
+				}
+			}
+
 
 			.selected-row {
-				background-color: #e0f7fa;
+				background-color: #9ad5dd !important;
+				font-style: italic;
 			}
-
+			
 			.edit-btn {
 				margin-left: 8px;
 				padding: 2px 6px;

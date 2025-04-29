@@ -31,21 +31,19 @@
 			/>
 		</template>
 		<SectionHeader title="Assets Database"/>
-		<button 
-			type="button"
-			class="importButton"
-			@click="handleImportAssets"
-		>Import Assets</button>
-		<CustomDataTable
-			:data="ctApp.assetsMgr.assets.value"
-			:selected_id="selectedRow"			
-			:ignoreColumns="['id', 'file_path']"
-			:showDeleteColumn="true"
-			@rowClick="rowClick"
-			@cellClick="cellClick"
-			@cellEdit="cellEdit"
-			@deleteRow="deleteRow"
-		/>
+			<CustomDataTable
+				title="All Available Assets"
+				:addButtonText="'Import Assets'"
+				:data="ctApp.assetsMgr.assets.value"
+				:selected_id="selectedRow"			
+				:ignoreColumns="['id', 'file_path']"
+				:showDeleteColumn="true"
+				@rowClick="rowClick"
+				@cellClick="cellClick"
+				@cellEdit="cellEdit"
+				@deleteRow="deleteRow"
+				@addClicked="handleImportAssets"
+			/>
 	</PageBox>
 
 </template>

@@ -23,6 +23,7 @@
 		
 		<SectionHeader title="Users"/>
 		<CustomDataTable
+			title="All Recorded Users"
 			:data="users"
 			:selected_id="selectedRow"		
 			:ignoreColumns="['id', 'streams', 'commands']"	
