@@ -7,9 +7,12 @@
 	So here's a custom solution for a sortable / customizable table.
 -->
 <template>
-	<div class="table-container">
+	<div
+		class="table-container"
+		:class="{ 'no-headers': noHeaders }"
+	>
 
-		<div class="titleHeader">
+		<div class="titleHeader" v-if="!noHeaders">
 			<div class="title">{{ title }}</div>
 			<button 
 				v-if="addButtonText"
@@ -24,7 +27,7 @@
 		<table>
 
 			<!-- generate the head -->
-			<thead>
+			<thead v-if="!noHeaders">
 				<tr>
 					<th
 						v-for="key in filteredKeys"
@@ -83,6 +86,12 @@ const props = defineProps({
 	title: {
 		type: String,
 		default: 'Table Title'
+	},
+
+	// don't show either header
+	noHeaders: {
+		type: Boolean,
+		default: false
 	},
 
 	// if this is not empty, we'll show the add button with this text
@@ -168,6 +177,11 @@ const sort = (key) => {
 		border-radius: 10px;
 		overflow: clip;
 		border: 2px solid black;
+
+		&.no-headers {
+			border: none !important;
+			border-radius: 0px !important;
+		}
 
 		.titleHeader {
 

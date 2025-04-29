@@ -22,6 +22,7 @@
 
 				<div class="assetList">
 					<CustomDataTable
+						:noHeaders="true"
 						:data="props.assetManager.assets.value"
 						:selected_id="selectedRow"			
 						:ignoreColumns="['id', 'file_path', 'tags', 'internal']"
@@ -235,6 +236,8 @@ function buttonClicked(button, index){
 			border-radius: 10px;
 			margin: 15px;
 
+			overflow: clip;
+			
 			// list box of assets on the left
 			.assetList {
 
@@ -246,6 +249,27 @@ function buttonClicked(button, index){
 				overflow-y: scroll;
 
 				border-right: 2px solid gray;
+
+				// mac-style scrollbars
+				&::-webkit-scrollbar {
+					width: 14px;
+				}
+
+				&::-webkit-scrollbar-track {
+					background: transparent;
+					background: #E5E5E5;
+				}
+
+				&::-webkit-scrollbar-thumb {
+					background-color: rgba(120, 120, 120, 0.3);
+					border-radius: 6px;
+					transition: background-color 0.2s ease-in-out;
+				}
+
+				&:hover::-webkit-scrollbar-thumb,
+				&:active::-webkit-scrollbar-thumb {
+					background-color: rgba(120, 120, 120, 0.6);
+				}
 
 			}// .assetList
 
