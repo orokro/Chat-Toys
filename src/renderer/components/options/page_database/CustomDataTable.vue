@@ -15,11 +15,11 @@
 		<div class="titleHeader" v-if="!noHeaders">
 			<div class="title">{{ title }}</div>
 			<button 
-				v-if="addButtonText"
+				v-if="buttonText"
 				class="add-btn"
-				@click="$emit('addClicked')"
+				@click="$emit('buttonClicked')"
 			>
-				{{ addButtonText }}
+				{{ buttonText }}
 			</button>
 		</div>
 
@@ -94,8 +94,8 @@ const props = defineProps({
 		default: false
 	},
 
-	// if this is not empty, we'll show the add button with this text
-	addButtonText: {
+	// if this is not empty, we'll show the top-right button with this text
+	buttonText: {
 		type: String,
 		default: ''
 	},
@@ -155,7 +155,7 @@ const filteredSelectedId = computed(() => {
 		return props.selected_id;
 	
 	// otherwise return the first item
-	return sortedData.value[0].id;
+	return '';
 });
 
 

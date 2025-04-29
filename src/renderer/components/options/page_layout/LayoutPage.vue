@@ -22,18 +22,20 @@
 			<LayoutScreen :activeTab="selectedTab" />
 
 			<SectionHeader title="Single Page URL"/>
-			<SettingsRow>
-				<p>
-					As described below, this URL can be loaded into an OBS Browser source
-					as a way to layout multiple toy widgets in a single browser source.
-				</p>
-				<p>
-					You can also copy the URL below and load it in your Web Browser to test the layout.
-					The layout should reflect what you configured in the screen above.
-				</p>
-				<URLCopyBox :url="livePageURL" />
-			</SettingsRow>
-
+			<div class="settingsBlock">
+				<SettingsRow>
+					<p>
+						As described below, this URL can be loaded into an OBS Browser source
+						as a way to layout multiple toy widgets in a single browser source.
+					</p>
+					<p>
+						You can also copy the URL below and load it in your Web Browser to test the layout.
+						The layout should reflect what you configured in the screen above.
+					</p>
+					<URLCopyBox :url="livePageURL" />
+				</SettingsRow>
+			</div>
+			
 			<SectionHeader title="About Layout Configuration"/>
 			<p>
 				When incorporating the Chat Toys widgets into your stream, you have two options:
@@ -130,6 +132,7 @@ import LayoutScreen from './LayoutScreen.vue';
 import PageBox from '../PageBox.vue';
 import SectionHeader from '../SectionHeader.vue';
 import SettingsInputRow from '../SettingsInputRow.vue';
+import SettingsRow from '../SettingsRow.vue';
 import URLCopyBox from '../URLCopyBox.vue';
 import CatsumIpsum from '@components/CatsumIpsum.vue';
 

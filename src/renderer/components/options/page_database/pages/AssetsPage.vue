@@ -33,7 +33,7 @@
 		<SectionHeader title="Assets Database"/>
 			<CustomDataTable
 				title="All Available Assets"
-				:addButtonText="'Import Assets'"
+				:buttonText="'Import Assets'"
 				:data="ctApp.assetsMgr.assets.value"
 				:selected_id="selectedRow"			
 				:ignoreColumns="['id', 'file_path']"
@@ -42,7 +42,7 @@
 				@cellClick="cellClick"
 				@cellEdit="cellEdit"
 				@deleteRow="deleteRow"
-				@addClicked="handleImportAssets"
+				@buttonClicked="handleImportAssets"
 			/>
 	</PageBox>
 
