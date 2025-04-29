@@ -60,7 +60,11 @@
 					</div>
 					<div class="row">
 						<div class="key">Points:</div>
-						<div class="value">{{ selectedUserData.points }}</div>
+						<div class="value">{{ selectedUserData.points }}
+							<button type="button" class="showStreams" @click="e=>handleEditPoints(selectedUserData)">
+								Edit
+							</button>
+						</div>
 					</div>
 					<div class="row">
 						<div class="key">Points Spent:</div>
@@ -128,6 +132,7 @@ import CustomDataTable from '../CustomDataTable.vue';
 import FilePreview from '../../FilePreview.vue';
 import StreamsListModal from '../StreamsListModal.vue';
 import CommandsListModal from '../CommandsListModal.vue';
+import EditUserModal from '../EditUserModal.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
@@ -141,6 +146,7 @@ const selectedRow = ref("");
 // when a user is selected, we will show their data in the right column
 const selectedUserData = shallowRef(null);
 
+
 // list of users for the table
 const users = shallowRef(ytctDB.getAllUsersFull().map(user=>{
 	return {
@@ -149,6 +155,7 @@ const users = shallowRef(ytctDB.getAllUsersFull().map(user=>{
 		last_seen: formatDate(user.last_seen, true),
 	}
 }));
+
 
 // make sure users DB is up-to-date
 function handleRefreshList(){
@@ -164,6 +171,7 @@ function handleRefreshList(){
 
 }
 
+
 // handle when a row is clicked
 async function rowClick({ id, data }){
 
@@ -173,6 +181,7 @@ async function rowClick({ id, data }){
 	selectedUserData.value = user;
 }
 
+
 // handle when a cell is clicked
 function cellClick({ id, key, value }){
 
@@ -180,12 +189,14 @@ function cellClick({ id, key, value }){
 	// console.log('cell clicked', id, key, value);
 }
 
+
 // handle when a cell edit is requested
 function cellEdit({ id, data, key, value }){
 
 	// currently for debug only
 	// console.log('cell edit', id, key, value);
 }
+
 
 // handle when the import assets button is clicked
 async function handleImportAssets(){
@@ -226,7 +237,6 @@ function formatDate(isoString, noTime=false) {
 }
 
 
-
 /**
  * Shows the modal list of streams the user has participated in
  * 
@@ -252,6 +262,34 @@ async function handleShowCommands(userData){
 	const response = await promptModal(CommandsListModal, {
 		userData
 	});
+}
+
+
+/**
+ * Shows the modal to edit the points for a user
+ * 
+ * @param userData {Object} - the user data to show
+ */
+async function handleEditPoints(userData){
+
+	// prompt the user to confirm the delete with our custom modal
+	const response = await promptModal(EditUserModal, {
+		userData
+	});
+
+	// gtfo if the user cancelled
+	if(response==null || response.button=='cancel')
+		return;
+
+	// get new value as int
+	const newValue = parseInt(response.value, 10);
+
+	// update the user in the database w/ new points
+	await window.ytctDB.setUserPoints(userData.youtube_id, newValue);
+
+	// refresh things
+	handleRefreshList();
+	selectedUserData.value = await ytctDB.getUserFull(userData.youtube_id);
 }
 
 

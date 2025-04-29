@@ -257,7 +257,6 @@ class DatabaseManager {
 	 */
 	updateUser(youtube_id, { displayName, streamID, command, relativePoints } = {}) {
 
-
 		const now = new Date().toISOString();
 
 		// optional youtube ID if none is provided
@@ -329,6 +328,20 @@ class DatabaseManager {
 		// run the transaction
 		tx();
 	}
+
+
+	/**
+	 * Sets the points for a user
+	 * 
+	 * @param {String} youtube_id - the channel id for a YouTuber user
+	 * @param {Number} points - the points to set
+	 */
+	setUserPoints(youtube_id, points) {
+		this.db
+			.prepare(`UPDATE users SET points = ? WHERE youtube_id = ?`)
+			.run(points, youtube_id);
+	}
+
 
 	/**
 	 * Bans a user from the system

@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld("ytctDB", {
 	updateUser: (id, data) => db.updateUser(id, data),
 	ban: (id) => db.ban(id),
 	unBan: (id) => db.unBan(id),
+	setUserPoints: (id, points) => db.setUserPoints(id, points),
 	dbPath: dbPath
 });
 
