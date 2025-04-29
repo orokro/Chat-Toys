@@ -50,7 +50,7 @@
 				Costs can be:
 				<ul>
 					<li>₱ 0 (Free)</li>
-					<li>Up to ₱ 999</li>
+					<li>Up to ₱ 100,000</li>
 					<li>Whole numbers only (no fractions like ₱ 3.50)</li>
 				</ul>
 				If you do not have the Channel Points toy enabled, the cost will be ignored.
@@ -202,7 +202,7 @@ const validValue = computed(() => {
 		if (!Number.isInteger(numValue)) return 'Value must be a whole number (integer).';
 		if (props.kind === 'cost' && (numValue < 0 || numValue > 999)) {
 			if (numValue < 0) return 'Cost cannot be negative or below 0.';
-			if (numValue > 999) return 'Cost cannot exceed 999.';
+			if (numValue > 100000) return 'Cost cannot exceed 100,000.';
 		}
 		if ((props.kind === 'coolDown' || props.kind === 'groupCoolDown') && (numValue < 0 || numValue > 3600)) {
 			if (numValue < 0) return 'Cooldown cannot be negative or below 0.';
