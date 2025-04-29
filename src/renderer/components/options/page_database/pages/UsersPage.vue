@@ -118,6 +118,7 @@ import InfoBox from '../../InfoBox.vue';
 import CustomDataTable from '../CustomDataTable.vue';
 import FilePreview from '../../FilePreview.vue';
 import StreamsListModal from '../StreamsListModal.vue';
+import CommandsListModal from '../CommandsListModal.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
@@ -215,15 +216,30 @@ function formatDate(isoString, noTime=false) {
 }
 
 
+
 /**
  * Shows the modal list of streams the user has participated in
  * 
  * @param userData {Object} - the user data to show
  */
- async function handleShowStreams(userData){
+async function handleShowStreams(userData){
 
 	// prompt the user to confirm the delete with our custom modal
 	const response = await promptModal(StreamsListModal, {
+		userData
+	});
+}
+
+
+/**
+ * Shows the modal with a bar-graph/chart of the commands the user has used
+ * 
+ * @param userData {Object} - the user data to show
+ */
+async function handleShowCommands(userData){
+
+	// prompt the user to confirm the delete with our custom modal
+	const response = await promptModal(CommandsListModal, {
 		userData
 	});
 }

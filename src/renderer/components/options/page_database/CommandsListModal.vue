@@ -1,8 +1,8 @@
 <!--
-	StreamsListModal.vue
-	--------------------
+	CommandsListModal.vue
+	---------------------
 
-	Shows the list of YouTube thumbnails for the streams a user has participated in.
+	Shows the list of commands a user has run
 -->
 <template>
 
@@ -22,28 +22,8 @@
 			</div>
 
 
-			<div class="streamsListbox">
-				<div 
-					v-for="stream in userData.streams" 
-					:key="stream" 
-					style="display: flex; flex-direction: column; align-items: center; width: 200px;"
-				>
-					<img 
-						:src="`https://img.youtube.com/vi/${stream}/hqdefault.jpg`" 
-						alt="Stream Thumbnail" 
-						style="width: 100%; border-radius: 8px; cursor: pointer;"
-						@click="openLink(`https://www.youtube.com/watch?v=${stream}`)"
-					/>
-
-					<div 
-						class="fakeLink" 
-						@click="openLink(`https://youtu.be/${stream}`)"
-						style="margin-top: 8px; color: blue; text-decoration: underline; cursor: pointer;"
-						>
-							youtu.be/{{ stream }}
-					</div>
-				</div>
-				
+			<div class="commandsListChart">			
+				<CommandBarChart :commands="userData.commands" />
 			</div>
 
 			<!-- the buttons along hte bottom -->
@@ -75,6 +55,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
 // components
 import ModalWindowFrame from '@components/options/ModalWindowFrame.vue';
+import CommandBarChart from './CommandBarChart.vue';
 
 // lib misc
 import { Modal } from 'jenesius-vue-modal';
@@ -181,7 +162,7 @@ const openLink = (url) => {
 
 		}// .prompt
 
-		.streamsListbox {
+		.commandsListChart {
 
 			border-radius: 10px;
 			background: rgba(0, 0, 0, 0.1);
@@ -219,7 +200,7 @@ const openLink = (url) => {
 				background-color: rgba(120, 120, 120, 0.6);
 			}
 			
-		}// streamsListbox
+		}// commandsListChart
 
 		// put buttons bar along the bottom, slightly gray
 		.buttons {
