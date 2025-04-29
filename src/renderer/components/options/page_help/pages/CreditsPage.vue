@@ -151,6 +151,7 @@
 ├── typescript@5.8.2
 ├── uuid@11.1.0
 ├── vite@4.5.10
+├── vue-chartjs@5.3.2
 ├── vue-tippy@6.7.0
 ├── vue@3.5.13
 ├── ws@8.18.1
