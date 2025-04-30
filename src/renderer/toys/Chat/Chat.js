@@ -158,6 +158,7 @@ export default class Chat extends Toy {
 			showChatterNames: ref(true),
 			chatNameColor: ref('#00ABAE'),
 			chatTextColor: ref('#FFFFFF'),
+			chatTextSize: ref(24),
 			shoutSoundId: ref('11'),
 			swarmSize: ref(5),
 			swarmDuration: ref(10),

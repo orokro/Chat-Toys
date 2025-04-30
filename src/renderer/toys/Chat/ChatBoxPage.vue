@@ -92,8 +92,18 @@
 				<template #title>Chat Text Color.</template #title>
 				<p>What color to use for message text?</p>
 			</SettingsInputRow>
+			<SettingsInputRow
+				type="number"
+				min="1"
+				max="100"
+				:step="1"
+				v-model="chatTextSize"
+			>
+				<template #title>Chat Text Size.</template #title>
+				<p>Font size for the on-screen chat only.</p>
+			</SettingsInputRow>
 			<SettingsAssetRow
-				v-model="shoutSoundId"
+				v-model="shoutSoundId" 
 				:kind-filter="'sound'"
 			>
 				<h3>Shout Sound</h3>
@@ -161,6 +171,7 @@ const {
 	showChatterNames,
 	chatNameColor,
 	chatTextColor,
+	chatTextSize,
 	shoutSoundId,
 	swarmSize,
 	swarmDuration,

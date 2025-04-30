@@ -19,6 +19,7 @@
 			borderImageSource: `url(${chatFramePath})`,
 			borderImageSlice: '200 fill',
 			borderImageRepeat: 'stretch',
+			'--fontSize': socketSettingsRef?.chatTextSize + 'px',
 		}"		
 	>
 		<div class="messageText">
@@ -80,6 +81,7 @@ const props = defineProps({
 const ready = ref(false);
 const socketSettingsRef = useToySettings('chat', 'chatWidgetBox', emit, () => {
 	ready.value = true;
+	console.log(socketSettingsRef.value);
 });
 
 
@@ -164,7 +166,7 @@ watch(demoMode, (newVal) => {
 
 			// text settings
 			text-shadow: 2px 2px 0px black;
-			font-size: 25px;
+			font-size: var(--fontSize);
 			font-weight: bold;
 			text-align: left;
 			/* white-space: nowrap; */

@@ -215,8 +215,7 @@ watch(internalValue, validate);
 		flex-direction: column;
 		gap: 5px;
 		padding: 10px 0px;
-		/* border-bottom: 5px solid
-		 black; */
+
 		max-width: 1200px;
 
 		:deep(h3) {
@@ -237,8 +236,7 @@ watch(internalValue, validate);
 			border: 1px solid #ccc;
 			border-radius: 4px;
 			width: 100%;
-			max-width: 300px;			
-			
+			max-width: 150px;
 		}
 
 		input {

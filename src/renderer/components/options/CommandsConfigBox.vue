@@ -201,6 +201,7 @@ const props = defineProps({
 });
 
 
+
 // true if we have at 'channel_points' enabled in ctApp.enabledToys.value
 const isChannelPointsEnabled = computed(()=>
 	ctApp.enabledToys.value.includes(ChannelPoints.slug));

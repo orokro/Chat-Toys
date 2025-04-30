@@ -257,9 +257,9 @@ onMounted(loadChats);
 			padding-top: 50px;
 
 			input[type="text"] {
-				padding: 5px 20px;
+				padding: 7px 20px;
 				border: 2px solid black;
-				border-radius: 8px;
+				border-radius: 4px;
 				box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
 
 				// text settings
