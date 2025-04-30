@@ -20,11 +20,10 @@
 		<br>
 		<p>
 			The Fishing Toy is a mini game your viewers can play in chat.
-			<br>
+			<br><br>
 			The users can cast their line, with optional x/y coordinates, and then wait for a fish to bite.
-			<br>
 			Once a fish bites, the user can reel it in by typing with reel command and optional strength.
-			<br>
+			<br><br>
 			You can set channel points for catches, or just have it be a fun game.		</p>
 		<p>You can customize the list of fish, including:</p>
 		<ul>
@@ -33,7 +32,8 @@
 			<li>Rarity</li>
 			<li>Channel Point Reward Value</li>
 		</ul>
-		<p>This way, you can customize the fishing experience to your channels theme.</p>
+		<br>
+		<p>In addition, you can also change the fishing pond background image. Have fun customizing the fishing experience to your channels theme.</p>
 
 		<SectionHeader title="Command Triggers"/>
 		<p>
