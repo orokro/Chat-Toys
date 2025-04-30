@@ -387,6 +387,12 @@ const builtInAssets = [
 		tags: ['fish'],
 	},
 	{
+		id: 24,
+		name: 'fish_pond.png',
+		kind: 'image',
+		tags: ['fish'],
+	},
+	{
 		id: 22,
 		name: 'generic_chat.png',
 		kind: 'image',

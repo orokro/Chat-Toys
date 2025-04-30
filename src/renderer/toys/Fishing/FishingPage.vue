@@ -76,6 +76,14 @@
 					eventually timeout and auto-reel back in.)
 				</p>
 			</SettingsInputRow>
+			
+			<SettingsAssetRow
+				v-model="bgImageFile"
+				:kind-filter="'image'"
+			>
+				<h3>Fishing Scene Image</h3>
+				<p>If you so desire, you can draw or commission a unique background scene for your channel!</p>
+			</SettingsAssetRow>
 
 			<SettingsRow>
 				<h3>Fish List</h3>
@@ -118,6 +126,7 @@ import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayFishEdit from './ArrayFishEdit.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
@@ -135,6 +144,7 @@ const {
 	fishSpawnInterval,
 	maxFish,
 	castTimeout,
+	bgImageFile,
 	fishList,
 } = toy.settings;
 

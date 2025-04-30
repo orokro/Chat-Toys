@@ -14,7 +14,8 @@
 			class="scaleBox"
 			:class="{ demoMode: demoMode }"	
 			:style="{
-				transform: `translate(-50%, -50%) scale(${scale})`
+				transform: `translate(-50%, -50%) scale(${scale})`,
+				'--lakeImage': `url(${bgImagePath})`,
 			}"
 		>
 			<!-- the main box for the widget -->
@@ -181,7 +182,7 @@ const socketSettingsRef = useToySettings('fishing', 'widgetBox', emit, () => {
 const demoMode = socketShallowRefReadOnly('demoMode', false);
 const gameState = socketShallowRefReadOnly(slugify('gameState'), '');
 const catches = socketShallowRefReadOnly(slugify('catches'), '');
-
+const bgImagePath = socketShallowRefReadOnly(slugify('bgImagePath'), '');
 
 // keep a time stamp of the last catch we saw, so we don't double spawn
 let lastCatchTime = chromeShallowRef('lastCatchTime', 0);
@@ -284,7 +285,7 @@ function showCatch(){
 				rgba(255, 255, 255, 0) 100%);
 
 		// load the lake as the bg	
-		background-image: url('/assets/fishing/lake.png');
+		background-image: var(--lakeImage);
 		background-position: 50% 70%;
 		background-size: 110% 110%;
 		background-repeat: no-repeat;

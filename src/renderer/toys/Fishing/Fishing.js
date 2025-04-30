@@ -8,7 +8,7 @@
 */
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
 import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // lib/misc
@@ -81,6 +81,16 @@ export default class Fishing extends Toy {
 			this.chatToysApp.log.info(log);
 		});
 
+		// path to the background image for the fishing scene
+		this.bgImagePath = socketShallowRef(
+			this.static.slugify('bgImagePath'), 
+			this.getAssetPath(this.settings.bgImageFile.value));
+
+		// set up a watcher to update the background image path
+		watch(this.settings.bgImageFile, () => {
+			this.bgImagePath.value = this.getAssetPath(this.settings.bgImageFile.value);
+		});
+
 		// make state var for 'catches' to show in the widget when a chatter catches a fish
 		this.catches = socketShallowRef(this.static.slugify('catches'), []);
 
@@ -139,6 +149,7 @@ export default class Fishing extends Toy {
 			maxFish: ref(5),
 			fishSpawnInterval: ref(120),
 			castTimeout: ref(300),
+			bgImageFile: ref('22'),
 			fishList: shallowRef([
 				{
 					name: 'runt',
