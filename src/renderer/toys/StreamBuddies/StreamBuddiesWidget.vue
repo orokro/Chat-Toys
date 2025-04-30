@@ -133,13 +133,19 @@ const socketSettingsRef = useToySettings('stream-buddies', 'widgetBox', emit, ()
 	ready.value = true;	
 	// console.log('buddies settings', socketSettingsRef.value);
 	buddySize.value = socketSettingsRef.value.buddySize;
+
+	setThreeLights();
 });
+  
 
 // copy to local refs for legibility
 watch(socketSettingsRef, (newVal) => {
 	if(newVal == null)
 		return;
 	buddySize.value = socketSettingsRef.value.buddySize;
+
+	// set lights
+	setThreeLights();
 
 	if(modelPath.value != socketSettingsRef.value.modelPath){
 		modelPath.value = socketSettingsRef.value.modelPath;
@@ -179,6 +185,9 @@ watch(canvasContainerRef, (newVal)=>{
 
 		// expose on window for debug
 		window.bs = buddiesSystem;
+
+		// set lights
+		setThreeLights();
 	}
 });
 
@@ -191,6 +200,26 @@ onBeforeUnmount(() => {
 		buddiesSystem = null;
 	}
 });
+
+
+// updates the lights in the ThreeJS scene when we load
+function setThreeLights(){
+	
+	// if we don't have a buddies system, do nothing
+	if(buddiesSystem == null)
+		return;
+
+	// if our settings aren't ready, do nothing
+	if(socketSettingsRef.value == null || socketSettingsRef.value == 'uninitialized')
+		return;
+
+	// set the lights in the buddies system
+	const ambientLightColor = socketSettingsRef.value.ambientLightColor;
+	const ambientLightIntensity = socketSettingsRef.value.ambientLightIntensity;
+	const lightColor = socketSettingsRef.value.lightColor;
+	const lightIntensity = socketSettingsRef.value.lightIntensity;
+	buddiesSystem.setLights(ambientLightColor, ambientLightIntensity, lightColor, lightIntensity);
+}
 
 
 </script>

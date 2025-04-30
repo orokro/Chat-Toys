@@ -55,6 +55,55 @@
 				<template #title>Buddy Scale</template #title>
 				<p>Just this to adjust the size of the characters on screen. Default is 1.</p>
 			</SettingsInputRow>
+
+
+
+
+
+			<SettingsInputRow
+				type="color"
+				v-model="ambientLightColor"
+			>
+				<template #title>Ambient Light Color</template #title>
+				<p>The renderer uses both an Ambient light as well as a Directional light.</p>
+				<p>Use this to set the color of the ambient light.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="float"
+				:min="0.01"
+				:max="10"
+				:step="0.01"
+				v-model="ambientLightIntensity"
+			>
+				<template #title>Ambient Light Intensity</template #title>
+				<p>Set the ambient light Intensity.</p>
+			</SettingsInputRow>
+
+
+
+
+			<SettingsInputRow
+				type="color"
+				v-model="lightColor"
+			>
+				<template #title>Directional Light Color</template #title>
+				<p>The renderer uses both an Ambient light as well as a Directional light.</p>
+				<p>Use this to set the color of the directional light.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="float"
+				:min="0.01"
+				:max="10"
+				:step="0.01"
+				v-model="lightIntensity"
+			>
+				<template #title>Light Intensity</template #title>
+				<p>Set the directional light Intensity.</p>
+			</SettingsInputRow>
+
+
+
+
 			<SettingsAssetRow
 				v-model="modelId"
 				:kind-filter="'3d'"
@@ -95,6 +144,10 @@ const {
 	maxBuddyCount,
 	buddySize,
 	modelId,
+	ambientLightColor,
+	lightColor,
+	ambientLightIntensity,
+	lightIntensity,
 } = toy.settings;
 
 </script>

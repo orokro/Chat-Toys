@@ -100,6 +100,10 @@ export default class StreamBuddies extends Toy {
 			buddySize: ref(1.0),
 			modelId: ref('23'),
 			modelPath: ref(''),
+			ambientLightColor: ref('#ffffff'),
+			lightColor: ref('#ffffff'),
+			ambientLightIntensity: ref(1.75),
+			lightIntensity: ref(1.0),
 			widgetBox: shallowRef({
 				x: 20,
 				y: 20,

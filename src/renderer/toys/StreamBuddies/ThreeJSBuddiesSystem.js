@@ -182,10 +182,12 @@ export class ThreeJSBuddiesSystem {
 		this.containerRef.value.appendChild(this.renderer.domElement);
 
 		// set up some basic lighting
-		this.scene.add(new AmbientLight(0xffffff, 1.75));
-		const dirLight = new DirectionalLight(0xffffff, 1);
-		dirLight.position.set(5, 10, 17.5);
-		this.scene.add(dirLight);
+		this.lights = {};
+		this.lights.ambient = new AmbientLight(0xffffff, 1.75);
+		this.scene.add(this.lights.ambient);
+		this.lights.dirLight = new DirectionalLight(0xffffff, 1);
+		this.lights.dirLight.position.set(5, 10, 17.5);
+		this.scene.add(this.lights.dirLight);
 
 		// for debug, show the collider
 		this.debugCollider = null;
@@ -260,6 +262,24 @@ export class ThreeJSBuddiesSystem {
 
 		await this.aniLibrary.ready;
 		this.animationsReady = true;
+	}
+
+
+	/**
+	 * Updates our lights
+	 * 
+	 * @param {String} ambientColor - hex color string for ambient light
+	 * @param {Number} ambientIntensity - intensity of ambient light
+	 * @param {String} lightColor - hex color string for directional light
+	 * @param {Number} lightIntensity - intensity of directional light
+	 */
+	setLights(ambientColor, ambientIntensity, lightColor, lightIntensity) {
+
+		// set up some basic lighting
+		this.lights.ambient.color = new Color(ambientColor);
+		this.lights.ambient.intensity = ambientIntensity;
+		this.lights.dirLight.color = new Color(lightColor);
+		this.lights.dirLight.intensity = lightIntensity;
 	}
 
 
