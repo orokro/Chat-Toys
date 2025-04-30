@@ -41,7 +41,7 @@
 				type="boolean"
 				v-model="ctApp.demoMode.value"
 			>
-				<template #title>Widget Demo Mode</template #title>
+				<template #title>Widget Demo Mode</template>
 				<p>When enabled, the various Chat Toy's Widgets will display in "<strong>demo mode</strong>".</p>
 				<p>
 					This can help you adjust your layout in OBS.
@@ -61,7 +61,7 @@
 				type="number"
 				v-model="ctApp.serverPort"
 			>
-				<template #title>Server Port</template #title>
+				<template #title>Server Port</template>
 				<p>If you don't know what this is, feel free to ignore it.</p>
 				<p>
 					Otherwise, if you need to configure the port number that Chat Toys will use to

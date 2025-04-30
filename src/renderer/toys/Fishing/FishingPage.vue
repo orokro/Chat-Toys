@@ -50,7 +50,7 @@
 				:min="1"
 				v-model="fishSpawnInterval"
 			>
-				<template #title>Fish Spawn Interval</template #title>
+				<template #title>Fish Spawn Interval</template>
 				<p>The Maximum time in seconds to wait before another fish should spawn after one was caught.</p>
 				<p>A random number will be picked, this is the maximum wait time.</p>
 			</SettingsInputRow>
@@ -60,7 +60,7 @@
 				:min="1"
 				v-model="maxFish"
 			>
-				<template #title>Max Fish</template #title>
+				<template #title>Max Fish</template>
 				<p>The Maximum number of fish that should be spawned on screen at once.</p>
 			</SettingsInputRow>
 
@@ -69,7 +69,7 @@
 				:min="1"
 				v-model="castTimeout"
 			>
-				<template #title>Cast Timeout</template #title>
+				<template #title>Cast Timeout</template>
 				<p>
 					The came will automatically reel in a users reel after this number of seconds.
 					(consider if the user leaves the stream or goes off line... their cast will

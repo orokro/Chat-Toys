@@ -47,14 +47,14 @@
 				type="boolean"
 				v-model="enableChatBox"
 			>
-				<template #title>Enable Onscreen Chat Box</template #title>
+				<template #title>Enable Onscreen Chat Box</template>
 				<p>Show chat box on screen mirroring live chat (as opposed to other streaming services)</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="boolean"
 				v-model="enableChatBoxImage"
 			>
-				<template #title>Enable Chat Box BG Image</template #title>
+				<template #title>Enable Chat Box BG Image</template>
 				<p>Use the image below to frame the chat box.</p>
 			</SettingsInputRow>
 			<SettingsAssetRow
@@ -68,28 +68,28 @@
 				type="boolean"
 				v-model="filterCommands"
 			>
-				<template #title>Filter !commands from Chat</template #title>
+				<template #title>Filter !commands from Chat</template>
 				<p>If using the custom streaming box, filter out the <span class="cmd">!Commands</span>.</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="boolean"
 				v-model="showChatterNames"
 			>
-				<template #title>Show Chatter Names</template #title>
+				<template #title>Show Chatter Names</template>
 				<p>Disable to show messages only.</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="color"
 				v-model="chatNameColor"
 			>
-				<template #title>User Name Chat Color</template #title>
+				<template #title>User Name Chat Color</template>
 				<p>What color to use for chat's user names?</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="color"
 				v-model="chatTextColor"
 			>
-				<template #title>Chat Text Color.</template #title>
+				<template #title>Chat Text Color.</template>
 				<p>What color to use for message text?</p>
 			</SettingsInputRow>
 			<SettingsInputRow
@@ -99,7 +99,7 @@
 				:step="1"
 				v-model="chatTextSize"
 			>
-				<template #title>Chat Text Size.</template #title>
+				<template #title>Chat Text Size.</template>
 				<p>Font size for the on-screen chat only.</p>
 			</SettingsInputRow>
 			<SettingsAssetRow
@@ -114,7 +114,7 @@
 				:min="1"
 				v-model="swarmSize"
 			>
-				<template #title>Swarm Size</template #title>
+				<template #title>Swarm Size</template>
 				<p>
 					If the <span class="cmd">!{{ swarm_command }}</span> command is enabled, how many users need to use it
 					in a short period of time for a swarm to start?
@@ -126,7 +126,7 @@
 				:min="1"
 				v-model="swarmDuration"
 			>
-				<template #title>Swarm Time Window</template #title>
+				<template #title>Swarm Time Window</template>
 				<p>
 					Used with the above setting, how long of window should be used to
 					count the number of users using the <span class="cmd">!{{ swarm_command }}</span> command?

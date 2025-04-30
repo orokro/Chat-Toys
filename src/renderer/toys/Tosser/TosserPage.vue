@@ -66,7 +66,7 @@
 				type="boolean"
 				v-model="randomTossMode"
 			>
-				<template #title>Random Toss Mode</template #title>
+				<template #title>Random Toss Mode</template>
 				<p>If no item is tossed with the <span class="cmd">!{{ toss_command }} &lt;item&gt;</span>
 					command, a random will be picked if this is mode is enabled.
 				</p>

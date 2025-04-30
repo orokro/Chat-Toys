@@ -98,7 +98,7 @@
 				:min="0"
 				v-model="maxClaims"
 			>
-				<template #title>Max Claims</template #title>
+				<template #title>Max Claims</template>
 				<p>When the claim opportunity appears, how many users can claim successfully before it goes away?</p>
 				<p>The default is set to '0' which means unlimited claims during the claim duration.</p>
 				<p><strong>NOTE: if claims run out, the graphic will disappear even if more time was available!</strong></p>
@@ -108,7 +108,7 @@
 				type="boolean"
 				v-model="showTimerBar"
 			>
-				<template #title>Show Timer Bar</template #title>
+				<template #title>Show Timer Bar</template>
 				<p>Should a timer bar be shown on the screen to indicate how much time is left to claim?</p>
 			</SettingsInputRow>
 
@@ -116,7 +116,7 @@
 				type="boolean"
 				v-model="showClaimsRemaining"
 			>
-				<template #title>Show Claims Remaining</template #title>
+				<template #title>Show Claims Remaining</template>
 				<p>Should a counter be shown on the screen to indicate how many claims are left?</p>
 			</SettingsInputRow>
 
@@ -124,7 +124,7 @@
 				type="boolean"
 				v-model="showUserClaims"
 			>
-				<template #title>Show User Claims</template #title>
+				<template #title>Show User Claims</template>
 				<p>Show the user names of successful claims near the graphic.</p>
 			</SettingsInputRow>
 
@@ -133,7 +133,7 @@
 				type="boolean"
 				v-model="showTextPrompt"
 			>
-				<template #title>Show Text Prompt</template #title>
+				<template #title>Show Text Prompt</template>
 				<p>Should a prompt be shown on the screen to indicate how to claim?</p>
 			</SettingsInputRow>
 
@@ -141,7 +141,7 @@
 				type="color"
 				v-model="widgetColorTheme"
 			>
-				<template #title>Widget Color Theme</template #title>
+				<template #title>Widget Color Theme</template>
 				<p>What color should the widget be?</p>
 			</SettingsInputRow>
 

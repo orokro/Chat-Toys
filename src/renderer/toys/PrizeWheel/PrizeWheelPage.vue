@@ -87,7 +87,7 @@
 				type="boolean"
 				v-model="alwaysShowWheel"
 			>
-				<template #title>Always Show Wheel</template #title>
+				<template #title>Always Show Wheel</template>
 				<p>If enabled, the wheel widget will always be visible.</p>
 				<p>If not enabled (default), the wheel will only appear when spun.</p>
 			</SettingsInputRow>

@@ -64,7 +64,7 @@
 				type="color"
 				v-model="logTextColor"
 			>
-				<template #title>Text Color</template #title>
+				<template #title>Text Color</template>
 				<p>The color to render the log text on the log widget.</p>
 			</SettingsInputRow>
 
@@ -72,14 +72,14 @@
 				type="boolean"
 				v-model="showLogBG"
 			>
-				<template #title>Show Log Background</template #title>
+				<template #title>Show Log Background</template>
 				<p>Should there be a background box rendered behind the log text, or just the log text?</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="color"
 				v-model="logBGColor"
 			>
-				<template #title>Background Color</template #title>
+				<template #title>Background Color</template>
 				<p>If the log box background is enabled, what color should it be?</p>
 			</SettingsInputRow>
 			<SettingsInputRow
@@ -89,7 +89,7 @@
 				:step="0.1"
 				v-model="logBGOpacity"
 			>
-				<template #title>Background Opacity</template #title>
+				<template #title>Background Opacity</template>
 				<p>
 					Again, if the log box background is enabled, what opacity should it be?
 				</p>

@@ -41,7 +41,7 @@
 				:min="1"
 				v-model="maxBuddyCount"
 			>
-				<template #title>Max Buddy Count</template #title>
+				<template #title>Max Buddy Count</template>
 				<p>The maximum number of buddies allowed on screen.</p>
 				<p>Adjust this based either on your performance needs, or clutter tolerance.</p>
 			</SettingsInputRow>
@@ -52,19 +52,15 @@
 				:step="0.01"
 				v-model="buddySize"
 			>
-				<template #title>Buddy Scale</template #title>
+				<template #title>Buddy Scale</template>
 				<p>Just this to adjust the size of the characters on screen. Default is 1.</p>
 			</SettingsInputRow>
-
-
-
-
 
 			<SettingsInputRow
 				type="color"
 				v-model="ambientLightColor"
 			>
-				<template #title>Ambient Light Color</template #title>
+				<template #title>Ambient Light Color</template>
 				<p>The renderer uses both an Ambient light as well as a Directional light.</p>
 				<p>Use this to set the color of the ambient light.</p>
 			</SettingsInputRow>
@@ -75,18 +71,15 @@
 				:step="0.01"
 				v-model="ambientLightIntensity"
 			>
-				<template #title>Ambient Light Intensity</template #title>
+				<template #title>Ambient Light Intensity</template>
 				<p>Set the ambient light Intensity.</p>
 			</SettingsInputRow>
-
-
-
 
 			<SettingsInputRow
 				type="color"
 				v-model="lightColor"
 			>
-				<template #title>Directional Light Color</template #title>
+				<template #title>Directional Light Color</template>
 				<p>The renderer uses both an Ambient light as well as a Directional light.</p>
 				<p>Use this to set the color of the directional light.</p>
 			</SettingsInputRow>
@@ -97,12 +90,9 @@
 				:step="0.01"
 				v-model="lightIntensity"
 			>
-				<template #title>Light Intensity</template #title>
+				<template #title>Light Intensity</template>
 				<p>Set the directional light Intensity.</p>
 			</SettingsInputRow>
-
-
-
 
 			<SettingsAssetRow
 				v-model="modelId"
