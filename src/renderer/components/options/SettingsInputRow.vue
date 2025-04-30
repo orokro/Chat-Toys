@@ -24,7 +24,19 @@
 					:step="step"
 					v-model="internalValue" @blur="handleBlur"
 					class="settings-input"
+					:style="{ width: inputWidth }"
 				/>
+
+				<!-- Range slider if min and max are set -->
+                <input
+                    v-if="(type === 'number' || type === 'float') && min !== undefined && max !== undefined"
+                    type="range"
+                    :min="min"
+                    :max="max"
+                    :step="step || 1"
+                    v-model="internalValue"
+                    class="settings-slider"
+                />
 
 				<!-- if color mode, also show color input -->
 				<div v-if="type === 'color'" class="colorWrapper">
@@ -96,6 +108,7 @@ const props = defineProps({
 	max: { type: Number, required: false },
 	step: { type: Number, required: false, default: 1 },
 	schema: { type: Object, required: false }, // Optional Yup schema
+	inputWidth: { type: String, default: '150px' },
 });
 
 // v-model binding (expects a ref/shallowRef)
@@ -236,7 +249,15 @@ watch(internalValue, validate);
 			border: 1px solid #ccc;
 			border-radius: 4px;
 			width: 100%;
-			max-width: 150px;
+			/* max-width: 150px; */
+		}
+
+		.settings-slider {
+
+			position: relative;
+			top: 10px;
+			margin-right: 10px;
+			accent-color: black;
 		}
 
 		input {

@@ -94,6 +94,7 @@
 					<SettingsInputRow
 						type="text"
 						v-model="gambaPrompt"
+						inputWidth="600px"
 					>
 						<template #title>Gamba Prompt</template #title>
 						<p>
