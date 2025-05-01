@@ -14,7 +14,7 @@
 		<OBSSettingsPage v-if="selectedPage === 'obsSettings'" />
 		<ChatPage v-if="selectedPage === 'chatSettings'" />
 		<PluginPage v-if="selectedPage === 'plugin'" />
-		<CommandsDescPage v-if="selectedPage === 'streamBuddies'" />
+		<CommandsDescPage v-if="selectedPage === 'copy_details'" />
 
 	</VerticalItemsPage>
 
@@ -42,7 +42,7 @@ const pageItems = [
 		name: 'General Settings',
 	},
 	{
-		slug: 'streamBuddies',
+		slug: 'copy_details',
 		name: 'Commands Desc',
 	}
 	// {

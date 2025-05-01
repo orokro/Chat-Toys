@@ -6,7 +6,7 @@
 -->
 <template>
 
-	<PageBox title="Commands List" themeColor="#262262" themeImage="assets/bg_tiles/plugin.png">
+	<PageBox title="Commands List" themeColor="#262262" themeImage="assets/bg_tiles/copy_details.png">
 		<br>
 		<p>
 			Below is a text snippet you can copy and paste into your chat to show the list of commands.
