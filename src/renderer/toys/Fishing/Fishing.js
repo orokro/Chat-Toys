@@ -81,14 +81,19 @@ export default class Fishing extends Toy {
 			this.chatToysApp.log.info(log);
 		});
 
+		// because the CSS in the widget resolves paths differently, we gotta make the path more explicit when live
+		const fixPathForLive = (path) => {
+			return window.env.isDev ? path : `/live/${path}`;
+		}
+
 		// path to the background image for the fishing scene
 		this.bgImagePath = socketShallowRef(
 			this.static.slugify('bgImagePath'), 
-			this.getAssetPath(this.settings.bgImageFile.value));
+			fixPathForLive(this.getAssetPath(this.settings.bgImageFile.value)));
 
 		// set up a watcher to update the background image path
 		watch(this.settings.bgImageFile, () => {
-			this.bgImagePath.value = this.getAssetPath(this.settings.bgImageFile.value);
+			this.bgImagePath.value = fixPathForLive(this.getAssetPath(this.settings.bgImageFile.value));
 		});
 
 		// make state var for 'catches' to show in the widget when a chatter catches a fish

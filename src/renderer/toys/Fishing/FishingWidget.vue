@@ -274,8 +274,6 @@ function showCatch(){
 		// reset stacking context
 		position: relative;
 
-		
-
 		// make circle with fadeout mask
 		border-radius: 50%;
 		overflow: hidden;
