@@ -166,8 +166,8 @@ const props = defineProps({
 
 
 // helper method to see if a specific bobble is being nibbled
-const bobbleIsBeingNibbled = function(bobble) {
-	return this.gameState.fish.some((fish) => {
+function bobbleIsBeingNibbled(bobble) {
+	return gameState.value.fish.some((fish) => {
 		return fish.nibbling && fish.targetCast.userID == bobble.userID;
 	});
 };
