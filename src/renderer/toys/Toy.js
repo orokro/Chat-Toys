@@ -360,7 +360,7 @@ export default class Toy {
 
 			let url = `http://localhost:${hostPort}/`;
 			
-			url += isDev ? 'live.html?' : '/live/?';
+			url += isDev ? 'live.html?' : 'live/?';
 
 			url += showPort ? `port=${serverPort}&` : '';
 
