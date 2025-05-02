@@ -374,7 +374,7 @@ export default class ChannelPoints extends Toy {
 		// universal tick
 		this.tickInterval = window.setElectronInterval(()=>{
 			this.tick();
-		}, 500);
+		}, 1000);
 	}
 
 
