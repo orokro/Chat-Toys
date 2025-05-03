@@ -58,21 +58,12 @@ const videoId = computed(() => getVideoId(props.url));
 
 // prepare reactive/computed styles for the thumbnail
 const thumbnailStyle = computed(() => ({
+
 	width: props.width,
-	aspectRatio: '16 / 9',
-	position: 'relative',
+	
 	backgroundImage: videoId.value
 		? `url(https://img.youtube.com/vi/${videoId.value}/maxresdefault.jpg)`
 		: 'none',
-	backgroundSize: 'cover',
-	backgroundRepeat: 'no-repeat',
-	backgroundPosition: 'center',
-	border: '2px solid black',
-	borderRadius: '4px',
-	cursor: 'pointer',
-	display: 'flex',
-	alignItems: 'center',
-	justifyContent: 'center'
 }));
 
 
@@ -98,6 +89,25 @@ const openVideo = () => {
 		&:hover {
 			transform: scale(1.02);
 		}
+
+		// reset stacking context
+		position: relative;
+
+		// box settings
+		aspect-ratio: 16 / 9;
+		border: 2px solid black;
+		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		// background image details
+		background-size: cover;
+		background-repeat: no-repeat;
+		background-position: center;
+		
+		// appear clickable
+		cursor: pointer;		
 
 		// the play button arrow / triangle icon
 		.play-button {
