@@ -22,12 +22,6 @@
 
 		<div
 			class="fakeLink"
-			@click="openLink(`https://www.myinstants.com/en/instant/pop-sfx-75405/`)">
-			<h3>Pop Sound</h3>
-		</div>
-		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
-		<div
-			class="fakeLink"
 			@click="openLink(`https://www.myinstants.com/en/instant/yaaaaaaaay/`)">
 			<h3>Yaaaaay!!</h3>
 		</div>
@@ -40,16 +34,64 @@
 		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
 		<div
 			class="fakeLink"
+			@click="openLink(`https://www.myinstants.com/en/instant/splat-sound-42753/`)">
+			<h3>Splat</h3>
+		</div>
+		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
+		<div
+			class="fakeLink"
 			@click="openLink(`https://www.myinstants.com/en/instant/click-4/`)">
 			<h3>Click</h3>
 		</div>
 		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
 		<div
 			class="fakeLink"
-			@click="openLink(`https://www.myinstants.com/en/instant/splat-sound-42753/`)">
-			<h3>Splat</h3>
+			@click="openLink(`https://www.myinstants.com/en/instant/mouse-click-sound-63406/`)">
+			<h3>Mouse Click</h3>
 		</div>
 		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.myinstants.com/en/instant/woosh-48165/`)">
+			<h3>Woosh</h3>
+		</div>
+		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.myinstants.com/en/instant/woosh-sound-effect-33436/`)">
+			<h3>Woosh Sound Effect</h3>
+		</div>
+		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.myinstants.com/en/instant/woosh-for-math-class/`)">
+			<h3>Woosh Sound Effect For Math Class</h3>
+		</div>
+		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.myinstants.com/en/instant/pop-sfx-75405/`)">
+			<h3>Pop Sound</h3>
+		</div>
+		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.myinstants.com/en/instant/pop/`)">
+			<h3>Pop</h3>
+		</div>
+		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.myinstants.com/en/instant/pop-cat-sound-80031/`)">
+			<h3>Pop Cat</h3>
+		</div>
+		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.myinstants.com/`)">myinstants</span></div>
+				<div
+			class="fakeLink"
+			@click="openLink(`https://freesound.org/people/quatricise/sounds/789791/`)">
+			<h3>Pop 2</h3>
+		</div>
+		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://freesound.org//`)">freesound.org/</span></div>
 
 		<SectionHeader title="Image Sources"/>
 
@@ -57,6 +99,12 @@
 			class="fakeLink"
 			@click="openLink(`https://www.vecteezy.com/png/21278938-boot-isolated-on-transparent`)">
 			<h3>Boot</h3>
+		</div>
+		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.vecteezy.com/`)">Vecteezy</span></div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.vecteezy.com/vector-art/3601086-8-black-and-white-arrow-no-pixel-mouse-hand-cursors-icons-vector-illustration-set-flat-style-design-isolated-on-white-background`)">
+			<h3>Hand Icon</h3>
 		</div>
 		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.vecteezy.com/`)">Vecteezy</span></div>
 		<div
@@ -120,9 +168,31 @@
 			<h3>Tylify</h3>
 		</div>
 
+		<SectionHeader title="Music (In Videos)"/>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.youtube.com/watch?v=SZ3PS5BAcLU`)">
+			<h3>“abstractions of rain” (Super Dodge Ball) by posu yan</h3>
+		</div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.youtube.com/watch?app=desktop&v=GikvajSCLlE2 `)">
+			<h3>“Intoxica” (Donkey Kong Country 3) by Radiowar</h3>
+		</div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://pixabay.com/music/introoutro-upbeat-pop-intro-logo-201067`)">
+			<h3>“Upbeat Pop Intro Logo” by BreakzStudios</h3>
+		</div>
+		<div
+			class="fakeLink"
+			@click="openLink(`https://audiojungle.net/item/stylish-future-bass-logo/25382649`)">
+			<h3>“Actions Future Bass Logo” by Diamond_Tunes</h3>
+		</div>
+
 		<SectionHeader title="NPM Libraries"/>
 		<pre>
-├── @ngneat/falso@7.3.0
+┌── @ngneat/falso@7.3.0
 ├── @types/three@0.174.0
 ├── @vitejs/plugin-vue@4.6.2
 ├── better-sqlite3@11.9.1
@@ -130,6 +200,7 @@
 ├── chokidar@3.6.0
 ├── chroma-js@3.1.2
 ├── cors@2.8.5
+├── dompurify@3.2.5
 ├── electron-builder@25.1.8
 ├── electron-interval-system@0.0.1
 ├── electron-rebuild@3.2.9
