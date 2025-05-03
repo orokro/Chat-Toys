@@ -101,9 +101,14 @@
 				<h3>Avatar For Characters</h3>
 				<p>Must be an FBX with a Mixamo skeleton.</p>
 			</SettingsAssetRow>
-		</div>
+		</div>		
 		
-		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/7cNTiqa_Kq8"
+			width="100%"
+		/>
+
 	</PageBox>
 
 </template>
@@ -121,6 +126,7 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '../../components/options/SettingsAssetRow.vue';
 import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // our app
 import StreamBuddies from './StreamBuddies';

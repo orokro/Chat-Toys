@@ -108,6 +108,12 @@
 		<RawLogPreview 
 			:messages="ctApp.obsServerMessages.value"
 		/>
+		
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/XyfmKtksFIg"
+			width="100%"
+		/>
 	</PageBox>
 
 </template>
@@ -127,6 +133,7 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import RawLogPreview from '../RawLogPreview.vue';
 import URLCopyBox from '@components/options/URLCopyBox.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');

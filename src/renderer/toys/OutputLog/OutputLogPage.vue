@@ -95,7 +95,13 @@
 				</p>
 			</SettingsInputRow>
 		</div>
-		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+		
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/fC1Z2l9_rfQ"
+			width="100%"
+		/>
+
 	</PageBox>
 
 </template>
@@ -115,6 +121,7 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import CatsumIpsum from '@components/CatsumIpsum.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // our app
 import OutputLog from './OutputLog';

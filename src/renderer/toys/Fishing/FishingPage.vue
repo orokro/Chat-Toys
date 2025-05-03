@@ -109,7 +109,13 @@
 				/>
 			</SettingsRow>
 		</div>
-		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/sm5-RHsqQmI"
+			width="100%"
+		/>
+
 	</PageBox>
 
 </template>
@@ -131,6 +137,7 @@ import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayFishEdit from './ArrayFishEdit.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import CatsumIpsum from '@components/CatsumIpsum.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // our app
 import Fishing from './Fishing';

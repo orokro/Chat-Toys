@@ -68,7 +68,13 @@
 			
 			</SettingsRow>
 		</div>
-		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+		
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/35cJEtJNiq8"
+			width="100%"
+		/>
+
 	</PageBox>
 
 </template>
@@ -88,6 +94,7 @@ import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayMediaEdit from './ArrayMediaEdit.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // our app
 import Media from './Media';

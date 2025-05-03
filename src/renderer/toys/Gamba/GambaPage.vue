@@ -204,7 +204,12 @@
 
 		</div>
 
-		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/lv5cDifVbTc"
+			width="100%"
+		/>
+
 	</PageBox>
 
 </template>
@@ -227,6 +232,7 @@ import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import ConfirmModal from '@components/options/ConfirmModal.vue';
 import ResolveGambaModal from './ResolveGambaModal.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // our app
 import Gamba from './Gamba';

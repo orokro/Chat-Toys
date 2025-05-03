@@ -134,6 +134,13 @@
 				</div>
 			</div>
 		</div>
+		
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/bWa-IjAIPfI"
+			width="100%"
+		/>
+
 	</PageBox>
 
 </template>
@@ -153,6 +160,7 @@ import FilePreview from '../../FilePreview.vue';
 import StreamsListModal from '../StreamsListModal.vue';
 import CommandsListModal from '../CommandsListModal.vue';
 import EditUserModal from '../EditUserModal.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"

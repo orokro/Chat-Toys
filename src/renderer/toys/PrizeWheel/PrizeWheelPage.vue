@@ -104,7 +104,13 @@
 			</div>
 			
 		</div>
-		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+		
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/JMofM8hf9SI"
+			width="100%"
+		/>
+
 	</PageBox>
 
 </template>
@@ -127,6 +133,7 @@ import ArrayTextInput from '@components/options/ArrayTextInput.vue';
 import ArrayColorInput from '@components/options/ArrayColorInput.vue';
 import PrizeWheelWidget from './PrizeWheelWidget.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // lib/misc
 import * as yup from 'yup';

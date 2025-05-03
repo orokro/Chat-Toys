@@ -112,8 +112,15 @@
 			If nobody is in your chat, you can post a message in your own chat and see if it shows up here to make sure all systems are working.
 			<br>
 		</p>
+		
 		<RawLogPreview
 			:messages="ctApp.chatProcessor.screenMessages.value"
+		/>
+		
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/hd7dndoe8X4"
+			width="100%"
 		/>
 	</PageBox>
 
@@ -133,6 +140,7 @@ import RawLogPreview from '../RawLogPreview.vue';
 import ChatSourceManager from '../ChatSourceManager.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // our app
 import { AutoChatChecker } from '@scripts/AutoChatChecker.js';

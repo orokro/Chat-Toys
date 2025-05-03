@@ -97,7 +97,13 @@
 			
 			</SettingsRow>
 		</div>
-		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+		
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/B4YfacihXjc"
+			width="100%"
+		/>
+
 	</PageBox>
 
 </template>
@@ -118,6 +124,7 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayTosserEdit from './ArrayTosserEdit.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // our app
 import Tosser from './Tosser';

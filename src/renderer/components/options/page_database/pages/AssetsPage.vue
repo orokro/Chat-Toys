@@ -39,8 +39,7 @@
 			NOTE: the preview window for 3D models might not show avatar models correctly, same with 
 			the tossable models. You might have to experiment with more than one asset to show up correctly
 			in the widget.
-		</InfoBox>
-		
+		</InfoBox>		
 		
 		<template v-if="selectedRow">
 			<SectionHeader title="Preview"/>
@@ -64,6 +63,13 @@
 				@deleteRow="deleteRow"
 				@buttonClicked="handleImportAssets"
 			/>
+
+		
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/x8Pf10d15BM"
+			width="100%"
+		/>
 	</PageBox>
 
 </template>
@@ -79,6 +85,7 @@ import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CustomDataTable from '../CustomDataTable.vue';
 import FilePreview from '../../FilePreview.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"

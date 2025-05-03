@@ -166,7 +166,11 @@
 			
 		</div>
 		
-		<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+		<SectionHeader title="Video Help"/>
+		<YTVideoBox 
+			url="https://youtu.be/wGxNc5xE-ww"
+			width="100%"
+		/>
 	</PageBox>
 
 </template>
@@ -186,6 +190,7 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import ChannelPointsWidget from './ChannelPointsWidget.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // our app
 import ChannelPoints from './ChannelPoints';

@@ -116,7 +116,13 @@
 					</p>
 				</SettingsInputRow>
 			</div>
-			<CatsumIpsum :paragraphs="1" :sentences="10" :brOnly="true"/>
+			
+			<SectionHeader title="Video Help"/>
+			<YTVideoBox 
+				url="https://youtu.be/sJOo2MQIhjg"
+				width="100%"
+			/>
+
 		</PageBox>
 	</VerticalItemsPage>
 
@@ -135,6 +141,7 @@ import SettingsInputRow from '../SettingsInputRow.vue';
 import SettingsRow from '../SettingsRow.vue';
 import URLCopyBox from '../URLCopyBox.vue';
 import CatsumIpsum from '@components/CatsumIpsum.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
