@@ -403,5 +403,47 @@ const builtInAssets = [
 		name: 'avatar.fbx',
 		kind: '3d',
 		tags: ['avatar'],
-	}
+	},
+	{
+		id: 25,
+		name: 'mouse_click.mp3',
+		kind: 'sound',
+		tags: ['sfx'],
+	},
+	{
+		id: 26,
+		name: 'pop_2.wav',
+		kind: 'sound',
+		tags: ['sfx'],
+	},
+	{
+		id: 27,
+		name: 'pop_3.mp3',
+		kind: 'sound',
+		tags: ['sfx'],
+	},
+	{
+		id: 28,
+		name: 'pop_4.mp3',
+		kind: 'sound',
+		tags: ['sfx'],
+	},
+	{
+		id: 29,
+		name: 'woosh_1.mp3',
+		kind: 'sound',
+		tags: ['sfx'],
+	},
+	{
+		id: 30,
+		name: 'woosh_2.mp3',
+		kind: 'sound',
+		tags: ['sfx'],
+	},
+	{
+		id: 31,
+		name: 'woosh_3.mp3',
+		kind: 'sound',
+		tags: ['sfx'],
+	},
 ];
