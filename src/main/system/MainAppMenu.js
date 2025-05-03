@@ -91,13 +91,13 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 				{
 					label: 'Website',
 					click: () => {
-						shell.openExternal('https://orokro.github.io/YouTube-Chat-Toys/');
+						shell.openExternal('http://chattoys.pro/');
 					}
 				},
 				{
 					label: 'GitHub',
 					click: () => {
-						shell.openExternal('https://github.com/orokro/YouTube-Chat-Toys');
+						shell.openExternal('https://github.com/orokro/Chat-Toys');
 					}
 				}
 			]
