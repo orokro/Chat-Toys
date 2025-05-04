@@ -171,8 +171,8 @@ export class ThreeJSBuddiesSystem {
 
 		// set up camera & audio listener
 		this.listener = new AudioListener();
-		this.camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
-		this.camera.position.z = 100;
+		this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1000);
+		this.camera.position.z = 1000;
 
 		// add to scene
 		this.scene.add(this.camera);

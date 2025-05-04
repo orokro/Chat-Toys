@@ -36,7 +36,7 @@ class BuddySystem {
 		this.streamBuddies = streamBuddies;
 		this.activeBuddies = activeBuddies;
 		this.boxSize = boxSize;
-
+		
 		// store our spawned Buddies in this map
 		this.buddiesMap = new Map();
 
@@ -420,7 +420,7 @@ class Buddy {
 	 */
 	tick(deltaTime) {
 		
-		const moveSpeed = 25;
+		const moveSpeed = 25 * this.system.streamBuddies.settings.buddySize.value;
 
 		// apply gravity always (if the window is resized avatars will fall, etc)
 		this.velocityY += this.gravity * deltaTime;
@@ -440,7 +440,7 @@ class Buddy {
 		if (this.jumping || this.knockback) {
 
 			// apply physics just to X because we already applied gravity
-			this.x += this.velocityX * deltaTime;
+			this.x += this.velocityX * deltaTime * this.system.streamBuddies.settings.buddySize.value;
 
 			// our gravity code at the top of the function already checked if we hit the ground
 			// so this.inAir will be false if we did. However, for jumping, we should only care about the .inAir
