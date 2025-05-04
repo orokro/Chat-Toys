@@ -80,8 +80,8 @@ const buttons = [
 ];
 
 // the title and prompt text
-const title = `Streams ${props.userData.display_name} has participated in:`;
-const promptText = `The user, ${props.userData.display_name}, has participated in the following streams:`;
+const title = `Commands ${props.userData.display_name} has used:`;
+const promptText = `The user, ${props.userData.display_name}, has run in the following commands:`;
 
 
 // ref to the buttons bar so we can focus on it
