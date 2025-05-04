@@ -94,8 +94,8 @@
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="number"
-				min="1"
-				max="100"
+				:min="1"
+				:max="100"
 				:step="1"
 				v-model="chatTextSize"
 			>

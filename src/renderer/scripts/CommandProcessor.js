@@ -120,8 +120,6 @@ export class CommandProcessor {
 			map[cmd.command] = cmd;
 			return map;
 		}, {});
-
-		console.log("cmd map", this.commandMap);
 	}
 
 

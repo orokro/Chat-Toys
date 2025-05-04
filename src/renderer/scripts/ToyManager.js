@@ -41,6 +41,23 @@ export class ToyManager {
 
 
 	/**
+	 * Helper to get the toy instance by slug
+	 * 
+	 * @param {String} slug - the slug of the toy to get
+	 * @return {Object|null} - the toy object, or null if not found
+	 */
+	getToyBySlug(slug) {
+
+		// if we have the toy, return it
+		if (this.toys[slug])
+			return this.toys[slug];		
+
+		// otherwise, return null
+		return null;
+	}
+
+
+	/**
 	 * Sync the toy instances with the currently enabled toy slugs.
 	 * Instantiates new ones, preserves existing ones, and removes disabled ones.
 	 */

@@ -68,6 +68,10 @@ const ctApp = inject('ctApp');
         // Get group name from slug (before first __)
         const group = (cmd.slug && cmd.slug.includes('__')) ? cmd.slug.split('__')[0] : '';
 
+		// check if we this group's toy is active. If it's not, skip it
+		if(ctApp.toyManager.getToyBySlug(group) === null)
+			continue;
+
         // Insert a blank line if the group changes
         if (group !== lastGroup && lastGroup !== null)
             lines.push('');
@@ -104,6 +108,8 @@ const ctApp = inject('ctApp');
             line += ` ${cmd.userDesc}`;
         } else if (group === 'media') {
             line += ` Show the ${cmd.command} media item!`;
+        } else if (group === 'tosser') {
+            line += ` Toss the ${cmd.command} item!`;
         }
 
         lines.push(line);
