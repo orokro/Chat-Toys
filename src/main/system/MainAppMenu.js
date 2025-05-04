@@ -44,7 +44,7 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 				{ role: 'selectAll' }
 			]
 		},
-		...((true || isDev) ? [{
+		...((isDev) ? [{
 			label: 'View',
 			submenu: [
 				{ role: 'reload' },
@@ -59,7 +59,7 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 			]
 		}] : []),
 		{
-			label: 'Window',
+			label: 'Misc',
 			submenu: [
 				{
 					label: 'Show Live Window',

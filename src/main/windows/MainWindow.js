@@ -6,7 +6,7 @@
 */
 
 // Electron
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 
 // local imports
@@ -76,6 +76,17 @@ function createMainWindow() {
 	const tickInterval = setInterval(() => {
 		mainWindow.webContents.send('tick');
 	}, 1000);
+
+	// allow programmatic opening of the dev tools
+	ipcMain.on('toggle-devtools', () => {
+		if (mainWindow && mainWindow.webContents) {
+			if (mainWindow.webContents.isDevToolsOpened())
+				mainWindow.webContents.closeDevTools();
+			else
+				mainWindow.webContents.openDevTools();
+			
+		}
+	});
 
 	return mainWindow;
 }

@@ -52,6 +52,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
 	openExternal: (url) => shell.openExternal(url),
 	writeToClipboard: (text) => clipboard.writeText(text),
+	toggleDevTools: () => ipcRenderer.send('toggle-devtools'),
 });
 
 

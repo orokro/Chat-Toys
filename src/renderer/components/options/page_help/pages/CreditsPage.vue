@@ -13,7 +13,7 @@
 	>
 		<br/>
 		<p>
-			Below are a list of the sources for things I've used, via category.
+			Below are a list of the sources for things I've used, via category<span @click="toggleDevTools">.</span>
 			<br><br>
 			Not all of these things required attribution, but sure why not!
 		</p>
@@ -252,6 +252,12 @@ const openLink = (url) => {
 	electronAPI.openExternal(url);
 };
 
+/**
+ * Toggle the dev tools for our "." "easter egg"
+ */
+const toggleDevTools = () => {
+	electronAPI.toggleDevTools();
+};
 
 </script>
 <style lang="scss" scoped>	

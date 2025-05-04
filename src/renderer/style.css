@@ -34,6 +34,12 @@ body {
 	color: #333;
 
 	overflow: clip !important; 
+
+	
+}
+
+img {
+	-webkit-user-drag: none;
 }
 
 /* Remove default styles for main elements */

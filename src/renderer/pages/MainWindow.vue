@@ -71,7 +71,7 @@ const tabs = [
 ];
 
 // the index of the active tab
-const activeTab = chromeRef('mainTab', 1);
+const activeTab = chromeRef('mainTab', 0);
 
 // before we render first time, we need to instantiate our main state
 onBeforeMount(() => {

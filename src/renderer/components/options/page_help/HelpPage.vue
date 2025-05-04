@@ -60,8 +60,6 @@ const pageItems = [
 // refs
 const selectedPage = chromeRef('helpPageTab', 'help_welcome');
 
-
-
 </script>
 <style lang="scss" scoped>
 
