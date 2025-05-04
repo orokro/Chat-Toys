@@ -184,7 +184,9 @@ export class ThreeBuddy extends Object3D {
 		if (!changed)
 			return;
 
-		const xPos = newState.x - (this.system.canvasWidth / 2);
+		const localWidth = this.system.canvasWidth;
+		const xWrapped = ((newState.x % localWidth) + localWidth) % localWidth;
+		const xPos = xWrapped - (localWidth / 2);
 		const yPos = newState.y - (this.system.canvasHeight / 2);
 		this.position.set(xPos, yPos, 0);
 

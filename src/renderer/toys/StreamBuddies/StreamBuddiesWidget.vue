@@ -29,7 +29,7 @@
 			:key="index"
 			class="buddyBox"			
 			:style="{
-				left: buddy.x + 'px',
+				left: getWrappedX(buddy.x) + 'px',
 				bottom: buddy.y + 'px',
 				transform: 'scale(' + buddySize + ')',
 			}"
@@ -122,6 +122,11 @@ const modelPath = chromeRef('model-path', '');
 const props = defineProps({
 
 });
+
+function getWrappedX(x) {
+  const width = canvasContainerRef.value?.clientWidth || 1920; // fallback if DOM not ready
+  return ((x % width) + width) % width;
+}
 
 // path to 3d model for avatar
 // const avatarPath = socketShallowRefReadOnly(slugify('avatarPath'), {});

@@ -599,7 +599,25 @@ class Buddy {
 	 * Makes sure our avatar is within the bounds of the container
 	 */
 	clampPosition() {
-		this.x = Math.max(0, Math.min(this.x, this.system.containerWidth));
+
+		// NOTE: containerWidth is no longer whats used to clamp the render,
+		// because the widget could be loaded in multiple places with different widths
+		// instead, we'll use it as a loose abstract width, and use the logic to make buddies
+		// prefer to be in the middle
+		const width = this.system.containerWidth;
+	
+		// If within bounds, do nothing
+		if (this.x >= 0 && this.x <= width)
+			return;
+	
+		// Prefer to stay roughly within the middle 50% of container width
+		const targetMin = width * 0.25;
+		const targetMax = width * 0.75;
+		const target = targetMin + Math.random() * (targetMax - targetMin);
+	
+		// move to place randomly in the middle of the abstract width
+		this.targetX = target;
+		this.gotoState('moving');
 	}
 
 
