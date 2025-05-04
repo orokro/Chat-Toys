@@ -184,8 +184,8 @@ export class ThreeBuddy extends Object3D {
 		if (!changed)
 			return;
 
-		const xPos = (newState.x - this.system.canvasWidth/2);
-		const yPos = -(this.system.canvasHeight/2) - (newState.y - this.system.canvasHeight);
+		const xPos = newState.x - (this.system.canvasWidth / 2);
+		const yPos = newState.y - (this.system.canvasHeight / 2);
 		this.position.set(xPos, yPos, 0);
 
 		let rotY = 0;

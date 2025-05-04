@@ -89,7 +89,6 @@ class BuddySystem {
 			}
 
 		}// next chat
-
 	}
 
 
@@ -265,12 +264,12 @@ class Buddy {
 
 		// our movement variables
 		this.x = Math.random() * system.containerWidth;
-		this.y = system.containerHeight - 100;
+		this.y = 0;
 		this.targetX = this.x;
 		this.targetY = this.y;
 		this.velocityX = 0;
 		this.velocityY = 0;
-		this.gravity = 980; // px/s^2
+		this.gravity = -980; // px/s^2
 		this.inAir = true;
 		this.targetUserID = null;
 
@@ -431,8 +430,8 @@ class Buddy {
 		this.inAir = true;
 
 		// check if we hit the ground & clamp back up
-		if (this.y >= this.system.containerHeight && this.velocityY >= 0) {
-			this.y = this.system.containerHeight;
+		if (this.y <= 0 && this.velocityY <= 0) {
+			this.y = 0;
 			this.velocityY = 0;
 			this.inAir = false;
 		}
@@ -563,7 +562,7 @@ class Buddy {
 								// set target to being knocked back
 								const knockBackVelo = (this.x < targetBuddy.x) ? 100 : -100;
 								targetBuddy.velocityX = knockBackVelo;
-								targetBuddy.velocityY = -500;
+								targetBuddy.velocityY = 500;
 								targetBuddy.knockback = true;
 								if(targetBuddy.attacking)
 									targetBuddy.attacking = false;
@@ -589,6 +588,10 @@ class Buddy {
 				this.gotoState('moving');
 			}
 		}
+
+		// last clamp check
+		if (this.y < 0)
+			this.y = 0;
 	};
 
 

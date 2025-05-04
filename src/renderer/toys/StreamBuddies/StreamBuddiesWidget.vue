@@ -30,7 +30,7 @@
 			class="buddyBox"			
 			:style="{
 				left: buddy.x + 'px',
-				top: buddy.y + 'px',
+				bottom: buddy.y + 'px',
 				transform: 'scale(' + buddySize + ')',
 			}"
 		>
