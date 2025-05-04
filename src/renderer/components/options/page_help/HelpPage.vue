@@ -23,6 +23,7 @@
 
 // vue
 import { ref } from 'vue';
+import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
@@ -57,7 +58,9 @@ const pageItems = [
 ];
 
 // refs
-const selectedPage = ref('help_welcome');
+const selectedPage = chromeRef('helpPageTab', 'help_welcome');
+
+
 
 </script>
 <style lang="scss" scoped>

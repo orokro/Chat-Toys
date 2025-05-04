@@ -20,6 +20,7 @@
 
 // vue
 import { ref } from 'vue';
+import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
@@ -39,7 +40,7 @@ const pageItems = [
 ];
 
 // refs
-const selectedPage = ref('assets_db');
+const selectedPage = chromeRef('databasePageTab', 'assets_db');
 
 </script>
 <style lang="scss" scoped>

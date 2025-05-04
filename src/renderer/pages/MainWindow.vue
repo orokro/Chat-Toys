@@ -43,6 +43,7 @@
 
 // vue
 import { ref, provide, onBeforeMount } from 'vue'
+import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 
 // components
 import TopTabBar from '../components/options/TopTabBar.vue'
@@ -70,7 +71,7 @@ const tabs = [
 ];
 
 // the index of the active tab
-const activeTab = ref(1);
+const activeTab = chromeRef('mainTab', 1);
 
 // before we render first time, we need to instantiate our main state
 onBeforeMount(() => {
@@ -84,6 +85,15 @@ onBeforeMount(() => {
 	// provide access for window for e-z-debugging
 	window.dctApp = ctApp;
 });
+
+
+// switch to the help tab when invoked
+const selectedHelpPage = chromeRef('helpPageTab', 'help_welcome');
+window.electronAPI.onShowHelp(() => {
+	activeTab.value = 0;
+	selectedHelpPage.value = 'help';
+});
+
 
 </script>
 <style lang="scss" scoped>

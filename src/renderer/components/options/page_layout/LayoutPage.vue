@@ -131,6 +131,7 @@
 
 // vue
 import { ref, computed, inject } from 'vue';
+import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
@@ -153,7 +154,7 @@ const verticalItems = computed(() => {
 });
 
 // what's the selected tab?
-const selectedTab = ref(verticalItems.value[0]?.slug || '');
+const selectedTab = chromeRef('layoutPageTab', verticalItems.value[0]?.slug || '');
 
 // figure out which URL to show for the test page based on our mode
 const livePageURL = computed(() => {
