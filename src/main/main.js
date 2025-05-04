@@ -33,6 +33,10 @@ let tray = null;
 // list of our spawned windows
 let openedWindows = [];
 
+process.on('uncaughtException', (err) => {
+	console.error('[uncaughtException]', err.stack || err);
+  });
+
 console.error = (...args) => {
 	if (
 	  typeof args[0] === 'string' &&

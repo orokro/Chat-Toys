@@ -46,12 +46,19 @@ class OBSViewServer {
 		// start our servers
 		this.startServers();
 
+		// true when app is closing
+		this.closing = false;
+
 		// kill servers when main window is closed
 		this.mainWindow.on('close', () => {
 
+			this.closing = true;
+
+			// kill our servers
 			this.killServers();
 
-			setTimeout(()=>{
+			setInterval(()=>{
+				console.log('kill');
 				process.exit(0);
 			}, 1000)
 		});
@@ -88,6 +95,12 @@ class OBSViewServer {
 	 */
 	startEchoServer() {
 
+		// do not allow servers to start if we're closing
+		if(this.closing == true){
+			console.log('skipping startServers, closing');
+			return;
+		}
+
 		// note that, WSS comes from the socket-ref server
 		// and is already set up to handle incoming messages
 		this.wss.on('connection', (socket) => {
@@ -115,6 +128,8 @@ class OBSViewServer {
 	 */
 	async killServers(){
 
+		console.log('attempting to kill servers');
+
 		// Close HTTP server first (since WebSockets depend on it)
 		// await close(this.server, 'HTTP server');
 		await this.terminatorHTTP.terminate();
@@ -123,6 +138,8 @@ class OBSViewServer {
 		// Try closing WebSocket interface if it's separate (for safety)
 		await this.terminatorWS.terminate();
 		this.wss = null;
+
+		console.log('server kill attempt complete');
 	}
 
 
@@ -153,7 +170,22 @@ class OBSViewServer {
 	 * @param {String} msg - message
 	 */
 	logToFE(msg) {
-		this.mainWindow.webContents.send('server-log', msg);
+
+		// if we are closing, skip logging
+		if(this.closing == true){
+			console.log('skipping logToFE, closing');
+			console.log(msg);
+			return;
+		}
+
+		// set to the FE
+		const mainWindow = this.mainWindow;
+		if (mainWindow && !mainWindow.isDestroyed()) {
+
+			const webContents = mainWindow.webContents;
+			if (webContents && !webContents.isDestroyed())
+				mainWindow.webContents.send('server-log', msg);
+		}
 	}
 
 
@@ -161,6 +193,12 @@ class OBSViewServer {
 	 * Starts both the http and websocket servers.
 	 */
 	startServers() {
+
+		// do not allow servers to start if we're closing
+		if(this.closing == true){
+			console.log('skipping startServers, closing');
+			return;
+		}
 
 		// get default port
 		const port = store.get('port', 3001);
@@ -183,7 +221,7 @@ class OBSViewServer {
 			// using our socket-ref server, that syncs socketRefs
 			this.wss = socketRefServer({ server: this.server, port });
 
-			// web socket server loggin
+			// web socket server logging
 			this.wss.on('connection', (ws, req) => {
 				const ip = req.socket.remoteAddress;
 				this.logToFE(`[WS] New connection from ${ip}`);
@@ -197,7 +235,8 @@ class OBSViewServer {
 				});
 			});
 
-			this.startEchoServer();
+			// for debug, disabled for now
+			// this.startEchoServer();
 
 			// set up the terminators so we can close the servers cleanly
 			this.terminatorHTTP = createHttpTerminator({ server: this.server });
