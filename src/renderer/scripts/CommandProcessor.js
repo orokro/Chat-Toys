@@ -93,6 +93,23 @@ export class CommandProcessor {
 
 
 	/**
+	 * Remove hook for when toy is destructing
+	 * 
+	 * @param {String} toySlug - The toy slug to hook commands for, like "chat" or "tosser", etc
+	 * @param {Function } callback - Function to clear the hook
+	 */
+	clearHook(toySlug, callback) {
+
+		// remove the callback for this toySlug
+		if (this.toyHooks.has(toySlug) == false)
+			return;
+
+		const hooks = this.toyHooks.get(toySlug);
+		this.toyHooks.set(toySlug, hooks.filter(cb => cb !== callback));
+	}
+
+
+	/**
 	 * Build a map of commands for easy lookup
 	 */
 	buildCommandMap(){
@@ -103,6 +120,8 @@ export class CommandProcessor {
 			map[cmd.command] = cmd;
 			return map;
 		}, {});
+
+		console.log("cmd map", this.commandMap);
 	}
 
 

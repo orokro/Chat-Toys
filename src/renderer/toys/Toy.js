@@ -50,7 +50,8 @@ export default class Toy {
 
 		// we'll auto-subscribe to the commands for this toy!
 		// we'll use a callback that can be overridden by the toy
-		this.chatToysApp.commandProcessor.hookToyCommands(this.slug, this.onCommand.bind(this));
+		this.onCommandFn = this.onCommand.bind(this);
+		this.chatToysApp.commandProcessor.hookToyCommands(this.slug, this.onCommandFn);
 	}
 
 
@@ -280,6 +281,10 @@ export default class Toy {
 
 		// for debug
 		console.log("Ending toy", this.slug);
+
+		// remove hook from the command processor
+		this.chatToysApp.commandProcessor.clearHook(this.slug, this.onCommandFn);
+		this.onCommandFn = null;
 
 		// stop watching the settings
 		this.stopSettingsSocketWatch();
