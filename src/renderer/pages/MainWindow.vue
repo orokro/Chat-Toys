@@ -89,9 +89,10 @@ onBeforeMount(() => {
 
 // switch to the help tab when invoked
 const selectedHelpPage = chromeRef('helpPageTab', 'help_welcome');
-window.electronAPI.onShowHelp(() => {
+window.electronAPI.onShowHelp((page) => {
+
 	activeTab.value = 0;
-	selectedHelpPage.value = 'help';
+	selectedHelpPage.value = page;
 });
 
 

@@ -71,12 +71,12 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 						shell.openExternal(url);
 					}
 				},
-				{
-					label: 'Open Chat Tester',
-					click: () => {
-						chatTesterWindow.show();
-					}
-				}
+				// {
+				// 	label: 'Open Chat Tester',
+				// 	click: () => {
+				// 		chatTesterWindow.show();
+				// 	}
+				// }
 			]
 		},
 		{
@@ -85,9 +85,16 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 				{
 					label: 'View Help',
 					click: () => {
-						mainWindow.webContents.send('show-help');
+						mainWindow.webContents.send('show-help', 'help');
 					}
 				},
+				{
+					label: 'View Video Help',
+					click: () => {
+						mainWindow.webContents.send('show-help', 'help_videos');
+					}
+				},
+				{ type: 'separator' },
 				{
 					label: 'Website',
 					click: () => {
@@ -99,7 +106,20 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 					click: () => {
 						shell.openExternal('https://github.com/orokro/Chat-Toys');
 					}
-				}
+				},
+				{ type: 'separator' },
+				{
+					label: 'Contact',
+					click: () => {
+						mainWindow.webContents.send('show-help', 'help_contact');
+					}
+				},
+				{
+					label: 'Credits',
+					click: () => {
+						mainWindow.webContents.send('show-help', 'credits');
+					}
+				},
 			]
 		}
 	];
