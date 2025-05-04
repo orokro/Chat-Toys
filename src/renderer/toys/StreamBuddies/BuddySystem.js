@@ -317,7 +317,7 @@ class Buddy {
 			case 'jump':
 				this.jumping = true;
 				this.gotoState('jumping');
-				this.velocityY = -500;
+				this.velocityY = 500;
 				this.velocityX = param === 'left' ? -100 : param === 'right' ? 100 : 0;
 				this.targetX = this.x + this.velocityX;
 				break;
@@ -448,7 +448,7 @@ class Buddy {
 			if (this.inAir==false) {
 
 				// clamp y & return to the ground
-				this.y = this.system.containerHeight;
+				this.y = 0;
 
 				// clear both / either mode & return to idle since we 'landed'
 				this.jumping = this.knockback = false;
@@ -562,7 +562,7 @@ class Buddy {
 								// set target to being knocked back
 								const knockBackVelo = (this.x < targetBuddy.x) ? 100 : -100;
 								targetBuddy.velocityX = knockBackVelo;
-								targetBuddy.velocityY = 500;
+								targetBuddy.velocityY =500;
 								targetBuddy.knockback = true;
 								if(targetBuddy.attacking)
 									targetBuddy.attacking = false;
