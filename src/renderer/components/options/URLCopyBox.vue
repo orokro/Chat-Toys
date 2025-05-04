@@ -15,9 +15,11 @@
 			@copy="$event.target.select()"
 		></input>
 
-		<div class="copyButton">
-			<span class="material-icons"
-				@click="copyURL">
+		<div 
+			class="copyButton"
+			@click="copyURL"
+		>
+			<span class="material-icons">				
 				content_copy
 			</span>
 		</div>
@@ -47,7 +49,19 @@ const props = defineProps({
  * @param event {MouseEvent} the click event
  */
 const copyURL = (event) => {
+
+	// get the input element
     const input = event.target.closest('.inputRow').querySelector('input');
+
+	// get it's value
+	const value = input.value;
+
+	// use the electron API to write to clipboard,
+	// these browser ones suck
+	electronAPI.writeToClipboard(value);
+	return;
+
+	// old shitty code below
 
     // Try using modern Clipboard API
     if (navigator.clipboard && window.isSecureContext) {
