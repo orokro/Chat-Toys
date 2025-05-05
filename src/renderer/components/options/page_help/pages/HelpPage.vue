@@ -57,29 +57,18 @@
 				Live widgets are individual interactive visual elements that appear on your stream. Each widget
 				corresponds to a "toy" — a modular, configurable piece of logic and UI. Widgets are injected into the
 				stream via a browser source pointing at the locally hosted web server (e.g., http://localhost:3001/live
-				or http://localhost:3001/widget/toyname).
-			</p>
-			<p>
-				Widgets can be triggered by chat commands, channel point redemptions, or other events like user joins or
-				subscriptions. Many of them include animation, audio, and interactivity. Because they run in the browser
-				context, they are lightweight and responsive.
+				or http://localhost:3001/live/?single=true&toy=toyName&widget=widgetName).
 			</p>
 
 			<SectionHeader title="Layout Page" id="layout-page" />
 			<p>
-				The layout page is where you can visually organize your widgets for the Live Screen. It provides a
-				WYSIWYG interface where you can spawn multiple widget containers, resize and position them, and assign
-				each container to a specific toy or widget instance.
-			</p>
-			<p>
-				Each widget container supports scaling, dragging, resizing with aspect-ratio lock, and placeholder
-				behavior when not active. This page lets you design your OBS scene composition interactively. You can
-				design default layouts, test interactions, and preview the full visual experience without launching OBS.
+				The layout page is an optional way where you can visually organize your widgets for the Live Screen. It provides a
+				WYSIWYG interface where resize and position the various toys you've enabled.
 			</p>
 
 			<SectionHeader title="Users Database" id="users-database" />
 			<p>
-				The Users tab provides an in-depth interface for tracking every viewer who has interacted with your
+				The Database/Users tab provides an in-depth interface for tracking every viewer who has interacted with your
 				stream. Each user record includes their YouTube channel ID, display name, command usage history,
 				participation in streams, points balance, and ban status.
 			</p>
@@ -91,9 +80,8 @@
 
 			<SectionHeader title="Assets Database" id="assets-database" />
 			<p>
-				The Assets tab is a powerful asset manager for all media files used by toys and widgets. You can import
-				custom images, sounds, and 3D models, preview them, and assign them to different toys. Assets are
-				organized by type and ID, and can be browsed through a searchable UI.
+				The Database/Assets tab is an asset manager for all media files used by toys and widgets. You can import
+				custom images, sounds, and 3D models, preview them, or delete them.
 			</p>
 			<p>
 				When importing, files are moved into a managed internal folder and assigned UUIDs for reference. This
@@ -102,6 +90,15 @@
 			</p>
 
 			<SectionHeader title="Toys Overview" id="toys" />
+			<p>
+				Below you can learn more about each of the toys.
+			</p>
+
+			<SectionHeader title="Channel Points" id="channel-points" />
+			<p>
+				This toy implements a points-based reward system. Users accumulate points over time by being present,
+				and typing the command to claim them. (Default is <span class="cmd">!get</span>) Points can be used to trigger toys, actions, or rewards.
+			</p>
 
 			<SectionHeader title="Chat" id="chat" />
 			<p>
@@ -112,18 +109,6 @@
 			<p>
 				Without the chat toy active, most interactivity will not function. It handles message parsing, filters
 				invalid or irrelevant messages, and supports forwarding messages to multiple widgets.
-			</p>
-
-			<SectionHeader title="Channel Points" id="channel-points" />
-			<p>
-				This toy implements a points-based reward system. Users accumulate points over time by being present,
-				chatting, or through external logic. These points can then be spent on triggering actions, animations,
-				or responses using configured commands.
-			</p>
-			<p>
-				The system supports pricing, custom rewards, and point caps. Points can be edited manually or reset. Toy
-				logic often includes conditions based on point balances (e.g., you need 100 points to trigger
-				!explosion).
 			</p>
 
 			<SectionHeader title="Fishing" id="fishing" />
