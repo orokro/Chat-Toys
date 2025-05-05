@@ -14,11 +14,17 @@
 		bgThemePos="0px"
 	>
 		<p>
-			Welcome to the ToyBox plugin! This plugin is designed to help you interact with your viewers in fun and engaging ways.
+			<br>
+			Welcome to the Chat Toys!
+			<br>
+			If this is your first time, watch the video below to get started!
+			<br><br>
 		</p>
 
-		<SectionHeader title="CatsumIpsum"/>
-		<CatsumIpsum :paragraphs="5" :sentences="10"/>
+		<YTVideoBox 
+			url="https://youtu.be/iR3jYHwa6OM"
+			width="100%"
+		/>
 	</PageBox>
 
 </template>
@@ -32,6 +38,7 @@ import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
+import YTVideoBox from '@components/YTVideoBox.vue';
 
 </script>
 <style lang="scss" scoped>	
