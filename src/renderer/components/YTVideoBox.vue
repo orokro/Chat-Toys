@@ -73,7 +73,7 @@ const openVideo = () => {
 	if (videoId.value) {
 
 		// we'll use the embeded URL to open the video so it's full screen
-		const embedUrl = `https://www.youtube.com/embed/${videoId.value}`
+		const embedUrl = `https://www.youtube.com/embed/${videoId.value}?modestbranding=1&rel=0`
 		window.open(embedUrl, '_blank', 'width=800,height=450')
 	}
 }
