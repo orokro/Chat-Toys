@@ -1,7 +1,7 @@
 {
 	"name": "Chat-Toys",
-	"version": "0.0.1",
-	"description": "A simple Electron app to play with YouTube chat messages",
+	"version": "0.5.0",
+	"description": "App to provide YT Chat Interactions locally!",
 	"main": "main/main.js",
 	"scripts": {
 		"dev": "node scripts/dev-server.js",
