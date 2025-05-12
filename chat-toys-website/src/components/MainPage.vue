@@ -9,11 +9,49 @@
 	<!-- this thing will waste space for the beginning of the scrolling -->
 	<div class="top-scroll-space"></div>
 
+	<!-- header image -->
+	<img
+		v-show="scrollY > 1500"
+		class="header-image"
+		src="../assets/img/header.png"
+		alt="header image"		
+	/>
+
+	<!-- the animated box segment -->
+	<BoxAni :scroll-y="scrollY" />
+
 </template>
 <script setup>
 
 // vue
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
+
+// components
+import BoxAni from './BoxAni.vue';
+
+// reactive vertical scroll variable
+const scrollY = ref(0)
+
+// function to update scroll position
+function updateScroll() {
+	scrollY.value = window.scrollY || window.pageYOffset
+}
+
+onMounted(() => {
+
+	window.addEventListener('scroll', updateScroll, { passive: true })
+	window.addEventListener('resize', updateScroll)
+
+	requestAnimationFrame(() => {
+		updateScroll()
+	})
+})
+
+onUnmounted(() => {
+	window.removeEventListener('scroll', updateScroll)
+	window.removeEventListener('resize', updateScroll)
+})
+
 
 </script>
 <style lang="scss" scoped>
@@ -21,9 +59,16 @@ import { ref, onMounted } from 'vue';
 	// area that just takes up space to provide some room to scroll before content begins
 	.top-scroll-space {
 
-		height: 1500px;
-		border-left: 10px solid red;
-	
+		height: 3000px;
+
 	}// .top-scroll-space
 
+	.header-image {
+
+		position: fixed;
+		top: 0px;
+		left: 50%;
+		width: 70vw;
+		transform: translateX(-50%);
+	}
 </style>
