@@ -1,47 +1,81 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
+<!--
+	App.vue
+	-------
 
+	Main entry point to the website
+-->
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
+	<main>
+		<MainPage/>
+	</main>
 
-  <main>
-    <TheWelcome />
-  </main>
 </template>
+<script setup>
 
-<style scoped>
-header {
-  line-height: 1.5;
-}
+// vue
+import { ref, onMounted } from 'vue';
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
+// components
+import MainPage from './components/MainPage.vue';
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+</script>
+<style lang="scss">
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+	// add gradient & titled images to main page background
+	body {
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-}
+		/* background: linear-gradient(#5e5e5e, #000);
+		background-position: fixed; */
+
+		// use pseudo element to add a vertical gradient that doesn't scroll with content
+		&::before {
+
+			// required content to make pseudo element work
+			content: "";
+
+			// fill screen
+			position: fixed;
+			inset: 0px 0px 0px 0px;
+			width: 100vw;
+			height: 100vh;
+
+			// just a nice gradient
+			background: linear-gradient(#5e5e5e, #000);
+			
+			// always on bottom, no interaction
+			z-index: -1;
+			pointer-events: none;	
+		}
+
+		// use another pseudo element to add a tiled background image
+		// that doesn't scroll with content
+		&::after {
+
+			// required content to make pseudo element work
+			content: "";
+			
+			// fill screen
+			position: fixed;
+			inset: 0px 0px 0px 0px;
+			width: 100vw;
+			height: 100vh;
+
+			// tiled background image over the screen
+			background-image: url('assets/img/main_bg.png');
+			background-size: 350px;
+			background-position: center;
+
+			// always on bottom, no interaction
+			z-index: -1;
+			pointer-events: none;	
+
+		}// &::after
+
+	}// body
+
+	@media (min-width: 1024px) {
+
+	}
+
 </style>
