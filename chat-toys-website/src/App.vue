@@ -7,7 +7,11 @@
 <template>
 
 	<main>
-		<MainPage/>
+		<div
+			class="page-wrapperz"
+		>
+			<MainPage/>
+		</div>
 	</main>
 
 </template>
@@ -42,6 +46,7 @@ import MainPage from './components/MainPage.vue';
 
 			// just a nice gradient
 			background: linear-gradient(#5e5e5e, #000);
+			background: linear-gradient(#00ABAE, #000);
 			
 			// always on bottom, no interaction
 			z-index: -1;
@@ -73,6 +78,21 @@ import MainPage from './components/MainPage.vue';
 		}// &::after
 
 	}// body
+
+	.page-wrapper {
+		
+		// main column that has a max size so its not too big on wide screen
+		min-width: 700px;
+		max-width: 1000px;
+		width: 100%;
+
+		// center the column
+		margin: 0 auto;
+		
+		// for debug
+		border: 2px solid yellow;
+		
+	}// .page-wrapper
 
 	@media (min-width: 1024px) {
 

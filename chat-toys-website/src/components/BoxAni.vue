@@ -15,12 +15,14 @@
 			class="ani-frames"
 			:data-frame="computedFrame"
 			:style="{
-				left: computedBoxScaleAndPos.left,
+				// left: computedBoxScaleAndPos.left,
 				bottom: computedBoxScaleAndPos.bottom,
 				width: computedBoxScaleAndPos.scale + 'vw',
-				
+				maxWidth: (1100 * (computedBoxScaleAndPos.scale/100)) + 'px',
+				transform: `translateX(-50%) translateY(${computedBoxScaleAndPos.translateY})`
 			}"
 		>
+			<!-- <h1 style="color:white;">{{ computedFrame }}</h1> -->
 			<!-- the lid of the box -->
 			<div
 				v-show="computedLidYPos > -1"
@@ -53,7 +55,6 @@ const props = defineProps({
 // step size for frames
 const frameStepSize = 50;
 
-
 // compute which frame of animation to show
 const computedFrame = computed(() => {
 	
@@ -65,7 +66,7 @@ const computedFrame = computed(() => {
 const computedLidYPos = computed(() => {
 	
 	const cutOff = (16 * frameStepSize) - 1;
-	return (props.scrollY > cutOff) ? (props.scrollY-cutOff) : -1;
+	return (props.scrollY > cutOff) ? (props.scrollY-cutOff) * 2.0 : -1;
 });
 
 // the scale of the box
@@ -79,9 +80,9 @@ const computedBoxScaleAndPos = computed(() => {
 		return {
 			scale: 100,
 			left: '0vw',
-			bottom: 'calc(50vh - 55vw)'
-		}
-	
+			bottom: '50%',
+			translateY: '50%',
+		};	
 
 	// the amount extra to scroll for the animation
 	const aniDistance = 300;
@@ -95,10 +96,10 @@ const computedBoxScaleAndPos = computed(() => {
 	return {
 		scale: 100 + (t * 50),
 		left: (-25 * t) + 'vw',
-		bottom: `calc(${50*iT}vh - ${55 + 5*t}vw)`
-	}
+		bottom: `${50*iT}%`,
+		translateY: `${50-5*t}%`
+	};
 });
-
 
 </script>
 <style lang="scss" scoped>
@@ -110,22 +111,15 @@ const computedBoxScaleAndPos = computed(() => {
 
 		// fixed position w/ animation
 		position: fixed;
-		left: 0vw;
 		width: 100vw;
-		aspect-ratio: 1 / 1;
+		max-width: 1100px;
+		aspect-ratio: 1 / 1 !important;
 
-		/* transition: 
-			bottom 0.5s ease-in-out,
-			width 0.5s ease-in-out,
-		; */
+		bottom: 0%;
+		left: 50%;
 		
-
-		// css glow filter
-		/* filter: drop-shadow(0px 0px 10px #00ABAE99)
-				drop-shadow(0px 0px 20px #00ABAE77)
-				drop-shadow(0px 0px 30px #00ABAE66)
-				drop-shadow(0px 0px 40px #00ABAE33)
-				drop-shadow(0px 0px 50px #00ABAE22); */
+		// lighten it a bit
+		filter: brightness(1.5);
 
 		// background sprite sheet
 		background-image: url('../assets/img/box_frames.webp');
