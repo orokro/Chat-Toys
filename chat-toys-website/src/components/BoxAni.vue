@@ -22,7 +22,7 @@
 				transform: `translateX(-50%) translateY(${computedBoxScaleAndPos.translateY})`
 			}"
 		>
-			<!-- <h1 style="color:white;">{{ computedFrame }}</h1> -->
+			<!-- <h1 style="color:white; width: 100%; text-align:center;" >{{ computedLidYPos }}</h1> -->
 			<!-- the lid of the box -->
 			<div
 				v-show="computedLidYPos > -1"
@@ -31,6 +31,7 @@
 					top: -computedLidYPos + 'px',
 				}"
 			></div>
+
 		</div>
 
 	</div>
@@ -49,8 +50,19 @@ const props = defineProps({
 		type: Number,
 		default: 0
 	}
-
 });
+
+const emit = defineEmits([
+
+	// emit when the box is opened
+	'box-opened',
+
+	// the open T state
+	'box-open-t',
+]);
+
+// true when box is open for detecting change
+const boxIsOpen = ref(false);
 
 // step size for frames
 const frameStepSize = 50;
@@ -92,6 +104,17 @@ const computedBoxScaleAndPos = computed(() => {
 	const t = Math.min(Math.max(tUnclamped, 0), 1);
 	const iT = 1.0 - t;
 
+	// emit the open t state
+	emit('box-open-t', t);
+
+	// compute if open status changed to fire the event
+	const boxIsOpenNow  = (t>=1.0);
+	const statusChanged = (boxIsOpenNow != boxIsOpen.value);
+	if(statusChanged) {
+		boxIsOpen.value = boxIsOpenNow;
+		emit('box-opened', boxIsOpen.value);
+	}
+
 	// return interpolated values
 	return {
 		scale: 100 + (t * 50),
@@ -114,6 +137,7 @@ const computedBoxScaleAndPos = computed(() => {
 		width: 100vw;
 		max-width: 1100px;
 		aspect-ratio: 1 / 1 !important;
+		z-index: 0;
 
 		bottom: 0%;
 		left: 50%;
@@ -173,6 +197,25 @@ const computedBoxScaleAndPos = computed(() => {
 			background-position: 0% 0%;
 			
 		}// .box-lid
+
+		// the top of the box that occludes content
+		.box-top {
+
+			// for debug
+			/* border: 1px solid blue; */
+			filter: brightness(.5);
+
+			// fixed pos
+			position: absolute;
+			inset: 0px 0px 0px 0px;
+
+			background-image: url('../assets/img/bottom_front.png');
+			background-size: 100% 100%;
+			background-position: 0% 0%;
+
+			z-index: 9001;
+
+		}// .box-top
 
 	}// .ani-frames
 
