@@ -77,8 +77,10 @@ const computedFrame = computed(() => {
 // compute the lid position (-1 should be hidden)
 const computedLidYPos = computed(() => {
 	
-	const cutOff = (16 * frameStepSize) - 1;
-	return (props.scrollY > cutOff) ? (props.scrollY-cutOff) * 2.0 : -1;
+	if(computedBoxScaleAndPos.value.tu <= 0)
+		return -1;
+
+	return computedBoxScaleAndPos.value.tu * 300;
 });
 
 // the scale of the box
@@ -94,6 +96,8 @@ const computedBoxScaleAndPos = computed(() => {
 			left: '0vw',
 			bottom: '50%',
 			translateY: '50%',
+			t: 0,
+			tu: 0,
 		};	
 
 	// the amount extra to scroll for the animation
@@ -120,7 +124,9 @@ const computedBoxScaleAndPos = computed(() => {
 		scale: 100 + (t * 50),
 		left: (-25 * t) + 'vw',
 		bottom: `${50*iT}%`,
-		translateY: `${50-5*t}%`
+		translateY: `${50-5*t}%`,
+		t: t,
+		tu: tUnclamped,
 	};
 });
 
@@ -213,7 +219,7 @@ const computedBoxScaleAndPos = computed(() => {
 			background-size: 100% 100%;
 			background-position: 0% 0%;
 
-			z-index: 9001;
+			/* z-index: 9001; */
 
 		}// .box-top
 

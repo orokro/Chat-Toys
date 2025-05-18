@@ -27,6 +27,7 @@
 
 	<!-- the animated box segment -->
 	<BoxAni
+		class="box-ani"
 		:scroll-y="scrollY"
 		@box-open-t="handleBoxOpenStatusChange"
 	/>
@@ -40,6 +41,11 @@
 
 	</div>
 
+	<BoxFront
+		v-if="boxIsOpen"
+	/>
+
+
 </template>
 <script setup>
 
@@ -48,6 +54,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
 // components
 import BoxAni from './BoxAni.vue';
+import BoxFront from './BoxFront.vue';
 
 // reactive vertical scroll variable
 const scrollY = ref(0)
@@ -89,7 +96,7 @@ onUnmounted(() => {
 		// for debug
 		/* border-left: 10px solid red; */
 
-		height: 2000px;
+		height: 2100px;
 
 	}// .top-scroll-space
 
@@ -100,6 +107,7 @@ onUnmounted(() => {
 		top: 0px;
 		left: 0px;
 		right: 0px;
+		z-index: 101;
 
 		// blurry bg
 		background: rgba(0, 0, 0, 0.25);
@@ -121,13 +129,19 @@ onUnmounted(() => {
 
 	}// .header-bar
 
+	.box-ani {
+		z-index: 0;
+	}
+
 	.box-content {
+
+		position: relative;
 
 		width: 80%;
 		margin-left: auto;
 		margin-right: auto;
 		
-		z-index: 1000;
+		z-index: 100;
 		background: rgba(0, 0, 0, 0.5);
 		color: white;
 		
