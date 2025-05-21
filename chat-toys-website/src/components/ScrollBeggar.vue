@@ -12,7 +12,6 @@
 		class="scroll-beggar-box"
 		:class="{ 'is-visible': isVisible }"
 	>
-
 		<!-- row with the letters that say "SCROLL DOWN" -->
 		<div class="text-row row">
 			<span

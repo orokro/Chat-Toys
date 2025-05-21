@@ -19,6 +19,9 @@
 
 	</BoxAnimation>
 
+	<!-- header comes after the box, for automatic correct z-positioning -->
+	<Header/>
+	
 	<!-- a box on the bottom of the page to prompt the user to scroll down -->
 	<ScrollBeggar/>
 
@@ -29,6 +32,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 
 // // components
+import Header from './Header.vue';
 import BoxAnimation from './BoxAnimation.vue';
 import ScrollBeggar from './ScrollBeggar.vue';
 

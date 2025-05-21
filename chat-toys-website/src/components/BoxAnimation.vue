@@ -110,7 +110,7 @@ const boxAniFrame = ref(0);
 const initialAnimationMode = ref(true);
 
 // for computing animation, we'll pick an arbitrary y-height to use
-const initialAnimationScrollDistance = 16 * 50;
+const initialAnimationScrollDistance = 10 * 50;
 
 // scroll distance for moving the box down
 const moveDownScrollDistance = 10 * 50;
@@ -176,18 +176,32 @@ const boxStyle = computed(() => {
 // styles for the content area
 const contentStyle = computed(() => {
 
+	// the box will scale as it moves towards the bottom.
+	// to make it still drag 1:1 with touch-drag, we will scale the position
+	let inverseScale = 1;
+	if(initialAnimationMode.value == false){
+
+		// compute the scale based on the scroll position
+		const aniT = Math.min(Math.max((scrollY.value - initialAnimationScrollDistance) / moveDownScrollDistance, 0), 1);
+		const scale = 1 + (aniT * 0.5);
+		inverseScale = 1 / scale;
+	}
+
 	// the height is based on the lid position and it's height. It's height can change, however, based
 	// on it's width aspect ratio, so we need to compute that too.
 
 	// compute where there lid should be positioned
-	const topPos = initialAnimationMode.value ? 0 : Math.max((scrollY.value - initialAnimationScrollDistance), 0);
+	const topPosPreScale = initialAnimationMode.value ? 0 : Math.max((scrollY.value - initialAnimationScrollDistance), 0);
+	const topPos = topPosPreScale * inverseScale;
 
 	// get the HTML element of the lid & it's height or use 0 if null
-	const lidHeight = (lidElRef.value ? lidElRef.value.clientHeight : 0) * 0.2;
+	const lidHeight = (lidElRef.value ? lidElRef.value.clientHeight : 0) * 0.0;
 
 	// reading .value of this will cause this computed method to recompute
 	// this is hackish, but w/e
 	const zero = (windowWidth.value / windowWidth.value) - 1;
+
+	
 
 	// for now, return a fixed size
 	return {
@@ -295,7 +309,7 @@ function measureScroll() {
 			inset: 0px 0px 0px 0px;
 
 			// lighten it a bit
-			filter: brightness(var(--box-brightness));
+			/* filter: brightness(var(--box-brightness)); */
 
 			// background sprite sheet
 			background-image: url('../assets/img/box_frames.webp');
@@ -336,7 +350,7 @@ function measureScroll() {
 			background-position: 0% 0%;
 
 			// lighten it a bit
-			filter: brightness(var(--box-brightness));
+			/* filter: brightness(var(--box-brightness)); */
 
 		}// .open-box
 
@@ -366,7 +380,7 @@ function measureScroll() {
 			inset: 0px 0px 0px 0px;
 
 			// lighten it a bit
-			filter: brightness(var(--box-brightness));
+			/* filter: brightness(var(--box-brightness)); */
 
 			// background sprite sheet
 			background-image: url('../assets/img/bottom_front.png');
@@ -389,7 +403,7 @@ function measureScroll() {
 			height: 100%;
 
 			// lighten it a bit
-			filter: brightness(var(--box-brightness));
+			/* filter: brightness(var(--box-brightness)); */
 
 			// background sprite sheet
 			background-image: url('../assets/img/box_lid.webp');
@@ -410,6 +424,9 @@ function measureScroll() {
 
 	// fixed on bottom-left to show debug info
 	.debug-info {
+
+		// for debug disable normally
+		display: none;
 
 		// fixed on top-left
 		position: fixed;
