@@ -65,7 +65,7 @@ import MainPage from './components/MainPage.vue';
 
 			// tiled background image over the screen
 			background-image: url('assets/img/main_bg.png');
-			background-size: 350px;
+			background-size: 70vh;
 			background-position: center;
 
 			// always on bottom, no interaction
