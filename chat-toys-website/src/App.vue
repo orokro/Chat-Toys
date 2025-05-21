@@ -7,11 +7,8 @@
 <template>
 
 	<main>
-		<div
-			class="page-wrapperz"
-		>
-			<MainPage/>
-		</div>
+	
+		<MainPage/>
 	</main>
 
 </template>
@@ -79,20 +76,6 @@ import MainPage from './components/MainPage.vue';
 
 	}// body
 
-	.page-wrapper {
-		
-		// main column that has a max size so its not too big on wide screen
-		min-width: 700px;
-		max-width: 1000px;
-		width: 100%;
-
-		// center the column
-		margin: 0 auto;
-		
-		// for debug
-		border: 2px solid yellow;
-		
-	}// .page-wrapper
 
 	@media (min-width: 1024px) {
 

@@ -183,27 +183,6 @@ const computedBoxScaleAndPos = computed(() => {
 			background-position: 0% 0%;
 		}
 
-		// animated lid PNG that opens up
-		.box-lid {
-
-			// for debug
-			/* border: 1px solid cyan; */
-
-			// fixed pos
-			position: absolute;
-			top: 0px;
-			left: 0px;
-
-			// fill container
-			width: 100%;
-			height: 100%;
-
-			background-image: url('../assets/img/box_lid.webp');
-			background-size: 100% 100%;
-			background-position: 0% 0%;
-			
-		}// .box-lid
-
 		// the top of the box that occludes content
 		.box-top {
 
@@ -222,6 +201,26 @@ const computedBoxScaleAndPos = computed(() => {
 			/* z-index: 9001; */
 
 		}// .box-top
+
+		// animated lid PNG that opens up
+		.box-lid {
+
+			// for debug
+			border: 1px solid cyan;
+
+			// fixed pos
+			position: absolute;
+			left: 0px;
+
+			// fill container
+			width: 100%;
+
+
+			background-image: url('../assets/img/box_lid.webp');
+			background-size: 100% 100%;
+			background-position: 0% 0%;
+
+		}// .box-lid
 
 	}// .ani-frames
 
