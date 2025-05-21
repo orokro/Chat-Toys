@@ -347,7 +347,7 @@ function measureScroll() {
 
 			// fill container, but we half special left/right to fit "inside" the box
 			position: absolute;
-			inset: auto 10% 40% 18%;
+			inset: auto 18% 40% 18%;
 
 			// we will control our scrolling via JS and don't want anything to "escape" the box
 			overflow: hidden;

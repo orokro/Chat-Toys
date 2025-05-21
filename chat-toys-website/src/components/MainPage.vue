@@ -6,8 +6,7 @@
 -->
 <template>
 
-	
-
+	<!-- this will wrap our content in the opening-box animation -->
 	<BoxAnimation>
 
 		<div class="box-content">
@@ -20,6 +19,8 @@
 
 	</BoxAnimation>
 
+	<!-- a box on the bottom of the page to prompt the user to scroll down -->
+	<ScrollBeggar/>
 
 </template>
 <script setup>
@@ -29,71 +30,12 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
 // // components
 import BoxAnimation from './BoxAnimation.vue';
-// import BoxAni from './OLD/BoxAni.vue';
-// import BoxFront from './OLD/BoxFront.vue';
-
-// reactive vertical scroll variable
-const scrollY = ref(0)
-
-// function to update scroll position
-function updateScroll() {
-	scrollY.value = window.scrollY || window.pageYOffset
-}
-
-// handle when the box animation is open
-let boxIsOpen = ref(false);
-function handleBoxOpenStatusChange(t){
-	boxIsOpen.value = (t>=1.0);
-}
-
-onMounted(() => {
-
-	window.addEventListener('scroll', updateScroll, { passive: true })
-	window.addEventListener('resize', updateScroll)
-
-	requestAnimationFrame(() => {
-		updateScroll()
-	})
-});
-
-
-onUnmounted(() => {
-	window.removeEventListener('scroll', updateScroll)
-	window.removeEventListener('resize', updateScroll)
-});
+import ScrollBeggar from './ScrollBeggar.vue';
 
 
 </script>
 <style lang="scss" scoped>
 
-	.header-bar {
-
-		// fixed on top
-		position: fixed;
-		top: 0px;
-		left: 0px;
-		right: 0px;
-		z-index: 101;
-
-		// blurry bg
-		background: rgba(0, 0, 0, 0.25);
-		backdrop-filter: blur(5px);
-
-		opacity: 0;
-		transition: opacity 0s ease-in-out;
-		&.show { 
-			transition: opacity 0.15s ease-in-out;
-			opacity: 1; 
-		}
-
-		.header-image {
-
-			/* position: fixed; */
-			width: 70vw;
-
-		}// .header-image
-
-	}// .header-bar
 
 	.box-content {
 
