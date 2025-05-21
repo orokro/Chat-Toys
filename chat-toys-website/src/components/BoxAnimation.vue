@@ -42,8 +42,7 @@
 	<div
 		class="box"
 		:style="boxStyle"
-	>
-		
+	>		
 		<!-- This will be the first 16-frames of animation, the 17th frame (box open handled separately)-->
 		<div
 			v-show="initialAnimationMode"
@@ -111,7 +110,10 @@ const boxAniFrame = ref(0);
 const initialAnimationMode = ref(true);
 
 // for computing animation, we'll pick an arbitrary y-height to use
-const initialAnimationScrollHeight = 16 * 50;
+const initialAnimationScrollDistance = 16 * 50;
+
+// scroll distance for moving the box down
+const moveDownScrollDistance = 10 * 50;
 
 // set up resize observer on the window
 const bodyResizeObserver = new ResizeObserver((entries) => {
@@ -134,14 +136,42 @@ const whiteSpaceStyle = computed(() => {
 // styles for the main box
 const boxStyle = computed(() => {
 
+	// compute where there box should be positioned
+	// const scale = initialAnimationMode.value ? 1 : 1.5;
+
+	/*
+		the scale and bottom position will like so:
+		
+		bottom: 50% -> 5%
+		scale: 1 -> 1.5
+
+		We will use our constant moveDownScrollDistance to compute the interpolation
+	*/
+
+	// defaults
+	let bottom = 45;
+	let scale = 1;
+
+	// only compute the interpolation if we're not in animation mode
+	if(initialAnimationMode.value == false) {
+
+		// compute the scale based on the scroll position
+		const aniT = Math.min(Math.max((scrollY.value - initialAnimationScrollDistance) / moveDownScrollDistance, 0), 1);
+		scale = 1 + (aniT * 0.5);
+
+		// compute the bottom position based on the scroll position
+		bottom = 45 - (aniT * 40);
+	}
+
 	// for now, return a fixed size
 	return {
 		width: squareSize.value + 'px',
 		height: squareSize.value + 'px',
-		bottom: '50%',
-		transform: `translateX(-50%) translateY(50%)`
+		bottom: `${bottom}%`,
+		transform: `translateX(-50%) translateY(50%) scale(${scale})`
 	}
 });
+
 
 // styles for the content area
 const contentStyle = computed(() => {
@@ -150,11 +180,13 @@ const contentStyle = computed(() => {
 	// on it's width aspect ratio, so we need to compute that too.
 
 	// compute where there lid should be positioned
-	const topPos = initialAnimationMode.value ? 0 : Math.max((scrollY.value - initialAnimationScrollHeight), 0);
+	const topPos = initialAnimationMode.value ? 0 : Math.max((scrollY.value - initialAnimationScrollDistance), 0);
 
 	// get the HTML element of the lid & it's height or use 0 if null
 	const lidHeight = (lidElRef.value ? lidElRef.value.clientHeight : 0) * 0.2;
 
+	// reading .value of this will cause this computed method to recompute
+	// this is hackish, but w/e
 	const zero = (windowWidth.value / windowWidth.value) - 1;
 
 	// for now, return a fixed size
@@ -163,11 +195,12 @@ const contentStyle = computed(() => {
 	}
 });
 
+
 // styles for the lid of the box
 const lidStyle = computed(() => {
 
 	// compute where there lid should be positioned
-	let topPos = initialAnimationMode.value ? 0 : (scrollY.value - initialAnimationScrollHeight);
+	let topPos = initialAnimationMode.value ? 0 : (scrollY.value - initialAnimationScrollDistance);
 	if(topPos < 0)
 		topPos = 0;
 	
@@ -227,28 +260,30 @@ function measureScroll() {
 	scrollY.value = window.scrollY || window.pageYOffset
 
 	// normalize the scroll position to be between 0 and 1 for the animation
-	const aniT = Math.min(Math.max(scrollY.value / initialAnimationScrollHeight, 0), 1);
+	const aniT = Math.min(Math.max(scrollY.value / initialAnimationScrollDistance, 0), 1);
 	boxAniFrame.value = Math.floor(aniT * 16);
 
 	// compute if we've exited the animation mode
 	initialAnimationMode.value = (boxAniFrame.value < 15);
-}	
-
+}
 
 </script>
 <style lang="scss" scoped>
 
 	// the main box that's visible on screen
 	.box {
- 
+
+		// var for our brightness
+		--box-brightness: 1.4;
+
 		// for debug
-		background: rgba(0, 0, 0, 0.2);
+		/* background: rgba(0, 0, 0, 0.2); */
 		/* border: 2px solid rgb(255, 166, 0); */
 
 		// fixed positioning, centered initially
 		position: fixed;
 		left: 50%;	
-
+		
 		// the box that shows the animation frames
 		.ani-frames {
 
@@ -258,6 +293,9 @@ function measureScroll() {
 			// fill container box 100%;
 			position: absolute;
 			inset: 0px 0px 0px 0px;
+
+			// lighten it a bit
+			filter: brightness(var(--box-brightness));
 
 			// background sprite sheet
 			background-image: url('../assets/img/box_frames.webp');
@@ -297,6 +335,9 @@ function measureScroll() {
 			background-size: 100% 100%;
 			background-position: 0% 0%;
 
+			// lighten it a bit
+			filter: brightness(var(--box-brightness));
+
 		}// .open-box
 
 		// area where our page content will spawn
@@ -318,11 +359,14 @@ function measureScroll() {
 
 			// for debug
 			/* border: 1px solid rgb(0, 255, 0); */
-			opacity: 90%;
+			/* opacity: 90%; */
 
 			// fill container box 100%;
 			position: absolute;
 			inset: 0px 0px 0px 0px;
+
+			// lighten it a bit
+			filter: brightness(var(--box-brightness));
 
 			// background sprite sheet
 			background-image: url('../assets/img/bottom_front.png');
@@ -344,6 +388,9 @@ function measureScroll() {
 			width: 100%;
 			height: 100%;
 
+			// lighten it a bit
+			filter: brightness(var(--box-brightness));
+
 			// background sprite sheet
 			background-image: url('../assets/img/box_lid.webp');
 			background-size: 100% 100%;
@@ -361,17 +408,17 @@ function measureScroll() {
 
 	}// .top-scroll-space
 
-	// fixed on top-left to show debug info
+	// fixed on bottom-left to show debug info
 	.debug-info {
 
 		// fixed on top-left
 		position: fixed;
-		top: 0px;
+		bottom: 0px;
 		left: 0px;
 		z-index: 9001;
 
 		// pretty
-		border-radius: 0px 0px 15px 0px;
+		border-radius: 0px 15px 0px 0px;
 
 		// dark mode transparent box with some spacing
 		background: rgba(0, 0, 0, .5);
