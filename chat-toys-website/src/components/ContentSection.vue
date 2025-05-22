@@ -144,6 +144,22 @@ const defineProps = defineProps({
 				}
 			}
 
+			// white circle
+			.circle {
+
+				// fixed position
+				position: absolute;
+				top: -6px;
+				right: -15px;
+
+				// white circle
+				width: 15px;
+				height: 15px;
+				border-radius: 100%;
+				background: #ffffff;
+
+			}// .circle
+
 		}// .content-header
 		
 		// box w/ actual content text
@@ -259,6 +275,10 @@ const defineProps = defineProps({
 				left: initial;
 				right: 5%;
 								
+				.circle {
+					right: initial;
+					left: -15px;
+				}
 			}// .content-header
 
 			.content-box {
