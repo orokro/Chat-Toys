@@ -201,8 +201,6 @@ const contentStyle = computed(() => {
 	// this is hackish, but w/e
 	const zero = (windowWidth.value / windowWidth.value) - 1;
 
-	
-
 	// for now, return a fixed size
 	return {
 		height: (initialAnimationMode.value ? 0 : (topPos-lidHeight+zero)) + 'px',
@@ -212,6 +210,17 @@ const contentStyle = computed(() => {
 
 // styles for the lid of the box
 const lidStyle = computed(() => {
+
+	// the box will scale as it moves towards the bottom.
+	// to make it still drag 1:1 with touch-drag, we will scale the position
+	let inverseScale = 0.75;
+	if(initialAnimationMode.value == false){
+
+		// compute the scale based on the scroll position
+		const aniT = Math.min(Math.max((scrollY.value - initialAnimationScrollDistance) / moveDownScrollDistance, 0), 1);
+		const scale = 1 + (aniT * 0.5);
+		inverseScale = (1 / scale) * 1.2;
+	}
 
 	// compute where there lid should be positioned
 	let topPos = initialAnimationMode.value ? 0 : (scrollY.value - initialAnimationScrollDistance);
@@ -304,7 +313,7 @@ function measureScroll() {
 			// no interaction
 			pointer-events: none;
 			
-			
+
 			// for debug
 			/* border: 1px solid cyan; */
 

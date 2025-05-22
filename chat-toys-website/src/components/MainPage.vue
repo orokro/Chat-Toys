@@ -11,20 +11,29 @@
 
 		<div class="box-content">
 
-			<h1 class="my-header">
-				<Bloc>Welcome To</Bloc> <Bloc>Chat Toys!</Bloc>
-			</h1>
-			<div class="clip-top">
-				<BlurbBox class="top-dashes">
-					Chat Toys is a collection of fun & interactive widgets to use in OBS, that interact with YouTube live chat.
+			<ContentSection
+				section-title="Welcome!"
+				:is-left="false"
+				:show-top-circle="true"
+			>
+				<div class="spacer" style="padding-left: 15%;">
+					Chat Toys is a collection of fun & interactive widgets to use in OBS,<br>
+					that interact with YouTube live chat.
 					<br/><br/>
-					This application runs entirely locally on your computer, and does not require clouds, servers, or subscriptions!
+					This application runs entirely locally on your computer,<br>
+					and does not require cloud connections, servers, or subscriptions!
 					<br/><br/>
-					Chat Toys is also open source, and you can find it on GitHub.
+					Chat Toys is also open source, and you can 
+					<a href="https://github.com/orokro/Chat-Toys" target="_blank">find it on GitHub.</a>
 					<br/><br/>
-					Scroll down to find out what's inside!
-				</BlurbBox>
-			</div>
+					Scroll down to find out what's inside, or...
+					<a href="https://github.com/orokro/Chat-Toys/releases/" target="_blank">
+						<div class="dl-button">
+							Download Chat Toys
+						</div>
+					</a>
+				</div>
+			</ContentSection>
 
 			<ContentSection
 				section-title="Channel Points"
@@ -67,10 +76,10 @@
 				image-scale="1.1"
 				:is-left="true"
 			>
-				The head pat system will will automatically play the head-pad gif when a chatter submits a
-				<cmd>pat</cmd> command in chat.
+				The Head Pat toy will will automatically play the head-pat gif when a chatter submits a
+				<cmd>pat</cmd> command!
 				<br><br>
-				You can also enable chatters to pat each other, not just pat the streamer!
+				You can enable chatters to pat each other, as well!
 				
 			</ContentSection>
 
@@ -80,13 +89,14 @@
 				image-scale="1.4"
 				:is-left="false"
 			>
-				The Tosser Toy lets your chatters toss tomatoes, pies, wads of paper at your webcam or avatar!
+				The Tosser Toy lets your chatters toss tomatoes, pies, or paper-wads at your webcam or avatar!
 				<br><br>
-				Objects rendered in 3D & animated in real-time!
+				Objects are rendered in 3D & animated in real-time!
 				<br><br>
-				You can even import custom objects to toss!
+				You can even import custom objects to toss.
 				<br><br>
-				Chatters can type <cmd>toss</cmd> command in chat, or specify with <cmd>toss tomato</cmd>, etc.
+				Chatters can type <cmd>toss</cmd> command in chat,<br>
+				or specify with <cmd>toss tomato</cmd>.
 				
 			</ContentSection>
 
@@ -107,11 +117,10 @@
 				image-scale="1.1"
 				:is-left="false"
 			>
-				The Media Toy lets you set up any number of images, sounds, and gifs that can play with any custom commands.
+				The Media Toy lets you set up any number of images, sounds, and gifs that can play with custom commands.
 				<br><br>
-				For example, set up a command such as <cmd>yay</cmd> for happy sounds & a fun gif, or
-				<br>
-				a command like <cmd>sad</cmd> for sad sounds & a sad gif.
+				For example, set up a command such as <cmd>yay</cmd> for happy sounds & a fun gif,
+				or a command like <cmd>sad</cmd> for sad sounds & a sad gif.
 				<br><br>
 				There is no limit to the number of sounds & gifs you can import and assign custom commands.				
 			</ContentSection>
@@ -122,13 +131,13 @@
 				image-scale="1.4"
 				:is-left="true"
 			>
-			The Fishing Toy let's chatters play an idle-game where they can <cmd>cast</cmd> and <cmd>reel</cmd>	at their leisure.
+				The Fishing Toy let's chatters play an idle-game where they can <cmd>cast</cmd> and <cmd>reel</cmd>	at their leisure.
 				<br><br>
 				You can completely customize the pond animation, the stock of fish including their names, images, rarity, and reward values.		
 			</ContentSection>
 
 			<ContentSection
-				section-title="Steam Buddies"
+				section-title="Stream Buddies"
 				section-image="src/assets/img/chat/buddies.png"
 				image-scale="1.2"
 				:is-left="false"
@@ -184,35 +193,55 @@ import ContentSection from './ContentSection.vue';
 </script>
 <style lang="scss">
 
-	.clip-top {
-		/* border: 1px solid red; */
-		overflow: hidden;
-		
-	}
 
-	.top-dashes {
+	// fancy dl button
+	.dl-button {
+
 		position: relative;
-		top: 4px;
+		display: inline-block;
+		margin-top: 10px;
 
-		border: 3px dashed white;
-		border-radius: 36px 36px 36px 0px;
-		border-bottom: 0px;
-		border-right: 0px;
-		padding-bottom: 14px;
+		// box & spacing settings
+		padding: 12px 24px;
+		border: 2px solid rgba(255, 255, 255, 0.5);
+		border-radius: 8px;
+		cursor: pointer;
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+		overflow: hidden;
 
-	}
+		// text
+		font-size: 16px;
+		font-weight: bold;
+		color: white;
 
+		// animated bg gradient
+		background: linear-gradient(120deg, #5a13b6, #9f00ff, #612ba8);
+		background-size: 200%;
+		background-position: left;	
+		transition: background-position 0.5s ease, box-shadow 0.3s ease;		
+
+		&:hover {
+			background-position: right;
+			box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+		}
+
+	}// .dl-button
+
+	// styles for our main content inside the virtual box
 	.box-content {
 
+		// text
 		color: white;
-		/* padding: 50px; */
-	}
+		
+		// thiccc headers
+		.my-header {
+			
+			font-weight: bolder;
+			text-shadow: 3px 3px 0px black;
+			text-align: center;
 
-	.my-header {
+		}// .my-header
 
-
-		font-weight: bolder;
-		text-shadow: 3px 3px 0px black;
-		text-align: center;
-	}
+	}// .box-content
+	
 </style>

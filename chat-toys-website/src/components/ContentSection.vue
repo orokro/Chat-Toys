@@ -19,6 +19,12 @@
 			'right': !isLeft
 		}"
 	>
+		<!-- optional top circle -->
+		<div 
+			v-if="showTopCircle"
+			class="top-circle"
+		/>
+
 		<!-- the graphic stylized dashed lines to go left/right-->
 		<div class="dashed-lines-section-main">
 			<div class="lines"/>
@@ -94,8 +100,13 @@ const defineProps = defineProps({
 	isLeft: {
 		type: Boolean,
 		default: true
-	}
+	},
 
+	// optional top circle for style
+	showTopCircle: {
+		type: Boolean,
+		default: false
+	}
 });
 
 </script>
@@ -217,6 +228,23 @@ const defineProps = defineProps({
 			}// .white-space
 
 		}// .content box
+
+		// white circle
+		.top-circle {
+
+			// fixed position
+			position: absolute;
+			top: 0px;
+			right: 5%;
+			transform: translateX(40%);
+
+			// white circle
+			width: 15px;
+			height: 15px;
+			border-radius: 100%;
+			background: #ffffff;
+
+		}// .top-circle
 
 		// dashed lines, common styles
 		.lines {
