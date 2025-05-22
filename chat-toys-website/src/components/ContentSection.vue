@@ -27,11 +27,11 @@
 			<div class="lines"/>
 		</div>
 		
-
 		<!-- the title of the section -->
 		<div class="content-header">
 			<h2 class="show my-header">{{ sectionTitle }}</h2>
 			<h2 class="no-show my-header">{{ sectionTitle }}</h2>
+			<div class="circle"></div>
 		</div>
 
 		<!-- the content of the section -->
@@ -49,9 +49,13 @@
 				>
 					<img
 						class="pic"
+						draggable="false"
+						width="80%"
 						:src="sectionImage"
 						:alt="sectionTitle"
-						width="80%"
+						:style="{ 
+							transform: 'translateY(-50%) scale(' + parseFloat(imageScale) + ')'
+						}"
 					/>
 				</div>
 			</div>
@@ -80,6 +84,12 @@ const defineProps = defineProps({
 		default: ""
 	},
 
+	// optional image scaling
+	imageScale: {
+		type: Number,
+		default: 1.0
+	},
+
 	// true if the dashed lines should be on the left side
 	isLeft: {
 		type: Boolean,
@@ -93,6 +103,8 @@ const defineProps = defineProps({
 
 	// main outer wrapper
 	.content-section-box {
+
+		pointer-events: none;
 
 		// for debug
 		/* border: 1px solid red; */
@@ -114,14 +126,15 @@ const defineProps = defineProps({
 			position: absolute;
 			top: 127px;
 			border-bottom: 3px dashed white;
-			padding: 0px 20px 0px 0px;
+			padding: 0px 20px;
 
 			h2 {
 				line-height: 1.4rem;
 				margin-bottom: 5px;
-				text-align: right;
+				text-align: center;
 
 				&.show {
+					pointer-events: initial;
 					position: absolute;
 					inset: auto 0px 0px 0px;					
 				}
@@ -136,6 +149,8 @@ const defineProps = defineProps({
 		// box w/ actual content text
 		.content-box {
 
+			pointer-events: initial;
+
 			/* position: absolute; */
 			margin: 0% 5%;
 			border-radius: 0px 0px 0px 36px;
@@ -145,7 +160,7 @@ const defineProps = defineProps({
 			background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 80%);
 
 			font-size: 12px;
-			padding: 10px 20px;
+			padding: 30px 20px;
 
 			// box that floats left or right to push the text around to make room for the optional image
 			.white-space {
@@ -178,9 +193,7 @@ const defineProps = defineProps({
 					.pic {
 						position: absolute;
 						left: 10%;
-						top: 50%;
-						transform: translateY(-50%);
-						
+						top: 50%;						
 					}// .pic
 
 				}// .pic-box
@@ -243,14 +256,9 @@ const defineProps = defineProps({
 		&.right {
 
 			.content-header {
-				padding: 0px 20px 0px 0px;
 				left: initial;
 				right: 5%;
-				
-				h2 { 
-					text-align: left;
-				}
-				
+								
 			}// .content-header
 
 			.content-box {
@@ -288,7 +296,7 @@ const defineProps = defineProps({
 
 				inset: 0px 5% 30px 10%;		
 				.lines {
-					inset: -3px 0px 0px -3px;
+					inset: -3px 0px 0px -4px;
 					border-right: 3px dashed white;
 					border-bottom: 3px dashed white;
 					border-radius: 0px 0px 30px 0px;
@@ -301,7 +309,7 @@ const defineProps = defineProps({
 				width: 5%;
 				height: 33px;
 				.lines {
-					inset: 0px -3px -3px 0px;
+					inset: 0px -4px -3px 0px;
 					border-left: 3px dashed white;
 					border-top: 3px dashed white;
 					border-radius: 50px 0px 0px 0px;
