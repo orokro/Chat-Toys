@@ -45,7 +45,10 @@
 				<br><br>
 				It will periodically show a widget on screen letting your chatters know it's time to type <cmd>get</cmd> in chat so they can earn points to spend on other Chat Toys systems!
 				<br><br>
+				You can configure the other commands to then spend these points on fun features!
 				
+				<img src="../assets/img/ref/channel_points_image.png" width="70%"/>
+
 				<!-- youtube embed -->
 				<!-- <iframe
 					width="560"
@@ -133,7 +136,8 @@
 			>
 				The Fishing Toy let's chatters play an idle-game where they can <cmd>cast</cmd> and <cmd>reel</cmd>	at their leisure.
 				<br><br>
-				You can completely customize the pond animation, the stock of fish including their names, images, rarity, and reward values.		
+				You can completely customize the pond animation, the stock of fish including their names, images, rarity, and reward values.	
+				<img src="../assets/img/ref/fishing_widget.png" width="100%"/>
 			</ContentSection>
 
 			<ContentSection
