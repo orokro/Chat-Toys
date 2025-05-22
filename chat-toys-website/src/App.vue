@@ -56,7 +56,7 @@ import MainPage from './components/MainPage.vue';
 
 			// required content to make pseudo element work
 			content: "";
-			
+			opacity: 0.33;
 			// fill screen
 			position: fixed;
 			inset: 0px 0px 0px 0px;

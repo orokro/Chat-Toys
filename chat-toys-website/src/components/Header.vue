@@ -53,7 +53,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 		min-width: 305px;
 
 		// dark bg w/ blur filter
-		background: rgba(0, 0, 0, 0.5);
+		background: rgba(0, 0, 0, 0.25);
 		backdrop-filter: blur(5px);
 
 		// box containing chat-toys logo
