@@ -16,5 +16,7 @@
 
 	.bloc {
 		display: inline-block;
-	}
+		font-weight: inherit;
+	}// .bloc
+	
 </style>

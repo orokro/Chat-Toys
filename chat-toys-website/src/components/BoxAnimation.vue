@@ -301,6 +301,10 @@ function measureScroll() {
 		// the box that shows the animation frames
 		.ani-frames {
 
+			// no interaction
+			pointer-events: none;
+			
+			
 			// for debug
 			/* border: 1px solid cyan; */
 
@@ -340,6 +344,9 @@ function measureScroll() {
 		// image of the box open
 		.open-box {
 
+			// no interaction
+			pointer-events: none;
+			
 			// fill container box 100%;
 			position: absolute;
 			inset: 0px 0px 0px 0px;
@@ -371,6 +378,9 @@ function measureScroll() {
 		// the png on top of the content to occlude it
 		.box-front {
 
+			// no interaction
+			pointer-events: none;
+			
 			// for debug
 			/* border: 1px solid rgb(0, 255, 0); */
 			/* opacity: 90%; */
@@ -394,6 +404,9 @@ function measureScroll() {
 
 			// for debug
 			/* border: 1px solid rgb(0, 255, 0); */
+
+			// no interaction
+			pointer-events: none;
 
 			// fill container box 100%;
 			position: absolute;

@@ -26,7 +26,8 @@
 
 			<ContentSection
 				sectionTitle="Channel Points"
-			>
+				sectionImage="src/assets/img/chat/channel_points.png"
+			>	
 				The channel points system is the heart of Chat Toys. It can periodically show a widget on screen letting your chatters know it's time to type <span class="cmd">!get</span> in chat so they can earn points to spend on other Chat Toys systems!
 				<br/>foo
 				<br/>foo
@@ -37,6 +38,7 @@
 			</ContentSection>
 			<ContentSection
 				sectionTitle="Prize Wheel"
+				sectionImage="src/assets/img/chat/prize_wheel.png"
 				:isLeft="false"
 			>
 				The Prize Wheel widget lets chatters type <span class="cmd">!spin</span> in chat to spin a wheel and win prizes! You can customize the prizes, color, and wheel PNG!

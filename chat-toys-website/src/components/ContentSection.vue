@@ -29,10 +29,33 @@
 		
 
 		<!-- the title of the section -->
-		<h2 class="content-header my-header">{{ sectionTitle }}</h2>
+		<div class="content-header">
+			<h2 class="show my-header">{{ sectionTitle }}</h2>
+			<h2 class="no-show my-header">{{ sectionTitle }}</h2>
+		</div>
 
 		<!-- the content of the section -->
 		<div class="content-box">
+			
+			<!-- add some wide space to make room for the picture -->
+			<div 
+				v-if="sectionImage!=''"
+				class="white-space"
+			>
+				<div 
+					v-if="sectionImage!=''"
+					class="pic-box"
+					
+				>
+					<img
+						class="pic"
+						:src="sectionImage"
+						:alt="sectionTitle"
+						width="80%"
+					/>
+				</div>
+			</div>
+
 			<slot/>
 		</div>
 
@@ -45,11 +68,19 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
 const defineProps = defineProps({
 	
+	// title text for the section
 	sectionTitle: {
 		type: String,
 		default: "Section Title"
 	},
 
+	// image to show
+	sectionImage: {
+		type: String,
+		default: ""
+	},
+
+	// true if the dashed lines should be on the left side
 	isLeft: {
 		type: Boolean,
 		default: true
@@ -75,26 +106,90 @@ const defineProps = defineProps({
 		// the header w/ dashed underline
 		.content-header {
 			
+			// for debug
+			/* border: 1px solid red; */
+			left: 5%;
+			max-width: 50%;
+			height: 1px;
 			position: absolute;
-			top: 91px;
+			top: 127px;
 			border-bottom: 3px dashed white;
-		}
+			padding: 0px 20px 0px 0px;
 
+			h2 {
+				line-height: 1.4rem;
+				margin-bottom: 5px;
+				text-align: right;
+
+				&.show {
+					position: absolute;
+					inset: auto 0px 0px 0px;					
+				}
+
+				&.no-show {
+					opacity: 0;
+				}
+			}
+
+		}// .content-header
 		
 		// box w/ actual content text
 		.content-box {
 
 			/* position: absolute; */
-			/* ins */
 			margin: 0% 5%;
-			border-radius: 0px 50px 50px 38px;
+			border-radius: 0px 0px 0px 36px;
 
 			background: rgba(255, 255, 255, 0.25);
+			background: #ffffff;
+			background: linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 80%);
 
 			font-size: 12px;
-			padding: 10px;
-		}
+			padding: 10px 20px;
 
+			// box that floats left or right to push the text around to make room for the optional image
+			.white-space {
+
+				// for debug
+				/* border: 1px solid red; */
+
+				width: 40%;
+				height: 100%;
+
+				float: right;
+				
+				// shows picture over a grid
+				.pic-box {
+
+					position: relative;
+					left: 15%;
+					top: 0%;
+					transform: translateY(-30%);
+					width: 100%;
+					aspect-ratio: 1;
+					border-radius: 100%;
+
+					background-image: url('src/assets/img/grid.png');
+					background-size: contain;
+					background-repeat: no-repeat;
+					background-position: center;
+
+					// actual picture
+					.pic {
+						position: absolute;
+						left: 10%;
+						top: 50%;
+						transform: translateY(-50%);
+						
+					}// .pic
+
+				}// .pic-box
+
+			}// .white-space
+
+		}// .content box
+
+		// dashed lines, common styles
 		.lines {
 
 			// for debug
@@ -117,47 +212,77 @@ const defineProps = defineProps({
 			
 		}
 
+		// the larger of the lines that connects from top & across bottom
+		.dashed-lines-section-main {
 
-		&.left {
+			inset: 0px 10% 30px 5%;		
+			.lines {
+				inset: -3px -3px 0px 0px;
+				border-left: 3px dashed white;
+				border-bottom: 3px dashed white;
+				border-radius: 0px 0px 0px 30px;
+			}
+		}// .dashed-lines-section-main
+		
+		// smaller line section that curves down to connect on the bottom
+		.dashed-lines-section-sub {
 
-			.content-header {
-				padding: 0px 0px 0px 20px;
-				left: 5%;
+			inset: auto 5% 0px auto;	
+			width: 5%;
+			height: 33px;
+			.lines {
+				inset: 0px 0px -3px -3px;
+				border-right: 3px dashed white;
+				border-top: 3px dashed white;
+				border-radius: 0px 50px 0px 0px;
 			}
 
-			.dashed-lines-section-main {
+		}// .dashed-lines-section-sub
 
-				inset: 0px 10% 30px 5%;		
-				.lines {
-					inset: -3px -3px 0px 0px;
-					border-left: 3px dashed white;
-					border-bottom: 3px dashed white;
-					border-radius: 0px 0px 0px 30px;
-				}
-			}// .dashed-lines-section-main
-			
-			.dashed-lines-section-sub {
-
-				inset: auto 5% 0px auto;	
-				width: 5%;
-				height: 33px;
-				.lines {
-					inset: 0px 0px -3px -3px;
-					border-right: 3px dashed white;
-					border-top: 3px dashed white;
-					border-radius: 0px 50px 0px 0px;
-				}
-
-			}// .dashed-lines-section-sub
-
-		}// .left
-
+		// over-ride styles just for the right-side boxes
 		&.right {
 
 			.content-header {
 				padding: 0px 20px 0px 0px;
+				left: initial;
 				right: 5%;
-			}
+				
+				h2 { 
+					text-align: left;
+				}
+				
+			}// .content-header
+
+			.content-box {
+
+				/* position: absolute; */
+				margin: 0% 5%;
+				border-radius: 0px 0px 36px 0px;
+
+				background: rgba(255, 255, 255, 0.25);
+				background: #ffffff;
+				background: linear-gradient(270deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 80%);
+
+				.white-space {
+
+					float: left;
+
+					.pic-box {
+
+						left: initial;
+						right: 15%;						
+
+						.pic {
+							position: absolute;
+							left: initial;
+							right: 10%;							
+						}// .pic
+						
+					}// .pic-box
+
+				}// .white-space
+
+			}// .content-box
 
 			.dashed-lines-section-main {
 
@@ -166,7 +291,7 @@ const defineProps = defineProps({
 					inset: -3px 0px 0px -3px;
 					border-right: 3px dashed white;
 					border-bottom: 3px dashed white;
-					border-radius: 0px 0px 50px 0px;
+					border-radius: 0px 0px 30px 0px;
 				}
 			}// .dashed-lines-section-main
 
