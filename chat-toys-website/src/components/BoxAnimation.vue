@@ -128,7 +128,7 @@ const whiteSpaceStyle = computed(() => {
 
 	// for now, return a fixed size
 	return {
-		height: 10100 + 'px',
+		height: 11100 + 'px',
 	}
 });
 

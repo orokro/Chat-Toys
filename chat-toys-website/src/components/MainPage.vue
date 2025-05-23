@@ -16,7 +16,7 @@
 				:is-left="false"
 				:show-top-circle="true"
 			>
-				<div class="spacer" style="padding-left: 15%;">
+				<div class="spacer" style="padding-left: 10%;">
 					Chat Toys is a collection of fun & interactive widgets to use in OBS,<br>
 					that interact with YouTube live chat.
 					<br/><br/>
@@ -26,7 +26,7 @@
 					Chat Toys is also open source, and you can 
 					<a href="https://github.com/orokro/Chat-Toys" target="_blank">find it on GitHub.</a>
 					<br/><br/>
-					Scroll down to find out what's inside, or...
+					Scroll down to find out what's inside, or...<br><br>
 					<a href="https://github.com/orokro/Chat-Toys/releases/" target="_blank">
 						<div class="dl-button">
 							Download Chat Toys
@@ -215,7 +215,7 @@
 				/>
 
 			</ContentSection>
-
+			
 			<ContentSection
 				section-title="Chat"
 				section-image="src/assets/img/chat/chat.png"
@@ -234,7 +234,47 @@
 				/>
 			</ContentSection>
 
+			<ContentSection
+				section-title="Commands"
+				:is-left="false"
+			>
+				<img 
+					src="../assets/img/ref/command_box.png" 
+					width="100%"
+					style="
+						position: relative; 
+						top: -0px;
+						border-radius: 5px;
+					"
+				/>
+				<br><br>
+				The various Chat Toys all provide commands for chat to interact with them. Seen above are the settings for the Head Pat Toy's <cmd>pat</cmd> command.
+				<br><br>
+				As shown above, you can:
+				<ul>
+					<li>Enable or disable the command</li>
+					<li>Limit the command to Super Chats only</li>
+					<li>Limit the command to Channel Members only</li>
+					<li>Edit the text of the command, like changing <cmd>pat</cmd> to <cmd>headpat</cmd></li>
+					<li>Set the Channel Points ₱ cost to use the command</li>
+					<li>Set a cool-down timer for chatters using the command</li>
+					<li>Set a cool-down timer for anyone using the command</li>					
+				</ul>
+				
+			</ContentSection>
 
+			<ContentSection
+				section-title="Download Now!"
+				:is-left="true"
+				:showBottomCircle="true"
+			>
+				If you're ready to make your YouTube live chat more exciting, <br><br>
+				<a href="https://github.com/orokro/Chat-Toys/releases/" target="_blank">
+					<div class="dl-button">
+						Download Chat Toys
+					</div>
+				</a>
+			</ContentSection>
 		</div>
 
 	</BoxAnimation>
