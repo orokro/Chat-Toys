@@ -223,7 +223,7 @@ const defineProps = defineProps({
 					aspect-ratio: 1;
 					border-radius: 100%;
 
-					background-image: url('src/assets/img/grid.png');
+					background-image: url('../assets/img/grid.png');
 					background-size: contain;
 					background-repeat: no-repeat;
 					background-position: center;
