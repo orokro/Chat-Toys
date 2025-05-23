@@ -49,6 +49,15 @@
 				
 				<img src="../assets/img/ref/channel_points_image.png" width="70%"/>
 
+				<br><br>
+				Check the video below to learn more!
+				<br><br>
+				<ThumbnailBox
+					slug='channel_points'
+					count="4"
+					videoUrl="wGxNc5xE-ww"
+				/>
+
 				<!-- youtube embed -->
 				<!-- <iframe
 					width="560"
@@ -70,7 +79,12 @@
 				The Prize Wheel widget lets chatters type <cmd>spin</cmd> in chat to spin a wheel and win prizes!
 				<br><br>
 				You can customize the prizes, color, and wheel PNG!
-				
+				<br><br>
+				<ThumbnailBox
+					slug='prize_wheel'
+					count="3"
+					videoUrl="JMofM8hf9SI"
+				/>
 			</ContentSection>
 
 			<ContentSection
@@ -84,8 +98,14 @@
 				<br><br>
 				You can enable chatters to pat each other, as well!
 				
-			</ContentSection>
+				<ThumbnailBox
+					slug='head_pats'
+					count="2"
+					videoUrl="wDCzZFhiU-s"
+				/>
 
+			</ContentSection>
+			
 			<ContentSection
 				section-title="Tosser"
 				section-image="src/assets/img/chat/tosser.png"
@@ -100,9 +120,15 @@
 				<br><br>
 				Chatters can type <cmd>toss</cmd> command in chat,<br>
 				or specify with <cmd>toss tomato</cmd>.
-				
-			</ContentSection>
+				<br><br>
+				<ThumbnailBox
+					slug='tosser'
+					count="3"
+					videoUrl="B4YfacihXjc"
+				/>
 
+			</ContentSection>
+			
 			<ContentSection
 				section-title="Gamba"
 				section-image="src/assets/img/chat/gamba.png"
@@ -111,7 +137,14 @@
 			>
 				The Gamba system lets your chatters place bets on predictions you set up for your steam.
 				<br><br>
-				<cmd>bet &lt;option&gt; &lt;amount&gt;</cmd> lets chatters specify the bet option &amp; amount of their channel points to put ont the line!				
+				<cmd>bet &lt;option&gt; &lt;amount&gt;</cmd> lets chatters specify the bet option &amp; amount of their channel points to put ont the line!
+				<br><br><br>
+				Check the video below to learn more!<br><br>
+				<ThumbnailBox
+					slug='gamba'
+					count="4"
+					videoUrl="lv5cDifVbTc"
+				/>
 			</ContentSection>
 
 			<ContentSection
@@ -126,6 +159,13 @@
 				or a command like <cmd>sad</cmd> for sad sounds & a sad gif.
 				<br><br>
 				There is no limit to the number of sounds & gifs you can import and assign custom commands.				
+				<br><br>
+				
+				<ThumbnailBox
+					slug='media'
+					count="3"
+					videoUrl="35cJEtJNiq8"
+				/>
 			</ContentSection>
 
 			<ContentSection
@@ -137,7 +177,19 @@
 				The Fishing Toy let's chatters play an idle-game where they can <cmd>cast</cmd> and <cmd>reel</cmd>	at their leisure.
 				<br><br>
 				You can completely customize the pond animation, the stock of fish including their names, images, rarity, and reward values.	
-				<img src="../assets/img/ref/fishing_widget.png" width="100%"/>
+				<br><br>
+				Check the video below to learn more!
+				<img 
+					src="../assets/img/ref/fishing_widget.png" 
+					width="100%"
+					style="position: relative; top: -0px;"
+				/>
+
+				<ThumbnailBox
+					slug='fishing'
+					count="4"
+					videoUrl="sm5-RHsqQmI"
+				/>
 			</ContentSection>
 
 			<ContentSection
@@ -155,6 +207,13 @@
 					href="https://www.mixamo.com/#/?page=1&query=t+pose&type=Motion%2CMotionPack"
 					target="_blank"
 				>Mixamo T-Pose skeleton.</a>
+				<br><br><br>
+				<ThumbnailBox
+					slug='stream_buddies'
+					count="3"
+					videoUrl="7cNTiqa_Kq8"
+				/>
+
 			</ContentSection>
 
 			<ContentSection
@@ -166,6 +225,13 @@
 				There are other Chat systems, such as <cmd>shout</cmd> which is like a Super Chat using channel points!
 				<br><br>
 				Also included is <cmd>swarm</cmd>, which shows user messages in a swarm if enough chatters type the command simultaneously!
+				
+				<br><br><br><br><br>
+				<ThumbnailBox
+					slug='chat'
+					count="4"
+					videoUrl="kc-181dg2M8"
+				/>
 			</ContentSection>
 
 
@@ -193,6 +259,7 @@ import BoxAnimation from './BoxAnimation.vue';
 import ScrollBeggar from './ScrollBeggar.vue';
 import BlurbBox from './BlurbBox.vue';
 import ContentSection from './ContentSection.vue';
+import ThumbnailBox from './ThumbnailBox.vue';
 
 </script>
 <style lang="scss">

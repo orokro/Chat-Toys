@@ -25,6 +25,12 @@
 			class="top-circle"
 		/>
 
+		<!-- optional bottom circle -->
+		<div 
+			v-if="showBottomCircle"
+			class="bottom-circle"
+		/>
+
 		<!-- the graphic stylized dashed lines to go left/right-->
 		<div class="dashed-lines-section-main">
 			<div class="lines"/>
@@ -92,8 +98,8 @@ const defineProps = defineProps({
 
 	// optional image scaling
 	imageScale: {
-		type: Number,
-		default: 1.0
+		type: String,
+		default: "1"
 	},
 
 	// true if the dashed lines should be on the left side
@@ -104,6 +110,12 @@ const defineProps = defineProps({
 
 	// optional top circle for style
 	showTopCircle: {
+		type: Boolean,
+		default: false
+	},
+
+	// optional top circle for style
+	showBottomCircle: {
 		type: Boolean,
 		default: false
 	}
@@ -229,8 +241,8 @@ const defineProps = defineProps({
 
 		}// .content box
 
-		// white circle
-		.top-circle {
+		// white circles
+		.top-circle, .bottom-circle {
 
 			// fixed position
 			position: absolute;
@@ -244,7 +256,12 @@ const defineProps = defineProps({
 			border-radius: 100%;
 			background: #ffffff;
 
-		}// .top-circle
+		}// .top-circle, .bottom-circle
+
+		.bottom-circle {
+			top: initial;
+			bottom: 0px;
+		}
 
 		// dashed lines, common styles
 		.lines {
