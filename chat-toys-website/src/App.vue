@@ -15,10 +15,48 @@
 <script setup>
 
 // vue
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, provide, watch } from 'vue';
 
 // components
 import MainPage from './components/MainPage.vue';
+
+// make a reactive BG theme color & provide to children
+const bgThemeColor = ref('#00ABAE')
+provide('bgThemeColor', bgThemeColor)
+
+// we need to append a raw DOM style element to manipulate the ::before dynamically
+let styleEl;
+
+// method to update the body::before style
+const updateBodyBeforeStyle = (color) => {
+
+	// generate new css for our raw style element
+	const css = `
+		body::before {
+			transition: background 2s ease-in-out !important;
+			background: linear-gradient(${color}, #000);
+		}
+	`;
+
+	// if not yet created, create it
+	if (!styleEl) {
+		styleEl = document.createElement('style')
+		document.head.appendChild(styleEl)
+	}
+
+	// update the style element with the new css
+  	styleEl.textContent = css
+}
+
+// if any of our children change the bgThemeColor, update the body::before style
+watch(bgThemeColor, (newColor) => {
+	updateBodyBeforeStyle(newColor)
+});
+
+// make sure we set up our gradient once on start up
+onMounted(() => {
+  	updateBodyBeforeStyle(bgThemeColor.value)
+});
 
 </script>
 <style lang="scss">
@@ -42,9 +80,9 @@ import MainPage from './components/MainPage.vue';
 			height: 100vh;
 
 			// just a nice gradient
-			background: linear-gradient(#5e5e5e, #000);
-			background: linear-gradient(#00ABAE, #000);
-			
+			/* background: linear-gradient(#00ABAE, #000); */
+			transition: background 2 ease-in-out;
+
 			// always on bottom, no interaction
 			z-index: -1;
 			pointer-events: none;	

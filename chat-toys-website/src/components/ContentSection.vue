@@ -87,7 +87,7 @@
 import { ref, onMounted, onUnmounted, onBeforeUnmount } from 'vue';
 
 // some props
-const defineProps = defineProps({
+const props = defineProps({
 	
 	// title text for the section
 	sectionTitle: {
@@ -105,6 +105,12 @@ const defineProps = defineProps({
 	imageScale: {
 		type: String,
 		default: "1"
+	},
+
+	// theme color for this section
+	themeColor: {
+		type: String,
+		default: "#00ABAE"
 	},
 
 	// true if the dashed lines should be on the left side
@@ -157,7 +163,9 @@ onMounted(() => {
 				if (visible) {
 					if (!isOnScreen.value) {
 						isOnScreen.value = true
-						emits('onScreenEnter')
+						emits('onScreenEnter', {
+							bgColor: props.themeColor,
+						})
 					}
 					if (!appearedOnce.value) {
 						appearedOnce.value = true

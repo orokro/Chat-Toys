@@ -13,8 +13,10 @@
 
 			<ContentSection
 				section-title="Welcome!"
+				theme-color="#00ABAE"
 				:is-left="false"
 				:show-top-circle="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				<div class="spacer" style="padding-left: 10%;">
 					Chat Toys is a collection of fun & interactive widgets to use in OBS,<br>
@@ -39,7 +41,9 @@
 				section-title="Channel Points"
 				:section-image="getChatGuyImage('src/assets/img/chat/channel_points.png')"
 				image-scale="0.9"
+				theme-color="#EED43A"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>	
 				The channel points system is the heart of Chat Toys.				
 				<br><br>
@@ -74,7 +78,9 @@
 				section-title="Prize Wheel"
 				:section-image="getChatGuyImage('src/assets/img/chat/prize_wheel.png')"
 				image-scale="1.3"
+				theme-color="#FFAAC5"
 				:is-left="false"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Prize Wheel widget lets chatters type <cmd>spin</cmd> in chat to spin a wheel and win prizes!
 				<br><br>
@@ -91,7 +97,9 @@
 				section-title="Head Pats"
 				:section-image="getChatGuyImage('src/assets/img/chat/head_pat.png')"
 				image-scale="1.1"
+				theme-color="#C6C37A"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Head Pat toy will will automatically play the head-pat gif when a chatter submits a
 				<cmd>pat</cmd> command!
@@ -110,7 +118,9 @@
 				section-title="Tosser"
 				:section-image="getChatGuyImage('src/assets/img/chat/tosser.png')"
 				image-scale="1.4"
+				theme-color="#E65A5A"
 				:is-left="false"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Tosser Toy lets your chatters toss tomatoes, pies, or paper-wads at your webcam or avatar!
 				<br><br>
@@ -133,7 +143,9 @@
 				section-title="Gamba"
 				:section-image="getChatGuyImage('src/assets/img/chat/gamba.png')"
 				image-scale="1.4"
+				theme-color="#458233"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Gamba system lets your chatters place bets on predictions you set up for your steam.
 				<br><br>
@@ -151,7 +163,9 @@
 				section-title="Media"
 				:section-image="getChatGuyImage('src/assets/img/chat/media.png')"
 				image-scale="1.1"
+				theme-color="#51547D"
 				:is-left="false"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Media Toy lets you set up any number of images, sounds, and gifs that can play with custom commands.
 				<br><br>
@@ -172,7 +186,9 @@
 				section-title="Fishing"
 				:section-image="getChatGuyImage('src/assets/img/chat/fishing.png')"
 				image-scale="1.4"
+				theme-color="#A4704C"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Fishing Toy let's chatters play an idle-game where they can <cmd>cast</cmd> and <cmd>reel</cmd>	at their leisure.
 				<br><br>
@@ -196,7 +212,9 @@
 				section-title="Stream Buddies"
 				:section-image="getChatGuyImage('src/assets/img/chat/buddies.png')"
 				image-scale="1.2"
+				theme-color="#B59EDE"
 				:is-left="false"
+				@onScreenEnter="setPageBGColor"
 			>
 				Stream Buddies show 3D avatars on stream of various members of your chat.
 				<br><br>
@@ -220,7 +238,9 @@
 				section-title="Chat"
 				:section-image="getChatGuyImage('src/assets/img/chat/chat.png')"
 				image-scale="1.0"
+				theme-color="#60C5F1"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				There are other Chat systems, such as <cmd>shout</cmd> which is like a Super Chat using channel points!
 				<br><br>
@@ -237,6 +257,8 @@
 			<ContentSection
 				section-title="Commands"
 				:is-left="false"
+				theme-color="#00ABAE"
+				@onScreenEnter="setPageBGColor"
 			>
 				<img 
 					src="../assets/img/ref/command_box.png" 
@@ -266,7 +288,9 @@
 			<ContentSection
 				section-title="Download Now!"
 				:is-left="true"
+				theme-color="#00ABAE"
 				:showBottomCircle="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				If you're ready to make your YouTube live chat more exciting, <br><br>
 				<a href="https://github.com/orokro/Chat-Toys/releases/" target="_blank">
@@ -289,7 +313,7 @@
 <script setup>
 
 // vue
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, inject } from 'vue';
 
 // components
 import Bloc from './Bloc.vue';
@@ -309,6 +333,13 @@ function getChatGuyImage(path) {
 	const key = `/${path}`;
 	const img = chatGuyImages[key]?.default;
 	return img;
+}
+
+const bgThemeColor = inject('bgThemeColor');
+function setPageBGColor({bgColor}) {
+
+	// console.log('color', bgColor);
+	// bgThemeColor.value = bgColor;
 }
 
 
