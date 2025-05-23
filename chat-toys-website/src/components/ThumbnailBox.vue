@@ -31,6 +31,15 @@
 				display: 'inline-block',
 			}"
 		>	
+			<div
+				v-if="videoUrl!='' && n === 1"
+				class="play-button"
+			>
+				<svg viewBox="0 0 100 100" width="40" height="40" fill="white">
+					<circle cx="50" cy="50" r="50" fill="white" />
+					<polygon points="40,30 70,50 40,70" fill="black" />
+				</svg>
+			</div>
 
 		</div>
 
@@ -131,6 +140,9 @@ function onWheel(e) {
 		// actual thumbnail images
 		.thumb {
 
+			// reset stacking context
+			position: relative;
+
 			// don't resize for the flex
 			flex-grow: 0;
 			flex-shrink: 0;
@@ -149,6 +161,20 @@ function onWheel(e) {
 			&:hover {
 				transform: scale(1.1);				
 			}
+
+			// play button for video thumbnails
+			.play-button {
+
+				// don't interfere with the button
+				pointer-events: none;
+
+				// center the play button icon
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -45%) scale(0.8);			
+				
+			}// .play-button
 
 		}// .thumb
 
