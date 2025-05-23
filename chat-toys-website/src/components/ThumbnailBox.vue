@@ -24,7 +24,7 @@
 			class="thumb"
 			:key="`${slug}-${n}`"
 			:style="{
-				backgroundImage: `url(src/assets/img/screens/thumbs/${slug}_0${n}.jpg)`,
+				backgroundImage: `url(${getImage(slug, n)})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				margin: '5px',
@@ -73,6 +73,15 @@ const props = defineProps({
 	},
 });
 
+// import thumbnail images for dynamic generation
+const thumbnailImages = import.meta.glob('@assets/img/screens/thumbs/*.jpg', { eager: true });
+
+// helper method to get loaded image in template
+function getImage(slug, n) {
+	const key = `/src/assets/img/screens/thumbs/${slug}_0${n}.jpg`;
+	const img = thumbnailImages[key]?.default;
+	return img;
+}
 
 // DOM el for the container
 const container = ref(null);

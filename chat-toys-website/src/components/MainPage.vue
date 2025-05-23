@@ -37,7 +37,7 @@
 
 			<ContentSection
 				section-title="Channel Points"
-				section-image="src/assets/img/chat/channel_points.png"
+				:section-image="getChatGuyImage('src/assets/img/chat/channel_points.png')"
 				image-scale="0.9"
 				:is-left="true"
 			>	
@@ -72,7 +72,7 @@
 
 			<ContentSection
 				section-title="Prize Wheel"
-				section-image="src/assets/img/chat/prize_wheel.png"
+				:section-image="getChatGuyImage('src/assets/img/chat/prize_wheel.png')"
 				image-scale="1.3"
 				:is-left="false"
 			>
@@ -89,7 +89,7 @@
 
 			<ContentSection
 				section-title="Head Pats"
-				section-image="src/assets/img/chat/head_pat.png"
+				:section-image="getChatGuyImage('src/assets/img/chat/head_pat.png')"
 				image-scale="1.1"
 				:is-left="true"
 			>
@@ -108,7 +108,7 @@
 			
 			<ContentSection
 				section-title="Tosser"
-				section-image="src/assets/img/chat/tosser.png"
+				:section-image="getChatGuyImage('src/assets/img/chat/tosser.png')"
 				image-scale="1.4"
 				:is-left="false"
 			>
@@ -131,7 +131,7 @@
 			
 			<ContentSection
 				section-title="Gamba"
-				section-image="src/assets/img/chat/gamba.png"
+				:section-image="getChatGuyImage('src/assets/img/chat/gamba.png')"
 				image-scale="1.4"
 				:is-left="true"
 			>
@@ -149,7 +149,7 @@
 
 			<ContentSection
 				section-title="Media"
-				section-image="src/assets/img/chat/media.png"
+				:section-image="getChatGuyImage('src/assets/img/chat/media.png')"
 				image-scale="1.1"
 				:is-left="false"
 			>
@@ -170,7 +170,7 @@
 
 			<ContentSection
 				section-title="Fishing"
-				section-image="src/assets/img/chat/fishing.png"
+				:section-image="getChatGuyImage('src/assets/img/chat/fishing.png')"
 				image-scale="1.4"
 				:is-left="true"
 			>
@@ -194,7 +194,7 @@
 
 			<ContentSection
 				section-title="Stream Buddies"
-				section-image="src/assets/img/chat/buddies.png"
+				:section-image="getChatGuyImage('src/assets/img/chat/buddies.png')"
 				image-scale="1.2"
 				:is-left="false"
 			>
@@ -218,7 +218,7 @@
 			
 			<ContentSection
 				section-title="Chat"
-				section-image="src/assets/img/chat/chat.png"
+				:section-image="getChatGuyImage('src/assets/img/chat/chat.png')"
 				image-scale="1.0"
 				:is-left="true"
 			>
@@ -300,6 +300,17 @@ import ScrollBeggar from './ScrollBeggar.vue';
 import BlurbBox from './BlurbBox.vue';
 import ContentSection from './ContentSection.vue';
 import ThumbnailBox from './ThumbnailBox.vue';
+
+// import thumbnail images for dynamic generation
+const chatGuyImages = import.meta.glob('@assets/img/chat/*.png', { eager: true });
+
+// helper method to get loaded image in template
+function getChatGuyImage(path) {
+	const key = `/${path}`;
+	const img = chatGuyImages[key]?.default;
+	return img;
+}
+
 
 </script>
 <style lang="scss">
