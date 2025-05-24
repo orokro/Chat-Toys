@@ -13,8 +13,10 @@
 
 			<ContentSection
 				section-title="Welcome!"
+				theme-color="#00ABAE"
 				:is-left="false"
 				:show-top-circle="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				<div class="spacer" style="padding-left: 10%;">
 					Chat Toys is a collection of fun & interactive widgets to use in OBS,<br>
@@ -39,7 +41,9 @@
 				section-title="Channel Points"
 				:section-image="getChatGuyImage('src/assets/img/chat/channel_points.png')"
 				image-scale="0.9"
+				theme-color="#EED43A"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>	
 				The channel points system is the heart of Chat Toys.				
 				<br><br>
@@ -56,25 +60,18 @@
 					slug='channel_points'
 					count="4"
 					videoUrl="wGxNc5xE-ww"
+					@thumbnail-click="handleThumbnailClick"
 				/>
 
-				<!-- youtube embed -->
-				<!-- <iframe
-					width="560"
-					height="315"
-					src="https://www.youtube.com/embed/wGxNc5xE-ww"
-					title="YouTube video player"
-					frameborder="0"
-					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-					allowfullscreen
-				></iframe> -->
 			</ContentSection>
 
 			<ContentSection
 				section-title="Prize Wheel"
 				:section-image="getChatGuyImage('src/assets/img/chat/prize_wheel.png')"
 				image-scale="1.3"
+				theme-color="#FFAAC5"
 				:is-left="false"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Prize Wheel widget lets chatters type <cmd>spin</cmd> in chat to spin a wheel and win prizes!
 				<br><br>
@@ -84,6 +81,7 @@
 					slug='prize_wheel'
 					count="3"
 					videoUrl="JMofM8hf9SI"
+					@thumbnail-click="handleThumbnailClick"
 				/>
 			</ContentSection>
 
@@ -91,7 +89,9 @@
 				section-title="Head Pats"
 				:section-image="getChatGuyImage('src/assets/img/chat/head_pat.png')"
 				image-scale="1.1"
+				theme-color="#C6C37A"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Head Pat toy will will automatically play the head-pat gif when a chatter submits a
 				<cmd>pat</cmd> command!
@@ -102,6 +102,7 @@
 					slug='head_pats'
 					count="2"
 					videoUrl="wDCzZFhiU-s"
+					@thumbnail-click="handleThumbnailClick"
 				/>
 
 			</ContentSection>
@@ -110,7 +111,9 @@
 				section-title="Tosser"
 				:section-image="getChatGuyImage('src/assets/img/chat/tosser.png')"
 				image-scale="1.4"
+				theme-color="#E65A5A"
 				:is-left="false"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Tosser Toy lets your chatters toss tomatoes, pies, or paper-wads at your webcam or avatar!
 				<br><br>
@@ -125,6 +128,7 @@
 					slug='tosser'
 					count="3"
 					videoUrl="B4YfacihXjc"
+					@thumbnail-click="handleThumbnailClick"
 				/>
 
 			</ContentSection>
@@ -133,9 +137,11 @@
 				section-title="Gamba"
 				:section-image="getChatGuyImage('src/assets/img/chat/gamba.png')"
 				image-scale="1.4"
+				theme-color="#458233"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>
-				The Gamba system lets your chatters place bets on predictions you set up for your steam.
+				The Gamba system lets your chatters place bets on predictions you set up for your stream.
 				<br><br>
 				<cmd>bet &lt;option&gt; &lt;amount&gt;</cmd> lets chatters specify the bet option &amp; amount of their channel points to put ont the line!
 				<br><br><br>
@@ -144,6 +150,7 @@
 					slug='gamba'
 					count="4"
 					videoUrl="lv5cDifVbTc"
+					@thumbnail-click="handleThumbnailClick"
 				/>
 			</ContentSection>
 
@@ -151,7 +158,9 @@
 				section-title="Media"
 				:section-image="getChatGuyImage('src/assets/img/chat/media.png')"
 				image-scale="1.1"
+				theme-color="#51547D"
 				:is-left="false"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Media Toy lets you set up any number of images, sounds, and gifs that can play with custom commands.
 				<br><br>
@@ -165,6 +174,7 @@
 					slug='media'
 					count="3"
 					videoUrl="35cJEtJNiq8"
+					@thumbnail-click="handleThumbnailClick"
 				/>
 			</ContentSection>
 
@@ -172,7 +182,9 @@
 				section-title="Fishing"
 				:section-image="getChatGuyImage('src/assets/img/chat/fishing.png')"
 				image-scale="1.4"
+				theme-color="#A4704C"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				The Fishing Toy let's chatters play an idle-game where they can <cmd>cast</cmd> and <cmd>reel</cmd>	at their leisure.
 				<br><br>
@@ -189,6 +201,7 @@
 					slug='fishing'
 					count="4"
 					videoUrl="sm5-RHsqQmI"
+					@thumbnail-click="handleThumbnailClick"
 				/>
 			</ContentSection>
 
@@ -196,7 +209,9 @@
 				section-title="Stream Buddies"
 				:section-image="getChatGuyImage('src/assets/img/chat/buddies.png')"
 				image-scale="1.2"
+				theme-color="#B59EDE"
 				:is-left="false"
+				@onScreenEnter="setPageBGColor"
 			>
 				Stream Buddies show 3D avatars on stream of various members of your chat.
 				<br><br>
@@ -212,6 +227,7 @@
 					slug='stream_buddies'
 					count="3"
 					videoUrl="7cNTiqa_Kq8"
+					@thumbnail-click="handleThumbnailClick"
 				/>
 
 			</ContentSection>
@@ -220,7 +236,9 @@
 				section-title="Chat"
 				:section-image="getChatGuyImage('src/assets/img/chat/chat.png')"
 				image-scale="1.0"
+				theme-color="#60C5F1"
 				:is-left="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				There are other Chat systems, such as <cmd>shout</cmd> which is like a Super Chat using channel points!
 				<br><br>
@@ -231,12 +249,15 @@
 					slug='chat'
 					count="4"
 					videoUrl="kc-181dg2M8"
+					@thumbnail-click="handleThumbnailClick"
 				/>
 			</ContentSection>
 
 			<ContentSection
 				section-title="Commands"
 				:is-left="false"
+				theme-color="#00ABAE"
+				@onScreenEnter="setPageBGColor"
 			>
 				<img 
 					src="../assets/img/ref/command_box.png" 
@@ -266,7 +287,9 @@
 			<ContentSection
 				section-title="Download Now!"
 				:is-left="true"
+				theme-color="#00ABAE"
 				:showBottomCircle="true"
+				@onScreenEnter="setPageBGColor"
 			>
 				If you're ready to make your YouTube live chat more exciting, <br><br>
 				<a href="https://github.com/orokro/Chat-Toys/releases/" target="_blank">
@@ -285,11 +308,12 @@
 	<!-- a box on the bottom of the page to prompt the user to scroll down -->
 	<ScrollBeggar/>
 
+	<container/>
 </template>
 <script setup>
 
 // vue
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, inject } from 'vue';
 
 // components
 import Bloc from './Bloc.vue';
@@ -300,17 +324,51 @@ import ScrollBeggar from './ScrollBeggar.vue';
 import BlurbBox from './BlurbBox.vue';
 import ContentSection from './ContentSection.vue';
 import ThumbnailBox from './ThumbnailBox.vue';
+import ThumbModal from './ThumbModal.vue';
+
+// lib/misc
+import { promptModal, openModal, container } from 'jenesius-vue-modal';
 
 // import thumbnail images for dynamic generation
 const chatGuyImages = import.meta.glob('@assets/img/chat/*.png', { eager: true });
 
-// helper method to get loaded image in template
+/**
+ * Helper method to get loaded image in template
+ * 
+ * @param path {string} - the path to the image
+ */
 function getChatGuyImage(path) {
 	const key = `/${path}`;
 	const img = chatGuyImages[key]?.default;
 	return img;
 }
 
+
+/**
+ * Show thumbnail modal w/ selected thumbnail when clicked
+ * 
+ * @param details {Object} - the details of the thumbnail clicked
+ */
+function handleThumbnailClick(details){
+
+	openModal(
+		ThumbModal,
+		{
+			slug: details.slug,
+			count: parseInt(details.count),
+			index: parseInt(details.index),
+			videoUrl: details.videoUrl,
+		},
+	);
+}
+
+
+const bgThemeColor = inject('bgThemeColor');
+function setPageBGColor({bgColor}) {
+
+	// console.log('color', bgColor);
+	// bgThemeColor.value = bgColor;
+}
 
 </script>
 <style lang="scss">

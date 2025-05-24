@@ -13,10 +13,12 @@
 
 	<!-- main outer-most wrapper -->
 	<div
+		ref="containerRef"
 		class="content-section-box"
 		:class="{
-			'left': isLeft,
-			'right': !isLeft
+			left: isLeft,
+			right: !isLeft,
+			show: appearedOnce,
 		}"
 	>
 		<!-- optional top circle -->
@@ -57,7 +59,9 @@
 				<div 
 					v-if="sectionImage!=''"
 					class="pic-box"
-					
+					:class="{
+						show: appearedOnce,
+					}"
 				>
 					<img
 						class="pic"
@@ -80,9 +84,10 @@
 <script setup>
 
 // vue
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, onBeforeUnmount } from 'vue';
 
-const defineProps = defineProps({
+// some props
+const props = defineProps({
 	
 	// title text for the section
 	sectionTitle: {
@@ -100,6 +105,12 @@ const defineProps = defineProps({
 	imageScale: {
 		type: String,
 		default: "1"
+	},
+
+	// theme color for this section
+	themeColor: {
+		type: String,
+		default: "#00ABAE"
 	},
 
 	// true if the dashed lines should be on the left side
@@ -121,6 +132,74 @@ const defineProps = defineProps({
 	}
 });
 
+// some events
+const emits = defineEmits(['onScreenEnter', 'onScreenExit', 'onFirstEnter'])
+
+// Threshold for detecting if the element is in the viewport
+const visibility = 0.5;
+
+// the main components outer dom element
+const containerRef = ref(null);
+
+// refs
+const isOnScreen = ref(false)
+const appearedOnce = ref(false)
+
+// intersection observer
+let observer = null;
+
+onMounted(() => {
+
+	// set up the intersection observer w/ the viewport
+	observer = new IntersectionObserver(
+		(entries) => {
+
+			for (const entry of entries) {
+
+				if (entry.target !== containerRef.value) 
+					continue;
+
+				const visible = entry.isIntersecting && entry.intersectionRatio >= visibility
+				if (visible) {
+					if (!isOnScreen.value) {
+						isOnScreen.value = true
+						emits('onScreenEnter', {
+							bgColor: props.themeColor,
+						})
+					}
+					if (!appearedOnce.value) {
+						appearedOnce.value = true
+						emits('onFirstEnter')
+					}
+				} else {
+					if (isOnScreen.value) {
+						isOnScreen.value = false
+						emits('onScreenExit')
+					}
+				}
+			
+			}// next entry
+		},
+		{
+			threshold: visibility
+		}
+	)
+
+	// observe the container element
+	if (containerRef.value) {
+		observer.observe(containerRef.value)
+	}
+});
+
+onBeforeUnmount(() => {
+
+	// if we have an observer, unobserve the container element
+	if (observer && containerRef.value) {
+		observer.unobserve(containerRef.value)
+		observer.disconnect()
+	}
+});
+
 </script>
 <style lang="scss" scoped>
 
@@ -134,7 +213,7 @@ const defineProps = defineProps({
 
 		// reset stacking context for children
 		position: relative;
-
+		
 		// padding on top to make room for the title
 		padding: 130px 0px 30px 0px;
 
@@ -151,6 +230,11 @@ const defineProps = defineProps({
 			border-bottom: 3px dashed white;
 			padding: 0px 20px;
 
+			// animate in
+			transform-origin: left;
+			transform: scaleX(0);
+			transition: transform 0.5s ease-in-out;
+
 			h2 {
 				line-height: 1.4rem;
 				margin-bottom: 5px;
@@ -165,7 +249,14 @@ const defineProps = defineProps({
 				&.no-show {
 					opacity: 0;
 				}
-			}
+
+				// animate in
+				transform-origin: bottom;
+				transform: scaleY(0);
+				transition: transform 0.5s ease-in-out;
+				transition-delay: 0.4s;
+
+			}// hd
 
 			// white circle
 			.circle {
@@ -181,12 +272,23 @@ const defineProps = defineProps({
 				border-radius: 100%;
 				background: #ffffff;
 
+				// animate in
+				transform: scale(0);
+				transition: transform 0.5s ease-in-out;
+				transition-delay: 0.25s;
 			}// .circle
 
 		}// .content-header
 		
 		// box w/ actual content text
 		.content-box {
+
+			position: relative;
+			top: 50px;
+			opacity: 0;
+			transition: 
+				top 0.5s ease-in-out,
+				opacity 0.5s ease-in-out;
 
 			pointer-events: initial;
 
@@ -218,7 +320,7 @@ const defineProps = defineProps({
 					position: relative;
 					left: 15%;
 					top: 0%;
-					transform: translateY(-30%);
+					transform: translateY(-30%) scale(0);
 					width: 100%;
 					aspect-ratio: 1;
 					border-radius: 100%;
@@ -228,6 +330,10 @@ const defineProps = defineProps({
 					background-repeat: no-repeat;
 					background-position: center;
 
+					transition: transform 0.5s ease-in-out;
+					&.show {
+						transform: translateY(-30%) scale(1);
+					}
 					// actual picture
 					.pic {
 						position: absolute;
@@ -319,11 +425,13 @@ const defineProps = defineProps({
 			.content-header {
 				left: initial;
 				right: 5%;
-								
+				transform-origin: right;
+
 				.circle {
 					right: initial;
 					left: -15px;
 				}
+
 			}// .content-header
 
 			.content-box {
@@ -383,6 +491,28 @@ const defineProps = defineProps({
 			}// .dashed-lines-section-sub
 
 		}// .right
+
+		&.show {
+
+			.content-header {
+				transform: scaleX(1);
+
+				.circle {
+					transform: scale(1);
+				}
+
+				h2 {
+					transform: scaleY(1);
+				}
+			}
+
+			.content-box {
+				top: 0px;
+				opacity: 1;
+			}
+
+		}// &.show
+
 
 	}// .content-section-box
 
