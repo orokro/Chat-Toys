@@ -66,9 +66,12 @@
 		<div
 			v-show="initialAnimationMode == false"
 			class="main-content"
+			ref="contentElRef"
 			:style="contentStyle"
 		>
-			<slot/>
+			<div ref="scrollContent">
+				<slot />
+			</div>
 		</div>
 
 		<!-- 
@@ -98,6 +101,8 @@ import { ref, onMounted, computed, onBeforeUnmount } from 'vue';
 
 // element refs
 const lidElRef = ref(null);
+const contentElRef = ref(null);
+const scrollContent = ref(null);
 
 // some vars we'll use for layout & animations tate
 const isPortrait = ref(false);
@@ -108,6 +113,7 @@ const squareSize = ref(0);
 const scrollY = ref(0);
 const boxAniFrame = ref(0);
 const initialAnimationMode = ref(true);
+const contentSizeHeight = ref(0);
 
 // for computing animation, we'll pick an arbitrary y-height to use
 const initialAnimationScrollDistance = 10 * 50;
@@ -125,6 +131,9 @@ const bodyResizeObserver = new ResizeObserver((entries) => {
 
 // the size of the white space that will be used to create scrollable space
 const whiteSpaceStyle = computed(() => {
+
+	// doesn't work
+	const height = contentSizeHeight.value + initialAnimationScrollDistance + 'px';
 
 	// for now, return a fixed size
 	return {
@@ -271,6 +280,9 @@ function measureOrientation() {
 
 	// set the square size to the smaller of the two
 	squareSize.value = Math.min(windowWidth.value, windowHeight.value);
+
+	// measure the content scroll height
+	contentSizeHeight.value = scrollContent.value.scrollHeight;
 }
 
 
@@ -311,8 +323,7 @@ function measureScroll() {
 		.ani-frames {
 
 			// no interaction
-			pointer-events: none;
-			
+			pointer-events: none;			
 
 			// for debug
 			/* border: 1px solid cyan; */
