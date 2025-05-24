@@ -29,7 +29,9 @@
 				backgroundPosition: 'center',
 				margin: '5px',
 				display: 'inline-block',
+				border: selectedIndex === n ? '4px solid white' : '2px solid black',
 			}"
+			@click="() => handleClick(n)"
 		>	
 			<div
 				v-if="videoUrl!='' && n === 1"
@@ -65,6 +67,12 @@ const props = defineProps({
 		default: "1"
 	},
 
+	// optional selected index to show border
+	selectedIndex: {
+		type: Number,
+		default: -1
+	},
+
 	// for now we'll only support one video thumbnail and it will always be the first
 	// if this URL is non-empty, we'll use it as the video thumbnail
 	videoUrl: {
@@ -72,6 +80,9 @@ const props = defineProps({
 		default: ""
 	},
 });
+
+// events
+const emit = defineEmits(['thumbnailClick']);
 
 // import thumbnail images for dynamic generation
 const thumbnailImages = import.meta.glob('@assets/img/screens/thumbs/*.jpg', { eager: true });
@@ -83,21 +94,28 @@ function getImage(slug, n) {
 	return img;
 }
 
+
 // DOM el for the container
 const container = ref(null);
 let hoverTimeStamp = 0;
+
 
 // record time when we enter
 function onMouseEnter() {
 	hoverTimeStamp = Date.now();
 }
 
+
 // if the mouse leaves the container, reset the timestamp
 function onMouseLeave() {
 	hoverTimeStamp = 0;
 }
 
-// handle when the wheel is used
+/**
+ * handle when the wheel is used
+ * 
+ * @param e - the wheel event
+ */
 function onWheel(e) {	
 
 	// if the timeStamp is <=0, GTFO
@@ -119,13 +137,30 @@ function onWheel(e) {
 	e.stopPropagation();
 }
 
+
+/**
+ * Handle click on thumbnail & emit event
+ * 
+ * @param {number} n - the index of the thumbnail clicked
+ */
+function handleClick(n) {
+
+	// emit the thumbnail click event
+	emit('thumbnailClick', {
+		index: n,
+		count: props.count,
+		slug: props.slug,
+		videoUrl: props.videoUrl,
+	});
+}
+
 </script>
 <style lang="scss" scoped>
 
 	// main outer wrapper
 	.thumbnail-box {
 		
-		display: flow-root;
+		/* display: flow-root; */
 
 		// reset stacking context
 		position: relative;
@@ -188,7 +223,7 @@ function onWheel(e) {
 		}// .thumb
 
 		&::-webkit-scrollbar {
-			height: 12px;
+			height: 11px;
 		}
 
 		&::-webkit-scrollbar-track {
@@ -200,7 +235,7 @@ function onWheel(e) {
 			border-radius: 6px;
 			
 			// Creates "padding" effect
-			border: 3px solid transparent; 
+			border: 4px solid transparent; 
 
 			// Ensures border doesn't overlay the background
 			background-clip: content-box; 
