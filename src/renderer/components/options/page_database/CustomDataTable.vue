@@ -129,7 +129,17 @@ const sortOrder = ref(1);
 
 // the keys will be columns - but we'll filter out the ones we don't want
 const filteredKeys = computed(() => {
-	return Object.keys(props.data[0]).filter(key => !props.ignoreColumns.includes(key));
+
+  if(!props.data)
+    return [];
+
+  try {
+	  
+    return Object.keys(props.data[0]).filter(key => !props.ignoreColumns.includes(key));
+  
+  }catch(e){
+    return [];
+  }
 });
 
 
