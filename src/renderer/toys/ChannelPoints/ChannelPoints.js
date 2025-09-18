@@ -228,7 +228,7 @@ export default class ChannelPoints extends Toy {
 		}
 
 		// if we don't have any claims left, reject the command
-		if(this.claimsLeft.value <= 0){
+		if(this.claimsLeft.value <= 0 && this.settings.maxClaims.value > 0){
 			handshake.reject(`${msg.author}: No claims left`);
 			return;
 		}
@@ -237,9 +237,9 @@ export default class ChannelPoints extends Toy {
 		this.claimsLeft.value--;
 
 		// if there's no claims left, return to idle mode
-		if(this.claimsLeft.value <= 0)
+		if(this.claimsLeft.value <= 0 && this.settings.maxClaims.value > 0)
 			this.clearAbleTimeouts.push(window.setElectronTimeout(()=>{
-				this.startGetMode();
+				this.startIdleMode();
 			}, 1000));
 
 		// update the user's points and other data

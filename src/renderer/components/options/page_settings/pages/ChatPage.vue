@@ -26,6 +26,9 @@
 			If a live stream ends or chat is disabled, the source will be "unavailable."
 			<br>
 			You cannot enable an unavailable source.
+			<br><br>
+			If you wish to use private streams / member only streams, you will need to
+			<button type="button" @click="showYouTube">Log Into YouTube</button>
 		</p>
 		<ChatSourceManager/>
 
@@ -148,6 +151,9 @@ import { AutoChatChecker } from '@scripts/AutoChatChecker.js';
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
+function showYouTube(){
+	window.open("https://youtube.com");
+}
 
 </script>
 <style lang="scss" scoped>	
@@ -194,5 +200,38 @@ const ctApp = inject('ctApp');
 		}// .obsStatus
 
 	}// .autoChatRow
+
+	// make buttons look pretty
+	button {
+
+		// nice padding, rounded corners, and pointer cursor
+		padding: 5px 10px;
+		border-radius: 5px;
+		cursor: pointer;
+
+		// nice vertical gradient
+		background: linear-gradient(180deg, #e96c6c, #ff0000);
+		text-transform: uppercase;
+		color: white;
+		font-weight: bolder;
+
+		&:disabled {
+			pointer-events: none;
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+
+		// mm that primary tho
+		&.primary {
+			background: linear-gradient(180deg, #05dee2, #00ABAE);
+			font-weight: bolder;
+			color: white;
+		}
+
+		&:hover {
+			background: linear-gradient(180deg, #05dee2, #00ABAE);
+		}
+
+	}// button
 
 </style>

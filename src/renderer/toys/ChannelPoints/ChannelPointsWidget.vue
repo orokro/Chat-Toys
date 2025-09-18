@@ -74,7 +74,7 @@
 				<!-- the text elements -->
 				<div class="textOverlay">
 
-					<div v-if="socketSettingsRef.showClaimsRemaining" class="claimsRemaining">
+					<div v-if="socketSettingsRef.showClaimsRemaining && socketSettingsRef.maxClaims>0" class="claimsRemaining">
 						{{ claimsLeft }} left!
 					</div>
 
@@ -155,7 +155,7 @@ const ready = ref(false);
 const socketSettingsRef = useToySettings('channel-points', 'widgetBox', emit, () => {
 	ready.value = true;
 	// console.log('channel-points settings updated');
-	// console.log(socketSettingsRef.value);
+	console.log(socketSettingsRef.value);
 });
 
 // gets live sockets
