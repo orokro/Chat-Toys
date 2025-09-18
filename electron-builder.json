@@ -10,7 +10,27 @@
 		"shortcutName": "Electron App"
 	},
 	"win": {
-		"target": "nsis"
+		"target": [
+			{
+				"target": "nsis",
+				"arch": [
+					"x64"
+				]
+			},
+			{
+				"target": "msi",
+				"arch": [
+					"x64"
+				]
+			}
+		]
+	},
+	"msi": {
+		"oneClick": false,
+		"perMachine": false,
+		"createDesktopShortcut": true,
+		"createStartMenuShortcut": true,
+		"shortcutName": "Chat-Toys"
 	},
 	"linux": {
 		"target": [
@@ -41,7 +61,23 @@
 		},
 		"!build",
 		"!dist",
-		"!scripts"
+		"!scripts",
+		"!**/*.map",
+		"!**/node_modules/.bin",
+		"!**/node_modules/**/test{,s}/**",
+		"!**/node_modules/**/docs/**",
+		"!**/node_modules/**/examples/**",
+		"!**/node_modules/**/demo/**",
+
+		"!**/node_modules_backup/.bin",
+		"!**/node_modules_backup/**/test{,s}/**",
+		"!**/node_modules_backup/**/docs/**",
+		"!**/node_modules_backup/**/examples/**",
+		"!**/node_modules_backup/**/demo/**",
+
+		"!misc/**",
+		"!chat-toys-website/**",
+		"!old_vite_cgs/**"
 	],
 	"extraResources": [
 		{

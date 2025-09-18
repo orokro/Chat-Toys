@@ -17,10 +17,8 @@ function buildMain() {
     return compileTs(mainPath);
 }
 
-FileSystem.rmSync(Path.join(__dirname, '..', 'build'), {
-    recursive: true,
-    force: true,
-})
+FileSystem.rmSync(Path.join(__dirname, '..', 'build'), { recursive: true, force: true });
+FileSystem.rmSync(Path.join(__dirname, '..', 'dist'), { recursive: true, force: true });
 
 console.log(Chalk.blueBright('Transpiling renderer & main...'));
 
