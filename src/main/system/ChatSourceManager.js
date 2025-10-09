@@ -343,6 +343,13 @@ class ChatSourceManager {
 
 		// set up communication with the renderer process
 		this.setupIPC();
+
+		window.onBeforeunload = (e) => {
+			alert('hi');
+			console.log('App is closing, disabling all chat sources...');
+			e.returnValue = false; // prevent unload
+			this.disableAllChatSources();
+		}
 	}
 
 	/**
@@ -433,6 +440,15 @@ class ChatSourceManager {
 	disableChatSource(youtube_id) {
 		const chat = this.chatSources.get(youtube_id);
 		if (chat) chat.disable();
+	}
+
+
+	/**
+	 * Disables all chat sources
+	 */
+	disableAllChatSources() {
+		for (const chat of this.chatSources.values())
+			chat.disable();
 	}
 
 

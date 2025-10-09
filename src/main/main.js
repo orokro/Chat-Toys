@@ -50,12 +50,54 @@ process.on('uncaughtException', console.error);
 process.on('unhandledRejection', console.error);
 
 // function to destroy all windows
-function destroyAllWindows() {
+function destroyAllWindows_old() {
 	openedWindows.forEach((win) => {
 		win.destroy();
 	});
 	openedWindows = [];
 }
+
+
+// nuclear option: destroy all windows and kill the app cleanly
+function destroyAllWindows() {
+	try {
+		// Get every BrowserWindow that exists (even if not tracked)
+		const allWindows = BrowserWindow.getAllWindows();
+
+		// Attempt to close/destroy each one forcibly
+		for (const win of allWindows) {
+			try {
+				if (!win.isDestroyed()) {
+					win.removeAllListeners(); // prevent reentry / crashes
+					win.destroy(); // bypass close handlers
+				}
+			} catch (err) {
+				console.error('Error destroying window:', err);
+			}
+		}
+
+		// Extra safety: clear any references you’re tracking
+		if (global.openedWindows && Array.isArray(global.openedWindows)) {
+			global.openedWindows.length = 0;
+		}
+
+		// Give the event loop a tick to finish destruction, then quit
+		setTimeout(() => {
+			try {
+				app.exit(0); // immediate exit, bypass graceful shutdown
+			} catch {
+				process.exit(0); // absolute fallback
+			}
+		}, 200);
+
+	} catch (err) {
+		console.error('Critical failure during destroyAllWindows:', err);
+		// As a last resort, hard kill Node
+		process.exit(1);
+	}
+}
+
+
 
 // When the app is ready, create the window. 
 app.whenReady().then(() => {
