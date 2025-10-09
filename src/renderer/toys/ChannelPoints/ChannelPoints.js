@@ -59,6 +59,7 @@ export default class ChannelPoints extends Toy {
 		this.mode = socketShallowRef(this.static.slugify('mode'), 'idle');
 		this.timeLeftNormalised = socketShallowRef(this.static.slugify('timeLeftNormalised'), 0);
 		this.userClaims = socketShallowRef(this.static.slugify('userClaims'), []);
+		this.userMeLogs = socketShallowRef(this.static.slugify('userMeLogs'), []);
 		this.widgetIconPath = socketShallowRef(
 			this.static.slugify('widgetIconPath'),
 			this.getAssetPath(this.settings.widgetIconId.value));
@@ -285,6 +286,10 @@ export default class ChannelPoints extends Toy {
 
 		// log success!
 		this.chatToysApp.log.info(`${msg.author} has ${points} points`);
+		this.userMeLogs.value = [...this.userMeLogs.value, {
+			id: uuidv4(),
+			text: `${msg.author}: ₱ ${points}`,
+		}];
 
 		// we have accepted the command
 		handshake.accept();

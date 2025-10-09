@@ -7,7 +7,7 @@
 <template>
 
 	<!-- auto sizer so we can lazily scale the widget lol -->
-	<FixedAutoSizer :targetWidth="200" :targetHeight="200" v-model="scale">
+	<FixedAutoSizer :targetWidth="200" :targetHeight="250" v-model="scale">
 
 		<!-- box to scale -->
 		<div
@@ -93,6 +93,13 @@
 						</div>
 					</div>
 
+					<div
+						v-if="true || userMeMsg !== ''" 
+						class="userMeLogs"
+					>
+						{{  userMeMsg }}
+					</div>
+
 				</div>
 
 			</div>
@@ -124,6 +131,9 @@ const widgetSlug = 'points';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
 }
+
+// const userMeMsg = ref(`${"Orokro"}: ₱ ${9001}`);
+const userMeMsg = ref('');
 
 // set up our live-light code
 keepAliveSocket(thisSlug, widgetSlug);
@@ -165,6 +175,7 @@ const claimsLeft = socketShallowRefReadOnly(slugify('claimsLeft'), 0);
 const mode = socketShallowRefReadOnly(slugify('mode'), 'idle');
 const timeLeftNormalised = socketShallowRefReadOnly(slugify('timeLeftNormalised'), 0);
 const userClaims = socketShallowRefReadOnly(slugify('userClaims'), []);
+const userMeLogs = socketShallowRefReadOnly(slugify('userMeLogs'), []);
 const widgetIconPath = socketShallowRefReadOnly(slugify('widgetIconPath'), null);
 
 
@@ -193,6 +204,124 @@ watch(userClaims, (newClaims) => {
 	}// next i
 });
 
+/**
+ * Queue of pending user messages.
+ * @type {string[]}
+ */
+ const msgQueue = [];
+
+/**
+ * Timer ID for clearing messages.
+ * @type {number|null}
+ */
+let msgTimer = null;
+
+/**
+ * Duration each message is displayed (in milliseconds).
+ * @constant
+ */
+const DISPLAY_DURATION = 3000;
+
+/**
+ * Handles displaying the next message in the queue.
+ * This function pops a message, sets it to `userMeMsg`, and
+ * sets a timer to clear it after DISPLAY_DURATION.
+ */
+function processNextMsg() {
+	// If queue is empty, nothing to do
+	if (msgQueue.length === 0) {
+		msgTimer = null;
+		return;
+	}
+
+	// Pop next message and display it
+	const nextMsg = msgQueue.shift();
+	userMeMsg.value = nextMsg;
+
+	// Start timer to clear message
+	msgTimer = setTimeout(() => {
+		userMeMsg.value = '';
+
+		setTimeout(()=>{
+
+			// Clear timer reference
+			msgTimer = null;
+
+			// Process next message if any remain
+			processNextMsg();
+
+		}, 500);
+
+	}, DISPLAY_DURATION);
+}
+
+/**
+ * Push a new message to the queue.
+ * If no timer is running, it will immediately start processing.
+ * Otherwise, it will wait until the current message cycle completes.
+ * @param {string} msg - The message to add to the queue.
+ */
+function pushUserMsg(msg) {
+	if (typeof msg !== 'string' || !msg.trim()) return;
+	msgQueue.push(msg);
+
+	// If no timer running, start the loop
+	if (!msgTimer) {
+		processNextMsg();
+	}
+}
+
+// Example usage:
+// pushUserMsg('Hello there!');
+// pushUserMsg('This will appear after the previous one.');
+
+
+/**
+ * Set of message IDs we've already processed.
+ * Prevents duplicate pushUserMsg() calls.
+ * @type {Set<string>}
+ */
+ const seenMsgIds = new Set();
+
+/**
+ * Watch the userMeLogs shallowRef for changes.
+ * Whenever new items appear, send their `.text` to pushUserMsg().
+ * When items disappear (cleared by the source), we remove their IDs from our tracking set.
+ */
+watch(
+	() => userMeLogs.value,
+	(newLogs) => {
+
+		console.log('New userMeLogs:', newLogs);
+		if (!Array.isArray(newLogs)) return;
+
+		console.log('b');
+
+		// Collect all current IDs from the newLogs array
+		const currentIds = new Set(newLogs.map((log) => log.id));
+
+		// --- Step 1: Remove stale IDs from seenMsgIds ---
+		for (const id of seenMsgIds) {
+			if (!currentIds.has(id)) {
+				seenMsgIds.delete(id);
+			}
+		}
+
+		// --- Step 2: Process any new logs we haven't seen yet ---
+		for (const log of newLogs) {
+			if (!seenMsgIds.has(log.id)) {
+				seenMsgIds.add(log.id);
+
+				// Defensive: ensure text exists and is a string
+				if (typeof log.text === 'string' && log.text.trim()) {
+					pushUserMsg(log.text);
+				}
+			}
+		}
+	},
+	{ deep: false } // shallowRef → no need for deep watching
+);
+
 </script>
 <style lang="scss" scoped>
 
@@ -201,7 +330,7 @@ watch(userClaims, (newClaims) => {
 		
 		// same size as the default widget scale
 		width: 200px;
-		height: 200px;
+		height: 250px;
 		
 		// center in the widget
 		position: absolute;
@@ -215,10 +344,10 @@ watch(userClaims, (newClaims) => {
 
 		// fixed size (if the user wants to adjust size we'll use transforms)
 		width: 200px;
-		height: 200px;
+		height: 250px;
 
 		// for debug
-		/* border: 1px solid red; */
+		// border: 1px solid red;
 
 		transition: transform 0.25s ease-in-out;
 		transform: scale(1);
@@ -236,6 +365,9 @@ watch(userClaims, (newClaims) => {
 			position: absolute !important;
 			inset: 0px;
 			mask-image: none !important;
+
+			/* border: 1px solid yellow; */
+			height: 100%;
 
 			// with the text that appears like "orokro got 100 points!"
 			.userClaims {
@@ -266,6 +398,22 @@ watch(userClaims, (newClaims) => {
 
 			}// .userClaims
 
+			.userMeLogs {
+				position: absolute;
+				bottom: 0px;
+				left: 0px;
+				right: 0px;
+				height: 40px;
+
+				// claim text
+				color: white;
+				text-shadow: 2px 2px 0px black;
+				font-weight: bolder;
+				text-align: center;
+				line-height: 15px;
+				/* white-space: nowrap; */
+			}// .userMeLogs 
+
 		}// .textOverlay
 
 		// while the .channelPointsWidget is able to be positioned abso-lutely,
@@ -274,7 +422,7 @@ watch(userClaims, (newClaims) => {
 
 			// fill the box
 			width: 100%;
-			height: 100%;
+			aspect-ratio: 1 / 1;
 
 			// reset stacking context
 			position: relative;
@@ -391,7 +539,7 @@ watch(userClaims, (newClaims) => {
 
 				// place on bottom
 				position: absolute;
-				bottom: 0px;
+				bottom: 50px;
 				left: 50%;
 				transform: translateX(-50%);
 
@@ -409,6 +557,7 @@ watch(userClaims, (newClaims) => {
 				}
 			}// .command
 
+			
 		}// .innerWrapper
 
 	}// .channelPointsWidget
