@@ -72,6 +72,17 @@
 				</p>
 			</SettingsInputRow>
 
+			<SettingsInputRow
+				type="float"
+				:min="0.1"
+				:max="4"
+				:step="0.1"
+				v-model="tossSpeed"
+			>
+				<template #title>Toss Speed.</template>
+				<p>Font size for the on-screen chat only.</p>
+			</SettingsInputRow>
+
 			<SettingsRow>
 				<h3>Tossable Objects</h3>
 				<p>Add/Edit 3d Models to Toss!</p>
@@ -136,7 +147,8 @@ const toy = ctApp.toyManager.toys[Tosser.slug];
 // get our local refs to use in template
 const { 
 	tosserAssets, 
-	randomTossMode
+	randomTossMode,
+	tossSpeed,
 } = toy.settings;
 
 // all of the commands system wide are stored in this chrome shallow ref

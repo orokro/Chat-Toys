@@ -106,6 +106,7 @@ const socketSettingsRef = useToySettings('tosser', 'widgetBox', emit, () => {
 	ready.value = true;	
 });
 
+window.ssr = socketSettingsRef;
 
 // update our local copy of the tosser assets when the settings change
 watch(socketSettingsRef, (newVal) => {
@@ -124,7 +125,8 @@ watch(canvasContainerRef, (newVal)=>{
 		tosserSystem = new ThreeJSTosserSystem(
 			canvasContainerRef,
 			modelsAvailable,
-			colliderBox
+			colliderBox,
+			socketSettingsRef
 		);
 
 		// expose on window for debug

@@ -44,13 +44,15 @@ export class ThreeJSTosserSystem {
 	 * @param {Ref} canvasContainerRef - the canvas container reference
 	 * @param {shallowRef} modelsAvailableRef - vue ref that is a list of available 3d modesl
 	 * @param {shallowRef} colliderBoxRef - vue ref of the collider box like {x, y, width, height}
+	 * @param {Ref} settingsRef - vue ref of the toy settings
 	 */
-	constructor(canvasContainerRef, modelsAvailableRef, colliderBoxRef) {
+	constructor(canvasContainerRef, modelsAvailableRef, colliderBoxRef, settingsRef) {
 
 		// save our refs
 		this.containerRef = canvasContainerRef;
 		this.modelsRef = modelsAvailableRef;
 		this.colliderRef = colliderBoxRef;
+		this.settingsRef = settingsRef;
 
 		// we'll store our spawned (tossed) items here
 		this.tossedItems = [];
@@ -245,10 +247,32 @@ export class ThreeJSTosserSystem {
 				this.audioLoader.load(item.soundPath, (buffer) => {
 					audio.setBuffer(buffer);
 				});
+				console.debug(`Audio loaded: ${item.soundPath}`);
 				this.audioSources.set(item.soundPath, audio);
 			}
 			
 		}// next item
+
+	}
+
+
+	/**
+		 * Create a cloned audio node from a loaded source.
+		 * This prevents WebAudio node reuse hiccups.
+		 * 
+		 * @param {Audio} source - preloaded source
+		 * @returns {Audio}
+		 */
+	makeSoundInstance(source) {
+
+		if (!source?.buffer)
+			return null;
+		
+		const s = new Audio(this.listener);
+		s.setBuffer(source.buffer);
+		s.setLoop(false);
+		s.setVolume(source.getVolume());
+		return s;
 	}
 
 
@@ -304,10 +328,11 @@ export class ThreeJSTosserSystem {
 		);
 
 		// get the associated collision sound
-		const sound = this.audioSources.get(def.soundPath);
+		const baseSound = this.audioSources.get(def.soundPath);
+		const sound = this.makeSoundInstance(baseSound);
 
 		// spawn the object
-		const tossed = new TossedObject(def.object, startPos, targetPos, this.scene, sound);
+		const tossed = new TossedObject(def.object, startPos, targetPos, this.settingsRef, this.scene, sound);
 		this.tossedItems.push(tossed);
 	}
 
@@ -366,10 +391,11 @@ class TossedObject {
 	 * @param {Object3D} model - the 3d model to toss
 	 * @param {Vector3} startPos - the starting position of the object
 	 * @param {Vector3} target - the target position to toss the object to
+	 * @param {Ref} settingsRef - the settingsRef to toss the object at
 	 * @param {Scene} scene - the Three.js scene to add the object to
 	 * @param {sound} sound - the sound to play when the object is tossed
 	 */
-	constructor(model, startPos, target, scene, sound) {
+	constructor(model, startPos, target, settingsRef, scene, sound) {
 
 		// save our scene
 		this.scene = scene;
@@ -383,6 +409,7 @@ class TossedObject {
 		// save our start & target positions
 		this.startPos = startPos;
 		this.target = target.clone();
+		this.settingsRef = settingsRef;
 
 		// make random rotation values
 		const rotX = Math.random() * Math.PI * 2;
@@ -408,6 +435,7 @@ class TossedObject {
 
 		// save our sound for later
 		this.sound = sound;
+		this.lastSoundTime = 0;
 		
 		// when we crash, we'll store our particle system here
 		this.particleBurst = null;
@@ -457,7 +485,8 @@ class TossedObject {
 
 		// do physics / motion updates
 		this.velocity.add(this.gravity);
-		this.mesh.position.add(this.velocity);
+		const speed = unref(this.settingsRef).tossSpeed;
+		this.mesh.position.add(this.velocity.clone().multiplyScalar(speed));
 
 		// apply our rotation spin
 		this.mesh.rotation.x += this.rotation.x * 0.01;
@@ -474,9 +503,13 @@ class TossedObject {
 		) {
 
 			// play the collision sound
-			if (this.sound)
-				this.sound.play();
-
+			const now = performance.now();
+			if (this.sound && !this.sound.isPlaying && now - this.lastSoundTime > 200) {
+				this.lastSoundTime = now;
+				queueMicrotask(() => {
+					try { this.sound.play(); } catch (e) {}
+				});
+			}
 			// we hit
 			this.hit = true;
 
