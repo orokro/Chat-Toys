@@ -79,10 +79,21 @@
 				:step="0.1"
 				v-model="tossSpeed"
 			>
-				<template #title>Toss Speed.</template>
-				<p>Font size for the on-screen chat only.</p>
+				<template #title>Toss Speed</template>
+				<p>How quick objects should fly on screen</p>
 			</SettingsInputRow>
 
+			<SettingsInputRow
+				type="float"
+				:min="0.0"
+				:max="1"
+				:step="0.1"
+				v-model="soundVolume"
+			>
+				<template #title>Sound Volume</template>
+				<p>How loud hit sounds should be</p>
+			</SettingsInputRow>
+			
 			<SettingsRow>
 				<h3>Tossable Objects</h3>
 				<p>Add/Edit 3d Models to Toss!</p>
@@ -149,6 +160,7 @@ const {
 	tosserAssets, 
 	randomTossMode,
 	tossSpeed,
+	soundVolume,
 } = toy.settings;
 
 // all of the commands system wide are stored in this chrome shallow ref

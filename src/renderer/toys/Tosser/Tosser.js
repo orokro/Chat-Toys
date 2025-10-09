@@ -104,6 +104,7 @@ export default class Tosser extends Toy {
 			]),
 			randomTossMode: ref(true),
 			tossSpeed: ref(1),
+			soundVolume: ref(1),
 			widgetBox: shallowRef({
 				x: 20,
 				y: 20,

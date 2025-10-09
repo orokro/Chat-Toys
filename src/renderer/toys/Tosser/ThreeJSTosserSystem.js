@@ -507,6 +507,7 @@ class TossedObject {
 			if (this.sound && !this.sound.isPlaying && now - this.lastSoundTime > 200) {
 				this.lastSoundTime = now;
 				queueMicrotask(() => {
+					this.sound.setVolume(this.settingsRef.value.soundVolume);
 					try { this.sound.play(); } catch (e) {}
 				});
 			}
