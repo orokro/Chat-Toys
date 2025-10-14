@@ -43,9 +43,6 @@ class OBSViewServer {
 		// set up our IPC communication
 		this.initializeIPC();
 
-		// start our servers
-		this.startServers();
-
 		// true when app is closing
 		this.closing = false;
 
@@ -209,6 +206,12 @@ class OBSViewServer {
 
 			// set up a basic express server and a WebSocket server
 			const expressApp = express();
+
+			// If TwitchManager (or other systems) provided a setup hook, call it before listening
+			if (typeof this.setupTwitch === 'function') {
+				console.log('[OBSViewServer] Calling setupTwitch hook before starting server...');
+				this.setupTwitch(expressApp);
+			}
 
 			// log every request to Frontend
 			expressApp.use((req, res, next) => {

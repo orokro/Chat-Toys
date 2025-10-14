@@ -21,6 +21,7 @@ const store = new Store();
  * and forwarding them as JSON strings to the renderer (same as YouTube).
  */
 class TwitchChatReader {
+	
 	constructor(mainWindow) {
 		this.mainWindow = mainWindow;
 		this.client = null;

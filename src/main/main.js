@@ -121,18 +121,22 @@ app.whenReady().then(() => {
 	// Create the OBSViewServer.
 	obsViewServer = new OBSViewServer(mainWindow);
 
-	// set up system to forward chat messages from websocket to the main window
-	chatForward(obsViewServer.wss, mainWindow);
 
 	// After creating your main window and OBSViewServer
-	twitchMgr = new TwitchManager(mainWindow);
+	twitchMgr = new TwitchManager(mainWindow, obsViewServer);
 
 	// Configure with your client ID and desired scopes
 	twitchMgr.setClientConfig({
 		clientId: 'x4po2in358dfq7c2jeuek5uh85qhoh',
 		scopes: ['chat:read', 'chat:edit'],
 	});
+	
+	// start servers after twitch has added it's routes
+	obsViewServer.startServers();
 
+	// set up system to forward chat messages from websocket to the main window
+	chatForward(obsViewServer.wss, mainWindow);
+	
 	// set up the chat source manager to manage list of chats to read
 	chatSourceMgr = new ChatSourceManager(mainWindow, testURL);
 
