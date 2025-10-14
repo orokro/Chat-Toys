@@ -1,6 +1,6 @@
 {
 	"name": "Chat-Toys",
-	"version": "0.5.2",
+	"version": "0.5.3",
 	"description": "App to provide YT Chat Interactions locally!",
 	"main": "main/main.js",
 	"scripts": {
