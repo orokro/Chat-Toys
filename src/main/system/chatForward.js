@@ -24,6 +24,7 @@ export function chatForward(wss, mainWindow) {
 		socket.on('message', (data) => {
 			let msg;
 
+
 			try {
 				msg = JSON.parse(data);
 			} catch (err) {

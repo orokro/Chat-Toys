@@ -76,3 +76,44 @@ contextBridge.exposeInMainWorld('chatSourceAPI', {
 	getAll: () => ipcRenderer.invoke('CSM-get-chats'),
 	onUpdate: (cb) => ipcRenderer.on('chat-source-updated', (e, data) => cb(data)),
 });
+
+
+// ---------------------------------------------------------------------------
+// Twitch Manager Bridge (Twitch-specific naming)
+// ---------------------------------------------------------------------------
+
+/**
+ * Exposes Twitch-specific bridge to the renderer.
+ * Uses explicit method names so future platforms (YouTube, Kick, etc.)
+ * can coexist cleanly under their own APIs.
+ */
+contextBridge.exposeInMainWorld('twitchAPI', {
+	/**
+	 * Start Twitch OAuth flow.
+	 */
+	connect: () => ipcRenderer.invoke('twitch-connect'),
+
+	/**
+	 * Disconnect Twitch and clear credentials.
+	 */
+	disconnect: () => ipcRenderer.invoke('twitch-disconnect'),
+
+	/**
+	 * Get current Twitch auth/user status.
+	 * @returns {Promise<object>}
+	 */
+	getStatus: () => ipcRenderer.invoke('twitch-get-status'),
+
+	/**
+	 * Configure Twitch application (client ID, scopes).
+	 * @param {{ clientId: string, scopes?: string[] }} cfg
+	 */
+	setClientConfig: (cfg) => ipcRenderer.invoke('twitch-set-config', cfg),
+
+	/**
+	 * Listen for Twitch updates (status or messages).
+	 * @param {(data:any)=>void} cb
+	 */
+	onUpdate: (cb) => ipcRenderer.on('twitch-update', (e, data) => cb(data)),
+});
+

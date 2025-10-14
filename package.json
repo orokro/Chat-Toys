@@ -54,6 +54,7 @@
 		"serve-index": "^1.9.1",
 		"socket-ref": "",
 		"three": "^0.174.0",
+		"tmi.js": "^1.8.5",
 		"uuid": "^11.1.0",
 		"vue": "^3.3.8",
 		"vue-chartjs": "^5.3.2",

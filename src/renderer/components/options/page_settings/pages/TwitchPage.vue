@@ -24,9 +24,7 @@
 			Simply Authenticate with Twitch below, and the app will be able to read chat from any
 			of your channels.
 		</p>
-		<ChatSourceManager/>
-
-		
+		<TwitchConnectionManager/>
 
 		<SectionHeader title="Live Raw Chat (All Sources)"/>
 		<p>
@@ -58,6 +56,7 @@ import SectionHeader from '../../SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import RawLogPreview from '../RawLogPreview.vue';
+import TwitchConnectionManager from '../TwitchConnectionManager.vue';
 import ChatSourceManager from '../ChatSourceManager.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';

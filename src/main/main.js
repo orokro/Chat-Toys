@@ -16,6 +16,7 @@ import { createSystemTray } from './system/SystemTray.js';
 import { createAppMenu } from './system/MainAppMenu.js';
 import { chatForward } from './system/chatForward.js';
 import ChatSourceManager from './system/ChatSourceManager.js';
+import { TwitchManager } from './system/TwitchManager.js';
 
 // load our window tests
 const { testURL } = require('./system/WindowTests');
@@ -28,6 +29,7 @@ let mainWindow = null;
 let chatTesterWindow = null;
 let obsViewServer = null;
 let chatSourceMgr = null;
+let twitchMgr = null;
 let tray = null;
 
 // list of our spawned windows
@@ -121,6 +123,15 @@ app.whenReady().then(() => {
 
 	// set up system to forward chat messages from websocket to the main window
 	chatForward(obsViewServer.wss, mainWindow);
+
+	// After creating your main window and OBSViewServer
+	twitchMgr = new TwitchManager(mainWindow);
+
+	// Configure with your client ID and desired scopes
+	twitchMgr.setClientConfig({
+		clientId: 'x4po2in358dfq7c2jeuek5uh85qhoh',
+		scopes: ['chat:read', 'chat:edit'],
+	});
 
 	// set up the chat source manager to manage list of chats to read
 	chatSourceMgr = new ChatSourceManager(mainWindow, testURL);

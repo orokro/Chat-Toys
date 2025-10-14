@@ -72,13 +72,65 @@ export class ChatProcessor {
 	/**
 	 * Formats chat messages from the chat platform & triggers callbacks
 	 * 
-	 * @param {Object} data - Data from the chat platform
+	 * @param {Object|String} data - Data from the chat platform
 	 * @returns {Array<Object>} - Array of formatted chat messages
 	 */
 	_handleChatMessage(data) {
 
-		// break out the top level object
-		data = JSON.parse(data); //.responseContext;
+		// parse if it's a string
+		if (typeof data === 'string') {
+			try {
+				data = JSON.parse(data);
+			} catch (err) {
+				console.warn('Could not parse chat message string:', err);
+				return;
+			}
+		}
+
+		// -------------------------------
+		// Twitch support
+		// -------------------------------
+		if (data?.twitch === true) {
+
+			// sanity check: if we've already seen this message, skip
+			if (this._seenMessageIDs.has(data.id))
+				return;
+
+			const formatted = {
+				id: data.id,
+				authorUniqueID: data.author || '',
+				author: data.author || '',
+				messageText: data.message || '',
+				emojis: [],
+				time: Date.now(),
+				isMember: !!data.isMember,
+				streamID: 'twitch',
+				isSuper: false,
+				twitch: true,
+			};
+
+			console.log('[ChatProcessor] 🟣 Received Twitch chat message:', formatted);
+
+			// mark seen
+			this._markMessageAsSeen(formatted.id);
+
+			// update relationships
+			this.seenAuthors.set(formatted.author, formatted.authorUniqueID);
+
+			// push and trigger callbacks just like YouTube
+			const newMessages = [formatted];
+			this._onNewChatsCallbacks.forEach((cb) => cb(newMessages));
+
+			const updated = [...this.screenMessages.value, ...newMessages];
+			this.screenMessages.value = updated.slice(-this.displayCount);
+			return; // exit, don't continue with YouTube logic
+		}
+
+		// -------------------------------
+		// YouTube (default behavior)
+		// -------------------------------
+
+		console.log('chat data', data);
 
 		// check for the data we need
 		if (
@@ -171,7 +223,7 @@ export class ChatProcessor {
 				isSuper,
 			};
 
-			if(isSuper){
+			if (isSuper) {
 				console.log('Superchat', formatted);
 			}
 
