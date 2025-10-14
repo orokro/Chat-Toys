@@ -13,6 +13,7 @@
 	>	
 		<OBSSettingsPage v-if="selectedPage === 'obsSettings'" />
 		<ChatPage v-if="selectedPage === 'chatSettings'" />
+		<TwitchPage v-if="selectedPage === 'twitch'" />
 		<PluginPage v-if="selectedPage === 'plugin'" />
 		<CommandsDescPage v-if="selectedPage === 'copy_details'" />
 
@@ -29,6 +30,7 @@ import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 import VerticalItemsPage from '../VerticalItemsPage.vue';
 import OBSSettingsPage from './pages/OBSSettingsPage.vue';
 import ChatPage from './pages/ChatPage.vue';
+import TwitchPage from './pages/TwitchPage.vue';
 import PluginPage from './pages/PluginPage.vue';
 import CommandsDescPage	 from './pages/CommandsDescPage.vue';
 
@@ -37,6 +39,10 @@ const pageItems = [
 	{
 		slug: 'chatSettings',
 		name: 'Chat Settings',
+	},
+	{
+		slug: 'twitch',
+		name: 'Twitch Settings',
 	},
 	{
 		slug: 'obsSettings',

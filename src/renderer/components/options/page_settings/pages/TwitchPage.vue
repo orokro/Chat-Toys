@@ -1,108 +1,32 @@
 <!--
-	ChatPage.vue
-	------------
+	TwitchPage.vue
+	--------------
 
-	Page to show chat reading configuration details
+	Page to show chat reading configuration details for Twitch
 -->
 <template>
 
 	<PageBox
-		title="YT Chat Settings"
-		themeColor="darkred"
+		title="Twitch Chat Settings"
+		themeColor="indigo"
 		themeImage="assets/bg_tiles/chatSettings.png"
 		bgSize="120px"
 		bgThemePos="-10px"
 	>
 		<br><br>
 		<p>
-			Use this page to configure the chat sources you want to read commands from.
+			Use this page to configure twitch chat connection!
 		</p>
-		<SectionHeader title="YT Chat Sources"/>
+		<SectionHeader title="Connect Twitch"/>
 		<p>
-			Below you can add or remove chat sources for the app to read.
+			Unlike YouTube, Twitch has chat read permissions that are tied to your account.
 			<br>
-			<strong>NOTE:</strong> a chat source must be enabled for commands to work!
-			<br><br>
-			If a live stream ends or chat is disabled, the source will be "unavailable."
-			<br>
-			You cannot enable an unavailable source.
-			<br><br>
-			If you wish to use private streams / member only streams, you will need to
-			<button type="button" @click="showYouTube">Log Into YouTube</button>
+			Simply Authenticate with Twitch below, and the app will be able to read chat from any
+			of your channels.
 		</p>
 		<ChatSourceManager/>
 
-		<SectionHeader title="YT Auto Chat"/>
-		<p>
-			The following feature is experimental and may not work as expected.
-			<br>
-			Below you can paste in a link to your YouTube channel page.
-			<br>
-			If present, the app will attempt to detect when you're live in OBS, and if live,<br>
-			attempt to find the latest live stream on your channel and automatically add it as a source.
-			<br><br>
-			This can fail in two ways:
-		</p>
-		<ul>
-			<li>
-				The app may not be able to detect when you're live in OBS.
-			</li>
-			<li>
-				YouTube API may not be able to find the stream.
-			</li>			
-		</ul>
-		<p>
-			<br>
-			So, you might want to check this page after you go live to see if it's been added,
-			and if not you can add it manually.
-			<br>
-			Also, due to the nature of this program - if the channel page changes, this feature
-			might become broken.
-			<br><br>
-			<strong>Consider this feature a potential <em>convenience</em> and <u>not</u> a guarantee.</strong>
-		</p>
-		<div class="autoChatRow">
-			
-			<div class="obsStatus">
-				OBS Status Detected: 
-				<span
-					class="status"
-					:class="{
-						live: ctApp.autoChatChecker.mode.value === AutoChatChecker.MODE.LIVE,
-					}"
-				>
-					{{ ctApp.autoChatChecker.mode.value }}
-				</span>
-			</div>
-			
-			<br>
-			<div class="settingsBlock">
-				<SettingsInputRow
-					type="boolean"
-					v-model="ctApp.enableAutoAdd.value"
-				>
-					<template #title>Enable Auto Chat Mode</template>
-					<p>
-						True if the app should try automatically searching for your live stream if/when it 
-						detects OBS is live. Again, no promises.
-					</p>
-				</SettingsInputRow>
-				<SettingsRow
-				>
-					<h3>Channel URL</h3>
-					<p>
-						Paste your Channel's page URL here.
-					</p>
-					<input
-						type="text"
-						id="autoChat"
-						v-model="ctApp.autoChatChannel.value"
-						placeholder="https://www.youtube.com/@YourChannelName"
-					/>
-				</SettingsRow>
-		</div>
-
-		</div>
+		
 
 		<SectionHeader title="Live Raw Chat (All Sources)"/>
 		<p>
@@ -118,12 +42,6 @@
 		
 		<RawLogPreview
 			:messages="ctApp.chatProcessor.screenMessages.value"
-		/>
-		
-		<SectionHeader title="Video Help"/>
-		<YTVideoBox 
-			url="https://youtu.be/hd7dndoe8X4"
-			width="100%"
 		/>
 	</PageBox>
 
