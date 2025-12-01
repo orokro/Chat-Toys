@@ -159,6 +159,18 @@
 					It is highly recommended to keep this on - these messages help provide context to chatters.
 				</p>
 			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="cachePFPImages"
+			>
+				<template #title>Cache Profile Pictures</template>
+				<p>
+					Enable to cache profile pictures locally for faster loading and less bandwidth.
+					<br/>
+					<br/>
+					Recommended to keep this on unless you have a specific reason not to.
+				</p>
+			</SettingsInputRow>
 			<SettingsRow>
 				<h3>Custom Theme Code</h3>
 				<p>
@@ -266,7 +278,10 @@ const {
 	chatTextShadow,
 	chatTextSize,
 	showSystemMessages,
+	cachePFPImages,
+
 	shoutSoundId,
+
 	swarmSize,
 	swarmDuration,
 } = toy.settings;

@@ -38,11 +38,11 @@
 				>
 					<!-- Profile Picture -->
 					<div class="pfp-aligner">				
-						<img 
+						<PfpImg
 							v-if="socketSettingsRef?.showChatterPFP"
-							src="https://static-cdn.jtvnw.net/jtv_user_pictures/03173e49-f80a-4e3e-9ddb-c51e9f2b633a-profile_image-300x300.jpeg"
+							:url="message.pfpUrl"
 							:alt="message.author + ' profile picture'"
-							class="chat-pfp"
+							:cache-enabled="socketSettingsRef?.cachePFPImages"
 						/>
 					</div>
 
@@ -85,7 +85,8 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 import { useToySettings } from '@toys/useToySettings';
 import { keepAliveSocket } from '../keepAliveSocket.js';
 
-// CHANGED: Import the parser component
+// components
+import PfpImg from './sub_components/PfpImg.vue';
 import ParsedMessage from './sub_components/ParsedMessage.vue';
 
 const thisSlug = 'chat';
@@ -187,7 +188,7 @@ watch(demoMode, (newVal) => {
 
 		&.showTextShadow {
 			.messageText {
-				text-shadow: 2px 2px 0px black;
+				text-shadow: 0.05em 0.05em 0px black;
 			}
 		}
 

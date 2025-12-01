@@ -165,7 +165,10 @@ export default class Chat extends Toy {
 			chatTextShadow: ref(true),
 			chatTextSize: ref(24),
 			showSystemMessages: ref(true),
+			cachePFPImages: ref(true),
+			
 			shoutSoundId: ref('11'),
+
 			swarmSize: ref(5),
 			swarmDuration: ref(10),
 			chatWidgetBox: shallowRef({
@@ -290,6 +293,7 @@ export default class Chat extends Toy {
 			chatLogMessages.push({
 				id: chat.id,
 				author: chat.author,
+				pfpUrl: chat.authorPFPUrl,
 				message: chat.messageText,
 				isMember: chat.isMember,
 				emojis: chat.emojis,

@@ -47,6 +47,10 @@ export class ChatProcessor {
 		// userName:userUniqueID pairs we've seen
 		this.seenAuthors = new ABMap();
 
+		// cache for Twitch avatar URLs so we don't hammer external services
+		this._twitchAvatarCache = new Map();
+		this._twitchAvatarInFlight = new Map();
+
 		// Hook up to Electron API
 		window.electronAPI.onChatMessage(this._handleChatMessage);
 	}
@@ -76,9 +80,9 @@ export class ChatProcessor {
 	 * Formats chat messages from the chat platform & triggers callbacks
 	 * 
 	 * @param {Object|String} data - Data from the chat platform
-	 * @returns {Array<Object>} - Array of formatted chat messages
+	 * @returns {Promise<Array<Object>>} - Array of formatted chat messages
 	 */
-	_handleChatMessage(data) {
+	async _handleChatMessage(data) {
 
 		// parse if it's a string
 		if (typeof data === 'string') {
@@ -94,7 +98,11 @@ export class ChatProcessor {
 		// streaming services in the future. We'll pass the data block into different parsers
 		// and just merge results
 		let parsedMessages = [];
-		parsedMessages = [...parsedMessages, ...this._parseTwitchMessages(data)];
+
+		// Twitch parsing may need to hit decapi, so it's async
+		const twitchMessages = await this._parseTwitchMessages(data);
+		parsedMessages = [...parsedMessages, ...twitchMessages];
+
 		parsedMessages = [...parsedMessages, ...this._parseYouTubeMessages(data)];
 		parsedMessages = [...parsedMessages, ...this._parseSysLoggerMessages(data)];
 
@@ -141,6 +149,7 @@ export class ChatProcessor {
 			id: data.id,
 			authorUniqueID: 'Chat Toys',
 			author: 'Chat Toys',
+			authorPFPUrl: undefined,
 			messageText: adjustedMessage || '',
 			raws: data.infoMessages || [],
 			emojis: [],
@@ -159,9 +168,9 @@ export class ChatProcessor {
 	 * Checks and parses Twitch chat messages
 	 * 
 	 * @param {Object} data - Data from chat platform
-	 * @returns {Array<Object>} - Array of formatted chat messages
+	 * @returns {Promise<Array<Object>>} - Array of formatted chat messages
 	 */
-	_parseTwitchMessages(data) {
+	async _parseTwitchMessages(data) {
 
 		// verify it's a Twitch message
 		const isTwitchMessage = (data?.twitch === true);
@@ -178,11 +187,19 @@ export class ChatProcessor {
 		// parse out any emotes and adjust the message text accordingly
 		const { adjustedMessage, emojis } = this._parseTwitchEmojis(data);
 
+		// try to pick the best username we can for avatar lookup
+		const rawAuthor =
+			data.author ||
+			data.data?.tags?.['display-name'] ||
+			data.data?.tags?.username ||
+			'';
+
 		// repack the data into our standard format
 		const formatted = {
 			id: data.id,
 			authorUniqueID: data.author || '',
-			author: data.author || '',
+			author: rawAuthor || '',
+			authorPFPUrl: undefined,
 			messageText: adjustedMessage || '',
 			emojis,
 			time: Date.now(),
@@ -192,13 +209,21 @@ export class ChatProcessor {
 			twitch: true,
 		};
 
-		// console.log('[ChatProcessor] 🟣 Received Twitch chat message:', formatted);
-
-		// mark seen
+		// mark seen immediately so duplicates during a slow network call don't re-process
 		this._markMessageAsSeen(formatted.id);
 
 		// update relationships
 		this.seenAuthors.set(formatted.author, formatted.authorUniqueID);
+
+		// resolve avatar URL via decapi.me, but only once per username
+		try {
+			const avatarUrl = await this._getTwitchAvatarUrl(rawAuthor);
+			if (avatarUrl) {
+				formatted.authorPFPUrl = avatarUrl;
+			}
+		} catch (e) {
+			console.warn('[ChatProcessor] Failed to resolve Twitch avatar URL for', rawAuthor, e);
+		}
 
 		// return the message (twitch is just one at a time)
 		return [formatted];		
@@ -347,6 +372,21 @@ export class ChatProcessor {
 				(b) => b?.liveChatAuthorBadgeRenderer?.customThumbnail
 			);
 
+			// get the author avatar URL, if present
+			let authorPFPUrl;
+			try {
+				const pfpThumbs = renderer.authorPhoto?.thumbnails;
+				if (Array.isArray(pfpThumbs) && pfpThumbs.length > 0) {
+					// use the last / largest thumbnail
+					const bestThumb = pfpThumbs[pfpThumbs.length - 1];
+					if (bestThumb?.url) {
+						authorPFPUrl = bestThumb.url;
+					}
+				}
+			} catch (e) {
+				console.warn('[ChatProcessor] Could not extract YouTube author photo URL:', e);
+			}
+
 			// get the message text and emojis
 			const runs = renderer.message?.runs || [];
 			let messageText = '';
@@ -401,6 +441,7 @@ export class ChatProcessor {
 				id,
 				authorUniqueID: authorChannelId,
 				author: authorName,
+				authorPFPUrl: authorPFPUrl,
 				messageText,
 				emojis,
 				time: timestampUsec ? Number(timestampUsec) : undefined,
@@ -442,6 +483,63 @@ export class ChatProcessor {
 			const ids = Array.from(this._seenMessageIDs);
 			this._seenMessageIDs = new Set(ids.slice(-this.rollingIDListLength));
 		}
+	}
+
+
+	/**
+	 * Resolve and cache Twitch avatar URLs using decapi.me
+	 * 
+	 * @param {String} username - Twitch username
+	 * @returns {Promise<String|null>} - Avatar URL or null if unavailable
+	 */
+	async _getTwitchAvatarUrl(username) {
+
+		if (!username)
+			return null;
+
+		const key = username.toLowerCase();
+
+		// if we've already resolved this user, use the cached value
+		if (this._twitchAvatarCache.has(key)) {
+			return this._twitchAvatarCache.get(key);
+		}
+
+		// if there's already an in-flight fetch for this user, share it
+		if (this._twitchAvatarInFlight.has(key)) {
+			return this._twitchAvatarInFlight.get(key);
+		}
+
+		// otherwise, start a new fetch & remember the promise
+		const promise = (async () => {
+			try {
+				const url = `https://decapi.me/twitch/avatar/${encodeURIComponent(key)}`;
+				const res = await fetch(url, { method: 'GET' });
+
+				if (!res.ok) {
+					console.warn('[ChatProcessor] decapi.me returned non-OK for', key, res.status);
+					this._twitchAvatarCache.set(key, null);
+					return null;
+				}
+
+				const text = (await res.text() || '').trim();
+
+				// decapi.me returns the avatar URL as plain text
+				const avatarUrl = text && text.startsWith('http') ? text : null;
+
+				this._twitchAvatarCache.set(key, avatarUrl || null);
+				return avatarUrl || null;
+
+			} catch (e) {
+				console.warn('[ChatProcessor] Error fetching Twitch avatar for', key, e);
+				this._twitchAvatarCache.set(key, null);
+				return null;
+			} finally {
+				this._twitchAvatarInFlight.delete(key);
+			}
+		})();
+
+		this._twitchAvatarInFlight.set(key, promise);
+		return promise;
 	}
 
 }
