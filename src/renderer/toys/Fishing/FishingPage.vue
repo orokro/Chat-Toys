@@ -71,7 +71,7 @@
 			>
 				<template #title>Cast Timeout</template>
 				<p>
-					The came will automatically reel in a users reel after this number of seconds.
+					The game will automatically reel in a users reel after this number of seconds.
 					(consider if the user leaves the stream or goes off line... their cast will
 					eventually timeout and auto-reel back in.)
 				</p>
