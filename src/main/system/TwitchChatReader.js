@@ -136,7 +136,9 @@ class TwitchChatReader {
 		});
 
 		this.client.on('message', (channel, tags, message, self) => {
-			if (self) return;
+			
+			if (self)
+				return;
 
 			const chatMsg = {
 				id: `${channel}-${tags['user-id'] || 'anon'}-${Date.now()}`,
@@ -144,6 +146,12 @@ class TwitchChatReader {
 				message: message,
 				isMember: !!tags.subscriber,
 				twitch: true,
+				data: {
+					channel,
+					tags,
+					message,
+					self,
+				}
 			};
 
 			console.log('[TwitchChatReader] 💬 Parsed message:', chatMsg);

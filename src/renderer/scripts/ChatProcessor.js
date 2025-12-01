@@ -96,6 +96,8 @@ export class ChatProcessor {
 			if (this._seenMessageIDs.has(data.id))
 				return;
 
+			console.log('[ChatProcessor] 🟣 Received Twitch chat message:', data);
+
 			const formatted = {
 				id: data.id,
 				authorUniqueID: data.author || '',
@@ -109,7 +111,7 @@ export class ChatProcessor {
 				twitch: true,
 			};
 
-			console.log('[ChatProcessor] 🟣 Received Twitch chat message:', formatted);
+			// console.log('[ChatProcessor] 🟣 Received Twitch chat message:', formatted);
 
 			// mark seen
 			this._markMessageAsSeen(formatted.id);
