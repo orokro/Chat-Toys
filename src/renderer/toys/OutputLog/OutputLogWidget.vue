@@ -76,6 +76,8 @@ const socketSettingsRef = useToySettings('log', 'widgetBox', emit, () => {
 const messages = socketShallowRefReadOnly('syslog', []);
 const demoMode = socketShallowRefReadOnly('demoMode', false);
 
+window.msgs = messages;
+
 </script>
 <style lang="scss" scoped>
 

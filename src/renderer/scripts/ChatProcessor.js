@@ -31,6 +31,9 @@ export class ChatProcessor {
 		// this will be used externally to render the chat messages if need be
 		this.screenMessages = shallowRef([]);
 
+		// true to show msgs
+		this._showDebugLogs = true;
+
 		// keep track of seen messages so we don't repeat them
 		this._seenMessageIDs = new Set();
 
@@ -87,58 +90,183 @@ export class ChatProcessor {
 			}
 		}
 
-		// -------------------------------
-		// Twitch support
-		// -------------------------------
-		if (data?.twitch === true) {
 
-			// sanity check: if we've already seen this message, skip
-			if (this._seenMessageIDs.has(data.id))
-				return;
+		// we don't know if the message block is from Twitch, YouTube, or potentially other
+		// streaming services in the future. We'll pass the data block into different parsers
+		// and just merge results
+		let parsedMessages = [];
+		parsedMessages = [...parsedMessages, ...this._parseTwitchMessages(data)];
+		parsedMessages = [...parsedMessages, ...this._parseYouTubeMessages(data)];
 
+		console.log('Parsed Messages: ', parsedMessages);
+
+		// if we got any new messages, trigger callbacks
+		if (parsedMessages.length > 0) {
+
+			// Trigger callbacks
+			this._onNewChatsCallbacks.forEach((cb) => cb(parsedMessages));
+
+			// Update reactive screenMessages
+			const updated = [...this.screenMessages.value, ...parsedMessages];
+			this.screenMessages.value = updated.slice(-this.displayCount);
+		}
+	}
+
+
+	/**
+	 * Checks and parses Twitch chat messages
+	 * 
+	 * @param {Object} data - Data from chat platform
+	 * @returns {Array<Object>} - Array of formatted chat messages
+	 */
+	_parseTwitchMessages(data) {
+
+		// verify it's a Twitch message
+		const isTwitchMessage = (data?.twitch === true);
+		if (!isTwitchMessage)
+			return [];
+
+		// sanity check: if we've already seen this message, skip
+		if (this._seenMessageIDs.has(data.id))
+			return;
+
+		if (this._showDebugLogs)
 			console.log('[ChatProcessor] 🟣 Received Twitch chat message:', data);
 
-			const formatted = {
-				id: data.id,
-				authorUniqueID: data.author || '',
-				author: data.author || '',
-				messageText: data.message || '',
-				emojis: [],
-				time: Date.now(),
-				isMember: !!data.isMember,
-				streamID: 'twitch',
-				isSuper: false,
-				twitch: true,
-			};
+		// parse out any emotes and adjust the message text accordingly
+		const { adjustedMessage, emojis } = this._parseTwitchEmojis(data);
 
-			// console.log('[ChatProcessor] 🟣 Received Twitch chat message:', formatted);
+		// repack the data into our standard format
+		const formatted = {
+			id: data.id,
+			authorUniqueID: data.author || '',
+			author: data.author || '',
+			messageText: adjustedMessage || '',
+			emojis,
+			time: Date.now(),
+			isMember: !!data.isMember,
+			streamID: 'twitch',
+			isSuper: false,
+			twitch: true,
+		};
 
-			// mark seen
-			this._markMessageAsSeen(formatted.id);
+		// console.log('[ChatProcessor] 🟣 Received Twitch chat message:', formatted);
 
-			// update relationships
-			this.seenAuthors.set(formatted.author, formatted.authorUniqueID);
+		// mark seen
+		this._markMessageAsSeen(formatted.id);
 
-			// push and trigger callbacks just like YouTube
-			const newMessages = [formatted];
-			this._onNewChatsCallbacks.forEach((cb) => cb(newMessages));
+		// update relationships
+		this.seenAuthors.set(formatted.author, formatted.authorUniqueID);
 
-			const updated = [...this.screenMessages.value, ...newMessages];
-			this.screenMessages.value = updated.slice(-this.displayCount);
-			return; // exit, don't continue with YouTube logic
-		}
+		// return the message (twitch is just one at a time)
+		return [formatted];		
+	}
 
-		// -------------------------------
-		// YouTube (default behavior)
-		// -------------------------------
 
-		console.log('chat data', data);
+	/**
+     * Extracts emotes, generates URLs, and formats the message with colons.
+     * * @param {Object} data - The raw Twitch data object
+     * @returns {Object} - { emojis: Array, adjustedMessage: String }
+     */
+    _parseTwitchEmojis(data) {
+
+        const message = data.message || "";
+
+        // Access emotes from the deep structure based on your JSON
+        const emotes = data.data?.tags?.emotes;
+
+        // 1. If no emotes or empty message, return defaults
+        if (!emotes || !message) {
+            return {
+                emojis: [],
+                adjustedMessage: message
+            };
+        }
+
+        const emojisMap = new Map();
+        const allOccurrences = [];
+
+        // 2. First Pass: Parse all emote instances and build the unique list
+        Object.entries(emotes).forEach(([id, ranges]) => {
+
+            // ranges is an array like ["0-4", "12-16"]
+            
+            // We only need to grab the code from the text ONCE per ID
+            // to get the clean name (e.g., "LUL")
+            const firstRange = ranges[0].split('-').map(Number);
+            const code = message.substring(firstRange[0], firstRange[1] + 1);
+            
+            // Construct the URL
+            const url = `https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0`;
+
+            // Add to our unique map if we haven't seen this specific emote ID yet
+            if (!emojisMap.has(id)) {
+                emojisMap.set(id, {
+                    code: code,
+                    url: url,
+                    pos: ranges // Keep the original Twitch format ["start-end"]
+                });
+            }
+
+            // Add every single occurrence to a flat list for the string replacement step
+            ranges.forEach(range => {
+                const [start, end] = range.split('-').map(Number);
+                allOccurrences.push({
+                    start,
+                    end,
+                    code
+                });
+            });
+        });
+
+        // 3. Second Pass: Create the adjustedMessage
+        // We sort by 'start' index in DESCENDING order (High -> Low).
+        // By replacing text from the end of the string backwards, we don't 
+        // mess up the indices of the earlier emotes.
+        allOccurrences.sort((a, b) => b.start - a.start);
+
+        let adjustedMessage = message;
+
+        allOccurrences.forEach(occ => {
+            // Grab text before the emote
+            const before = adjustedMessage.substring(0, occ.start);
+            // Grab text after the emote
+            const after = adjustedMessage.substring(occ.end + 1);
+            
+            // Stitch them together with the colon-wrapped code
+            adjustedMessage = `${before}:${occ.code}:${after}`;
+        });
+
+        // 4. Return the result
+        return {
+            emojis: Array.from(emojisMap.values()),
+            adjustedMessage: adjustedMessage
+        };
+    }
+
+
+	/**
+	 * Checks and parses YouTube chat messages
+	 * 
+	 * @param {Object} data - Data from chat platform
+	 * @returns {Array<Object>} - Array of formatted chat messages
+	 */
+	_parseYouTubeMessages(data) {
+
+		// verify it's a YouTube message
+		const isYouTubeData = (data?.youtube === true);
+		if (!isYouTubeData)
+			return [];
 
 		// check for the data we need
 		if (
 			!data?.continuationContents?.liveChatContinuation?.actions ||
 			!Array.isArray(data.continuationContents.liveChatContinuation.actions)
-		) return;
+		) return [];
+
+		// for debug
+		if (this._showDebugLogs)
+			console.log('[ChatProcessor] 🔴 Received YouTube chat data:', data);
 
 		// get the chat messages, which are stored as 'actions'
 		// because originally they're intended to be things like 'addChatItemAction'
@@ -189,11 +317,13 @@ export class ChatProcessor {
 					messageText += run.text;
 				} else if (run.emoji) {
 					const emoji = run.emoji;
+
 					if (emoji.isCustomEmoji && emoji.image?.thumbnails?.length) {
 						const url = emoji.image.thumbnails[emoji.image.thumbnails.length - 1].url;
 						const shortcode = `&${emoji.shortcuts?.[0] || emoji.emojiId};`;
 						messageText += shortcode;
 						emojis.push(url);
+
 					} else if (emoji.emojiId) {
 						messageText += emoji.emojiId; // Unicode emoji
 					}
@@ -238,15 +368,9 @@ export class ChatProcessor {
 
 		}// next action
 
-		if (newMessages.length > 0) {
-			// Trigger callbacks
-			this._onNewChatsCallbacks.forEach((cb) => cb(newMessages));
-
-			// Update reactive screenMessages
-			const updated = [...this.screenMessages.value, ...newMessages];
-			this.screenMessages.value = updated.slice(-this.displayCount);
-		}
+		return newMessages;
 	}
+
 
 
 	/**
