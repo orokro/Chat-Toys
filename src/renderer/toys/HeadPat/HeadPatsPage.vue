@@ -42,6 +42,52 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
+
+		</br></br>
+		<h2>Head Pats Settings</h2>
+		<div class="settingsBlock">
+			<SettingsInputRow
+				type="boolean"
+				v-model="showPatterName"
+			>
+				<template #title>Show Patter Name</template>
+				<p>Show the name of the chatter who triggered the head pat</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="number"
+				v-model="chatterNameFontSize"
+				:min="8"
+				:max="72"
+				:step="1"
+			>
+				<template #title>Chatter Name Font Size</template>
+				<p>Font size to use for the patter's name</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="chatterNameColor"
+			>
+				<template #title>Chatter Name Color</template>
+				<p>Color to use for the patter's name</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="chatterTextColor"
+			>
+				<template #title>Chatter Text Color</template>
+				<p>Color to use for any text shown for the patter</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="chatterNameShadow"
+			>
+				<template #title>Chatter Name Shadow</template>
+				<p>Add a shadow to the patter's name for better visibility</p>
+			</SettingsInputRow>
+		</div>
+
+		<br/>
+		<h2>User Head Pats</h2>
 		<div class="settingsBlock">
 			<SettingsInputRow
 				type="boolean"
@@ -95,6 +141,11 @@ const toy = ctApp.toyManager.toys[HeadPat.slug];
 
 // local settings refs
 const { 
+	showPatterName,
+	chatterNameFontSize,
+	chatterNameColor,
+	chatterTextColor,
+	chatterNameShadow,
 	allowUserPats,
 	headPatChatterImage,
 } = toy.settings;

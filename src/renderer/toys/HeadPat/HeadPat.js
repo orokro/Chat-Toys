@@ -108,7 +108,11 @@ export default class HeadPat extends Toy {
 
 		// head pat settings
 		this.buildSettingsBlock({
-
+			showPatterName: ref(true),
+			chatterNameFontSize: ref(25),
+			chatterNameColor: ref('#00ABAE'),
+			chatterTextColor: ref('#FFFFFF'),
+			chatterNameShadow: ref(true),
 			allowUserPats: ref(true),
 			headPatChatterImage: ref('22'),
 			streamerWidgetBox: shallowRef({

@@ -43,7 +43,7 @@
 		
 		<SectionHeader title="Settings"/>
 
-		<h1>Chat Box Settings</h1>
+		<h2>Chat Box Settings</h2>
 		<div class="settingsBlock">
 
 			<!-- 
@@ -108,7 +108,7 @@
 				<template #title>Profile Picture Size</template>
 				<p>Size (in pixels) for user profile pictures in chat.</p>
 			</SettingsInputRow>
-			
+
 			<SettingsInputRow
 				type="boolean"
 				v-model="messageOnNewLine"
@@ -178,7 +178,7 @@
 		</div>
 
 		<br/>
-		<h1>Shout Widget Settings</h1>
+		<h2>Shout Widget Settings</h2>
 		<div class="settingsBlock">
 			<SettingsAssetRow
 				v-model="shoutSoundId" 
@@ -190,7 +190,7 @@
 		</div>
 
 		<br/>
-		<h1>Swarm Widget Settings</h1>
+		<h2>Swarm Widget Settings</h2>
 		<div class="settingsBlock">
 			<SettingsInputRow
 				type="number"

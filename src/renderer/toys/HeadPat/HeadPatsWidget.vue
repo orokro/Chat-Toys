@@ -7,15 +7,17 @@
 <template>
 
 	<!-- auto sizer so we can lazily scale the widget lol -->
-	<FixedAutoSizer :targetWidth="200" :targetHeight="200" v-model="scale">
+	<FixedAutoSizer :targetWidth="200" :targetHeight="showProfilePicture ? 250 : 200" v-model="scale">
 
 		<!-- box to scale -->
 		<div
 			class="scaleBox"
-			
 			:style="{
 				transform: `translate(-50%, -50%) scale(${scale})`,
-				height: showProfilePicture ? '250px' : '200px'
+				height: showProfilePicture ? '250px' : '200px',
+				'--chatterNameColor': socketSettingsRef?.chatterNameColor || '#00ABAE',
+				'--chatterTextColor': socketSettingsRef?.chatterTextColor || '#FFFFFF',
+				'--chatterNameFontSize': (socketSettingsRef?.chatterNameFontSize || 25) + 'px',
 			}"
 		>
 			<!-- the main box for the widget -->
@@ -26,6 +28,8 @@
 					idle: mode === 'IDLE',
 					showProfilePicture: showProfilePicture,
 					demoMode: demoMode,
+					showTextShadow: socketSettingsRef?.chatterNameShadow,
+					showPatterName: showProfilePicture || socketSettingsRef?.showPatterName,
 				}"
 				:style="{
 					height: showProfilePicture ? '250px' : '200px'
@@ -52,7 +56,10 @@
 				/>
 
 				<!-- the name of the user doing the pat -->
-				<div class="patUserName">
+				<div
+					v-if=" showProfilePicture || socketSettingsRef?.showPatterName"
+					class="patUserName"
+				>
 					<span>{{ demoMode ? 'McPattin' : currentPatData?.patter }}</span> pats
 				</div>
 
@@ -176,7 +183,7 @@ const currentChatterPat = socketShallowRefReadOnly(slugify('currentChatterPat'),
 			transform: scale(1);
 		}
 
-		color: white;
+		color: var(--chatterTextColor);
 
 		// the actual head pat image
 		.headPatImage {
@@ -208,7 +215,7 @@ const currentChatterPat = socketShallowRefReadOnly(slugify('currentChatterPat'),
 			width: 100%;			
 
 			span {
-				color: #FFD700;
+				color: var(--chatterNameColor)
 			}			
 
 		}// .patUserName
@@ -224,12 +231,19 @@ const currentChatterPat = socketShallowRefReadOnly(slugify('currentChatterPat'),
 			width: 100%;
 
 		}// .targetUserName
-		
+
+		&.showTextShadow {
+
+			.patUserName, .targetUserName {
+				text-shadow: 0.1em 0.085em 0px black;
+			}
+
+		}// .showTextShadow
+
 		// text settings
 		.patUserName, .targetUserName {
 
-			text-shadow: 2px 2px 0px black;
-			font-size: 25px;
+			font-size: var(--chatterNameFontSize);
 			font-weight: bold;
 			text-align: left;
 			white-space: nowrap;
