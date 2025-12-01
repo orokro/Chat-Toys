@@ -32,8 +32,8 @@
 			<HelpPage v-if="activeTab === 0" />
 			<SettingsPage v-if="activeTab === 1" />			
 			<ToyBoxPage v-if="activeTab === 2" />
-			<LayoutPage v-if="activeTab === 3" />	
-			<DatabasePage v-if="activeTab === 4" />
+			<!-- <LayoutPage v-if="activeTab === 3" />	 -->
+			<DatabasePage v-if="activeTab === 3" />
 
 		</div>
 
@@ -63,7 +63,7 @@ const tabs = [
 	{ title: 'Help', icon: 'help', slug: 'help' },
 	{ title: 'Connection Settings', icon: 'settings_ethernet', slug: 'settings' },	
 	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
-	{ title: 'Layout', icon: 'monitor', slug: 'layout' },
+	// { title: 'Layout', icon: 'monitor', slug: 'layout' },
 	{ title: 'Database', icon: 'storage', slug: 'settings' },
 
 	// deprecated page
