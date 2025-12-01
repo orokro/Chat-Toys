@@ -90,7 +90,6 @@ export class ChatProcessor {
 			}
 		}
 
-
 		// we don't know if the message block is from Twitch, YouTube, or potentially other
 		// streaming services in the future. We'll pass the data block into different parsers
 		// and just merge results
@@ -234,7 +233,7 @@ export class ChatProcessor {
             const after = adjustedMessage.substring(occ.end + 1);
             
             // Stitch them together with the colon-wrapped code
-            adjustedMessage = `${before}:${occ.code}:${after}`;
+            adjustedMessage = `${before}&:${occ.code}:;${after}`;
         });
 
         // 4. Return the result
@@ -318,11 +317,19 @@ export class ChatProcessor {
 				} else if (run.emoji) {
 					const emoji = run.emoji;
 
+					// if the user used a custom channel emoji / or youtube emoji
 					if (emoji.isCustomEmoji && emoji.image?.thumbnails?.length) {
+
+						// get the URL & code
 						const url = emoji.image.thumbnails[emoji.image.thumbnails.length - 1].url;
-						const shortcode = `&${emoji.shortcuts?.[0] || emoji.emojiId};`;
+						const justCode = `${emoji.shortcuts?.[0] || emoji.emojiId}`;
+						const shortcode = `&${justCode};`;
 						messageText += shortcode;
-						emojis.push(url);
+						emojis.push({
+							code: justCode,
+							url: url,
+							pos: [], // YouTube doesn't provide position info
+						});
 
 					} else if (emoji.emojiId) {
 						messageText += emoji.emojiId; // Unicode emoji
