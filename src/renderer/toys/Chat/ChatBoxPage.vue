@@ -82,7 +82,7 @@
 				v-model="filterCommands"
 			>
 				<template #title>Filter !commands from Chat</template>
-				<p>Filter out the <span class="cmd">!Commands</span> from the Chat widget.</p>
+				<p>Filter out the <span class="cmd">!commands</span> from the Chat widget.</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="boolean"
