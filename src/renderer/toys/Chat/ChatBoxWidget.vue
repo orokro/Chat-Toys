@@ -43,7 +43,11 @@
 						color: socketSettingsRef?.chatTextColor,
 					}"
 				>
-					{{ message.message }}
+					<!-- CHANGED: Replaced direct interpolation with the ParsedMessage component -->
+					<ParsedMessage 
+						:text="message.message" 
+						:emojis="message.emojis" 
+					/>
 				</span>
 			</div>
 		</div>
@@ -58,6 +62,9 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
 import { keepAliveSocket } from '../keepAliveSocket.js';
+
+// CHANGED: Import the parser component
+import ParsedMessage from './sub_components/ParsedMessage.vue';
 
 const thisSlug = 'chat';
 const widgetSlug = 'liveChat';
@@ -173,7 +180,7 @@ watch(demoMode, (newVal) => {
 			/* white-space: nowrap; */
 
 			span {
-				color: #FFD700;
+				/* color: #FFD700; */
 			}	
 
 			// clip overflow with no scroll bars

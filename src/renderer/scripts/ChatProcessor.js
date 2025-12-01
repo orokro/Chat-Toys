@@ -233,7 +233,7 @@ export class ChatProcessor {
             const after = adjustedMessage.substring(occ.end + 1);
             
             // Stitch them together with the colon-wrapped code
-            adjustedMessage = `${before}&:${occ.code}:;${after}`;
+            adjustedMessage = `${before}&${occ.code};${after}`;
         });
 
         // 4. Return the result
@@ -297,7 +297,7 @@ export class ChatProcessor {
 				continue;
 
 			// get the author, message, and timestamp, and whether they're a member
-			const authorName = renderer.authorName?.simpleText || '';
+			let authorName = renderer.authorName?.simpleText || '';
 			const authorChannelId = renderer.authorExternalChannelId || '';
 			const timestampUsec = renderer.timestampUsec;
 			const isMember = !!renderer.authorBadges?.some(
@@ -349,6 +349,10 @@ export class ChatProcessor {
 				console.warn('Could not extract streamID from payload:', e);
 			}
 
+			// if there's a leading @ in the author name, remove it
+			if (authorName.startsWith('@'))
+				authorName = authorName.slice(1);
+			
 			// the final formatted message
 			const formatted = {
 				id,
