@@ -199,7 +199,8 @@ const openLink = (url) => {
  * @param input {string} - The input to parse
  * @return {string|null} - The YouTube ID or null if invalid
  */
-const parseYoutubeId = (input) => {
+ const parseYoutubeId = (input) => {
+
 	try {
 		// Direct ID
 		if (/^[\w-]{11}$/.test(input)) return input;
@@ -207,11 +208,18 @@ const parseYoutubeId = (input) => {
 		// some URLs will have a query string, like v=ID
 		const url = new URL(input);
 		if (url.hostname.includes('youtube.com')) {
+
 			if (url.pathname === '/watch') {
 				return url.searchParams.get('v');
 			}
 			if (url.pathname === '/live_chat') {
 				return url.searchParams.get('v');
+			}
+
+			// support /live/VIDEO_ID
+			if (url.pathname.startsWith('/live/')) {
+				const id = url.pathname.split('/')[2];
+				if (id && /^[\w-]{11}$/.test(id)) return id;
 			}
 		}
 
@@ -225,6 +233,7 @@ const parseYoutubeId = (input) => {
 	}
 	return null;
 };
+
 
 /**
  * Load chat sources when the component is mounted
