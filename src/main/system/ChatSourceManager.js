@@ -115,6 +115,7 @@ const chatReaderScript = `
 			try {
 				const cloned = result.clone();
 				const json = await cloned.json();
+				json.youtube = true;
 				const response = JSON.stringify(json);
 
 				window.dispatchEvent(new CustomEvent(
