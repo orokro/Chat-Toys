@@ -12,7 +12,8 @@
 		class="chatBoxWidget"
 		:class="{
 			disableBG: socketSettingsRef?.enableChatBoxImage==false,
-			demoMode: demoMode
+			demoMode: demoMode,
+			showTextShadow: socketSettingsRef?.chatTextShadow,
 		}"
 		:style="{
 			border: '30 solid transparent',
@@ -30,7 +31,6 @@
 				class="msgRow"
 				:class="{
 					isMember:message.isMember,
-					showPFP: socketSettingsRef?.showChatterPFP,
 				}"
 			>
 				<!-- Profile Picture -->
@@ -181,6 +181,12 @@ watch(demoMode, (newVal) => {
 			}
 		}
 
+		&.showTextShadow {
+			.messageText {
+				text-shadow: 2px 2px 0px black;
+			}
+		}
+
 		// text settings
 		.messageText {
 
@@ -191,7 +197,7 @@ watch(demoMode, (newVal) => {
 			color: white;
 
 			// text settings
-			text-shadow: 2px 2px 0px black;
+			
 			font-size: var(--fontSize);
 			font-weight: bold;
 			text-align: left;
@@ -225,7 +231,7 @@ watch(demoMode, (newVal) => {
 					justify-content: center;
 					margin-right: 8px;
 				}
-				
+
 				// styles for profile picture
 				.chat-pfp {
 					
