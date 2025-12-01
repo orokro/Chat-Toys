@@ -38,6 +38,7 @@
 				>
 					{{ message.author }}:
 				</span>
+				<br v-if="socketSettingsRef?.messageOnNewLine && socketSettingsRef?.showChatterNames"/>
 				<span
 					:style="{
 						color: socketSettingsRef?.chatTextColor,

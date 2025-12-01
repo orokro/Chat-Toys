@@ -46,6 +46,7 @@ const props = defineProps({
 	}
 });
 
+
 // 1. Create a dictionary for O(1) emoji lookup
 const emojiMap = computed(() => {
 	const map = new Map();
@@ -54,6 +55,7 @@ const emojiMap = computed(() => {
 	});
 	return map;
 });
+
 
 // 2. Parse the string into tokens
 const tokens = computed(() => {
@@ -67,7 +69,7 @@ const tokens = computed(() => {
 
 	// "hello &:LUL:; world" -> ["hello ", "&:LUL:;", " world"]
 	const parts = props.text.split(regex);
-	
+
 	return parts.map(part => {
 
 		// Check if this part is one of our emoji tokens
