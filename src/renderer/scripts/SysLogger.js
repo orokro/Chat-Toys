@@ -93,6 +93,9 @@ export class SysLogger {
 	 */
 	err(message) {		
 		this.pushMessage('error', message);
+
+		// also push to the buffered info messages for forwarding to chat
+		this.pushBuffer(message);
 	}
 
 
@@ -103,6 +106,9 @@ export class SysLogger {
 	 */
 	error(message) {		
 		this.pushMessage('error', message);
+
+		// also push to the buffered info messages for forwarding to chat
+		this.pushBuffer(message);
 	}
 
 
@@ -112,6 +118,19 @@ export class SysLogger {
 	info(message) {
 		// always log to the main syslog
 		this.pushMessage('info', message);
+
+		// also push to the buffered info messages for forwarding to chat
+		this.pushBuffer(message);
+		
+	}
+
+
+	/**
+	 * Push message to the buffered info messages for batched forwarding to chat
+	 * 
+	 * @param {string} message - the message to buffer
+	 */
+	pushBuffer(message){
 
 		// also buffer info messages for batched forwarding to the chat system
 		this.bufferedInfoMsgs.push(message);
