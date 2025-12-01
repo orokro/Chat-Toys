@@ -12,12 +12,10 @@
 
 			<span v-if="token.type === 'text'">{{ token.content }}</span>
 
-			<img 
+			<EmojiImg
 				v-else-if="token.type === 'emoji'"
-				:src="token.content"
+				:url="token.content"
 				:alt="token.alt"
-				referrerpolicy="no-referrer"
-				class="chat-emoji"
 			/>
 
 			<br v-else-if="token.type === 'br'" />
@@ -31,6 +29,9 @@
 
 // vue
 import { computed } from 'vue';
+
+// components
+import EmojiImg from './EmojiImg.vue';
 
 // define props
 const props = defineProps({
@@ -123,7 +124,6 @@ const tokens = computed(() => {
 	return finalTokens;
 
 });
-
 
 </script>
 <style lang="scss" scoped>
