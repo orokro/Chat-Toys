@@ -305,6 +305,7 @@ export default class PrizeWheel extends Toy {
 		this.spinItem.value = this.computeSpinItem(this.rotation.value);
 
 		// log message
+		this.chatToysApp.log.info(item.chatter + ' won ' + this.spinItem.value + ' from the prize wheel!');
 		this.chatToysApp.log.msg(item.chatter + ' spun the wheel and got ' + this.spinItem.value);
 
 		// return to idle

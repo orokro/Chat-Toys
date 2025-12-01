@@ -96,6 +96,7 @@ export class ChatProcessor {
 		let parsedMessages = [];
 		parsedMessages = [...parsedMessages, ...this._parseTwitchMessages(data)];
 		parsedMessages = [...parsedMessages, ...this._parseYouTubeMessages(data)];
+		parsedMessages = [...parsedMessages, ...this._parseSysLoggerMessages(data)];
 
 		console.log('Parsed Messages: ', parsedMessages);
 
@@ -109,6 +110,48 @@ export class ChatProcessor {
 			const updated = [...this.screenMessages.value, ...parsedMessages];
 			this.screenMessages.value = updated.slice(-this.displayCount);
 		}
+	}
+
+
+	/**
+	 * Checks and parses SysLogger chat messages
+	 * 
+	 * @param {Object} data - Data from chat platform
+	 * @returns {Array<Object>} - Array of formatted chat messages
+	 */
+	_parseSysLoggerMessages(data) {
+
+		// verify it's a SysLogger message
+		const isSysLoggerMessage = (data?.syslogger === true);
+		if (!isSysLoggerMessage)
+			return [];
+
+		// sanity check: if we've already seen this message, skip
+		if (this._seenMessageIDs.has(data.id))
+			return [];
+
+		if(this._showDebugLogs)
+			console.log('[ChatProcessor] ⚙️ Received SysLogger chat message:', data);
+
+		// msg text
+		const adjustedMessage = data.infoMessages.join('\n');
+
+		// repack the data into our standard format
+		const formatted = {
+			id: data.id,
+			authorUniqueID: 'Chat Toys',
+			author: 'Chat Toys',
+			messageText: adjustedMessage || '',
+			raws: data.infoMessages || [],
+			emojis: [],
+			time: Date.now(),
+			isMember: true,
+			streamID: 'Chat Toys',
+			isSuper: false,
+			syslogger: true,
+		};
+
+		return [formatted];
 	}
 
 
@@ -127,7 +170,7 @@ export class ChatProcessor {
 
 		// sanity check: if we've already seen this message, skip
 		if (this._seenMessageIDs.has(data.id))
-			return;
+			return [];
 
 		if (this._showDebugLogs)
 			console.log('[ChatProcessor] 🟣 Received Twitch chat message:', data);

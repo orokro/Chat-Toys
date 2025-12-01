@@ -10,17 +10,18 @@
 
 		<template v-for="(token, i) in tokens" :key="i">
 
-			<!-- Render Text -->
 			<span v-if="token.type === 'text'">{{ token.content }}</span>
 
-			<!-- Render Emoji -->
 			<img 
-				v-else-if="token.type === 'emoji'" 
-				:src="token.content" 
+				v-else-if="token.type === 'emoji'"
+				:src="token.content"
 				:alt="token.alt"
 				referrerpolicy="no-referrer"
 				class="chat-emoji"
 			/>
+
+			<br v-else-if="token.type === 'br'" />
+
 		</template>
 
 	</span>
@@ -64,32 +65,65 @@ const tokens = computed(() => {
 	if (!props.text)
 		return [];
 
-	// Regex to match your specific delimiter: &:CODE:;
-	// The capturing group ( ) is important so split() includes the separator in the result
 	const regex = /(&[a-zA-Z0-9_\-:]+;)/g;
 
-	// "hello &:LUL:; world" -> ["hello ", "&:LUL:;", " world"]
 	const parts = props.text.split(regex);
 
-	return parts.map(part => {
+	const finalTokens = [];
 
-		// Check if this part is one of our emoji tokens
+	parts.forEach(part => {
+
+		// Emoji token?
 		if (part.startsWith('&') && part.endsWith(';')) {
 
-			// Extract code: "&:LUL:;" -> "LUL"
-			const code = part.slice(1, -1); 
+			const code = part.slice(1, -1);
 			const url = emojiMap.value.get(code);
- 
-			// If we found a matching URL in our map, it's an emoji
-			if (url)
-				return { type: 'emoji', content: url, alt: code };			
+
+			if (url) {
+				finalTokens.push({
+					type: 'emoji',
+					content: url,
+					alt: code
+				});
+				return;
+			}
 		}
 
-		// Otherwise, it's just text (or a broken token)
-		return { type: 'text', content: part };
+		// TEXT token — now handle line breaks
+		if (part.includes('\n')) {
+
+			const lines = part.split('\n');
+
+			lines.forEach((line, idx) => {
+				// push text part
+				if (line.length > 0) {
+					finalTokens.push({
+						type: 'text',
+						content: line
+					});
+				}
+				// if not the last line, push <br/>
+				if (idx < lines.length - 1) {
+					finalTokens.push({
+						type: 'br'
+					});
+				}
+			});
+
+		} else {
+			// Normal plain text
+			finalTokens.push({
+				type: 'text',
+				content: part
+			});
+		}
+
 	});
 
+	return finalTokens;
+
 });
+
 
 </script>
 <style lang="scss" scoped>

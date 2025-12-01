@@ -32,6 +32,12 @@ export class SysLogger {
 
 		// our list of messages
 		this.messages = socketShallowRef('syslog', []);
+
+		// buffer for batching info messages to the chat system
+		this.bufferedInfoMsgs = [];
+
+		// timer handle for buffered info message flushing
+		this.bufferedMsgTimer = null;
 	}
 
 
@@ -100,11 +106,35 @@ export class SysLogger {
 	}
 
 
-
 	/**
 	 * Log info message
 	 */
 	info(message) {
+		// always log to the main syslog
 		this.pushMessage('info', message);
+
+		// also buffer info messages for batched forwarding to the chat system
+		this.bufferedInfoMsgs.push(message);
+
+		// if no timer is active, start one to flush after a short delay
+		if (!this.bufferedMsgTimer) {
+			this.bufferedMsgTimer = setTimeout(() => {
+
+				// make a unique ID for this batch
+				const batchID = Date.now().toString(36) + Math.random().toString(36).substr(2);
+
+				// forward batched info messages
+				electronAPI.invoke('local-chat-forward', {
+					syslogger: true,
+					id: batchID,
+					infoMessages: this.bufferedInfoMsgs
+				});
+
+				// clear buffer and reset timer
+				this.bufferedInfoMsgs = [];
+
+				this.bufferedMsgTimer = null;
+			}, 2000);
+		}
 	}
 }
