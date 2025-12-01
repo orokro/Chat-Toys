@@ -54,9 +54,14 @@ export class SysLogger {
 	 * @param {String} text - message text
 	 */
 	pushMessage(type, text) {
-		this.messages.value = [
+
+		// generate a unique ID for the message
+		const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
+
+		this.messages.value = [			
 			...this.messages.value,
 			{
+				id,
 				type,
 				text
 			}
