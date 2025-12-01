@@ -32,7 +32,7 @@
 				Commands can be:
 				<ul>
 					<li>Between 1 and 32 characters long</li>
-					<li>Contain only lower case letters a-z and numbers 0-9</li>
+					<li>Contain only lower case letters a-z, numbers 0-9, and underscore _</li>
 					<li>No spaces allowed</li>
 					<li>No special characters allowed</li>
 					<li>The leading <strong>!</strong> is implied and does not need to be typed</li>
@@ -190,8 +190,8 @@ const validValue = computed(() => {
 	if (props.kind === 'command') {
 		if (typeof value !== 'string') return 'Command must be a string.';
 		if (value.length < 1 || value.length > 32) return 'Command must be between 1 and 32 characters.';
-		if (!/^[a-z0-9]+$/.test(value)) return 'Command can only contain lowercase letters (a-z) and numbers (0-9). No spaces or special characters allowed.';
-		if (props.reservedCommands.includes(value)) return `The command "${value}" is reserved and cannot be used.`;
+		if (!/^[a-z0-9\_]+$/.test(value)) return 'Command can only contain lowercase letters (a-z), numbers (0-9), and underscore (_). No spaces or special characters allowed.';
+		if (props.reservedCommands.includes(value)) return `The command "${value}" is in use.`;
 		return true;
 	}
 	
@@ -231,7 +231,7 @@ function buttonClicked(button, index){
 function formatValue(){
 
 	if (props.kind === 'command') {
-		let formatted = editValue.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+		let formatted = editValue.value.toLowerCase().replace(/[^a-z0-9\_]/g, '');
 		if (formatted.length > 32) {
 			formatted = formatted.substring(0, 32);
 		}
