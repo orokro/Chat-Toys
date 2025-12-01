@@ -141,7 +141,12 @@
 				v-model="showSystemMessages"
 			>
 				<template #title>Show System Messages</template>
-				<p>Enable to show system messages (like when users list their points, or win prizes on the prize wheel, etc.) in chat.</p>
+				<p>
+					Enable to show system messages (like when users list their points, or win prizes on the prize wheel, etc.) in chat.
+					<br/>
+					<br/>
+					It is highly recommended to keep this on - these messages help provide context to chatters.
+				</p>
 			</SettingsInputRow>
 			<SettingsRow>
 				<h3>Custom Theme Code</h3>
@@ -153,7 +158,7 @@
 				<textarea 
 					v-model="customChatTheme" 
 					rows="10" 
-					style="width:100%; font-family: monospace;"
+					style="resize: none; width:100%; font-family: monospace;"
 					placeholder=''
 				></textarea>
 			
