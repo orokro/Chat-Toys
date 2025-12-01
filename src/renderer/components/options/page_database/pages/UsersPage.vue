@@ -38,7 +38,7 @@
 			<br/>
 			It is out-of-scope for this application to provide robust database tools, so feel free to poke around.
 			<br/>
-			But be warned! Always make a backup copy of the database before you start make changes.
+			But be warned! Always make a backup copy of the database before you start making changes.
 		</InfoBox>
 		
 		<SectionHeader title="Users"/>
