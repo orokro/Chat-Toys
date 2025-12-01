@@ -47,6 +47,16 @@
 		<h2>Head Pats Settings</h2>
 		<div class="settingsBlock">
 			<SettingsInputRow
+				type="number"
+				v-model="timeToShow"
+				:min="1"
+				:max="30"
+				:step="1"
+			>
+				<template #title>Time to Show (seconds)</template>
+				<p>How long to show the head pat on screen</p>
+			</SettingsInputRow>
+			<SettingsInputRow
 				type="boolean"
 				v-model="showPatterName"
 			>
@@ -141,6 +151,7 @@ const toy = ctApp.toyManager.toys[HeadPat.slug];
 
 // local settings refs
 const { 
+	timeToShow,
 	showPatterName,
 	chatterNameFontSize,
 	chatterNameColor,

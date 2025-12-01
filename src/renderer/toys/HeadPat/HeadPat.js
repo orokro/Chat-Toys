@@ -108,6 +108,7 @@ export default class HeadPat extends Toy {
 
 		// head pat settings
 		this.buildSettingsBlock({
+			timeToShow: ref(5),
 			showPatterName: ref(true),
 			chatterNameFontSize: ref(25),
 			chatterNameColor: ref('#00ABAE'),
@@ -167,12 +168,12 @@ export default class HeadPat extends Toy {
 			// only show the pat on the chatter if it's enabled, otherwise show it on the streamer
 			if(params.user) {
 				if(this.settings.allowUserPats.value) {
-					this.chatterPatQueue.addToQueue({patter: msg.author, pattee:params.user, duration: 10});
+					this.chatterPatQueue.addToQueue({patter: msg.author, pattee:params.user, duration: this.settings.timeToShow.value});
 				} else {
-					this.streamerPatQueue.addToQueue({patter: msg.author, pattee: '', duration: 10});
+					this.streamerPatQueue.addToQueue({patter: msg.author, pattee: '', duration: this.settings.timeToShow.value});
 				}
 			} else {
-				this.streamerPatQueue.addToQueue({patter: msg.author, pattee: '', duration: 10});
+				this.streamerPatQueue.addToQueue({patter: msg.author, pattee: '', duration: this.settings.timeToShow.value});
 			}
 		}
 
