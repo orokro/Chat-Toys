@@ -154,7 +154,7 @@ export default class Fishing extends Toy {
 			maxFish: ref(5),
 			fishSpawnInterval: ref(120),
 			castTimeout: ref(300),
-			bgImageFile: ref('22'),
+			bgImageFile: ref('24'),
 			fishList: shallowRef([
 				{
 					name: 'runt',
