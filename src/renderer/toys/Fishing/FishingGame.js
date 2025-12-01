@@ -242,7 +242,7 @@ export class FishingGame {
 				return;
 
 			} else {
-				this.log(`${username} caught a ${nearbyFish.name}!`);
+				this.log(`${username} caught a ${nearbyFish.name} worth ${nearbyFish.points}!`);
 				this.catchFn({ cast, fish: nearbyFish });
 
 				// remove caught fish!

@@ -25,49 +25,53 @@
 		}"		
 	>
 		<div class="messageText">
-			<div 
+			<template 
 				v-for="(message, index) in (demoMode ? demoChat : chatLog)"
 				:key="message.id"
-				class="msgRow"
-				:class="{
-					isMember:message.isMember,
-				}"
 			>
-				<!-- Profile Picture -->
-				<div class="pfp-aligner">				
-					<img 
-						v-if="socketSettingsRef?.showChatterPFP"
-						src="https://static-cdn.jtvnw.net/jtv_user_pictures/03173e49-f80a-4e3e-9ddb-c51e9f2b633a-profile_image-300x300.jpeg"
-						:alt="message.author + ' profile picture'"
-						class="chat-pfp"
-					/>
-				</div>
-
-				<div class="message-contents">
-					<span 
-						v-if="socketSettingsRef?.showChatterNames"
-						class="user"
-						:class="{isMember:message.isMember}"
-						:style="{
-							color: socketSettingsRef?.chatNameColor,
-						}"
-					>
-						{{ message.author }}:
-					</span>
-					<br v-if="socketSettingsRef?.messageOnNewLine && socketSettingsRef?.showChatterNames"/>
-					<span
-						:style="{
-							color: socketSettingsRef?.chatTextColor,
-						}"
-					>
-						<!-- CHANGED: Replaced direct interpolation with the ParsedMessage component -->
-						<ParsedMessage 
-							:text="message.message" 
-							:emojis="message.emojis" 
+				<div				
+					v-if="!message.syslogger || (message.syslogger == true && socketSettingsRef?.showSystemMessages)"
+					class="msgRow"
+					:class="{
+						isMember:message.isMember,
+					}"
+				>
+					<!-- Profile Picture -->
+					<div class="pfp-aligner">				
+						<img 
+							v-if="socketSettingsRef?.showChatterPFP"
+							src="https://static-cdn.jtvnw.net/jtv_user_pictures/03173e49-f80a-4e3e-9ddb-c51e9f2b633a-profile_image-300x300.jpeg"
+							:alt="message.author + ' profile picture'"
+							class="chat-pfp"
 						/>
-					</span>
+					</div>
+
+					<div class="message-contents">
+						<span 
+							v-if="socketSettingsRef?.showChatterNames"
+							class="user"
+							:class="{isMember:message.isMember}"
+							:style="{
+								color: socketSettingsRef?.chatNameColor,
+							}"
+						>
+							{{ message.author }}:
+						</span>
+						<br v-if="socketSettingsRef?.messageOnNewLine && socketSettingsRef?.showChatterNames"/>
+						<span
+							:style="{
+								color: socketSettingsRef?.chatTextColor,
+							}"
+						>
+							<!-- CHANGED: Replaced direct interpolation with the ParsedMessage component -->
+							<ParsedMessage 
+								:text="message.message" 
+								:emojis="message.emojis" 
+							/>
+						</span>
+					</div>
 				</div>
-			</div>
+			</template>
 		</div>
 	</div>
 </template>

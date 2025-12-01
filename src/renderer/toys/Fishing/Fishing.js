@@ -125,7 +125,7 @@ export default class Fishing extends Toy {
 			// trim size
 			while(newCatches.length > 20)
 				newCatches.shift();
-			
+
 			// update socket state
 			this.catches.value = newCatches;
 		});

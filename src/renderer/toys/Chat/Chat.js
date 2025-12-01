@@ -292,7 +292,8 @@ export default class Chat extends Toy {
 				author: chat.author,
 				message: chat.messageText,
 				isMember: chat.isMember,
-				emojis: chat.emojis
+				emojis: chat.emojis,
+				syslogger: chat.syslogger,
 			});
 			
 		}// next chat
