@@ -99,6 +99,17 @@
 				<p>Enable to show user profile pictures next to their messages.</p>
 			</SettingsInputRow>
 			<SettingsInputRow
+				type="number"
+				:min="16"
+				:max="256"
+				:step="1"
+				v-model="pfpSize"
+			>
+				<template #title>Profile Picture Size</template>
+				<p>Size (in pixels) for user profile pictures in chat.</p>
+			</SettingsInputRow>
+			
+			<SettingsInputRow
 				type="boolean"
 				v-model="messageOnNewLine"
 			>
@@ -247,6 +258,7 @@ const {
 	filterCommands,
 	showChatterNames,
 	showChatterPFP,
+	pfpSize,
 	messageOnNewLine,
 	customChatTheme,
 	chatNameColor,

@@ -157,6 +157,7 @@ export default class Chat extends Toy {
 			filterCommands: ref(true),
 			showChatterNames: ref(true),
 			showChatterPFP: ref(true),
+			pfpSize: ref(32),
 			messageOnNewLine: ref(true),
 			customChatTheme: ref(''),
 			chatNameColor: ref('#00ABAE'),

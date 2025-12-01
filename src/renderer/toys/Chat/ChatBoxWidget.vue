@@ -20,6 +20,7 @@
 			borderImageSlice: '200 fill',
 			borderImageRepeat: 'stretch',
 			'--fontSize': socketSettingsRef?.chatTextSize + 'px',
+			'--pfpSize': socketSettingsRef?.pfpSize + 'px',
 		}"		
 	>
 		<div class="messageText">
@@ -27,29 +28,45 @@
 				v-for="(message, index) in (demoMode ? demoChat : chatLog)"
 				:key="message.id"
 				class="msgRow"
+				:class="{
+					isMember:message.isMember,
+					showPFP: socketSettingsRef?.showChatterPFP,
+				}"
 			>
-				<span 
-					v-if="socketSettingsRef?.showChatterNames"
-					class="user"
-					:class="{isMember:message.isMember}"
-					:style="{
-						color: socketSettingsRef?.chatNameColor,
-					}"
-				>
-					{{ message.author }}:
-				</span>
-				<br v-if="socketSettingsRef?.messageOnNewLine && socketSettingsRef?.showChatterNames"/>
-				<span
-					:style="{
-						color: socketSettingsRef?.chatTextColor,
-					}"
-				>
-					<!-- CHANGED: Replaced direct interpolation with the ParsedMessage component -->
-					<ParsedMessage 
-						:text="message.message" 
-						:emojis="message.emojis" 
+				<!-- Profile Picture -->
+				<div class="pfp-aligner">				
+					<img 
+						v-if="socketSettingsRef?.showChatterPFP"
+						src="https://static-cdn.jtvnw.net/jtv_user_pictures/03173e49-f80a-4e3e-9ddb-c51e9f2b633a-profile_image-300x300.jpeg"
+						:alt="message.author + ' profile picture'"
+						class="chat-pfp"
 					/>
-				</span>
+				</div>
+
+				<div class="message-contents">
+					<span 
+						v-if="socketSettingsRef?.showChatterNames"
+						class="user"
+						:class="{isMember:message.isMember}"
+						:style="{
+							color: socketSettingsRef?.chatNameColor,
+						}"
+					>
+						{{ message.author }}:
+					</span>
+					<br v-if="socketSettingsRef?.messageOnNewLine && socketSettingsRef?.showChatterNames"/>
+					<span
+						:style="{
+							color: socketSettingsRef?.chatTextColor,
+						}"
+					>
+						<!-- CHANGED: Replaced direct interpolation with the ParsedMessage component -->
+						<ParsedMessage 
+							:text="message.message" 
+							:emojis="message.emojis" 
+						/>
+					</span>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -191,6 +208,58 @@ watch(demoMode, (newVal) => {
 			display: flex;
 			flex-direction: column;
 			justify-content: flex-end;
+
+			// one of the message rows
+			.msgRow {
+
+				padding: 4px 8px;
+
+				display: flex;
+				flex-direction: row;
+				justify-content: flex-start;
+
+				// wrapper to align PFP
+				.pfp-aligner {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					margin-right: 8px;
+				}
+				
+				// styles for profile picture
+				.chat-pfp {
+					
+					// for debug
+					/* border: 2px solid black; */
+
+					// size from settings
+					height: var(--pfpSize) !important;
+					width: var(--pfpSize) !important;
+
+					// round
+					border-radius: 50%;
+
+					// margin to separate from text
+					margin-right: 8px;
+
+					// align with text
+					vertical-align: middle;
+
+					// prevent shrinking
+					/* flex-shrink: 0; */
+					
+
+				}// .chat-pfp
+
+				// to separate from the PFP
+				.message-contents {
+
+					.user {
+						margin-bottom: 0px;
+					}
+				}// .message-contents
+
+			}// .msgRow
 
 		}// .messageText
 

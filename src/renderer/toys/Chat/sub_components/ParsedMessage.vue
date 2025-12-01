@@ -8,19 +8,20 @@
 
 	<span class="message-content">
 
-	  <template v-for="(token, i) in tokens" :key="i">
+		<template v-for="(token, i) in tokens" :key="i">
 
-		<!-- Render Text -->
-		<span v-if="token.type === 'text'">{{ token.content }}</span>
-		
-		<!-- Render Emoji -->
-		<img 
-			v-else-if="token.type === 'emoji'" 
-			:src="token.content" 
-			:alt="token.alt"
-			class="chat-emoji"
-		/>
-	  </template>
+			<!-- Render Text -->
+			<span v-if="token.type === 'text'">{{ token.content }}</span>
+
+			<!-- Render Emoji -->
+			<img 
+				v-else-if="token.type === 'emoji'" 
+				:src="token.content" 
+				:alt="token.alt"
+				referrerpolicy="no-referrer"
+				class="chat-emoji"
+			/>
+		</template>
 
 	</span>
 
