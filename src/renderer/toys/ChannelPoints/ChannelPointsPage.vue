@@ -152,6 +152,24 @@
 				<h3>Channel Points Icon Image</h3>
 				<p>Choose an icon to show on the widget.</p>
 			</SettingsAssetRow>
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="enableWidgetSound"
+			>
+				<template #title>Enable Widget Sound</template>
+				<p>Should a sound play when the claim opportunity appears?</p>
+			</SettingsInputRow>
+
+			<SettingsAssetRow
+				v-model="widgetSoundId"
+				:kind-filter="'audio'"
+				v-if="enableWidgetSound"
+			>
+				<h3>Widget Sound Effect</h3>
+				<p>Choose a sound effect to play when the claim opportunity appears.</p>
+			</SettingsAssetRow>
+			
 		</div>
 		
 		<SectionHeader title="Widget Preview"/>
@@ -212,6 +230,8 @@ const {
 	showTextPrompt,
 	widgetColorTheme,
 	widgetIconId,
+	enableWidgetSound,
+	widgetSoundId,
 } = toy.settings;
 
 

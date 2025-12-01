@@ -63,7 +63,11 @@ export default class ChannelPoints extends Toy {
 		this.widgetIconPath = socketShallowRef(
 			this.static.slugify('widgetIconPath'),
 			this.getAssetPath(this.settings.widgetIconId.value));
-		
+		// our socket state
+		this.soundPath = socketShallowRef(
+			this.static.slugify('soundPath'),
+			this.getAssetPath(this.settings.widgetSoundId.value));
+
 		// set up a watch for the icon path
 		watch(this.settings.widgetIconId, (value) => {
 			this.widgetIconPath.value = this.getAssetPath(value);
@@ -137,6 +141,8 @@ export default class ChannelPoints extends Toy {
 			showTextPrompt: ref(true),
 			widgetColorTheme: ref('#00ABAE'),
 			widgetIconId: ref('1'),
+			enableWidgetSound: ref(true),
+			widgetSoundId: ref('11'),
 			widgetBox: shallowRef({
 				x: 1280 - 150,
 				y: 720 - 150,

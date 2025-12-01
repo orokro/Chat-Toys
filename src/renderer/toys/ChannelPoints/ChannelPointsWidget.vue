@@ -135,17 +135,21 @@ const slugify = (text) => {
 // const userMeMsg = ref(`${"Orokro"}: ₱ ${9001}`);
 const userMeMsg = ref('');
 
+
 // set up our live-light code
 keepAliveSocket(thisSlug, widgetSlug);
+
 
 const emit = defineEmits([
 	'boxChange'
 ]);
 
+
 // define some props
 const props = defineProps({
 
 });
+
 
 // timer circle settings
 const thiccness = ref(10);
@@ -155,10 +159,11 @@ const center = computed(() => radius.value + 5);
 const circumference = computed(() => 2 * Math.PI * radius.value);
 const dashArray = computed(() => circumference.value);
 const dashOffset = computed(() => {
-  const pct = Math.min(Math.max(timeLeftNormalised.value, 0), 1);
-  return circumference.value * (1 - pct);
+	const pct = Math.min(Math.max(timeLeftNormalised.value, 0), 1);
+	return circumference.value * (1 - pct);
 });
 const svgSize = computed(() => diameter.value + 10); // 5px padding around
+
 
 // gets our settings
 const ready = ref(false);
@@ -167,6 +172,7 @@ const socketSettingsRef = useToySettings('channel-points', 'widgetBox', emit, ()
 	// console.log('channel-points settings updated');
 	console.log(socketSettingsRef.value);
 });
+
 
 // gets live sockets
 const demoMode = socketShallowRefReadOnly('demoMode', false);
@@ -177,7 +183,7 @@ const timeLeftNormalised = socketShallowRefReadOnly(slugify('timeLeftNormalised'
 const userClaims = socketShallowRefReadOnly(slugify('userClaims'), []);
 const userMeLogs = socketShallowRefReadOnly(slugify('userMeLogs'), []);
 const widgetIconPath = socketShallowRefReadOnly(slugify('widgetIconPath'), null);
-
+const soundPath = socketShallowRefReadOnly(slugify('soundPath'), null);
 
 const claimsSeenHistory = chromeShallowRef('claimsSeenHistory', []);
 const claimsVisible = shallowRef([]);
@@ -204,11 +210,29 @@ watch(userClaims, (newClaims) => {
 	}// next i
 });
 
+
+// play sound when we leave idle
+watch(mode, (newMode) => {
+	
+	if(
+			newMode === 'GET'
+			&&
+			soundPath.value !== null
+			&&
+			socketSettingsRef.value.enableWidgetSound == true
+	) {
+		const audio = new Audio(soundPath.value);
+		audio.play();
+	}
+});
+
+
 /**
  * Queue of pending user messages.
  * @type {string[]}
  */
- const msgQueue = [];
+const msgQueue = [];
+
 
 /**
  * Timer ID for clearing messages.
@@ -216,11 +240,13 @@ watch(userClaims, (newClaims) => {
  */
 let msgTimer = null;
 
+
 /**
  * Duration each message is displayed (in milliseconds).
  * @constant
  */
 const DISPLAY_DURATION = 3000;
+
 
 /**
  * Handles displaying the next message in the queue.
@@ -255,6 +281,7 @@ function processNextMsg() {
 	}, DISPLAY_DURATION);
 }
 
+
 /**
  * Push a new message to the queue.
  * If no timer is running, it will immediately start processing.
@@ -281,7 +308,8 @@ function pushUserMsg(msg) {
  * Prevents duplicate pushUserMsg() calls.
  * @type {Set<string>}
  */
- const seenMsgIds = new Set();
+const seenMsgIds = new Set();
+
 
 /**
  * Watch the userMeLogs shallowRef for changes.

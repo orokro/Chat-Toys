@@ -37,6 +37,7 @@
 			:src="previewSrc"
 			controls
 			:autoplay="props.autoPlay"
+			class="no-volume"
 			:style="{
 				width: props.width ? props.width + 'px' : '100%'
 			}">
@@ -124,6 +125,11 @@ watch(() => props.fileId, generatePreview);
 
 </script>
 <style lang="scss" scoped>
+
+	.no-volume::-webkit-media-controls-volume-slider,
+	.no-volume::-webkit-media-controls-mute-button {
+		display: none !important;
+	}
 
 	// outer wrapper
 	.filePreview {
