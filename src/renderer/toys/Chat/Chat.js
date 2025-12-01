@@ -44,14 +44,6 @@ export default class Chat extends Toy {
 	static themeColor = '#60C5F1';
 	static widgetComponents = [
 		{
-			component: SwarmWidget,
-			key: 'swarmWidgetBox',
-			allowResize: true,
-			lockAspectRatio: false,
-			description: 'Shows swarm messages. Should ideally be placed full screen for maximum effect.',
-			slug: 'swarmBox'
-		},
-		{
 			component: ChatBoxWidget,
 			key: 'chatWidgetBox',
 			allowResize: true,
@@ -66,7 +58,15 @@ export default class Chat extends Toy {
 			lockAspectRatio: false,
 			description: 'Shows when a chatter uses the !shout command. Similar to super chats, but channel points instead.',
 			slug: 'shoutBox'
-		},		
+		},
+		{
+			component: SwarmWidget,
+			key: 'swarmWidgetBox',
+			allowResize: true,
+			lockAspectRatio: false,
+			description: 'Shows swarm messages. Should ideally be placed full screen for maximum effect.',
+			slug: 'swarmBox'
+		},				
 	];
 
 
@@ -151,7 +151,7 @@ export default class Chat extends Toy {
 		// chat settings
 		this.buildSettingsBlock({
 
-			enableChatBox: ref(false),
+			enableChatBox: ref(true),
 			enableChatBoxImage: ref(false),
 			chatBoxImage: ref('3'),
 			filterCommands: ref(true),
@@ -161,7 +161,9 @@ export default class Chat extends Toy {
 			customChatTheme: ref(''),
 			chatNameColor: ref('#00ABAE'),
 			chatTextColor: ref('#FFFFFF'),
+			chatTextShadow: ref(true),
 			chatTextSize: ref(24),
+			showSystemMessages: ref(true),
 			shoutSoundId: ref('11'),
 			swarmSize: ref(5),
 			swarmDuration: ref(10),
@@ -184,6 +186,10 @@ export default class Chat extends Toy {
 				height: 1040
 			}),
 		});
+
+		// this must always be true now
+		// (old installed versions may have it false, but we want to force it true now)
+		this.settings.enableChatBox.value = true;
 	}
 
 

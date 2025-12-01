@@ -90,6 +90,7 @@ const demoMode = socketShallowRefReadOnly('demoMode', false);
 const chatLog = socketShallowRefReadOnly(slugify('chatLog'), '');
 const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
 
+window.cl = chatLog;
 
 // set up demo logic if we're in demo mode.
 const demoChat = shallowRef([]);

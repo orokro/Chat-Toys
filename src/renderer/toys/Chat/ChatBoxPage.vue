@@ -42,14 +42,27 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
+
+		<h1>Chat Box Settings</h1>
 		<div class="settingsBlock">
-			<SettingsInputRow
-				type="boolean"
-				v-model="enableChatBox"
-			>
-				<template #title>Enable Onscreen Chat Box</template>
-				<p>Show chat box on screen mirroring live chat (as opposed to other streaming services)</p>
-			</SettingsInputRow>
+
+			<!-- 
+				This setting is now deprecated - it was part of the old Layout system. 
+			 
+				Since the old system showed all active widgets, it might have been desirable
+				to turn off the chat widget. But the new system uses individual widget sources,
+				so this setting is no longer needed.
+
+				Leaving the code commented out for now in case we want to re-enable it later.
+
+				<SettingsInputRow
+					type="boolean"
+					v-model="enableChatBox"
+				>
+					<template #title>Enable Onscreen Chat Box</template>
+					<p>Show chat box on screen mirroring live chat (as opposed to other streaming services)</p>
+				</SettingsInputRow>
+			-->
 			<SettingsInputRow
 				type="boolean"
 				v-model="enableChatBoxImage"
@@ -69,7 +82,7 @@
 				v-model="filterCommands"
 			>
 				<template #title>Filter !commands from Chat</template>
-				<p>If using the custom streaming box, filter out the <span class="cmd">!Commands</span>.</p>
+				<p>Filter out the <span class="cmd">!Commands</span> from the Chat widget.</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="boolean"
@@ -77,6 +90,20 @@
 			>
 				<template #title>Show Chatter Names</template>
 				<p>Disable to show messages only.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="showChatterPFP"
+			>
+				<template #title>Show Chatter Profile Pictures</template>
+				<p>Enable to show user profile pictures next to their messages.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="messageOnNewLine"
+			>
+				<template #title>Message On New Line</template>
+				<p>Enable to show message text on a new line under the name, rather than inline.</p>
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="color"
@@ -100,8 +127,43 @@
 				v-model="chatTextSize"
 			>
 				<template #title>Chat Text Size.</template>
-				<p>Font size for the on-screen chat only.</p>
+				<p>Font size for the chat box text.</p>
 			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="chatTextShadow"
+			>
+				<template #title>Chat Text Shadow</template>
+				<p>Enable to add a shadow to chat text for better visibility.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="showSystemMessages"
+			>
+				<template #title>Show System Messages</template>
+				<p>Enable to show system messages (like when users list their points, or win prizes on the prize wheel, etc.) in chat.</p>
+			</SettingsInputRow>
+			<SettingsRow>
+				<h3>Custom Theme Code</h3>
+				<p>
+					If you have custom theme code (JSON+CSS) you can paste it below.
+					<br/>
+					NOTE: custom themes can potentially overwrite the other chat box settings above.
+				</p>
+				<textarea 
+					v-model="customChatTheme" 
+					rows="10" 
+					style="width:100%; font-family: monospace;"
+					placeholder=''
+				></textarea>
+			
+			</SettingsRow>
+
+		</div>
+
+		<br/>
+		<h1>Shout Widget Settings</h1>
+		<div class="settingsBlock">
 			<SettingsAssetRow
 				v-model="shoutSoundId" 
 				:kind-filter="'sound'"
@@ -109,6 +171,11 @@
 				<h3>Shout Sound</h3>
 				<p>What sound effect should play when <span class="cmd">!{{ shout_command }}</span> command is used.</p>
 			</SettingsAssetRow>
+		</div>
+
+		<br/>
+		<h1>Swarm Widget Settings</h1>
+		<div class="settingsBlock">
 			<SettingsInputRow
 				type="number"
 				:min="1"
@@ -174,9 +241,14 @@ const {
 	chatBoxImage,
 	filterCommands,
 	showChatterNames,
+	showChatterPFP,
+	messageOnNewLine,
+	customChatTheme,
 	chatNameColor,
 	chatTextColor,
+	chatTextShadow,
 	chatTextSize,
+	showSystemMessages,
 	shoutSoundId,
 	swarmSize,
 	swarmDuration,
