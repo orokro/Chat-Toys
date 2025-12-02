@@ -315,6 +315,17 @@ export class VTSConnectionManager {
 		this._disconnectListeners = new Set();
 		this._modelMovedListeners = new Set();
 
+		// store our model transform data
+		this.modelTransform = {
+			positionX: 0,
+			positionY: 0,
+			scale: 1,
+			rotation: 0,
+			written: false,
+		};
+		// reactive version
+		this.modelTransformRef = shallowRef(this.modelTransform);
+
 		// for debug in dev tools
 		if (typeof window !== 'undefined')
 			window.vtsConnMgr = this;
@@ -938,6 +949,19 @@ export class VTSConnectionManager {
 		}
 	}
 
+
+	_updateModelTransform(payload) {
+		this.modelTransform = {
+			positionX: payload.positionX,
+			positionY: payload.positionY,
+			scale: payload.scale,
+			rotation: payload.rotation,
+			written: true,
+		};
+		this.modelTransformRef.value = this.modelTransform;
+	}
+
+
 	/**
 	 * Handle ModelMovedEvent payload from VTS.
 	 * 
@@ -960,6 +984,9 @@ export class VTSConnectionManager {
 			scale: typeof pos.size === 'number' ? pos.size : 1,
 			rotation: typeof pos.rotation === 'number' ? pos.rotation : 0
 		};
+		
+		// save to our state
+		this._updateModelTransform(payload);
 
 		for (const cb of this._modelMovedListeners) {
 			try {

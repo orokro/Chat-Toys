@@ -49,6 +49,13 @@ export default class VTSTosser extends Toy {
 		this.resetTimeout = window.setElectronTimeout(() => {
 			this.tossQueue.value = [];
 		}, 2000);
+
+		// true while we're doing calibration logic
+		this.isCalibrating = ref(false);
+
+		// save initial model position for calibration
+		this.initialModelCalibration = null;
+
 	}
 
 

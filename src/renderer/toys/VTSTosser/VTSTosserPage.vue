@@ -77,15 +77,16 @@
 		</template>
 		<template v-else>
 			<p>
-				In order for the tossed objects to interact with your model.<br/>
+				In order for the tossed objects to interact with your model:<br/><br/>
 				<ol>
 					<li>First you will need to enable your VTubeStudio virtual camera if it's not already enabled</li>
-					<li>Next you will need select the camera feed below</li>
+					<li>Next you will need start the camera feed below</li>
 					<li>Then click, drag, and resize the collider silhouette over your avatar</li>
 					<li>Go back to VTubeStudio & move / scale your avatar while watching below</li>
 					<li>You should see the collider move and scale with your model (not rotate)</li>
 					<li>Click save collider settings & you can disable the VTubeStudio virtual camera if you no longer need it</li>
 				</ol>
+				<br/>
 				<VTSLiveCamera/>
 			</p>
 		</template>
@@ -180,11 +181,11 @@ import YTVideoBox from '@components/YTVideoBox.vue';
 import VTSLiveCamera from './VTSLiveCamera.vue';
 
 // our app
-import Tosser from './VTSTosser';
+import VTSTosser from './VTSTosser';
 
 // fetch the main app state context & our toy
 const ctApp = inject('ctApp');
-const toy = ctApp.toyManager.toys[Tosser.slug];
+const toy = ctApp.toyManager.toys[VTSTosser.slug];
 
 // get our local refs to use in template
 const { 
@@ -199,7 +200,7 @@ const commandsRef = chromeShallowRef('commands', {});
 
 // get the command used for tossing items
 const toss_command = computed(() => {
-	return commandsRef.value.tosser__toss?.command || '';
+	return commandsRef.value.vtsTosser__yeet?.command || '';
 });
 
 </script>
