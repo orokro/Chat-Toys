@@ -248,7 +248,160 @@ const testScripts = {
 				console.log('result:false');
 			}
 		})()
-	`
+	`,
+
+	getUserLive: `
+		(() => {
+			try {
+
+				const MAX_WAIT_MS = 5000;
+				const POLL_INTERVAL_MS = 150;
+
+				/**
+				 * Recursively search an object graph for a live videoId.
+				 *
+				 * @param {any} root
+				 * @returns {string|null}
+				 */
+				const findLiveVideoId = (root) => {
+
+					if (!root || typeof root !== 'object')
+						return null;
+
+					const visited = new Set();
+					const stack = [root];
+
+					while (stack.length) {
+
+						const obj = stack.pop();
+
+						if (!obj || typeof obj !== 'object')
+							continue;
+
+						if (visited.has(obj))
+							continue;
+
+						visited.add(obj);
+
+						// Direct hit: has a videoId and looks live-ish
+						if (obj.videoId && typeof obj.videoId === 'string') {
+
+							const vd = obj;
+							const liveFlag =
+								vd.isLive === true ||
+								vd.isLiveContent === true ||
+								(vd.liveStreamability && typeof vd.liveStreamability === 'object') ||
+								(vd.badges && JSON.stringify(vd.badges).toLowerCase().includes('live'));
+
+							if (liveFlag) {
+								return vd.videoId;
+							}
+						}
+
+						// Sometimes live-ness is stored on videoDetails
+						if (obj.videoDetails && typeof obj.videoDetails === 'object') {
+
+							const vd = obj.videoDetails;
+							if (vd.videoId && typeof vd.videoId === 'string') {
+
+								const liveFlag =
+									vd.isLiveContent === true ||
+									vd.isLive === true ||
+									(vd.author && String(vd.author).toLowerCase().includes('live'));
+
+								if (liveFlag) {
+									return vd.videoId;
+								}
+							}
+						}
+
+						for (const key in obj) {
+							if (!Object.prototype.hasOwnProperty.call(obj, key))
+								continue;
+							const val = obj[key];
+							if (val && typeof val === 'object') {
+								stack.push(val);
+							}
+						}
+					}
+
+					return null;
+				};
+
+				/**
+				 * Fallback: scan HTML for a videoId near live flags.
+				 *
+				 * @returns {string|null}
+				 */
+				const scanHtmlForLiveVideoId = () => {
+
+					const html = document.documentElement.innerHTML;
+
+					// Look for a segment with isLive true and a nearby videoId
+					const liveSegmentMatch = html.match(/"isLive(?:Content)?":true[\\s\\S]{0,500}?"videoId":"([^"]+)"/);
+					if (liveSegmentMatch && liveSegmentMatch[1]) {
+						return liveSegmentMatch[1];
+					}
+
+					// Or videoDetails with isLiveContent
+					const vdMatch = html.match(/"videoDetails":[\\s\\S]{0,500}?"videoId":"([^"]+)"[\\s\\S]{0,500}?"isLiveContent":true/);
+					if (vdMatch && vdMatch[1]) {
+						return vdMatch[1];
+					}
+
+					return null;
+				};
+
+				const tryExtract = () => {
+
+					try {
+
+						const candidates = [];
+
+						if (window.ytInitialPlayerResponse)
+							candidates.push(window.ytInitialPlayerResponse);
+
+						if (window.ytInitialData)
+							candidates.push(window.ytInitialData);
+
+						// Some Studio pages tuck data under "response" or "contents"
+						if (window.ytInitialData && window.ytInitialData.response)
+							candidates.push(window.ytInitialData.response);
+
+						let videoId = null;
+
+						for (let i = 0; i < candidates.length && !videoId; i++) {
+							videoId = findLiveVideoId(candidates[i]);
+						}
+
+						if (!videoId) {
+							videoId = scanHtmlForLiveVideoId();
+						}
+
+						if (videoId) {
+							console.log('result:' + JSON.stringify(videoId));
+						} else if (Date.now() - startTime >= MAX_WAIT_MS) {
+							// Ran out of time, give up
+							console.log('result:null');
+						} else {
+							// Not ready yet, poll again
+							setTimeout(tryExtract, POLL_INTERVAL_MS);
+						}
+
+					} catch (err) {
+						console.log('result:null');
+					}
+				};
+
+				const startTime = Date.now();
+				tryExtract();
+
+			} catch (e) {
+				console.log('result:null');
+			}
+		})()
+	`,
+
 };
 
 
