@@ -152,13 +152,44 @@ watch(demoMode, (newVal) => {
 });
 
 
+
+function parseMultilineJSON(jsonString) {
+  // Regex explanation:
+  // /("(?:[^"\\]|\\.)*")/g
+  // 1. Matches a "
+  // 2. Matches any character that is NOT a " or \, OR matches an escaped character
+  // 3. Matches the closing "
+  
+  const fixedString = jsonString.replace(/("(?:[^"\\]|\\.)*")/g, (match) => {
+    // Inside the found string, replace literal newlines with escaped newlines
+    return match.replace(/\n/g, "\\n");
+  });
+
+  return JSON.parse(fixedString);
+}
+
+
 // watch the socketSettingsRef.value.customChatTheme for changes. When it changes, inject the CSS into the styleInjector div.
 const styleInjector = ref(null);
 watch(() => socketSettingsRef.value.customChatTheme, (newVal) => {
 	if (styleInjector.value) {
-		styleInjector.value.innerHTML = `<style scoped>${newVal}</style>`;
+
+		console.log('Updating chat box custom CSS', newVal);
+		// get just the CSS
+		const injects = {
+			chatRowInjects: '',
+			pfpInjects: '',
+			contentsInjects: '',
+			userNameInjects: '',
+			messageBodyInjects: '',
+			styleInjects: '',
+			...parseMultilineJSON(newVal || '{}')
+		};
+
+		styleInjector.value.innerHTML = `<style scoped>${injects.styleInjects}</style>`;
 	}
 }, { immediate: true });
+
 </script>
 <style lang="scss" scoped>
 
