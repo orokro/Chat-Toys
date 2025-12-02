@@ -84,7 +84,154 @@ const testScripts = {
 		})()
 	`,
 
+	getLive2: `
+		(() => {
+			try {
+				// Work directly on the initial HTML; we don't depend on dynamic DOM content.
+				const html = document.documentElement.innerHTML;
+				let videoId = null;
 
+				// 1) Try JSON "canonicalUrl":"https://www.youtube.com/watch?v=VIDEO_ID"
+				const jsonCanonicalMatch = html.match(/"canonicalUrl":"https:\\/\\/www\\.youtube\\.com\\/watch\\?v=([^"]+)"/);
+				if (jsonCanonicalMatch && jsonCanonicalMatch[1]) {
+					videoId = jsonCanonicalMatch[1];
+				}
+
+				// 2) Fallback: <link rel="canonical" href="https://www.youtube.com/watch?v=VIDEO_ID">
+				if (!videoId) {
+					const canonicalLink = document.querySelector('link[rel="canonical"]');
+					if (canonicalLink) {
+						const href = canonicalLink.getAttribute('href') || '';
+						const m = href.match(/[?&]v=([^&]+)/);
+						if (m && m[1]) {
+							videoId = m[1];
+						}
+					}
+				}
+
+				// If we still don't have a video id, it's not a watch page / live stream.
+				if (!videoId) {
+					console.log('result:null');
+					return;
+				}
+
+				// 3) Decide if it's actually live
+				let isLive = false;
+
+				// a) Try JS globals if they're there
+				try {
+					if (
+						window.ytInitialPlayerResponse &&
+						window.ytInitialPlayerResponse.videoDetails &&
+						window.ytInitialPlayerResponse.videoDetails.isLiveContent
+					) {
+						isLive = true;
+					}
+				} catch (e) {
+					// ignore
+				}
+
+				// b) Fallback: search for isLive flags in the HTML itself
+				if (!isLive) {
+					if (
+						html.includes('"isLive":true') ||
+						html.includes('"isLiveContent":true')
+					) {
+						isLive = true;
+					}
+				}
+
+				if (!isLive) {
+					console.log('result:null');
+					return;
+				}
+
+				// Return JSON so your existing parser can JSON.parse it cleanly
+				console.log('result:' + JSON.stringify(videoId));
+			} catch (e) {
+				console.log('result:null');
+			}
+		})()
+	`,
+
+		getLive3: `
+		(() => {
+			try {
+				let videoId = null;
+
+				// 1) If we're already on a watch page, just use v= directly
+				const currentUrl = new URL(location.href);
+				if (currentUrl.pathname === '/watch') {
+					videoId = currentUrl.searchParams.get('v');
+				}
+
+				const html = document.documentElement.innerHTML;
+
+				// 2) If not, try JSON canonicalUrl in the page
+				if (!videoId) {
+					const jsonCanonicalMatch = html.match(
+						/"canonicalUrl":"https:\\/\\/www\\.youtube\\.com\\/watch\\?v=([^"]+)"/
+					);
+					if (jsonCanonicalMatch && jsonCanonicalMatch[1]) {
+						videoId = jsonCanonicalMatch[1];
+					}
+				}
+
+				// 3) Fallback: <link rel="canonical" href="https://www.youtube.com/watch?v=VIDEO_ID">
+				if (!videoId) {
+					const canonicalLink = document.querySelector('link[rel="canonical"]');
+					if (canonicalLink) {
+						const href = canonicalLink.getAttribute('href') || '';
+						const m = href.match(/[?&]v=([^&]+)/);
+						if (m && m[1]) {
+							videoId = m[1];
+						}
+					}
+				}
+
+				// If we still don't have an ID, it's not a watch/live page
+				if (!videoId) {
+					console.log('result:null');
+					return;
+				}
+
+				// 4) Decide if it's actually live
+				let isLive = false;
+
+				// a) Prefer ytInitialPlayerResponse if present
+				try {
+					const player = window.ytInitialPlayerResponse;
+					const details = player && player.videoDetails;
+					if (details && (details.isLiveContent || details.isLive)) {
+						isLive = true;
+					}
+				} catch (e) {
+					// ignore, we'll fall back to HTML scan
+				}
+
+				// b) Fallback: search for isLive flags in the HTML itself
+				if (!isLive) {
+					if (
+						html.includes('"isLive":true') ||
+						html.includes('"isLiveContent":true')
+					) {
+						isLive = true;
+					}
+				}
+
+				if (!isLive) {
+					console.log('result:null');
+					return;
+				}
+
+				console.log('result:' + JSON.stringify(videoId));
+			} catch (e) {
+				console.log('result:null');
+			}
+		})()
+	`,
+
+	
 	chatIsLive: `
 		(() => {
 			try {
@@ -214,55 +361,51 @@ async function processQueue() {
 		This could be made more robust by using sockets to communicate, or by using a more complex string.
 		But for now, this is good enough.
 	*/
+	/*
+		Right, so - we are going to be injecting a raw JavaScript string directly into the loaded page.
+		...
+	*/
 	const logListener = (event, logType, args) => {
-
 		// check if we got a log message that's a string that starts with "result:"
 		if (logType === 'log' && args.length && typeof args[0] === 'string' && args[0].startsWith('result:')) {
 
-			// split the entire log message on the "result:" string & parse the result
 			const resultString = args[0].split('result:')[1];
 			let parsedResult = resultString;
 
-			// try to parse the result as JSON
 			try {
 				parsedResult = JSON.parse(resultString);
 			} catch (e) {
-
-				// Fallback to raw string if not JSON
 				if (resultString === 'true')
 					parsedResult = true;
 				else if (resultString === 'false')
 					parsedResult = false;
 			}
 
-			// if we haven't resolved the result yet, resolve the promise with the parsed result
 			if (!resultResolved) {
-
-				// we're resolved, lets clear our timeout because we got an answerr
 				resultResolved = true;
 				clearTimeout(timeout);
 
-				// clean up the listener for the console messages
-				testerWindow.webContents.removeListener('console-message', logListener);
+				// remove the actual listener we registered below
+				testerWindow.webContents.removeListener('console-message', consoleListener);
 
-				// resolve the OG promise with the parsed result
 				resolve(parsedResult);
 
-				// we're no longer busy, and we can clear the window to about:blank so we don't waste resources on
-				// whatever the test page was
 				isBusy = false;
 				testerWindow.loadURL('about:blank');
-
-				// there may be more items in the queue, so keep processing
 				processQueue();
 			}
 		}
 	};
 
-	// because we built our function above to read console log messages, let's subscribe it now before we load the test-URL
-	testerWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+	// this is the function we actually attach & later remove
+	const consoleListener = (event, level, message, line, sourceId) => {
+		// we only care about normal console.log
 		logListener(event, 'log', [message]);
-	});
+	};
+
+	// subscribe before we load the test-URL
+	testerWindow.webContents.on('console-message', consoleListener);
+
 
 	try {
 
@@ -278,7 +421,7 @@ async function processQueue() {
 			// we're resolved, lets clear our timeout because we got an error
 			resultResolved = true;
 			clearTimeout(timeout);
-			testerWindow.webContents.removeListener('console-message', logListener);
+			testerWindow.webContents.removeListener('console-message', consoleListener);
 
 			// reject the OG promise with the error
 			reject(err);
