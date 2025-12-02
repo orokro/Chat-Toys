@@ -60,7 +60,7 @@ export default class ChatToysApp {
 		this.serverPort = shallowRef(window.initPort);
 
 		// make an OBS connection manager to handle our OBS WebSocket connection
-		this.obsConnectionMgr = new OBSConnectionManager(this);
+		this.obsConnMgr = new OBSConnectionManager(this);
 
 		// unrelated to our logger above, we'll also receive messages from from the OBS server
 		// NOTE: this is for widgets telling us what's going on in OBS with them
@@ -101,6 +101,16 @@ export default class ChatToysApp {
 
 		// reusable drag helper
 		this.dragHelper = new DragHelper();
+
+		// Example: hook into OBS live / offline for later YouTubeConnectionManager usage
+		this.obsConnMgr.onOBSLive(() => {
+			console.log('OBS is live -> start polling YouTube, etc');
+		});
+
+		this.obsConnMgr.onOBSOffline(() => {
+			console.log('OBS offline -> stop polling YouTube, etc');
+		});
+
 	}
 	
 

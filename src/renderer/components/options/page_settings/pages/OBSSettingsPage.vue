@@ -18,16 +18,90 @@
 			Chat Toys works by creating a local webserver on your machine to host the widgets, as regular web pages.
 		</p>
 		<p>
-			In OBS, you can add these widgets to your scenes via Browser Sources, and this app will communciate to them.
+			In OBS, you can add these widgets to your scenes via Browser Sources, and this app will communicate to them.
 		</p>
 		<p>
-			Additionally, OBS provides a WebSocket interface that allows external apps to control it. In order for Chat Toys to
+			Additionally, OBS provides a WebSocket interface that allows external apps to interface with it.<br/>
+			In order for Chat Toys to
 			detect your live status, chat toys can be connected to OBS. This will be required for detecting YouTube live chat
 			automatically.
 		</p>
 
 		<SectionHeader title="OBS Connection"/>
+
+		If you want Chat Toys to automatically detect when you go live on YouTube, you need to connect it to OBS via WebSockets.
+		<br/>
+		This will allow Chat Toys to monitor your streaming status, and start looking for your YouTube live chat to read.
+		<br/><br/>
+		Below are the setting for the OBS Websocket server, which you will need to enable in OBS, see screens:
+
+		<br/><br/>
+		First, goto <strong>Tools &gt; WebSocket Server Settings</strong> in OBS:<br/>
+		<small>(Click to enlarge)</small><br/>
+		<a href="/assets/obs_screens/01_obs_tools_menu.png" target="_blank">
+			<img 
+				src="/assets/obs_screens/01_obs_tools_menu.png" 
+				style="border-radius: 10px; height: 80px; cursor: pointer;" 
+			/>
+		</a>
 		
+
+		<br/><br/>
+		Then, enable the server, set a port number, and a password.<br/>
+		Make sure to remember these, as you will need to enter them below:<br/>
+		<small>(Click to enlarge)</small><br/>
+		<a href="/assets/obs_screens/02_obs_socket_server.png" target="_blank">
+			<img 
+				src="/assets/obs_screens/02_obs_socket_server.png" 
+				style="border-radius: 10px; height: 80px; cursor: pointer;"  
+			/>
+		</a>
+		<br/><br/>
+
+		<div class="settingsBlock">
+			<template v-if="ctApp.obsConnMgr.enabled.value">
+				<SettingsRow>
+					{{ ctApp.obsConnMgr.isConnected.value ? '✅ Connected to OBS' : '❌ Not Connected to OBS' }}
+				</SettingsRow>
+				<SettingsRow>
+					{{ ctApp.obsConnMgr.isStreaming.value ? '✅ OBS is Streaming' : '❌ OBS is Not Streaming' }}
+				</SettingsRow>
+			</template>
+			<template v-else>
+				<SettingsRow>
+					OBS Connection is Disabled.
+				</SettingsRow>
+			</template>
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="ctApp.obsConnMgr.enabled.value"
+			>
+				<template #title>Enable OBS Connection</template>
+				<p>Set this on if you wish to try to connect to OBS,
+					so ChatToys can find your live YouTube chat when you go live.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="number"
+				v-model="ctApp.obsConnMgr.port.value"
+			>
+				<template #title>OBS WS Port Number</template>
+				<p>The port number from your OBS Websockets setup.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="password"
+				v-model="ctApp.obsConnMgr.password"
+			>
+				<template #title>OBS WS Password</template>
+				<p>The password text from your OBS Websockets setup.</p>
+			</SettingsInputRow>
+			<SettingsRow>
+				Connecting Status:
+				<div class="obsStatusBox">
+					{{ ctApp.obsConnMgr.statusMessage.value }}
+				</div>
+			</SettingsRow>
+		</div>
 
 		<SectionHeader title="Widget Server Settings"/>
 
@@ -75,19 +149,17 @@
 					serve the Toy Widgets, set below.
 				</p><br/>
 				<p>
-					<strong>NOTE:</strong> This is the port that OBS will connect to, and it must be
-					available on your system. If you are using a firewall, you may need to allow this port.
+					<strong>NOTE:</strong> This is NOT the same port as your OBS WebSocket port.
+					This will be for browsersource web pages.
+					You probably should not touch this at all unless you have something else running on this port.
+					<strong><em>({{ ctApp.serverPort }})</em></strong>
 				</p><br/>
 				<p>
-					<strong>NOTE:</strong> You will need to click the <strong>Restart Server</strong> button
-					or restart the entire application for port change to take effect.
+					<strong>ALSO NOTE:</strong> The widgets you use in OBS Browser sources will use this port number.
+					If you change it, you will need to update the URL in your OBS Browser sources to match.
 				</p><br/>
 				<p>
-					<strong>ALSO NOTE:</strong> Changing the port number will break the URL's for the widgets,
-					so you will have to edit the browser sources in OBS to the new port number.
-				</p><br/>
-				<p>
-					<strong>FINAL NOTE:</strong> Changing the port number is glitchy. It's recommended you change
+					<strong>FINAL NOTE:</strong> Changing the port number is fickle. It's recommended you change
 					the number, click "Restart Server" then restart the entire app.
 				</p>
 			</SettingsInputRow>
@@ -220,5 +292,19 @@ function restartServer(){
 		}
 		
 	}// .restartButton
+
+	// shows status message as obs tries to connect
+	.obsStatusBox {
+
+		margin-top: 10px;
+		padding: 10px;
+		border: 1px solid #4444aa;
+		border-radius: 5px;
+		background-color: #222244;
+		color: white;
+		font-family: monospace;
+		font-size: 14px;
+
+	}// .obsStatusBox
 
 </style>

@@ -270,7 +270,8 @@ watch(internalValue, validate);
 		}
 
 		input[type="text"],
-		input[type="number"] {
+		input[type="number"],
+		input[type="password"] {
 
 			padding: 8px 12px;
 			border: 2px solid black;
