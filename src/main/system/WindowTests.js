@@ -40,6 +40,7 @@ const testScripts = {
 		console.log('result:' + hasImg);
 	`,
 
+	// my original live video detection script
 	getLive: `
 		(() => {
 			try {
@@ -84,6 +85,7 @@ const testScripts = {
 		})()
 	`,
 
+	// improved live video detection script via chatGPT
 	getLive2: `
 		(() => {
 			try {
@@ -154,7 +156,8 @@ const testScripts = {
 		})()
 	`,
 
-		getLive3: `
+	// further improved live video detection script
+	getLive3: `
 		(() => {
 			try {
 				let videoId = null;
@@ -231,25 +234,7 @@ const testScripts = {
 		})()
 	`,
 
-	
-	chatIsLive: `
-		(() => {
-			try {
-				// YouTube's live chat will have a ytc-live-chat-frame element
-				const disabledText = Array.from(document.querySelectorAll('yt-formatted-string'))
-					.map(el => el.textContent)
-					.find(text => text?.toLowerCase().includes('chat is disabled'));
-
-				const isChatContainerPresent = document.querySelector('yt-live-chat-renderer') !== null;
-
-				const result = (!disabledText && isChatContainerPresent);
-				console.log('result:' + JSON.stringify(result));
-			} catch (e) {
-				console.log('result:false');
-			}
-		})()
-	`,
-
+	// instead of checking public page, this will check if a users yt studio page is live
 	getUserLive: `
 		(() => {
 			try {
@@ -401,6 +386,52 @@ const testScripts = {
 			}
 		})()
 	`,
+
+	// my original check if the live chat is live
+	chatIsLive: `
+		(() => {
+			try {
+				// YouTube's live chat will have a ytc-live-chat-frame element
+				const disabledText = Array.from(document.querySelectorAll('yt-formatted-string'))
+					.map(el => el.textContent)
+					.find(text => text?.toLowerCase().includes('chat is disabled'));
+
+				const isChatContainerPresent = document.querySelector('yt-live-chat-renderer') !== null;
+
+				const result = (!disabledText && isChatContainerPresent);
+				console.log('result:' + JSON.stringify(result));
+			} catch (e) {
+				console.log('result:false');
+			}
+		})()
+	`,
+
+	// improved live chat detection script
+	chatIsLive2: `
+		(() => {
+			try {
+				setTimeout(() => {
+					// look for the main chat renderer
+					const hasChatRenderer = !!document.querySelector('yt-live-chat-renderer');
+
+					// look for text indicating chat is explicitly disabled
+					const disabledText = Array
+						.from(document.querySelectorAll('yt-formatted-string'))
+						.map(el => el.textContent?.toLowerCase() || '')
+						.find(text =>
+							text.includes('chat is disabled') ||
+							text.includes('live chat is disabled') ||
+							text.includes('live chat replay is not available')
+						);
+
+					const result = !!(hasChatRenderer && !disabledText);
+					console.log('result:' + JSON.stringify(result));
+				}, 1000);
+			} catch (e) {
+				console.log('result:false');
+			}
+		})()
+	`,	
 
 };
 

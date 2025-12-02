@@ -191,12 +191,44 @@ class ChatSource {
 	 */
 	async init(autoEnable) {
 
-		// use our WindowTester method (see WindowTests.js) to check if this chat is live
-		try {
-			this.available = await this.testFn(this.chatURL, 'chatIsLive');
-		} catch (err) {
-			console.error(`Error checking availability for ${this.youtube_id}:`, err);
+		// how many times to try detecting chat for a *new* source
+		const maxAttempts = autoEnable ? 3 : 1;
+		const delayBetweenAttemptsMs = 1200;
+
+		let lastResult = false;
+
+		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+			try {
+
+				// ask our WindowTester if this chat is live
+				lastResult = await this.testFn(this.chatURL, 'chatIsLive2');
+
+				// log for debugging
+				console.log(
+					`[ChatSource:${this.youtube_id}] chatIsLive2 attempt ${attempt}/${maxAttempts} =`,
+					lastResult
+				);
+
+				// if we saw a positive result, we can stop early
+				if (lastResult)
+					break;
+
+			} catch (err) {
+
+				console.error(
+					`Error checking availability for ${this.youtube_id} (attempt ${attempt}/${maxAttempts}):`,
+					err
+				);
+			}
+
+			// if that wasn't the last attempt, wait a bit before trying again
+			if (attempt < maxAttempts) {
+				await new Promise((resolve) => setTimeout(resolve, delayBetweenAttemptsMs));
+			}
 		}
+
+		// final result
+		this.available = !!lastResult;
 
 		// we're no longer pending
 		this.status_pending = false;
@@ -208,6 +240,7 @@ class ChatSource {
 		// let the FE note when the status changes
 		this.manager.notifyRenderer(); // always push update when status changes
 	}
+
 
 
 	/**
