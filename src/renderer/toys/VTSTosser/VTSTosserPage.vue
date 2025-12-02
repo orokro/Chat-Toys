@@ -58,7 +58,25 @@
 			:enableCustomCommands="true"
 		/>
 
-		<WidgetSection :toy="toy" />
+		<SectionHeader title="VTS Tosser Widget URLs"/>
+		<p>
+			Wondering where the widgets are? Unlike the other toys, the VTS Tosser widgets
+			is integrated into VTubeStudio directly, so there is no separate URL to add to OBS.
+		</p>
+
+		<SectionHeader title="Collider Setup"/>
+		<p>
+			In order for the tossed objects to interact with your model.<br/>
+			<ol>
+				<li>First you will need to enable your VTubeStudio virtual camera if it's not already enabled</li>
+				<li>Next you will need select the camera feed below</li>
+				<li>Then click, drag, and resize the collider silhouette over your avatar</li>
+				<li>Go back to VTubeStudio & move / scale your avatar while watching below</li>
+				<li>You should see the collider move and scale with your model (not rotate)</li>
+				<li>Click save collider settings & you can disable the VTubeStudio virtual camera if you no longer need it</li>
+			</ol>
+			<VTSLiveCamera/>
+		</p>
 		
 		<SectionHeader title="Settings"/>
 		<div class="settingsBlock">
@@ -147,6 +165,7 @@ import ArrayEdit from '@components/options/ArrayEdit.vue';
 import VTSArrayTosserEdit from './VTSArrayTosserEdit.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import YTVideoBox from '@components/YTVideoBox.vue';
+import VTSLiveCamera from './VTSLiveCamera.vue';
 
 // our app
 import Tosser from './VTSTosser';
