@@ -21,6 +21,7 @@
 			<br v-else-if="token.type === 'br'" />
 
 		</template>
+		<div v-html="injects.messageBodyInjects"></div>
 
 	</span>
 
@@ -46,6 +47,12 @@ const props = defineProps({
 	emojis: {
 		type: Array,
 		default: () => []
+	},
+
+	// raw html to inject
+	injects: {
+		type: Object,
+		default: () => ({})
 	}
 });
 

@@ -39,7 +39,7 @@ const props = defineProps({
 	cacheEnabled: {
 		type: Boolean,
 		default: true
-	}
+	},
 });
 
 const src = ref(props.url);

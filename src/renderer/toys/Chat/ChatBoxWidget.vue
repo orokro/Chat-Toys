@@ -46,6 +46,7 @@
 							:alt="message.author + ' profile picture'"
 							:cache-enabled="socketSettingsRef?.cachePFPImages"
 						/>
+						<div v-html="injects.pfpInjects"></div>
 					</div>
 
 					<div class="message-contents">
@@ -58,6 +59,7 @@
 							}"
 						>
 							{{ message.author }}:
+							<span v-html="injects.userNameInjects"></span>
 						</span>
 						<br v-if="socketSettingsRef?.messageOnNewLine && socketSettingsRef?.showChatterNames"/>
 						<span
@@ -71,7 +73,10 @@
 								:emojis="message.emojis" 
 							/>
 						</span>
+						<div v-html="injects.messageBodyInjects"></div>
 					</div>
+
+					<div v-html="injects.chatRowInjects"></div>
 				</div>
 			</template>
 		</div>
@@ -171,12 +176,20 @@ function parseMultilineJSON(jsonString) {
 
 // watch the socketSettingsRef.value.customChatTheme for changes. When it changes, inject the CSS into the styleInjector div.
 const styleInjector = ref(null);
+const injects = shallowRef({
+	chatRowInjects: '',
+	pfpInjects: '',
+	contentsInjects: '',
+	userNameInjects: '',
+	messageBodyInjects: '',
+	styleInjects: '',
+});
 watch(() => socketSettingsRef.value.customChatTheme, (newVal) => {
 	if (styleInjector.value) {
 
 		console.log('Updating chat box custom CSS', newVal);
 		// get just the CSS
-		const injects = {
+		injects.value = {
 			chatRowInjects: '',
 			pfpInjects: '',
 			contentsInjects: '',
@@ -185,8 +198,8 @@ watch(() => socketSettingsRef.value.customChatTheme, (newVal) => {
 			styleInjects: '',
 			...parseMultilineJSON(newVal || '{}')
 		};
-
-		styleInjector.value.innerHTML = `<style scoped>${injects.styleInjects}</style>`;
+		
+		styleInjector.value.innerHTML = `<style scoped>${injects.value.styleInjects}</style>`;
 	}
 }, { immediate: true });
 
