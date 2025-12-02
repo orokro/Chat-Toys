@@ -49,6 +49,7 @@
 		"jenesius-vue-modal": "^1.11.9",
 		"material-icons": "^1.13.14",
 		"node-gyp": "^11.1.0",
+		"obs-websocket-js": "^5.0.7",
 		"sass": "^1.86.0",
 		"seedrandom": "^3.0.5",
 		"serve-index": "^1.9.1",

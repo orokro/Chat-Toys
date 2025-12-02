@@ -7,7 +7,7 @@
 <template>
 
 	<PageBox
-		title="OBS Settings"
+		title="OBS Connection & Widget Server Settings"
 		themeColor="#262262"
 		themeImage="assets/bg_tiles/obs.png"
 		bgSize="120px"
@@ -21,21 +21,28 @@
 			In OBS, you can add these widgets to your scenes via Browser Sources, and this app will communciate to them.
 		</p>
 		<p>
-			Below you can configure and test the server settings.
+			Additionally, OBS provides a WebSocket interface that allows external apps to control it. In order for Chat Toys to
+			detect your live status, chat toys can be connected to OBS. This will be required for detecting YouTube live chat
+			automatically.
 		</p>
 
-		<SectionHeader title="Test Page URL"/>
+		<SectionHeader title="OBS Connection"/>
+		
+
+		<SectionHeader title="Widget Server Settings"/>
+
 		<div class="settingsBlock">
 			<SettingsRow>
 				<h3>Test Page URL</h3>
-				<p>To test the local OBS widget server, copy the URL below and load it in your Web Browser.</p>
-				<p>Or try it out in an OBS Browser source.</p>
+				<p>To test the local OBS widget server, copy the URL below and load it in your preferred desktop Web Browser<br/>
+				(e.g. Chrome, Firefox, etc). Or try it out in an OBS Browser source.</p>
+				<br/>
 				<p>It should show a page that says "<strong>Chat Toys - Works!</strong>"</p>
 				<URLCopyBox :url="testPageURL" />
 			</SettingsRow>
 		</div>
-		
-		<SectionHeader title="Widget Demo Mode"/>
+
+		<br/>
 		<div class="settingsBlock">
 			<SettingsInputRow
 				type="boolean"
@@ -55,7 +62,7 @@
 			</SettingsInputRow>
 		</div>
 
-		<SectionHeader title="Server Settings"/>
+		<br/>
 		<div class="settingsBlock">
 			<SettingsInputRow
 				type="number"
@@ -66,19 +73,19 @@
 				<p>
 					Otherwise, if you need to configure the port number that Chat Toys will use to
 					serve the Toy Widgets, set below.
-				</p>
+				</p><br/>
 				<p>
 					<strong>NOTE:</strong> This is the port that OBS will connect to, and it must be
 					available on your system. If you are using a firewall, you may need to allow this port.
-				</p>
+				</p><br/>
 				<p>
 					<strong>NOTE:</strong> You will need to click the <strong>Restart Server</strong> button
 					or restart the entire application for port change to take effect.
-				</p>
+				</p><br/>
 				<p>
 					<strong>ALSO NOTE:</strong> Changing the port number will break the URL's for the widgets,
 					so you will have to edit the browser sources in OBS to the new port number.
-				</p>
+				</p><br/>
 				<p>
 					<strong>FINAL NOTE:</strong> Changing the port number is glitchy. It's recommended you change
 					the number, click "Restart Server" then restart the entire app.
@@ -94,6 +101,8 @@
 			Restart Server
 		</button>
 
+		<!-- eh this was kinda pointless, gonna hide it for now -->
+		<!-- 
 		<SectionHeader title="Server Output Log"/>
 		<p>
 			Below you can see the output from the server.
@@ -108,7 +117,8 @@
 		<RawLogPreview 
 			:messages="ctApp.obsServerMessages.value"
 		/>
-		
+		-->
+
 		<SectionHeader title="Video Help"/>
 		<YTVideoBox 
 			url="https://youtu.be/XyfmKtksFIg"

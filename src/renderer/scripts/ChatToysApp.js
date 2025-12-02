@@ -19,6 +19,7 @@ import { CommandProcessor } from './CommandProcessor';
 import { ToyManager } from './ToyManager';
 import { SysLogger } from './SysLogger';
 import { AutoChatChecker } from './AutoChatChecker';
+import { OBSConnectionManager } from './OBSConnectionManager.js';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -58,7 +59,12 @@ export default class ChatToysApp {
 		// port number for the obs server stuff
 		this.serverPort = shallowRef(window.initPort);
 
+		// make an OBS connection manager to handle our OBS WebSocket connection
+		this.obsConnectionMgr = new OBSConnectionManager(this);
+
 		// unrelated to our logger above, we'll also receive messages from from the OBS server
+		// NOTE: this is for widgets telling us what's going on in OBS with them
+		// not for the OBS websocket connection itself
 		this.obsServerMessages = shallowRef([]);
 		
 		// Hook up to Electron API
