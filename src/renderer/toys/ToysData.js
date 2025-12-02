@@ -10,6 +10,7 @@ import ChannelPoints from "./ChannelPoints/ChannelPoints";
 import Chat from "./Chat/Chat";
 import Media from "./Media/Media";
 import Tosser from "./Tosser/Tosser";
+import VTSTosser from "./VTSTosser/VTSTosser";
 import PrizeWheel from "./PrizeWheel/PrizeWheel";
 import Gamba from "./Gamba/Gamba";
 import HeadPat from "./HeadPat/HeadPat";
@@ -28,6 +29,7 @@ export const toysData = [
 	Chat,
 	Media,
 	Tosser,
+	VTSTosser,
 	PrizeWheel,
 	Gamba,
 	HeadPat,
