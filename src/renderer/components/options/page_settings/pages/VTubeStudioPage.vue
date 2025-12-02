@@ -65,10 +65,10 @@
 			</SettingsRow>
 		</div>
 
-		<SectionHeader title="Errors Log"/>
+		<SectionHeader title="Output Log"/>
 		<p>
 			In order to interact with VTubeStudio, often times files need to be moved into it's	StreamAssets folder.
-			If something doesn't appear, or the connection fails, you can see the errors logged below.
+			If something doesn't appear, or the connection fails, you may see related errors logged below.
 		</p>
 		
 		<RawLogPreview
