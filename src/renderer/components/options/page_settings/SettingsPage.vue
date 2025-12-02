@@ -14,6 +14,7 @@
 		<OBSSettingsPage v-if="selectedPage === 'obsSettings'" />
 		<ChatPage v-if="selectedPage === 'chatSettings'" />
 		<TwitchPage v-if="selectedPage === 'twitch'" />
+		<VTubeStudioPage v-if="selectedPage === 'vtsSettings'" />
 		<PluginPage v-if="selectedPage === 'plugin'" />
 		<CommandsDescPage v-if="selectedPage === 'copy_details'" />
 
@@ -29,6 +30,7 @@ import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 // components
 import VerticalItemsPage from '../VerticalItemsPage.vue';
 import OBSSettingsPage from './pages/OBSSettingsPage.vue';
+import VTubeStudioPage from './pages/VTubeStudioPage.vue';
 import ChatPage from './pages/ChatPage.vue';
 import TwitchPage from './pages/TwitchPage.vue';
 import PluginPage from './pages/PluginPage.vue';
@@ -47,6 +49,10 @@ const pageItems = [
 	{
 		slug: 'obsSettings',
 		name: 'General Settings',
+	},
+	{
+		slug: 'vtsSettings',
+		name: 'VTubeStudio Settings',
 	},
 	{
 		slug: 'copy_details',

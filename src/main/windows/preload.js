@@ -78,6 +78,12 @@ contextBridge.exposeInMainWorld('chatSourceAPI', {
 });
 
 
+// stuff for moving files into VTube Studio StreamingAssets folder
+contextBridge.exposeInMainWorld('vtsBridge', {
+	copyAssetToStreaming: (payload) => ipcRenderer.invoke('vts-copy-asset', payload),
+});
+
+
 // ---------------------------------------------------------------------------
 // Twitch Manager Bridge (Twitch-specific naming)
 // ---------------------------------------------------------------------------

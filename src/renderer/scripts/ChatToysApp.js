@@ -18,9 +18,9 @@ import { ChatProcessor } from './ChatProcessor';
 import { CommandProcessor } from './CommandProcessor';
 import { ToyManager } from './ToyManager';
 import { SysLogger } from './SysLogger';
-import { AutoChatChecker } from './AutoChatChecker';
 import { OBSConnectionManager } from './OBSConnectionManager.js';
 import { YouTubeConnectionManager } from './YouTubeConnectionManager.js';
+import { VTSConnectionManager } from './VTSConnectionManager.js';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -48,12 +48,6 @@ export default class ChatToysApp {
 		// integrated logging for on screen messages
 		this.log = new SysLogger(this);
 
-		// the auto chat feature will check if the user is live and automatically
-		// add the chat to the list of enabled chats.
-		this.enableAutoAdd = chromeRef('enableAutoAdd', false);
-		this.autoChatChannel = chromeRef('autoChatChannel', null);
-		this.autoChatChecker = new AutoChatChecker(this);
-
 		// true when we wanna render widgets in demo mode
 		this.demoMode = socketShallowRef('demoMode', false);
 
@@ -66,6 +60,9 @@ export default class ChatToysApp {
 		// make a YouTube connection manager to handle YouTube live status, etc
 		this.ytConnMgr = new YouTubeConnectionManager(this);
 
+		// make a new VTS connection manager to handle VTube Studio connection
+		this.vtsConnMgr = new VTSConnectionManager(this);
+		
 		// unrelated to our logger above, we'll also receive messages from from the OBS server
 		// NOTE: this is for widgets telling us what's going on in OBS with them
 		// not for the OBS websocket connection itself

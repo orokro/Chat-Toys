@@ -159,9 +159,6 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import YTVideoBox from '@components/YTVideoBox.vue';
 
-// our app
-import { AutoChatChecker } from '@scripts/AutoChatChecker.js';
-
 // fetch the main app state context
 const ctApp = inject('ctApp');
 

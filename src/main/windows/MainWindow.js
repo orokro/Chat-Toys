@@ -11,6 +11,7 @@ import { join } from 'path';
 
 // local imports
 import { setupAssetImportHandler } from '../system/importAsset';
+import { setupVTSFileBridge } from '../system/VTSFileBridge';
 
 /**
  * Creates the main window for the app.
@@ -71,6 +72,9 @@ function createMainWindow() {
 
 	// set up the asset import handler
 	setupAssetImportHandler(mainWindow);
+
+	// set up the bridge so the VTubeStudio code can copy files into the VTS StreamingAssets folder
+	setupVTSFileBridge(mainWindow);
 
 	// create an interval that will ping the renderer process every second
 	const tickInterval = setInterval(() => {
