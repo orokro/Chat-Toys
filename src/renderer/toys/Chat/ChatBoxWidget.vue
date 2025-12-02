@@ -5,6 +5,8 @@
 	Simple widget to show live chat messages on screen.
 -->
 <template>
+	<!-- injected styles -->
+	<div ref="styleInjector"></div>
 
 	<!-- just a simple box -->
 	<div 
@@ -148,6 +150,15 @@ watch(demoMode, (newVal) => {
 		demoChat.value = [];
 	}
 });
+
+
+// watch the socketSettingsRef.value.customChatTheme for changes. When it changes, inject the CSS into the styleInjector div.
+const styleInjector = ref(null);
+watch(() => socketSettingsRef.value.customChatTheme, (newVal) => {
+	if (styleInjector.value) {
+		styleInjector.value.innerHTML = `<style scoped>${newVal}</style>`;
+	}
+}, { immediate: true });
 </script>
 <style lang="scss" scoped>
 
