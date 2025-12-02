@@ -48,7 +48,24 @@
 				v-if="hasBoundingBox"
 				class="bounding-box-overlay"
 				:style="overlayStyle"
-			></div>
+			>
+				<!-- <div 
+					class="colliderImage"
+					:style="{
+						width: colliderBox.width + 'px',
+						height: colliderBox.height + 'px',
+						left: colliderBox.x + 'px',
+						top: colliderBox.y + 'px',
+					}"
+					@mousedown="handleStartColliderDrag"
+				>
+					
+					<div 
+						class="resizeHandle"
+						@mousedown="handleStartColliderResize"
+					></div>
+				</div> -->
+			</div>
 		</div>
 
 	</div>
@@ -691,7 +708,7 @@ onBeforeUnmount(() => {
 			height: 100%;
 			
 			object-fit: contain;
-			background: #F00;
+			background: #000;
 			display: block;
 
 		}// .camera-video

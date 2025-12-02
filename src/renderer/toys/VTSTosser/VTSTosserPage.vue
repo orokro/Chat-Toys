@@ -65,18 +65,30 @@
 		</p>
 
 		<SectionHeader title="Collider Setup"/>
-		<p>
-			In order for the tossed objects to interact with your model.<br/>
-			<ol>
-				<li>First you will need to enable your VTubeStudio virtual camera if it's not already enabled</li>
-				<li>Next you will need select the camera feed below</li>
-				<li>Then click, drag, and resize the collider silhouette over your avatar</li>
-				<li>Go back to VTubeStudio & move / scale your avatar while watching below</li>
-				<li>You should see the collider move and scale with your model (not rotate)</li>
-				<li>Click save collider settings & you can disable the VTubeStudio virtual camera if you no longer need it</li>
-			</ol>
-			<VTSLiveCamera/>
-		</p>
+		<template v-if="!ctApp.vtsConnMgr.readyToUse.value">
+			<InfoBox icon="warning">
+				In order to use the VTS Tosser, you must:
+				<ol>
+					<li><strong>Enable the VTS Connection</strong> in the <strong>Connection Settings</strong> tab above</li>
+					<li><strong>Authenticate</strong> the ChatToys plugin inside of <strong>VTubeStudio</strong></li>
+					<li><strong>Make Sure</strong> the VTS connection is <strong>Enabled</strong> and <strong>Connected</strong></li>
+				</ol>
+			</InfoBox>
+		</template>
+		<template v-else>
+			<p>
+				In order for the tossed objects to interact with your model.<br/>
+				<ol>
+					<li>First you will need to enable your VTubeStudio virtual camera if it's not already enabled</li>
+					<li>Next you will need select the camera feed below</li>
+					<li>Then click, drag, and resize the collider silhouette over your avatar</li>
+					<li>Go back to VTubeStudio & move / scale your avatar while watching below</li>
+					<li>You should see the collider move and scale with your model (not rotate)</li>
+					<li>Click save collider settings & you can disable the VTubeStudio virtual camera if you no longer need it</li>
+				</ol>
+				<VTSLiveCamera/>
+			</p>
+		</template>
 		
 		<SectionHeader title="Settings"/>
 		<div class="settingsBlock">

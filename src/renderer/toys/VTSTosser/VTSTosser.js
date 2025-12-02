@@ -90,6 +90,10 @@ export default class VTSTosser extends Toy {
 					cmd: "paper",
 				}
 			]),
+			colliderX: ref(0), // VTS coordinates
+			colliderY: ref(0), // VTS coordinates
+			colliderWidth: ref(0.1), // VTS units
+			colliderHeight: ref(0.2), // VTS units
 			randomTossMode: ref(true),
 			tossSpeed: ref(1),
 			soundVolume: ref(1),

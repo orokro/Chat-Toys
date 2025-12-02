@@ -15,7 +15,7 @@
 /* eslint-disable no-console */
 
 // vue
-import { ref, shallowRef, watch } from 'vue';
+import { ref, shallowRef, watch, computed } from 'vue';
 import { chromeRef, chromeShallowRef } from './chromeRef';
 
 /**
@@ -271,6 +271,17 @@ export class VTSConnectionManager {
 
 		// Rolling log for the VTS tab (array of {time, level, message})
 		this.logs = chromeShallowRef('vts_logs', []);
+
+		// true when set up and ready to use
+		this.readyToUse = computed(() => {
+			return (
+				this.enabled.value
+				&&
+				this.isConnected.value 
+				&&
+				this.isAuthenticated.value
+			);
+		});
 
 		// -----------------------
 		// Internal connection state
