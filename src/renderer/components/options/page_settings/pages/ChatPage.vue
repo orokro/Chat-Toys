@@ -41,50 +41,39 @@
 			If present, the app will attempt to detect when you're live in OBS, and if live,<br>
 			attempt to find the latest live stream on your channel and automatically add it as a source.
 			<br><br>
-			This can fail in two ways:
-		</p>
-		<ul>
-			<li>
-				The app may not be able to detect when you're live in OBS.
-			</li>
-			<li>
-				YouTube API may not be able to find the stream.
-			</li>			
-		</ul>
-		<p>
-			<br>
-			So, you might want to check this page after you go live to see if it's been added,
-			and if not you can add it manually.
-			<br>
-			Also, due to the nature of this program - if the channel page changes, this feature
-			might become broken.
+			In order to use this feature, you must have already connected ChatToys to OBS via WebSockets in the
+			<strong>OBS Connection</strong> tab on the left.
 			<br><br>
-			<strong>Consider this feature a potential <em>convenience</em> and <u>not</u> a guarantee.</strong>
+			<strong>Consider this feature a potential <em>convenience</em> and <u>not</u> a guarantee.
+			<br/>If chat isn't working, you may need to manually add your chat source anyway.
+			</strong>
 		</p>
 		<div class="autoChatRow">
-			
-			<div class="obsStatus">
-				OBS Status Detected: 
-				<span
-					class="status"
-					:class="{
-						live: ctApp.autoChatChecker.mode.value === AutoChatChecker.MODE.LIVE,
-					}"
-				>
-					{{ ctApp.autoChatChecker.mode.value }}
-				</span>
-			</div>
-			
-			<br>
+				
 			<div class="settingsBlock">
+				<template v-if="ctApp.obsConnMgr.enabled.value">
+					<SettingsRow>
+						{{ ctApp.obsConnMgr.isConnected.value ? '✅ Connected to OBS' : '❌ Not Connected to OBS' }}
+					</SettingsRow>
+					<SettingsRow>
+						{{ ctApp.obsConnMgr.isStreaming.value ? '✅ OBS is Streaming' : '❌ OBS is Not Streaming' }}
+					</SettingsRow>
+					<SettingsRow>
+						{{ ctApp.ytConnMgr.isScanning.value ?  '🔄 Scanning for YouTube Stream Info...' : '⏸️ Not Scanning for YouTube chats' }}
+					</SettingsRow>
+				</template>
+				<template v-else>
+					<SettingsRow>
+						OBS Connection is Disabled, so Auto Chat cannot function.
+					</SettingsRow>
+				</template>
 				<SettingsInputRow
 					type="boolean"
-					v-model="ctApp.enableAutoAdd.value"
+					v-model="ctApp.ytConnMgr.enabled.value"
 				>
 					<template #title>Enable Auto Chat Mode</template>
 					<p>
-						True if the app should try automatically searching for your live stream if/when it 
-						detects OBS is live. Again, no promises.
+						Enable if you want ChatToys to automatically find your YouTube live chat when it detects OBS is live.
 					</p>
 				</SettingsInputRow>
 				<SettingsRow
@@ -96,11 +85,36 @@
 					<input
 						type="text"
 						id="autoChat"
-						v-model="ctApp.autoChatChannel.value"
+						v-model="ctApp.ytConnMgr.channelUrl.value"
 						placeholder="https://www.youtube.com/@YourChannelName"
 					/>
 				</SettingsRow>
-		</div>
+				<SettingsInputRow
+					type="boolean"
+					v-model="ctApp.ytConnMgr.deleteOnOffline.value"
+				>
+					<template #title>Delete Chat Sources when Offline</template>
+					<p>
+						If enabled, ChatToys will remove any chat sources it added automatically when you go offline in OBS.
+					</p>
+				</SettingsInputRow>
+				<SettingsRow>
+					Click Below to search for a live stream on your channel NOW:
+					<div class="buttonBox">
+						<button				
+							@click="ctApp.ytConnMgr.checkNow()"
+						><!-- :disabled="!ctApp.ytConnMgr.canManualScan.value" -->
+							Scan for Live Stream
+						</button>
+					</div>
+				</SettingsRow>				
+				<SettingsRow>
+					Connecting Status:
+					<div class="ytStatusBox">
+						{{ ctApp.ytConnMgr.statusMessage.value }}
+					</div>
+				</SettingsRow>
+			</div>
 
 		</div>
 
@@ -233,5 +247,20 @@ function showYouTube(){
 		}
 
 	}// button
+
+
+	// shows status message as obs tries to connect
+	.ytStatusBox {
+
+		margin-top: 10px;
+		padding: 10px;
+		border: 1px solid #4444aa;
+		border-radius: 5px;
+		background-color: #222244;
+		color: white;
+		font-family: monospace;
+		font-size: 14px;
+
+	}// .ytStatusBox {
 
 </style>

@@ -20,6 +20,7 @@ import { ToyManager } from './ToyManager';
 import { SysLogger } from './SysLogger';
 import { AutoChatChecker } from './AutoChatChecker';
 import { OBSConnectionManager } from './OBSConnectionManager.js';
+import { YouTubeConnectionManager } from './YouTubeConnectionManager.js';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -61,6 +62,9 @@ export default class ChatToysApp {
 
 		// make an OBS connection manager to handle our OBS WebSocket connection
 		this.obsConnMgr = new OBSConnectionManager(this);
+
+		// make a YouTube connection manager to handle YouTube live status, etc
+		this.ytConnMgr = new YouTubeConnectionManager(this);
 
 		// unrelated to our logger above, we'll also receive messages from from the OBS server
 		// NOTE: this is for widgets telling us what's going on in OBS with them
