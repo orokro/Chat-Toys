@@ -951,6 +951,7 @@ export class VTSConnectionManager {
 
 
 	_updateModelTransform(payload) {
+
 		this.modelTransform = {
 			positionX: payload.positionX,
 			positionY: payload.positionY,
@@ -959,6 +960,11 @@ export class VTSConnectionManager {
 			written: true,
 		};
 		this.modelTransformRef.value = this.modelTransform;
+	}
+
+
+	getCurrentModelPosition() {
+		return this.modelTransform;
 	}
 
 

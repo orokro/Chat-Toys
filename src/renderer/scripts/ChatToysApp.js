@@ -226,5 +226,5 @@ export default class ChatToysApp {
 		localStorage.clear();
 		location.reload();
 	}
-
+	
 }

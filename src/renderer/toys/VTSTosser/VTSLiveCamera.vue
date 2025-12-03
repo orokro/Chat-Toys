@@ -50,7 +50,10 @@
 				class="bounding-box-overlay"
 				:style="overlayStyle"
 			>
-				<div class="relative-wrapper">
+				<div 
+					class="relative-wrapper"
+					:style="boxOffsetPos"
+				>
 					<div 
 						class="colliderImage"
 						:style="colliderPos"
@@ -72,7 +75,7 @@
 <script setup>
 
 // vue
-import { ref, computed, onBeforeUnmount, inject } from 'vue';
+import { ref, computed, onBeforeUnmount, inject, watch } from 'vue';
 
 // our app
 import VTSTosser from './VTSTosser';
@@ -606,6 +609,8 @@ async function handleStartClick() {
 		statusMessage.value = 'Failed to start camera. Check permissions and device.';
 	} finally {
 		isStarting.value = false;
+
+		startCalibration();
 	}
 }
 
@@ -630,6 +635,8 @@ function handleApplyClick() {
 
 	boundingBox.value = null;
 	isRunning.value = false;
+
+	endCalibration();
 }
 
 
@@ -663,6 +670,30 @@ const colliderPos = computed(() => {
 	};
 });
 
+const boxOffsetPos = computed(()=>{
+
+	if(toy.isCalibrating.value==false){
+		return {
+			left: '0px',
+			top:  '0px',
+		};
+	}	
+
+	// get the size of our bounding box overlay
+	const overlayRect = boundingBoxOverlayRef.value.getBoundingClientRect();
+	const screenSize = {
+		width: overlayRect.width,
+		height: overlayRect.height,
+	};
+
+	const computedOffset = toy.getOffset();
+	const a = {
+		left: (computedOffset.left * screenSize.width / 2) + 'px',
+		top:  (computedOffset.top * screenSize.height / 2) + 'px',
+	};
+
+	return a;
+});
 
 // handle the drag of the collider box
 function handleStartColliderDrag(e){
@@ -686,6 +717,13 @@ function doDrag(keys){
 		...colliderBox.value
 	};
 
+	// get the size of our bounding box overlay
+	const overlayRect = boundingBoxOverlayRef.value.getBoundingClientRect();
+	const screenSize = {
+		width: overlayRect.width,
+		height: overlayRect.height,
+	};
+
 	// start the drag
 	ctApp.dragHelper.dragStart(
 		
@@ -700,6 +738,8 @@ function doDrag(keys){
 
 			// update live box
 			colliderBox.value = newBox;
+
+			toy.updateCalibration(screenSize, newBox);
 		},
 
 		// upon complete
@@ -707,6 +747,22 @@ function doDrag(keys){
 
 		}
 	);
+
+}
+
+watch(()=>ctApp.vtsConnMgr.modelTransformRef.value, (newTransform)=>{
+
+	// console.log(ctApp.vtsConnMgr.modelTransformRef.value);
+
+});
+
+
+function startCalibration(){
+	toy.startCalibrationMode();
+}
+
+
+function endCalibration(){
 
 }
 

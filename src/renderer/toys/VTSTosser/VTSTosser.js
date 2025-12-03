@@ -56,6 +56,14 @@ export default class VTSTosser extends Toy {
 		// save initial model position for calibration
 		this.initialModelCalibration = null;
 
+		// save our offset
+		this.colliderPos = shallowRef({ 
+			x: 0,
+			y: 0,
+			width: 0.1,
+			height: 0.2
+		} );
+
 	}
 
 
@@ -239,5 +247,41 @@ export default class VTSTosser extends Toy {
 
 		this.chatToysApp.log.msg(msg.author + ' tossed a ' + itemSlug);
 	}
+
+
+	startCalibrationMode() {
+
+		// get current model position from vtsConnMgr
+		const modelPos = this.chatToysApp.vtsConnMgr.getCurrentModelPosition();
+		this.initialModelCalibration = modelPos;
+
+		this.isCalibrating.value = true;
+
+		console.log('model was at ', this.initialModelCalibration);
+	}
+
+	updateCalibration(screenSize, transform) {
+
+		// console.log(screenSize, transform);
+
+	}
+
+	endCalibrationMode() {
+
+		this.isCalibrating.value = false;
+		this.initialModelCalibration = null;
+
+	}
+
+	getOffset(){
+		const modelPos = this.chatToysApp.vtsConnMgr.modelTransformRef.value;
+		
+		return {
+			left: -(this.initialModelCalibration.positionX - modelPos.positionX),
+			top: (this.initialModelCalibration.positionY - modelPos.positionY),
+			scale: (modelPos.size / this.initialModelCalibration.size),
+		}
+	}
+
 
 }
