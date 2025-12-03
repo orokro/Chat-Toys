@@ -279,7 +279,7 @@ export default class VTSTosser extends Toy {
 		return {
 			left: -(this.initialModelCalibration.positionX - modelPos.positionX),
 			top: (this.initialModelCalibration.positionY - modelPos.positionY),
-			scale: (modelPos.size / this.initialModelCalibration.size),
+			scale: (this.initialModelCalibration.scale / modelPos.scale),
 		}
 	}
 

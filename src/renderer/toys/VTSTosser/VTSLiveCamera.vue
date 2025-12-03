@@ -75,7 +75,7 @@
 <script setup>
 
 // vue
-import { ref, computed, onBeforeUnmount, inject, watch } from 'vue';
+import { ref, computed, onBeforeUnmount, inject, watch, transformVNodeArgs } from 'vue';
 
 // our app
 import VTSTosser from './VTSTosser';
@@ -661,18 +661,24 @@ const colliderBox = ref({
 	height: 300,
 });
 
+const scale = ref(1.0);
+
 const colliderPos = computed(() => {
+
+
 	return {
 		left: colliderBox.value.x + 'px',
 		top:  colliderBox.value.y + 'px',
 		width: colliderBox.value.width + 'px',
 		height: colliderBox.value.height + 'px',
+		transform: `scale(${scale.value})`,
 	};
 });
 
 const boxOffsetPos = computed(()=>{
 
 	if(toy.isCalibrating.value==false){
+		scale.value = 1;
 		return {
 			left: '0px',
 			top:  '0px',
@@ -692,6 +698,7 @@ const boxOffsetPos = computed(()=>{
 		top:  (computedOffset.top * screenSize.height / 2) + 'px',
 	};
 
+	scale.value = computedOffset.scale;
 	return a;
 });
 
