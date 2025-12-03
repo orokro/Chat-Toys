@@ -6,7 +6,7 @@
 -->
 <template>
 
-	<span class="message-content">
+	<div class="message-body">
 
 		<template v-for="(token, i) in tokens" :key="i">
 
@@ -23,7 +23,7 @@
 		</template>
 		<div v-html="injects.messageBodyInjects"></div>
 
-	</span>
+	</div>
 
 </template>
 <script setup>

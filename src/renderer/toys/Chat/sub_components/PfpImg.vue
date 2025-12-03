@@ -8,15 +8,17 @@
 -->
 <template>
 
-	<img
-		:src="src"
-		:alt="alt"
-		referrerpolicy="no-referrer"
-		:class="[
-			'chat-pfp',
-			{ 'chat-pfp--cached': fromCache }
-		]"
-	/>
+	<div class="pfp-container">
+		<img
+			:src="src"
+			:alt="alt"
+			referrerpolicy="no-referrer"
+			:class="[
+				'chat-pfp',
+				{ 'chat-pfp--cached': fromCache }
+			]"
+		/>
+	</div>
 
 </template>
 <script setup>

@@ -36,6 +36,8 @@ import SwarmWidget from './SwarmWidget.vue';
 // main export
 export default class Chat extends Toy {
 
+	static evenOddCounter = 0;
+
 	// static info	
 	static name = 'Chat';
 	static slug = 'chat';
@@ -289,6 +291,10 @@ export default class Chat extends Toy {
 			if(this.settings.filterCommands.value==true && chat.messageText.startsWith('!'))
 				continue;
 
+			Chat.evenOddCounter++;
+			if(Chat.evenOddCounter > 1000000)
+				Chat.evenOddCounter = 0;
+
 			// add smaller chat object to the array
 			chatLogMessages.push({
 				id: chat.id,
@@ -298,6 +304,8 @@ export default class Chat extends Toy {
 				isMember: chat.isMember,
 				emojis: chat.emojis,
 				syslogger: chat.syslogger,
+				isOdd: (Chat.evenOddCounter % 2 === 1),
+				moduloKey: ['a', 'b', 'c', 'd'][Chat.evenOddCounter % 4],
 			});
 			
 		}// next chat

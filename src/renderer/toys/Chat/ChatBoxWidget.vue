@@ -16,6 +16,8 @@
 			disableBG: socketSettingsRef?.enableChatBoxImage==false,
 			demoMode: demoMode,
 			showTextShadow: socketSettingsRef?.chatTextShadow,
+			hasPFP: socketSettingsRef?.showChatterPFP,
+			noPFP: !socketSettingsRef?.showChatterPFP,
 		}"
 		:style="{
 			border: '30 solid transparent',
@@ -36,8 +38,15 @@
 					class="msgRow"
 					:class="{
 						isMember:message.isMember,
+						isOdd: message.isOdd,
+						isEven: !message.isOdd,
+						star1: message.moduloKey=='a',
+						star2: message.moduloKey=='b',
+						star3: message.moduloKey=='c',
+						star4: message.moduloKey=='d',
 					}"
 				>
+
 					<!-- Profile Picture -->
 					<div class="pfp-aligner">				
 						<PfpImg
@@ -58,7 +67,7 @@
 								color: socketSettingsRef?.chatNameColor,
 							}"
 						>
-							{{ message.author }}:
+							{{ message.author }}<span class="colon">:</span>
 							<span v-html="injects.userNameInjects"></span>
 						</span>
 						<br v-if="socketSettingsRef?.messageOnNewLine && socketSettingsRef?.showChatterNames"/>
@@ -165,6 +174,9 @@ function parseMultilineJSON(jsonString) {
   // 2. Matches any character that is NOT a " or \, OR matches an escaped character
   // 3. Matches the closing "
   
+  // remove tabs and replace with 2 spaces
+  jsonString = jsonString.replace(/\t/g, '  ');
+
   const fixedString = jsonString.replace(/("(?:[^"\\]|\\.)*")/g, (match) => {
     // Inside the found string, replace literal newlines with escaped newlines
     return match.replace(/\n/g, "\\n");
@@ -187,7 +199,7 @@ const injects = shallowRef({
 watch(() => socketSettingsRef.value.customChatTheme, (newVal) => {
 	if (styleInjector.value) {
 
-		console.log('Updating chat box custom CSS', newVal);
+		// console.log('Updating chat box custom CSS', newVal);
 		// get just the CSS
 		injects.value = {
 			chatRowInjects: '',
@@ -204,7 +216,7 @@ watch(() => socketSettingsRef.value.customChatTheme, (newVal) => {
 }, { immediate: true });
 
 </script>
-<style lang="scss" scoped>
+<style lang="scss">
 
 	// the main box for the widget
 	.chatBoxWidget {
@@ -292,30 +304,29 @@ watch(() => socketSettingsRef.value.customChatTheme, (newVal) => {
 					margin-right: 8px;
 				}
 
-				// styles for profile picture
-				.chat-pfp {
-					
-					// for debug
-					/* border: 2px solid black; */
-
+				.pfp-container {
 					// size from settings
 					height: var(--pfpSize) !important;
 					width: var(--pfpSize) !important;
 
-					// round
-					border-radius: 50%;
-
 					// margin to separate from text
 					margin-right: 8px;
+
+					// round
+					border-radius: 100px;
 
 					// align with text
 					vertical-align: middle;
 
-					// prevent shrinking
-					/* flex-shrink: 0; */
-					
+					overflow: hidden;
+					/* border: 1px solid red; */
 
-				}// .chat-pfp
+					.chat-pfp {
+						height: var(--pfpSize) !important;
+						width: var(--pfpSize) !important;
+					}
+
+				}
 
 				// to separate from the PFP
 				.message-contents {

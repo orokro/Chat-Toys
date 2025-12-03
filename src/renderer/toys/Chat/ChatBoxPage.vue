@@ -178,12 +178,13 @@
 					<br/>
 					NOTE: custom themes can potentially overwrite the other chat box settings above.
 				</p>
-				<textarea 
-					v-model="customChatTheme" 
-					rows="10" 
-					style="resize: none; width:100%; font-family: monospace;"
-					placeholder=''
-				></textarea>
+				<textarea
+					v-model="customChatTheme"
+					rows="10"
+					style="resize: vertical; width: 100%; font-family: monospace;"
+					placeholder=""
+					@keydown.tab.prevent="insertTabInTheme"
+				/>
 			
 			</SettingsRow>
 
@@ -297,6 +298,27 @@ const shout_command = computed(() => {
 const swarm_command = computed(() => {
 	return commandsRef.value.chat__swarm?.command || '';
 });
+
+
+function insertTabInTheme(event) {
+	const textarea = event.target
+	if (!textarea) return
+
+	const start = textarea.selectionStart
+	const end = textarea.selectionEnd
+	const value = textarea.value
+
+	// insert tab at current selection
+	textarea.value =
+		value.slice(0, start) + "\t" + value.slice(end)
+
+	// move caret after the tab
+	textarea.selectionStart = textarea.selectionEnd = start + 1
+
+	// keep v-model in sync without Vue re-rendering the DOM value
+	textarea.dispatchEvent(new Event("input"))
+}
+
 
 
 </script>
