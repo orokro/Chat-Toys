@@ -37,8 +37,9 @@
 					v-if="!message.syslogger || (message.syslogger == true && socketSettingsRef?.showSystemMessages)"
 					class="msgRow"
 					:class="{
-						isMember: message.isMember,
 						isSystem: message.syslogger,
+						isMember: message.isMember,
+						isSuper: message.isSuper,
 						isOdd: message.isOdd,
 						isEven: !message.isOdd,
 						star1: message.moduloKey=='a',
