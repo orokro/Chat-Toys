@@ -325,7 +325,7 @@ export class CommandProcessor {
 
 			if (last && (now - last) < commandData.coolDown * 1000) {
 
-				console.error('User cooldown not met');
+				// console.error('User cooldown not met');
 
 				const timeToTryAgain = Math.ceil(commandData.coolDown - ((now - last)/ 1000) );
 				this.chatToysApp.log.err(`${user.display_name}: try again in ${timeToTryAgain} seconds`);

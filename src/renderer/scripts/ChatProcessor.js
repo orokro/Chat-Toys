@@ -149,7 +149,7 @@ export class ChatProcessor {
 			id: data.id,
 			authorUniqueID: 'Chat Toys',
 			author: 'Chat Toys',
-			authorPFPUrl: undefined,
+			authorPFPUrl: '/builtin/ct_pfp.jpg',
 			messageText: adjustedMessage || '',
 			raws: data.infoMessages || [],
 			emojis: [],

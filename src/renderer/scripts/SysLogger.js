@@ -153,7 +153,7 @@ export class SysLogger {
 				this.bufferedInfoMsgs = [];
 
 				this.bufferedMsgTimer = null;
-			}, 2000);
+			}, 5000);
 		}
 	}
 }
