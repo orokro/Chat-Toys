@@ -143,8 +143,24 @@ export default class HeadPat extends Toy {
 				params: [
 					{ name: 'user', type: 'username', optional: true, desc: 'Which chatter to head pat' },
 				],
-				description: 'Show head pat graphic on streamer, or optionally a chatter.!',
+				description: 'Show head pat graphic on streamer, or optionally a chatter!',
 				userDesc: 'Give out head pats!',
+			},	
+			{
+				command: 'bonk',
+				params: [
+					{ name: 'user', type: 'username', optional: true, desc: 'Which chatter to bonk' },
+				],
+				description: 'Show bonk graphic on streamer, or optionally a chatter!',
+				userDesc: 'Give out bonks!',
+			},	
+			{
+				command: 'slap',
+				params: [
+					{ name: 'user', type: 'username', optional: true, desc: 'Which chatter to slap' },
+				],
+				description: 'Show slap graphic on streamer, or optionally a chatter!',
+				userDesc: 'Give out slaps!',
 			},	
 		]);
 	}
@@ -162,18 +178,21 @@ export default class HeadPat extends Toy {
 	onCommand(commandSlug, msg, user, params, handshake) {
 
 		// if the command is a pat command, we will show the pat on the streamer
-		if(commandSlug === 'pat') {
+		if(['pat', 'slap', 'bonk'].includes(commandSlug)){
 			
 			// if the user param is provided on the params {} object
 			// only show the pat on the chatter if it's enabled, otherwise show it on the streamer
 			if(params.user) {
 				if(this.settings.allowUserPats.value) {
-					this.chatterPatQueue.addToQueue({patter: msg.author, pattee:params.user, duration: this.settings.timeToShow.value});
+					this.chatterPatQueue.addToQueue({
+						patter: msg.author, pattee:params.user, duration: this.settings.timeToShow.value, kind: commandSlug});
 				} else {
-					this.streamerPatQueue.addToQueue({patter: msg.author, pattee: '', duration: this.settings.timeToShow.value});
+					this.streamerPatQueue.addToQueue({
+						patter: msg.author, pattee: '', duration: this.settings.timeToShow.value});
 				}
 			} else {
-				this.streamerPatQueue.addToQueue({patter: msg.author, pattee: '', duration: this.settings.timeToShow.value});
+				this.streamerPatQueue.addToQueue({
+					patter: msg.author, pattee: '', duration: this.settings.timeToShow.value, kind: commandSlug});
 			}
 		}
 

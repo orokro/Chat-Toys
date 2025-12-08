@@ -51,7 +51,7 @@
 				<!-- the main money - head pat gif -->
 				<img 
 					class="headPatImage"
-					src="/builtin/headpat-hand.gif"
+					:src="actionGif(currentPatData?.kind)"
 					alt="head pat icon"
 				/>
 
@@ -60,7 +60,7 @@
 					v-if=" showProfilePicture || socketSettingsRef?.showPatterName"
 					class="patUserName"
 				>
-					<span>{{ cacheLastName(demoMode ? 'McPattin' : currentPatData?.patter) }}</span> pats
+					<span>{{ cacheLastName(demoMode ? 'McPattin' : currentPatData?.patter) }}</span> {{ actionString(currentPatData?.kind) }}
 				</div>
 
 			</div>
@@ -102,6 +102,40 @@ const cacheLastName = (name)=>{
 		return lastPatName;
 	}
 }
+
+// get kind name for string
+let lastActionString = '';
+const actionString = (kind) => {
+
+	kind = kind || lastActionString;
+	lastActionString = kind;
+
+	switch(kind){
+		case 'pat':
+			return 'pats';
+		case 'slap':
+			return 'slaps';
+		case 'bonk':
+			return 'bonks';
+	}	
+}
+
+// get the gif to show
+let lastActionGif = '';
+const actionGif = (kind) => {
+	
+	kind = kind || lastActionGif;
+	lastActionGif = kind;
+
+	switch(kind){		
+		case 'pat':
+			return '/builtin/headpat-hand.gif';
+		case 'slap':
+			return '/builtin/slap.gif';
+		case 'bonk':
+			return '/builtin/bonk.gif';
+	}
+} 
 
 const emit = defineEmits([
 	'boxChange'
