@@ -204,6 +204,9 @@ export class CommandProcessor {
 		// get from database
 		const userFromDB = window.ytctDB.getUser(id);
 
+		// patch ID on
+		userFromDB.id = id;
+
 		// if not null, return as is
 		if (userFromDB)
 			return userFromDB;
@@ -214,6 +217,7 @@ export class CommandProcessor {
 			display_name: 'Unknown Chatter',
 			points: 0,
 			youtube_id: id,
+			id: id,
 		};
 	}
 
