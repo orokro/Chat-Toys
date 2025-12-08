@@ -60,7 +60,7 @@
 					v-if=" showProfilePicture || socketSettingsRef?.showPatterName"
 					class="patUserName"
 				>
-					<span>{{ demoMode ? 'McPattin' : currentPatData?.patter }}</span> pats
+					<span>{{ cacheLastName(demoMode ? 'McPattin' : currentPatData?.patter) }}</span> pats
 				</div>
 
 			</div>
@@ -89,6 +89,18 @@ const thisSlug = 'headPat';
 const widgetSlug = 'streamer';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
+}
+
+// when the name is undefined, return the last cached name so the UI doesn't jump around
+let lastPatName = '';
+const cacheLastName = (name)=>{
+
+	if(name !== undefined){
+		lastPatName = name;
+		return name;
+	}else{
+		return lastPatName;
+	}
 }
 
 const emit = defineEmits([
@@ -174,6 +186,7 @@ const currentChatterPat = socketShallowRefReadOnly(slugify('currentChatterPat'),
 
 		transition: transform 0.25s ease-in-out;
 		transform: scale(1);
+		transform-origin: 25% 25% !important;
 		&.idle {
 			transform: scale(0);
 		}
