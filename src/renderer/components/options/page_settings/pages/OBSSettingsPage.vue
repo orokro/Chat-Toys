@@ -38,21 +38,20 @@
 		<br/><br/>
 		First, goto <strong>Tools &gt; WebSocket Server Settings</strong> in OBS:<br/>
 		<small>(Click to enlarge)</small><br/>
-		<a href="/assets/obs_screens/01_obs_tools_menu.png" target="_blank">
+		<a :href="toolsMenuImage" target="_blank">
 			<img 
-				src="/assets/obs_screens/01_obs_tools_menu.png" 
+				:src="toolsMenuImage" 
 				style="border-radius: 10px; height: 80px; cursor: pointer;" 
 			/>
 		</a>
 		
-
 		<br/><br/>
 		Then, enable the server, set a port number, and a password.<br/>
 		Make sure to remember these, as you will need to enter them below:<br/>
 		<small>(Click to enlarge)</small><br/>
-		<a href="/assets/obs_screens/02_obs_socket_server.png" target="_blank">
+		<a :href="socketServerImg" target="_blank">
 			<img 
-				src="/assets/obs_screens/02_obs_socket_server.png" 
+				:src="socketServerImg" 
 				style="border-radius: 10px; height: 80px; cursor: pointer;"  
 			/>
 		</a>
@@ -216,6 +215,10 @@ import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import RawLogPreview from '../RawLogPreview.vue';
 import URLCopyBox from '@components/options/URLCopyBox.vue';
 import YTVideoBox from '@components/YTVideoBox.vue';
+
+// images
+import toolsMenuImage from '@assets/obs_screens/01_obs_tools_menu.png';
+import socketServerImg from '@assets/obs_screens/02_obs_socket_server.png';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');

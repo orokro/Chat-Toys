@@ -102,7 +102,6 @@ export class ChatProcessor {
 		// Twitch parsing may need to hit decapi, so it's async
 		const twitchMessages = await this._parseTwitchMessages(data);
 		parsedMessages = [...parsedMessages, ...twitchMessages];
-
 		parsedMessages = [...parsedMessages, ...this._parseYouTubeMessages(data)];
 		parsedMessages = [...parsedMessages, ...this._parseSysLoggerMessages(data)];
 

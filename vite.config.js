@@ -12,6 +12,7 @@ const config = defineConfig({
 			'@components': Path.resolve(__dirname, 'src/renderer/components'),
 			'@toys': Path.resolve(__dirname, 'src/renderer/toys'),
 			'@scripts': Path.resolve(__dirname, 'src/renderer/scripts'),
+			'@assets': Path.resolve(__dirname, 'src/renderer/assets'),
 		}
 	},
 	

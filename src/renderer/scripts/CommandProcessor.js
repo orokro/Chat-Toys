@@ -46,8 +46,9 @@ export class CommandProcessor {
 		this.userCooldowns = new Map();
 		this.groupCooldowns = new Map();
 
-		// list of callbacks for when any command is detected
+		// list of callbacks for when any command is detected / run
 		this.commandCallbacks = [];
+		this.commandRunCallbacks = [];
 
 		// set up our listeners / watchers
 		this.subscribeEvents();
@@ -61,6 +62,41 @@ export class CommandProcessor {
 	 */
 	onCommandFound(callback) {
 		this.commandCallbacks.push(callback);
+	}
+
+
+	/**
+	 * Add a callback to run when a command is run
+	 * 
+	 * @param {Function} callback - Callback to run when a command is run
+	 */
+	onCommandRun(callback) {
+		this.commandRunCallbacks.push(callback);
+	}
+
+
+	/**
+	 * Clear a callback for when a command is run
+	 * 
+	 * @param {Function} callback - Callback to remove
+	 */
+	offCommandRun(callback) {
+		this.commandRunCallbacks = this.commandRunCallbacks.filter(cb => cb !== callback);
+	}
+
+	
+	/**
+	 * Tell all listeners that a command was run (accepted / successful)
+	 * 
+	 * @param {String} commandSlug - slug for command that was run
+	 * @param {Object} msg - the original chat message details that triggered the command
+	 * @param {Object} commandData - details about the command from our settings
+	 */
+	_notifyRunListeners(commandSlug, msg, commandData) {
+
+		// notify all listeners of this command that was successfully run
+		for (const cb of this.commandRunCallbacks)
+			cb(commandSlug, msg, commandData);
 	}
 
 
@@ -429,6 +465,9 @@ export class CommandProcessor {
 						? commandData.cost
 						: 0,
 				});
+
+				// generic listener notification only when a command was successfully run
+				this._notifyRunListeners(commandData.command, msg, commandData);
 			};
 			
 			// build a method to reject the command

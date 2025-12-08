@@ -132,7 +132,6 @@ class DatabaseManager {
 	}
 
 
-
 	/**
 	 * Method to get a list of users from the database
 	 * 

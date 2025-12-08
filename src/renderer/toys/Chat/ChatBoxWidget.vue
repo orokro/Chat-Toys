@@ -69,7 +69,7 @@
 								color: socketSettingsRef?.chatNameColor,
 							}"
 						>
-							{{ message.author }}<span class="colon">:</span>
+							{{ message.author }}<span class="colon">:</span><span class="points">{{ getUserPoints(message.authorUniqueID) }}</span>
 							<span v-html="injects.userNameInjects"></span>
 						</span>
 						<br v-if="socketSettingsRef?.messageOnNewLine && socketSettingsRef?.showChatterNames"/>
@@ -137,6 +137,33 @@ const socketSettingsRef = useToySettings('chat', 'chatWidgetBox', emit, () => {
 const demoMode = socketShallowRefReadOnly('demoMode', false);
 const chatLog = socketShallowRefReadOnly(slugify('chatLog'), '');
 const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
+const pointsData = socketShallowRefReadOnly(slugify('pointsData'), null);
+
+/*
+	example points data:
+
+	[
+		{
+			"id": "UC5I9PkevsfZxvI3TGa9i2iA",
+			"points": 500
+		},
+		{
+			"id": "UCkiNOlf_W1HWykAnPhtYC1Q",
+			"points": 15430
+		}
+	]
+
+	So let's convert this array to a map:
+*/
+const pointsDataMap = computed(() => {
+	const map = {};
+	if (pointsData.value) {
+		for (const entry of pointsData.value) {
+			map[entry.id] = entry;
+		}
+	}
+	return map;
+});
 
 window.cl = chatLog;
 
@@ -170,21 +197,21 @@ watch(demoMode, (newVal) => {
 
 
 function parseMultilineJSON(jsonString) {
-  // Regex explanation:
-  // /("(?:[^"\\]|\\.)*")/g
-  // 1. Matches a "
-  // 2. Matches any character that is NOT a " or \, OR matches an escaped character
-  // 3. Matches the closing "
-  
-  // remove tabs and replace with 2 spaces
-  jsonString = jsonString.replace(/\t/g, '  ');
+	// Regex explanation:
+	// /("(?:[^"\\]|\\.)*")/g
+	// 1. Matches a "
+	// 2. Matches any character that is NOT a " or \, OR matches an escaped character
+	// 3. Matches the closing "
 
-  const fixedString = jsonString.replace(/("(?:[^"\\]|\\.)*")/g, (match) => {
-    // Inside the found string, replace literal newlines with escaped newlines
-    return match.replace(/\n/g, "\\n");
-  });
+	// remove tabs and replace with 2 spaces
+	jsonString = jsonString.replace(/\t/g, '  ');
 
-  return JSON.parse(fixedString);
+	const fixedString = jsonString.replace(/("(?:[^"\\]|\\.)*")/g, (match) => {
+		// Inside the found string, replace literal newlines with escaped newlines
+		return match.replace(/\n/g, "\\n");
+	});
+
+	return JSON.parse(fixedString);
 }
 
 
@@ -216,6 +243,17 @@ watch(() => socketSettingsRef.value.customChatTheme, (newVal) => {
 		styleInjector.value.innerHTML = `<style scoped>${injects.value.styleInjects}</style>`;
 	}
 }, { immediate: true });
+
+function getUserPoints(userID) {
+
+	const pdMap = pointsDataMap.value;
+
+	if(!pdMap || !pdMap[userID])
+		return '';
+
+	return ` ₱ ${pdMap[userID].points}`;
+}
+
 
 </script>
 <style lang="scss">
@@ -335,6 +373,12 @@ watch(() => socketSettingsRef.value.customChatTheme, (newVal) => {
 
 					.user {
 						margin-bottom: 0px;
+
+						.points {
+							color: green;
+							font-style: italic;
+							margin-left: 10px;
+						}
 					}
 				}// .message-contents
 

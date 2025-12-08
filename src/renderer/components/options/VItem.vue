@@ -118,9 +118,9 @@ const itemIconPath = computed(() => {
 		.nameRow {
 
 			position: absolute;
-			inset: 23px auto 0px 80px;
+			inset: 0px auto 0px 80px;
 			width: 150px;
-			/* border: 1px slateblue solid; */
+			height: 100%;
 
 			opacity: 0;
 			transition: opacity 0.4s;
@@ -130,6 +130,11 @@ const itemIconPath = computed(() => {
 			font-weight: bolder;
 			text-shadow: 2px 2px 0px black;
 			text-align: center;
+
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			line-height: 18px;
 
 		}// .nameRow
 
@@ -221,7 +226,7 @@ const itemIconPath = computed(() => {
 
 			.nameRow {
 				color: black;
-				text-shadow: none;				
+				text-shadow: none;		
 			}
 
 			// the delete button

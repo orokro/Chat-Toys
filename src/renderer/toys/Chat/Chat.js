@@ -23,6 +23,7 @@ import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'soc
 import Toy from "../Toy";
 import { Swarm } from './Swarm';
 import { StateTickerQueue } from '@scripts/StateTickerQueue';
+import { ChatPointsHelper } from './ChatPointsHelper';
 
 // misc/lib
 import { randUserName, randSentence, randPhrase, randUuid } from '@ngneat/falso';
@@ -99,6 +100,7 @@ export default class Chat extends Toy {
 		this.chatLog = socketShallowRef(this.static.slugify('chatLog'), []);
 		this.swarmLog = socketShallowRef(this.static.slugify('swarmLog'), []);
 		this.swarmMode = socketShallowRef(this.static.slugify('swarmMode'), 'IDLE');
+		this.pointsData = socketShallowRef(this.static.slugify('pointsData'), []);
 
 		// listen to changes in the shout sound
 		watch(this.settings.shoutSoundId, (value) => {
@@ -130,6 +132,12 @@ export default class Chat extends Toy {
 		this.tickFN = () => this.swarmLogic.tick();
 		electronAPI.tick(this.tickFN);
 
+		this.pointsDataHelper = (pointsData) => { 
+			console.log('foo', pointsData);
+			this.pointsData.value = pointsData; 
+		};
+		this.pointsDataHelper = this.pointsDataHelper.bind(this);
+		this.chatPointsHelper = new ChatPointsHelper(this, this.pointsDataHelper);
 	}
 
 
@@ -142,6 +150,7 @@ export default class Chat extends Toy {
 		electronAPI.clearTick(this.tickFN);
 		this.chatToysApp.chatProcessor.removeNewChatsListener(this.onNewChats);
 		window.clearElectronTimeout(this.swarmTimeout);
+		this.chatPointsHelper.destroy();
 	}
 
 
@@ -295,10 +304,11 @@ export default class Chat extends Toy {
 			if(Chat.evenOddCounter > 1000000)
 				Chat.evenOddCounter = 0;
 
-			// add smaller chat object to the array
-			chatLogMessages.push({
+			// package and add smaller chat object to the array
+			const chatData = {
 				id: chat.id,
 				author: chat.author,
+				authorUniqueID: chat.authorUniqueID,
 				pfpUrl: chat.authorPFPUrl,
 				message: chat.messageText,
 				isMember: chat.isMember,
@@ -306,8 +316,11 @@ export default class Chat extends Toy {
 				syslogger: chat.syslogger,
 				isOdd: (Chat.evenOddCounter % 2 === 1),
 				moduloKey: ['a', 'b', 'c', 'd'][Chat.evenOddCounter % 4],
-			});
-			
+			};
+			chatLogMessages.push(chatData);
+
+			// tell our points fetcher to hit the database eventually
+			this.chatPointsHelper.addMessage(chatData);
 		}// next chat
 
 		// trim list if it's too long
