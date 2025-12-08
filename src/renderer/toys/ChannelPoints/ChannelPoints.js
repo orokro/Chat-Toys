@@ -71,7 +71,11 @@ export default class ChannelPoints extends Toy {
 		// set up a watch for the icon path
 		watch(this.settings.widgetIconId, (value) => {
 			this.widgetIconPath.value = this.getAssetPath(value);
-		});
+		}, { immediate: true });
+		// set up a watch for the sound path
+		watch(this.settings.widgetSoundId, (value) => {
+			this.soundPath.value = this.getAssetPath(value);
+		}, { immediate: true });
 
 		// internal state vars
 		this.timeLeft = 0;

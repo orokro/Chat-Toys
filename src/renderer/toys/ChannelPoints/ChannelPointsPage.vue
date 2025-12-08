@@ -163,7 +163,7 @@
 
 			<SettingsAssetRow
 				v-model="widgetSoundId"
-				:kind-filter="'audio'"
+				:kind-filter="'sound'"
 				v-if="enableWidgetSound"
 			>
 				<h3>Widget Sound Effect</h3>

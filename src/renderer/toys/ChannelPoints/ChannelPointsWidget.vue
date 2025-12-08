@@ -221,6 +221,7 @@ watch(mode, (newMode) => {
 			&&
 			socketSettingsRef.value.enableWidgetSound == true
 	) {
+		console.log('Playing sound for channel points widget:', soundPath.value);
 		const audio = new Audio(soundPath.value);
 		audio.play();
 	}
@@ -322,8 +323,6 @@ watch(
 
 		console.log('New userMeLogs:', newLogs);
 		if (!Array.isArray(newLogs)) return;
-
-		console.log('b');
 
 		// Collect all current IDs from the newLogs array
 		const currentIds = new Set(newLogs.map((log) => log.id));

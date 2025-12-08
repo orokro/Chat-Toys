@@ -106,7 +106,8 @@ export class ChatProcessor {
 		parsedMessages = [...parsedMessages, ...this._parseYouTubeMessages(data)];
 		parsedMessages = [...parsedMessages, ...this._parseSysLoggerMessages(data)];
 
-		console.log('Parsed Messages: ', parsedMessages);
+		if(parsedMessages.length > 0 && this._showDebugLogs)
+			console.log('Parsed Messages: ', parsedMessages);
 
 		// if we got any new messages, trigger callbacks
 		if (parsedMessages.length > 0) {
