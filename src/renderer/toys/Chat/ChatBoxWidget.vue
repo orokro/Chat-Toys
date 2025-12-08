@@ -16,6 +16,7 @@
 			disableBG: socketSettingsRef?.enableChatBoxImage==false,
 			demoMode: demoMode,
 			showTextShadow: socketSettingsRef?.chatTextShadow,
+			showChatterPoints: socketSettingsRef?.showChatterPoints,
 			hasPFP: socketSettingsRef?.showChatterPFP,
 			noPFP: !socketSettingsRef?.showChatterPFP,
 		}"
@@ -30,7 +31,7 @@
 	>
 		<div class="messageText">
 			<template 
-				v-for="(message, index) in (demoMode ? demoChat : chatLog)"
+				v-for="(message, index) in (demoMode ? demoChat : chatLogC)"
 				:key="message.id"
 			>
 				<div				
@@ -60,7 +61,10 @@
 						<div v-html="injects.pfpInjects"></div>
 					</div>
 
-					<div class="message-contents">
+					<div 
+						class="message-contents"
+						:class="{ inline: !socketSettingsRef?.messageOnNewLine }"
+					>
 						<span 
 							v-if="socketSettingsRef?.showChatterNames"
 							class="user"
@@ -138,6 +142,40 @@ const demoMode = socketShallowRefReadOnly('demoMode', false);
 const chatLog = socketShallowRefReadOnly(slugify('chatLog'), '');
 const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
 const pointsData = socketShallowRefReadOnly(slugify('pointsData'), null);
+
+const chatLogC = computed(() => {
+
+	// if socketSettingsRef.value.groupUserMessages is true, group messages from the same user together
+	// as long as they are in-a-row
+	if (socketSettingsRef.value?.groupUserMessages) {
+		const groupedMessages = [];
+		let lastAuthorID = null;
+
+		for (const message of chatLog.value) {
+			if (message.authorUniqueID === lastAuthorID) {
+				// same author as last message, so append the message
+				const lastMessage = groupedMessages[groupedMessages.length - 1];
+				lastMessage.message += '\n' + message.message;
+
+				// also merge emojis if present
+				if (message.emojis && message.emojis.length > 0) {
+					lastMessage.emojis = lastMessage.emojis.concat(message.emojis);
+				}
+
+			} else {
+				// different author, so push a new message
+				groupedMessages.push({ ...message });
+				lastAuthorID = message.authorUniqueID;
+			}
+		}
+
+		return groupedMessages;
+
+	} else {
+		// no grouping, just return the original chat log
+		return chatLog.value;
+	}
+});
 
 /*
 	example points data:
@@ -371,6 +409,18 @@ function getUserPoints(userID) {
 				// to separate from the PFP
 				.message-contents {
 
+					// for debug
+					/* border: 1px solid red; */
+					
+					&.inline {
+						display: flex;
+
+						.message-body {
+							display: inline-block;
+							margin-left: 12px;
+						}
+					}
+
 					.user {
 						margin-bottom: 0px;
 
@@ -378,6 +428,8 @@ function getUserPoints(userID) {
 							color: green;
 							font-style: italic;
 							margin-left: 10px;
+
+							display: none;
 						}
 					}
 				}// .message-contents
@@ -386,6 +438,23 @@ function getUserPoints(userID) {
 
 		}// .messageText
 
+		&.showChatterPoints {
+
+			// one of the message rows
+			.msgRow {
+
+				.message-contents {
+					.user {
+						.points {
+							display: initial;
+						}
+					}
+				}// .message-contents
+
+			}// .msgRow
+
+		}// .showChatterPoints
+		
 	}// .chatBoxWidget
 
 </style>

@@ -177,7 +177,8 @@ export default class Chat extends Toy {
 			chatTextSize: ref(24),
 			showSystemMessages: ref(true),
 			cachePFPImages: ref(true),
-			
+			groupUserMessages: ref(false),
+			showChatterPoints: ref(true),
 			shoutSoundId: ref('11'),
 
 			swarmSize: ref(5),

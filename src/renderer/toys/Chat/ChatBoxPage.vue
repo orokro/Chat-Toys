@@ -117,6 +117,21 @@
 				<p>Enable to show message text on a new line under the name, rather than inline.</p>
 			</SettingsInputRow>
 			<SettingsInputRow
+				type="boolean"
+				v-model="groupUserMessages"
+			>
+				<template #title>Group Recent Messages</template>
+				<p>If the last set of messages are from the same user, they'll be grouped into one message.</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="showChatterPoints"
+			>
+				<template #title>Show Chatter Points</template>
+				<p>Users channel points will be displayed next to their name in the chat box.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
 				type="color"
 				v-model="chatNameColor"
 			>
@@ -280,6 +295,8 @@ const {
 	chatTextSize,
 	showSystemMessages,
 	cachePFPImages,
+	groupUserMessages,
+	showChatterPoints,
 
 	shoutSoundId,
 
