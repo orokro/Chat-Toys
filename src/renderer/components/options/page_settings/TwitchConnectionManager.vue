@@ -3,7 +3,7 @@
 	----------------------------
 
 	Simple manager UI for handling Twitch authentication state
-	within your Electron app's main window.
+	within the Electron app's main window.
 
 	Features:
 	- Checks Twitch auth status on mount

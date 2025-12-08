@@ -7,7 +7,7 @@
 		"oneClick": false,
 		"perMachine": false,
 		"allowToChangeInstallationDirectory": true,
-		"shortcutName": "Electron App"
+		"shortcutName": "Chat-Toys"
 	},
 	"win": {
 		"target": [
