@@ -8,7 +8,7 @@
 */
 
 // vue
-import { ref, shallowRef, watch } from 'vue';
+import { ref, shallowRef, watch, nextTick } from 'vue';
 import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // our app
@@ -24,9 +24,9 @@ import HeadPatsUserWidget from './HeadPatsUserWidget.vue';
 export default class HeadPat extends Toy {
 
 	// static info
-	static name = 'Head Pat';
+	static name = 'Head Pat/Bonk/Slap';
 	static slug = 'headPat';
-	static desc = 'Let viewers give and receive head pats.';
+	static desc = 'Let viewers give and receive head pats, bonks, and slaps.';
 	static optionsPageComponent = HeadPatsPage;
 	static themeColor = '#A4704C';
 	static themeColor = '#C6C37A';
@@ -36,7 +36,7 @@ export default class HeadPat extends Toy {
 			key: 'streamerWidgetBox',
 			allowResize: true,
 			lockAspectRatio: true,
-			description: 'This head-pat widget should be placed over the streamers avatar or webcam feed.',
+			description: 'This widget should be placed over the streamers avatar or webcam feed.',
 			slug: 'streamer'
 		},
 		{
@@ -85,10 +85,26 @@ export default class HeadPat extends Toy {
 		this.currentPat = socketShallowRef(this.static.slugify('currentPat'), null);
 		this.currentChatterPat = socketShallowRef(this.static.slugify('currentChatterPat'), null);
 		
+		// sounds
+		this.bonkSoundPath = socketShallowRef(
+			this.static.slugify('bonkSoundPath'),
+			this.getAssetPath(this.settings.bonkSoundId.value));
+		this.slapSoundPath = socketShallowRef(
+			this.static.slugify('slapSoundPath'),
+			this.getAssetPath(this.settings.slapSoundId.value));
+
 		// set up a watcher to update the user image path
 		watch(this.settings.headPatChatterImage, () => {
 			this.userImagePath.value = this.getAssetPath(this.settings.headPatChatterImage.value);
 		});
+		
+		// watch sound ids
+		watch(this.settings.bonkSoundId, () => {
+			this.bonkSoundPath.value = this.getAssetPath(this.settings.bonkSoundId.value);
+		}, { immediate: true });
+		watch(this.settings.slapSoundId, () => {
+			this.slapSoundPath.value = this.getAssetPath(this.settings.slapSoundId.value);
+		}, { immediate: true });
 	}
 
 
@@ -116,6 +132,9 @@ export default class HeadPat extends Toy {
 			chatterNameShadow: ref(true),
 			allowUserPats: ref(true),
 			headPatChatterImage: ref('22'),
+			enableWidgetSound: ref(true),
+			bonkSoundId: ref('32'),
+			slapSoundId: ref('33'),
 			streamerWidgetBox: shallowRef({
 				x: 1280 - 200,
 				y: 200,
@@ -219,8 +238,10 @@ export default class HeadPat extends Toy {
 		}
 
 		// otherwise we're in SHOWING mode
-		this.streamerMode.value = 'SHOWING';
 		this.currentPat.value = stateDetails;
+		nextTick(()=>{
+			this.streamerMode.value = 'SHOWING';		
+		});
 	}
 
 
@@ -239,8 +260,10 @@ export default class HeadPat extends Toy {
 		}
 
 		// otherwise we're in SHOWING mode
-		this.chatterMode.value = 'SHOWING';
 		this.currentChatterPat.value = stateDetails;
+		nextTick(()=>{
+			this.streamerMode.value = 'SHOWING';		
+		});
 	}
 
 }

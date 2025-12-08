@@ -195,6 +195,37 @@ const streamerMode = socketShallowRefReadOnly(slugify('streamerMode'), 'IDLE');
 const chatterMode = socketShallowRefReadOnly(slugify('chatterMode'), 'IDLE');
 const currentPat = socketShallowRefReadOnly(slugify('currentPat'), null);
 const currentChatterPat = socketShallowRefReadOnly(slugify('currentChatterPat'), null);
+const bonkSoundPath = socketShallowRefReadOnly(slugify('bonkSoundPath'), null);
+const slapSoundPath = socketShallowRefReadOnly(slugify('slapSoundPath'), null);
+
+watch(mode, (newMode)=>{
+
+	// play sound effects on mode change
+	if(newMode !== 'IDLE'){
+
+		// no sound if they're disabled
+		if(socketSettingsRef.value.enableWidgetSound === false){
+			return;
+		}
+
+		const kind = (props.showProfilePicture ? currentChatterPat.value : currentPat.value).kind;
+		
+		let soundPath = null;
+		switch(kind){
+			case 'bonk':
+				soundPath = bonkSoundPath.value;
+				break;
+			case 'slap':
+				soundPath = slapSoundPath.value;
+				break;
+		}
+		
+		if(soundPath){
+			const audio = new Audio(soundPath);
+			audio.play();
+		}
+	}
+});
 
 </script>
 <style lang="scss" scoped>

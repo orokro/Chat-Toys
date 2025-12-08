@@ -446,4 +446,16 @@ const builtInAssets = [
 		kind: 'sound',
 		tags: ['sfx'],
 	},
+	{
+		id: 32,
+		name: 'bonk.mp3',
+		kind: 'sound',
+		tags: ['sfx'],
+	},
+	{
+		id: 33,
+		name: 'slap.mp3',
+		kind: 'sound',
+		tags: ['sfx'],
+	},
 ];

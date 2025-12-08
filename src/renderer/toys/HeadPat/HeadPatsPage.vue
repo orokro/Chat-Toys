@@ -7,7 +7,7 @@
 <template>
 
 	<PageBox
-		title="Head Pats Settings"
+		title="Head Pat/Bonk/Slap Settings"
 		:themeColor="toy.static.themeColor"
 		themeImage="assets/bg_tiles/headpat.png"
 		bgThemePos="32px"
@@ -19,7 +19,7 @@
 		<br>
 
 		<p>
-			The Head Pats system lets chatters give you head pats!
+			The Head Pats system lets chatters give you head pats, bonks, or slaps!
 			<br><br>
 			If the user type <span class="cmd">!{{ pat_command }}</span> command by itself, the head-pat media GIF will play
 			along with the users name who triggered it.
@@ -30,7 +30,16 @@
 			In the future, the user-pat system might support loading the user profile image of the user specified,
 			but for now just a generic user profile will be shown.
 			<br><br>
-			NOTE: this system provides two widgets! One for each mode.
+			NOTE: this system provides two widgets! One for placing on the streams head, one to place anywhere for patting/bonking/slapping other chatters.
+			<InfoBox icon="lightbulb">
+				NEW FEATURES:<br>
+				Two new commands:
+				<span class="cmd">!{{ bonk_command }} &lt;slug&gt;</span> and 
+				<span class="cmd">!{{ slap_command }} &lt;slug&gt;</span>
+				have been added to play a bonk and slap gif respectively.<br>
+				These also have assignable sounds!
+			</InfoBox>
+
 		</p>
 		
 		<SectionHeader title="Command Triggers"/>
@@ -94,6 +103,31 @@
 				<template #title>Chatter Name Shadow</template>
 				<p>Add a shadow to the patter's name for better visibility</p>
 			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="enableWidgetSound"
+			>
+				<template #title>Enable Widget Sound</template>
+				<p>Allow bonk & slap to play sounds?</p>
+			</SettingsInputRow>
+			<SettingsAssetRow
+				v-model="bonkSoundId"
+				:kind-filter="'sound'"
+				v-if="enableWidgetSound"
+			>
+				<h3>Bonk Sound Effect</h3>
+				<p>Choose a sound effect to play for bonk commands.</p>
+			</SettingsAssetRow>
+			<SettingsAssetRow
+				v-model="slapSoundId"
+				:kind-filter="'sound'"
+				v-if="enableWidgetSound"
+			>
+				<h3>Slap Sound Effect</h3>
+				<p>Choose a sound effect to play for slap commands.</p>
+			</SettingsAssetRow>
+
 		</div>
 
 		<br/>
@@ -159,15 +193,24 @@ const {
 	chatterNameShadow,
 	allowUserPats,
 	headPatChatterImage,
+	enableWidgetSound,
+	bonkSoundId,
+	slapSoundId
 } = toy.settings;
 
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
 
-// get the command used for head patting
+// get the commands used as strings
 const pat_command = computed(() => {
 	return commandsRef.value.headPat__pat?.command || '';
+});
+const bonk_command = computed(() => {
+	return commandsRef.value.headPat__bonk?.command || '';
+});
+const slap_command = computed(() => {
+	return commandsRef.value.headPat__slap?.command || '';
 });
 
 
