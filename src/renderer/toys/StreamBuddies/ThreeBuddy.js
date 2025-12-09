@@ -10,7 +10,8 @@ import { watch } from 'vue';
 
 // three imports
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
-import { AnimationMixer, Object3D, LoopRepeat, LoopOnce, AnimationClip } from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { AnimationMixer, Object3D, LoopRepeat, LoopOnce } from 'three';
 import { ThreeJSBuddiesSystem } from './ThreeJSBuddiesSystem';
 
 /**
@@ -86,8 +87,8 @@ export class ThreeBuddy extends Object3D {
 	 * Constructs a buddy on screen
 	 * 
 	 * @param {ThreeJSBuddiesSystem} threeBuddySystem - the buddy system to use
-	 * @param {String} modelPath - path to the avatar model to use
-	 * @param {AnimationLibrary} animationLibrary - the animation library to use
+	 * @param {String} modelPath - path to the avatar model to use (fbx / glb / gltf)
+	 * @param {AnimationLibrary} animationLibrary - the animation library to use (FBX-only)
 	 */
 	constructor(threeBuddySystem, modelPath, animationLibrary) {
 
@@ -96,14 +97,21 @@ export class ThreeBuddy extends Object3D {
 
 		// members
 		this.system = threeBuddySystem;
-		this.loader = new FBXLoader();
+		this.modelPath = modelPath;
+		this.animationLibrary = animationLibrary;
+
 		this.model = null;
 		this.mixer = null;
 		this.currentAction = null;
+		this.currentAnimation = null;
 		this.lastState = null;
-		this.animationLibrary = animationLibrary;
 
-		// 
+		// determine if this is a glTF-based model (glb/gltf)
+		this.isGLTF = /\.(glb|gltf)$/i.test(modelPath);
+
+		// choose loader based on file extension
+		this.loader = this.isGLTF ? new GLTFLoader() : new FBXLoader();
+
 		this.animationMap = {
 			idle: ['idle_generic', 'idle_happy', 'idle_dwarf'],
 			moving: 'walking',
@@ -116,12 +124,8 @@ export class ThreeBuddy extends Object3D {
 
 		this.danceAnimations = ['dance_hiphop', 'dance_spin', 'dance_swing', 'dance_twerk'];
 
-		this.loader.load(modelPath, (fbx) => {
-			this.model = fbx;
-			this.model.scale.set(0.11, 0.11, 0.11);
-			this.mixer = new AnimationMixer(fbx);
-			this.add(fbx);
-		});
+		// load the model (fbx or glb)
+		this.loadModel();
 
 		// watch global scale ref to adjust our own scale when it changes
 		const s = this.system.buddySize.value;
@@ -129,6 +133,45 @@ export class ThreeBuddy extends Object3D {
 		watch(this.system.buddySize, (newVal) => {
 			this.scale.set(newVal, newVal, newVal);
 		});
+	}
+
+	/**
+	 * Internal helper to load the buddy model (FBX or GLB)
+	 */
+	loadModel() {
+
+		if (this.isGLTF) {
+
+			console.log(`Loading GLTF model from ${this.modelPath}...`);
+			this.loader.load(this.modelPath, (gltf) => {
+
+				console.log(`GLTF model loaded: `, gltf);
+				// GLTFLoader returns { scene, animations, ... }
+				const root = gltf.scene || (gltf.scenes && gltf.scenes[0]) || gltf;
+
+				this.model = root.children[0];
+				this.model.scale.set(0.11, 0.11, 0.11);
+
+				// even though the glb may contain its own animations,
+				// we still use the external AnimationLibrary clips
+				this.mixer = new AnimationMixer(root);
+
+				this.add(root);
+
+				window.m = this.model;
+			});
+
+		} else {
+
+			// FBX path (old behavior)
+			this.loader.load(this.modelPath, (fbx) => {
+
+				this.model = fbx;
+				this.model.scale.set(0.11, 0.11, 0.11);
+				this.mixer = new AnimationMixer(fbx);
+				this.add(fbx);
+			});
+		}
 	}
 
 
@@ -177,8 +220,6 @@ export class ThreeBuddy extends Object3D {
 		if (!this.model || !this.mixer) 
 			return;
 
-		// console.log('poop', newState);
-
 		const changed = !this.lastState || JSON.stringify(this.lastState) !== JSON.stringify(newState);
 		this.lastState = { ...newState };
 		if (!changed)
@@ -200,18 +241,18 @@ export class ThreeBuddy extends Object3D {
 		let {ani, loop} = this.pickAnimationKind(newState);
 
 		// initial set if undefined
-		if(this.lastAniKind===undefined)
+		if (this.lastAniKind === undefined)
 			this.lastAniKind = '';
 
 		// if the _kind_ of animation changed, we can run some extra logic for the type
-		if(this.lastAniKind !== ani){
+		if (this.lastAniKind !== ani) {
 
 			this.lastAniKind = ani;
 
-			if(ani=='idle')
+			if (ani == 'idle')
 				ani = this.animationMap.idle[Math.floor(Math.random() * 3)];
 
-			if(ani=='attacking')
+			if (ani == 'attacking')
 				ani = this.animationMap.attacking[Math.floor(Math.random() * 2)];
 
 			if (ani) 
@@ -239,12 +280,12 @@ export class ThreeBuddy extends Object3D {
 
 		} else if (['hugging', 'attacking'].includes(newState.stateMode)) {
 
-			if(newState[newState.stateMode]){
+			if (newState[newState.stateMode]) {
 				ani = newState.stateMode === 'hugging'
 					? this.animationMap['hugging']
-					: 'attacking'
+					: 'attacking';
 				loop = false;
-			}else{
+			} else {
 				ani = this.animationMap['moving'];
 			}
 
