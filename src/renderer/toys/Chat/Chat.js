@@ -21,7 +21,6 @@ import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'soc
 
 // our app
 import Toy from "../Toy";
-import { Swarm } from './Swarm';
 import { StateTickerQueue } from '@scripts/StateTickerQueue';
 import { ChatPointsHelper } from './ChatPointsHelper';
 
@@ -31,8 +30,6 @@ import { randUserName, randSentence, randPhrase, randUuid } from '@ngneat/falso'
 // components
 import ChatBoxPage from './ChatBoxPage.vue';
 import ChatBoxWidget from './ChatBoxWidget.vue';
-import ShoutWidget from './ShoutWidget.vue';
-import SwarmWidget from './SwarmWidget.vue';
 
 // main export
 export default class Chat extends Toy {
@@ -54,22 +51,6 @@ export default class Chat extends Toy {
 			description: 'Displays live chat.',
 			slug: 'liveChat'
 		},
-		{
-			component: ShoutWidget,
-			key: 'shoutWidgetBox',
-			allowResize: true,
-			lockAspectRatio: false,
-			description: 'Shows when a chatter uses the !shout command. Similar to super chats, but channel points instead.',
-			slug: 'shoutBox'
-		},
-		{
-			component: SwarmWidget,
-			key: 'swarmWidgetBox',
-			allowResize: true,
-			lockAspectRatio: false,
-			description: 'Shows swarm messages. Should ideally be placed full screen for maximum effect.',
-			slug: 'swarmBox'
-		},
 	];
 
 
@@ -83,29 +64,11 @@ export default class Chat extends Toy {
 		// call the parent constructor
 		super(toyManager);
 
-		// we'll use a ticker for queuing up shout messages
-		this.shoutQueue = new StateTickerQueue(this.handleShoutQueue.bind(this), 2, 10);
-		this.tickFN = () => this.shoutQueue.tick();
-		electronAPI.tick(this.tickFN);
-
-		// our socket state
-		this.soundPath = socketShallowRef(
-			this.static.slugify('soundPath'),
-			this.getAssetPath(this.settings.shoutSoundId.value));
 		this.chatFramePath = socketShallowRef(
 			this.static.slugify('chatFramePath'),
 			this.getAssetPath(this.settings.chatBoxImage.value));
-		this.shoutMessage = socketShallowRef(this.static.slugify('shoutMessage'), '');
-		this.shoutMode = socketShallowRef(this.static.slugify('shoutMode'), 'IDLE');
 		this.chatLog = socketShallowRef(this.static.slugify('chatLog'), []);
-		this.swarmLog = socketShallowRef(this.static.slugify('swarmLog'), []);
-		this.swarmMode = socketShallowRef(this.static.slugify('swarmMode'), 'IDLE');
 		this.pointsData = socketShallowRef(this.static.slugify('pointsData'), []);
-
-		// listen to changes in the shout sound
-		watch(this.settings.shoutSoundId, (value) => {
-			this.soundPath.value = this.getAssetPath(value);
-		});
 
 		// listen to changes in the chat box image
 		watch(this.settings.chatBoxImage, (value) => {
@@ -115,22 +78,6 @@ export default class Chat extends Toy {
 		// listen for incoming chat messages from chat processor
 		this.handleChatMessage = this.handleChatMessage.bind(this);
 		this.chatToysApp.chatProcessor.onNewChats(this.handleChatMessage);
-
-		// build new swarm logic
-		this.swarmLogic = new Swarm(
-			50,
-			this.settings.swarmSize,
-			this.settings.swarmDuration,
-			(messages) => { this.swarmLog.value = messages; },
-			(swarmIsActive) => {
-				this.swarmMode.value = swarmIsActive ? 'SHOWING' : 'IDLE';
-				if (swarmIsActive) {
-					this.chatToysApp.log.msg('SWARM ACTIVATED!');
-				}
-			}
-		);
-		this.tickFN = () => this.swarmLogic.tick();
-		electronAPI.tick(this.tickFN);
 
 		this.pointsDataHelper = (pointsData) => {
 			this.pointsData.value = pointsData;
@@ -146,9 +93,7 @@ export default class Chat extends Toy {
 	end() {
 		super.end();
 		electronAPI.clearTick(this.tickFN);
-		electronAPI.clearTick(this.tickFN);
 		this.chatToysApp.chatProcessor.removeNewChatsListener(this.onNewChats);
-		window.clearElectronTimeout(this.swarmTimeout);
 		this.chatPointsHelper.destroy();
 	}
 
@@ -178,27 +123,12 @@ export default class Chat extends Toy {
 			cachePFPImages: ref(true),
 			groupUserMessages: ref(false),
 			showChatterPoints: ref(true),
-			shoutSoundId: ref('11'),
 
-			swarmSize: ref(5),
-			swarmDuration: ref(10),
 			chatWidgetBox: shallowRef({
 				x: 1280 - 300,
 				y: 0,
 				width: 300,
 				height: 400
-			}),
-			shoutWidgetBox: shallowRef({
-				x: 20,
-				y: 20,
-				width: 400,
-				height: 100
-			}),
-			swarmWidgetBox: shallowRef({
-				x: 20,
-				y: 20,
-				width: 1880,
-				height: 1040
 			}),
 		});
 
@@ -213,24 +143,24 @@ export default class Chat extends Toy {
 	 */
 	buildCommands() {
 
-		super.buildCommands([
-			{
-				command: 'shout',
-				params: [
-					{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "shout"' },
-				],
-				description: 'A chatter can shout a message in exchange for channel points',
-				userDesc: 'Like Super Chat, but spend channel points',
-			},
-			{
-				command: 'swarm',
-				params: [
-					{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "swarm"' },
-				],
-				description: 'If enough chatters swarm at once, their messages will appear on screen',
-				userDesc: 'When many chatters use this at once, it may appear on steam',
-			}
-		]);
+		// super.buildCommands([
+		// 	{
+		// 		command: 'shout',
+		// 		params: [
+		// 			{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "shout"' },
+		// 		],
+		// 		description: 'A chatter can shout a message in exchange for channel points',
+		// 		userDesc: 'Like Super Chat, but spend channel points',
+		// 	},
+		// 	{
+		// 		command: 'swarm',
+		// 		params: [
+		// 			{ name: 'message', type: 'string', optional: false, desc: 'The message a chatter will "swarm"' },
+		// 		],
+		// 		description: 'If enough chatters swarm at once, their messages will appear on screen',
+		// 		userDesc: 'When many chatters use this at once, it may appear on steam',
+		// 	}
+		// ]);
 	}
 
 
@@ -245,41 +175,6 @@ export default class Chat extends Toy {
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
 
-		console.log(msg);
-		// if we got a shout command
-		if (commandSlug === 'shout') {
-
-			// NOTE: shout command should be fully validated by the time it gets here
-			// so we can just accept it and queue it up
-
-			// queue the shout message
-			this.shoutQueue.addToQueue({
-				message: {
-					user: msg.author,
-					message: params.message,
-				}
-			});
-
-			this.chatToysApp.log.msg(msg.author + ' used !shout ');
-
-			// we gucci
-			handshake.accept();
-			return;
-		}
-
-		// if we got a swarm command
-		if (commandSlug === 'swarm') {
-
-			// NOTE: swarm command should be fully validated by the time it gets here
-			// so we can just accept it and queue it up
-
-			// queue the swarm message
-			this.swarmLogic.newMessage(msg.author, msg.authorUniqueID, params.message);
-
-			// we gucci
-			handshake.accept();
-			return;
-		}
 
 	}
 
@@ -351,63 +246,6 @@ export default class Chat extends Toy {
 
 		// update our socket ref
 		this.chatLog.value = chatLogMessages;
-	}
-
-
-	/**
-	 * Handle the shout queue change
-	 * 
-	 * @param {Object} item - the item in the queue
-	 */
-	handleShoutQueue(item) {
-
-		// if it's null, we're in wait mode
-		if (item === null) {
-			this.shoutMode.value = 'IDLE';
-			return;
-		}
-
-		// otherwise we're in SHOWING mode
-		this.shoutMode.value = 'SHOWING';
-		this.shoutMessage.value = item.message;
-	}
-
-
-	/**
-	 * Tests swarm mode by generating random messages
-	 */
-	testSwarm() {
-
-		// toggle the swarm mode
-		if (this.testingSwarm === undefined)
-			this.testingSwarm = true;
-		else
-			this.testingSwarm = !this.testingSwarm;
-
-		// stop interval & gtfo
-		if (this.testingSwarm == false) {
-			if (this.swarmTimeout !== null)
-				window.clearElectronTimeout(this.swarmTimeout);
-			return;
-		}
-
-		// recursive timeout to send random messages
-		const randomMessage = () => {
-
-			if (this.testingSwarm === false)
-				return;
-
-			const id = randUuid();
-			const username = randUserName();
-			const message = randPhrase();
-			this.swarmLogic.newMessage(username, id, message);
-
-			const randomTime = Math.floor(Math.random() * 1500) + 500;
-			this.swarmTimeout = window.setElectronTimeout(randomMessage, randomTime);
-		}
-
-		// start the random message
-		randomMessage();
 	}
 
 }

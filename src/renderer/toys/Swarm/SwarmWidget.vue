@@ -11,12 +11,15 @@
 		v-if="ready"
 		class="swarmBoxWidget"
 		:class="{
-			disableBG: socketSettingsRef?.enableChatBoxImage==false,
+			disableBG: true,
 			idle: swarmMode === 'IDLE',
 			demoMode: demoMode,
-		}"	
-	>
-	
+			enableTextShadow: socketSettingsRef?.chatTextShadow,
+		}"
+		:style="{
+			fontSize: socketSettingsRef?.chatTextSize + 'px',
+		}"
+	>	
 		<div 
 			v-for="(message, index) in (demoMode ? demoSwarm : swarmLog)"
 			:key="message.id"
@@ -57,7 +60,7 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 import { useToySettings } from '@toys/useToySettings';
 import { keepAliveSocket } from '../keepAliveSocket.js';
 
-const thisSlug = 'chat';
+const thisSlug = 'swarm';
 const widgetSlug = 'swarmBox';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
@@ -77,7 +80,7 @@ const props = defineProps({
 
 // gets our settings
 const ready = ref(false);
-const socketSettingsRef = useToySettings('chat', 'swarmWidgetBox', emit, () => {
+const socketSettingsRef = useToySettings('swarm', 'swarmWidgetBox', emit, () => {
 	ready.value = true;
 });
 
@@ -146,37 +149,42 @@ watch(demoMode, (newVal) => {
 		// text settings
 		.messageText {
 
+			/* border: 1px solid red; */
+
 			// fixed inside frame
 			position: absolute;
 			transform: translate(-50%, -50%);
 			
 			color: white;
 
-			// text settings
-			text-shadow: 2px 2px 0px black;
-			font-size: 25px;
+			// text settings			
 			font-weight: bold;
 			text-align: center;			
 
 			min-width: 600px;
-			max-height: 60px;
-			line-height: 28px;
+			line-height: 1em;
 
 			// truncate with ellipse
 			/* white-space: nowrap; */
-			overflow: hidden;
+			/* overflow: hidden; */
 			text-overflow: ellipsis;
 			span {
 				color: #FFD700;
 			}	
 
 			// clip overflow with no scroll bars
-			overflow: hidden;
+			/* overflow: hidden; */
 
 			// play this animation forward, once
 			animation: fadeInOut 3s ease-in-out forwards;
 
 		}// .messageText
+
+		&.enableTextShadow{
+			.messageText {
+				text-shadow: 0.06em 0.06em 0.01em black;
+			}
+		}
 
 	}// .swarmBoxWidget
 

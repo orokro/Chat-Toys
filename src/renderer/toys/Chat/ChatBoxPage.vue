@@ -17,33 +17,24 @@
 			<img src="/assets/chat_solid/chat.png" height="300px" style="float:right"/>
 		</div>
 		<br><br>
-		<p>
-			The Chat Box system allows you to show a customized chat capture on screen.
-			However, it also has two special chat commands:
+		<p>The Chat Box widget lets you display live chat on your stream.</p>
+		<p>This will mix together chat from all enabled chat sources (YouTube, Twitch, etc.)</p>
+		<p>The advantage of this widget is that it can also display messages about users commands,
+			giving real time feed back. It also shows how many points users have by their names.
 		</p>
-		<ul>
-			<li>
-				<span class="cmd">!{{ shout_command }}</span> - similar to SuperChat but spends channel points.
-				Allows a chat message to be played on screen with a sound.
-			</li>
-			<li>
-				<span class="cmd">!{{ swarm_command }} &lt;message&gt;</span> - By itself, does nothing.
-				But if a critical number of chatters all start typing 
-				<span class="cmd">!{{ swarm_command }} &lt;message&gt;</span> at the same time,
-				then the messages will appear randomly on screen, like a swarm of chat.
-			</li>
-		</ul>
-		<SectionHeader title="Command Triggers"/>
-		<p>
-			Below you can customize the commands that users can type to interact with the Chat system.
+		<p>While you don't _have_ to use this chat widget, it's built in system features make the
+			overall channel points experience better for your viewers.
 		</p>
-		<CommandsConfigBox :toy="toy" />
+		<!-- <SectionHeader title="Command Triggers"/>
+		<p>
+			Below you can customize the commands that users can type to interact with the Swarm system.
+		</p>
+		<CommandsConfigBox :toy="toy" /> -->
 		
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
 
-		<h2>Chat Box Settings</h2>
 		<div class="settingsBlock">
 
 			<!-- 
@@ -142,7 +133,7 @@
 				type="color"
 				v-model="chatTextColor"
 			>
-				<template #title>Chat Text Color.</template>
+				<template #title>Chat Text Color</template>
 				<p>What color to use for message text?</p>
 			</SettingsInputRow>
 			<SettingsInputRow
@@ -205,46 +196,6 @@
 
 		</div>
 
-		<br/>
-		<h2>Shout Widget Settings</h2>
-		<div class="settingsBlock">
-			<SettingsAssetRow
-				v-model="shoutSoundId" 
-				:kind-filter="'sound'"
-			>
-				<h3>Shout Sound</h3>
-				<p>What sound effect should play when <span class="cmd">!{{ shout_command }}</span> command is used.</p>
-			</SettingsAssetRow>
-		</div>
-
-		<br/>
-		<h2>Swarm Widget Settings</h2>
-		<div class="settingsBlock">
-			<SettingsInputRow
-				type="number"
-				:min="1"
-				v-model="swarmSize"
-			>
-				<template #title>Swarm Size</template>
-				<p>
-					If the <span class="cmd">!{{ swarm_command }}</span> command is enabled, how many users need to use it
-					in a short period of time for a swarm to start?
-				</p>
-				<p>The time period can be customized below...</p>
-			</SettingsInputRow>
-			<SettingsInputRow
-				type="number"
-				:min="1"
-				v-model="swarmDuration"
-			>
-				<template #title>Swarm Time Window</template>
-				<p>
-					Used with the above setting, how long of window should be used to
-					count the number of users using the <span class="cmd">!{{ swarm_command }}</span> command?
-				</p>
-				<p>The number of users can be customized above...</p>
-			</SettingsInputRow>
-		</div>
 		<SectionHeader title="Video Help"/>
 		<YTVideoBox 
 			url="https://youtu.be/kc-181dg2M8"
@@ -297,25 +248,11 @@ const {
 	cachePFPImages,
 	groupUserMessages,
 	showChatterPoints,
-
-	shoutSoundId,
-
-	swarmSize,
-	swarmDuration,
 } = toy.settings;
 
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
-
-// get the command used for tossing items
-const shout_command = computed(() => {
-	return commandsRef.value.chat__shout?.command || '';
-});
-const swarm_command = computed(() => {
-	return commandsRef.value.chat__swarm?.command || '';
-});
-
 
 function insertTabInTheme(event) {
 	const textarea = event.target
@@ -335,8 +272,6 @@ function insertTabInTheme(event) {
 	// keep v-model in sync without Vue re-rendering the DOM value
 	textarea.dispatchEvent(new Event("input"))
 }
-
-
 
 </script>
 <style lang="scss" scoped>	

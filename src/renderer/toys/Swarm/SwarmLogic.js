@@ -1,6 +1,6 @@
 /*
-	Swarm.js
-	--------
+	SwarmLogic.js
+	-------------
 
 	We'll handle the state logic for the !swarm command here.
 */
@@ -9,7 +9,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 // main class
-export class Swarm {
+export class SwarmLogic {
 
 	/**
 	 * Builds a new Swarm object

@@ -15,12 +15,30 @@
 		v-if="ready"
 		class="shoutWidget"
 		:class="{ 
-			idle: shoutMode === 'IDLE',
+			idle: shoutMode === 'IDLE' && !demoMode,
+			enableTextShadow: socketSettingsRef?.chatTextShadow,
 			demoMode: demoMode
+		}"
+		:style="{
+			fontSize: socketSettingsRef?.chatTextSize + 'px',
 		}"
 	>
 		<div class="messageText">
-			<span class="user">{{ demoMode ? 'DudeMcGuy' : shoutMessage.user }}:</span> {{ demoMode ? 'Yooooo, no way!' :  shoutMessage.message }}
+			<span
+				v-if="socketSettingsRef?.showChatterNames"
+				class="user"
+				:style="{
+					color: socketSettingsRef?.chatNameColor,
+				}"
+			>{{ demoMode ? 'DudeMcGuy' : shoutMessage.user }}:
+			</span> 
+			<span
+				:style="{
+					color: socketSettingsRef?.chatTextColor,
+				}"
+			>
+				{{ demoMode ? 'Yooooo, no way!' :  shoutMessage.message }}
+			</span>
 		</div>
 	</div>
 </template>
@@ -34,7 +52,7 @@ import { socketShallowRefReadOnly } from 'socket-ref';
 import { useToySettings } from '@toys/useToySettings';
 import { keepAliveSocket } from '../keepAliveSocket.js';
 
-const thisSlug = 'chat';
+const thisSlug = 'shout';
 const widgetSlug = 'shoutBox';
 const slugify = (text) => {
 	return thisSlug + '__' + text.toLowerCase();
@@ -58,7 +76,7 @@ const props = defineProps({
 
 // gets our settings
 const ready = ref(false);
-const socketSettingsRef = useToySettings('chat', 'shoutWidgetBox', emit, () => {
+const socketSettingsRef = useToySettings('shout', 'shoutWidgetBox', emit, () => {
 	ready.value = true;
 });
 
@@ -68,10 +86,18 @@ const shoutMode = socketShallowRefReadOnly(slugify('shoutMode'), 'IDLE');
 const shoutMessage = socketShallowRefReadOnly(slugify('shoutMessage'), '');
 const soundPath = socketShallowRefReadOnly(slugify('soundPath'), null);
 
+window.debug = {
+	shoutMode,
+	shoutMessage
+}
+
 // we only want to play the sound when we switch from IDLE to PLAY
 watch(shoutMode, (newVal) => {
 
 	if(newVal === 'SHOWING' && soundPath.value !== null) {
+
+		if(socketSettingsRef.value.enableSound === false) return;
+
 		const audio = new Audio(soundPath.value);
 		audio.play();
 	}
@@ -93,10 +119,12 @@ watch(shoutMode, (newVal) => {
 		// debug bg
 		/* background: rgba(255, 255, 255, 0.1); */
 
-		transition: transform 0.25s ease-in-out;
+		transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
 		transform: scale(1);
+		opacity: 1;
 		&.idle {
-			transform: scale(0);
+			/* transform: scale(0); */
+			opacity: 0;
 		}
 
 		&.demoMode {
@@ -110,8 +138,6 @@ watch(shoutMode, (newVal) => {
 			color: white;
 
 			// text settings
-			text-shadow: 2px 2px 0px black;
-			font-size: 25px;
 			font-weight: bold;
 			text-align: left;
 			/* white-space: nowrap; */
@@ -122,6 +148,11 @@ watch(shoutMode, (newVal) => {
 
 		}// .messageText
 
+		&.enableTextShadow{
+			.messageText {
+				text-shadow: 0.04em 0.04em 0.01em black;
+			}
+		}
 	}// .shoutWidget
 
 </style>

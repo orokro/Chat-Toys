@@ -19,6 +19,8 @@ import Fishing from "./Fishing/Fishing";
 import OutputLog from "./OutputLog/OutputLog";
 import FrequencyFinder from "./FrequencyFinder/FrequencyFinder";
 import EmojiFountain from "./EmojiFountain/EmojiFountain";
+import Shout from "./Shout/Shout";
+import Swarm from "./Swarm/Swarm";
 
 // We'll export a list of all the constructors for the various toys
 // Their classes will have the static data they need, including:
@@ -29,6 +31,7 @@ export const toysData = [
 	ChannelPoints,
 	OutputLog,
 	Chat,
+	Shout,
 	Media,
 	Tosser,
 	VTSTosser,
@@ -39,6 +42,7 @@ export const toysData = [
 	Fishing,
 	FrequencyFinder,
 	EmojiFountain,
+	Swarm,
 ];
 
 // convert the array to an object for easier access

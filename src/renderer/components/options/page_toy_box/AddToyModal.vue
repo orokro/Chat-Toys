@@ -150,13 +150,15 @@ function select(value){
 		// scroll the box
 		overflow-y: auto;
 
+		background: rgb(226, 239, 245);
+
 		// the containers for the toy icons as laid-out by the above flex code
 		.toyIcon {
 
 			// fixed gray rectangle
 			width: 150px;
 			height: 110px;
-			background: rgb(236, 236, 236);
+			/* background: rgb(236, 236, 236); */
 			border-radius: 25px;
 
 			// new stacking context
@@ -186,7 +188,7 @@ function select(value){
 				// only allow hover pointer
 				cursor: not-allowed;
 
-				background: rgb(214, 231, 238);
+				/* background: rgb(214, 231, 238); */
 
 				.toyName {
 					background: #13b147;

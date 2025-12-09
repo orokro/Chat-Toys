@@ -32,7 +32,7 @@ export class ChatProcessor {
 		this.screenMessages = shallowRef([]);
 
 		// true to show msgs
-		this._showDebugLogs = true;
+		this._showDebugLogs = false;
 
 		// keep track of seen messages so we don't repeat them
 		this._seenMessageIDs = new Set();

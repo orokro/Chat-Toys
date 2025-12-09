@@ -38,7 +38,10 @@ export default class ChatToysApp {
 
 		// our global list of commands
 		this.commands = chromeShallowRef('commands', {});
-		
+
+		// clean up any deprecated commands from older versions
+		this.deleteDeprecatedCommands();
+
 		// we will use a chromeRef to persist the list of enabled toys
 		this.enabledToys = chromeShallowRef('enabledToys', []);
 
@@ -114,6 +117,35 @@ export default class ChatToysApp {
 
 	}
 	
+
+	/**
+	 * Deletes any deprecated commands from older versions.
+	 */
+	deleteDeprecatedCommands(){
+
+		// grab current commands object (or empty if somehow missing)
+		const commandsState = this.commands.value || {};
+		
+		// keys we want to delete if present
+		const keysToRemove = [
+			'chat__shout',
+			'chat__swarm',
+		];
+		
+		let mutated = false;
+		
+		for (const key of keysToRemove) {
+			if (key in commandsState) {
+				delete commandsState[key];
+				mutated = true;
+			}
+		}
+		
+		// reassign so chromeShallowRef watchers fire and storage updates
+		if (mutated)
+			this.commands.value = { ...commandsState };
+	}
+
 
 	/**
 	 * Sets up some general settings for the app in a nice, state synced object.
