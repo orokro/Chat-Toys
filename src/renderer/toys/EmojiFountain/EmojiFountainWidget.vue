@@ -11,14 +11,6 @@
 		class="emojiFountainWidget"
 		:style="widgetStyle"
 	>
-		<!-- Per-particle keyframes -->
-		<style
-			v-for="p in renderParticles"
-			:key="p.id + '-style'"
-		>
-			{{ p.motionKeyframes }}
-			{{ p.spinKeyframes }}
-		</style>
 
 		<!-- Particles -->
 		<div
@@ -39,7 +31,14 @@
 <script setup>
 
 // vue
-import { ref, computed, shallowRef, watch } from 'vue';
+import {
+	ref,
+	computed,
+	shallowRef,
+	watch,
+	onMounted,
+	onBeforeUnmount
+} from 'vue';
 import { socketShallowRefReadOnly } from 'socket-ref';
 
 // settings system
@@ -80,7 +79,6 @@ const socketParticles = socketShallowRefReadOnly(slugify('particles'), []);
 // local map url -> src (raw or blob)
 const sources = shallowRef(new Map());
 
-
 // ---------- Emoji source handling (cache aware) ----------
 
 function ensureSrcForUrl(url, useCache) {
@@ -113,39 +111,32 @@ function ensureSrcForUrl(url, useCache) {
 
 // ---------- Demo particles ----------
 
-// simple demo emoji urls; replace with your own if desired
 const DEMO_EMOJI_URLS = [
 	'https://twemoji.maxcdn.com/v/latest/72x72/1f389.png', // 🎉
 	'https://twemoji.maxcdn.com/v/latest/72x72/1f602.png', // 😂
-	'https://twemoji.maxcdn.com/v/latest/72x72/2764.png',  // ❤️
+	'https://twemoji.maxcdn.com/v/latest/72x72/2764.png'   // ❤️
 ];
 
 const demoParticles = ref([]);
-
 
 function randomRange(min, max) {
 	return Math.random() * (max - min) + min;
 }
 
-
 function clamp(v, min, max) {
 	return v < min ? min : v > max ? max : v;
 }
-
 
 function safeSpeedFromSettings() {
 	const s = socketSettingsRef.value?.speed;
 	return (s && s > 0) ? s : 1.0;
 }
 
-
 function nextDemoId(index) {
 	return `demo_${index}_${Date.now()}`;
 }
 
-
 function buildDemoRainParticle(url, speed, scale, index) {
-
 	const startYNorm = -0.2;
 	const endYNorm = 1.1;
 	const distance = endYNorm - startYNorm;
@@ -181,9 +172,7 @@ function buildDemoRainParticle(url, speed, scale, index) {
 	};
 }
 
-
 function buildDemoTossParticle(url, speed, scale, index) {
-
 	const startYNorm = 1.05;
 	const endYNorm = 1.15;
 	const apexYNorm = randomRange(0.1, 0.5);
@@ -221,9 +210,7 @@ function buildDemoTossParticle(url, speed, scale, index) {
 	};
 }
 
-
 function rebuildDemoParticles() {
-
 	const mode = socketSettingsRef.value?.mode === 'rain' ? 'rain' : 'toss';
 	const speed = safeSpeedFromSettings();
 	const scale = socketSettingsRef.value?.emojiSize ?? 1.0;
@@ -243,7 +230,6 @@ function rebuildDemoParticles() {
 	demoParticles.value = items;
 }
 
-
 // rebuild demo whenever demoMode toggles on or mode changes
 watch(
 	() => ({
@@ -258,7 +244,6 @@ watch(
 	{ immediate: true }
 );
 
-
 // ---------- Pick which particle set to render ----------
 
 const particlesForRender = computed(() => {
@@ -267,7 +252,6 @@ const particlesForRender = computed(() => {
 	}
 	return socketParticles.value || [];
 });
-
 
 // kick off emoji src resolution whenever particles or cache setting change
 watch(
@@ -285,7 +269,6 @@ watch(
 	{ immediate: true, deep: false }
 );
 
-
 // ---------- Keyframe + style builders ----------
 
 function buildMotionKeyframes(p, name, loop) {
@@ -297,8 +280,8 @@ function buildMotionKeyframes(p, name, loop) {
 	const ey = p.endY ?? 120;
 	const ay = p.apexY ?? 50;
 
+	// All keyframes now animate left/top as percentages of the widget.
 	if (p.type === 'rain') {
-		// Simple freefall + 1-2 bounces
 		const b1 = 70;
 		const b2 = p.bounces > 1 ? 85 : 100;
 		const peak1 = p.bounces > 1 ? 80 : 90;
@@ -307,26 +290,30 @@ function buildMotionKeyframes(p, name, loop) {
 		return `
 @keyframes ${name} {
 	0% {
-		transform: translate3d(${sx}%, ${sy}%, 0);
+		left: ${sx}%;
+		top: ${sy}%;
 	}
 	${b1}% {
-		transform: translate3d(${ax}%, 100%, 0);
+		left: ${ax}%;
+		top: 100%;
 	}
 	${peak1}% {
-		transform: translate3d(${ax}%, 90%, 0);
+		left: ${ax}%;
+		top: 90%;
 	}
 	${b2}% {
-		transform: translate3d(${ax}%, 100%, 0);
+		left: ${ax}%;
+		top: 100%;
 	}
 	${final}% {
-		transform: translate3d(${ex}%, ${ey}%, 0);
+		left: ${ex}%;
+		top: ${ey}%;
 	}
 }
 `;
 	}
 
 	if (p.type === 'fountain') {
-		// Up to apex, then fall + 1-2 bounces
 		const up = 40;
 		const hit = 65;
 		const peak1 = p.bounces > 1 ? 80 : 85;
@@ -335,19 +322,24 @@ function buildMotionKeyframes(p, name, loop) {
 		return `
 @keyframes ${name} {
 	0% {
-		transform: translate3d(${sx}%, ${sy}%, 0);
+		left: ${sx}%;
+		top: ${sy}%;
 	}
 	${up}% {
-		transform: translate3d(${ax}%, ${ay}%, 0);
+		left: ${ax}%;
+		top: ${ay}%;
 	}
 	${hit}% {
-		transform: translate3d(${ax}%, 100%, 0);
+		left: ${ax}%;
+		top: 100%;
 	}
 	${peak1}% {
-		transform: translate3d(${ax}%, 88%, 0);
+		left: ${ax}%;
+		top: 88%;
 	}
 	${final}% {
-		transform: translate3d(${ex}%, ${ey}%, 0);
+		left: ${ex}%;
+		top: ${ey}%;
 	}
 }
 `;
@@ -358,17 +350,21 @@ function buildMotionKeyframes(p, name, loop) {
 	return `
 @keyframes ${name} {
 	0% {
-		transform: translate3d(${sx}%, ${sy}%, 0);
+		left: ${sx}%;
+		top: ${sy}%;
 	}
 	${mid}% {
-		transform: translate3d(${ax}%, ${ay}%, 0);
+		left: ${ax}%;
+		top: ${ay}%;
 	}
 	100% {
-		transform: translate3d(${ex}%, ${ey}%, 0);
+		left: ${ex}%;
+		top: ${ey}%;
 	}
 }
 `;
 }
+
 
 function buildSpinKeyframes(p, name) {
 	const angle = (p.spinSpeed || 0) * (p.duration || 1);
@@ -384,15 +380,12 @@ function buildSpinKeyframes(p, name) {
 `;
 }
 
-
-// ---------- Final render particles ----------
+// ---------- Final render particles (with styles + keyframes) ----------
 
 const renderParticles = computed(() => {
-
 	const items = particlesForRender.value || [];
 	const s = socketSettingsRef.value || {};
 	const scaleSetting = s.emojiSize != null ? s.emojiSize : 1.0;
-	const useCache = !!s.cacheEmojiImages;
 
 	const map = sources.value;
 	const isDemo = demoMode.value;
@@ -400,7 +393,6 @@ const renderParticles = computed(() => {
 	return items
 		.filter((p) => !!p && !!p.url)
 		.map((p, idx) => {
-
 			const id = p.id || `ef_${idx}`;
 			const motionName = `ef_motion_${id}`;
 			const spinName = `ef_spin_${id}`;
@@ -415,8 +407,6 @@ const renderParticles = computed(() => {
 
 			const outerStyle = {
 				position: 'absolute',
-				left: '0',
-				top: '0',
 				pointerEvents: 'none',
 				animationName: motionName,
 				animationDuration: `${duration}s`,
@@ -425,6 +415,7 @@ const renderParticles = computed(() => {
 				animationFillMode: loop ? 'none' : 'forwards',
 				animationIterationCount: loop ? 'infinite' : '1'
 			};
+
 
 			const scaleStyle = {
 				transform: `translate(-50%, -50%) scale(${(p.scale || 1) * scaleSetting})`
@@ -451,6 +442,38 @@ const renderParticles = computed(() => {
 		});
 });
 
+// ---------- Inject dynamic keyframes into <head> ----------
+
+const dynamicStyleEl = ref(null);
+
+function applyDynamicCSS() {
+	if (!dynamicStyleEl.value) return;
+	const css = renderParticles.value
+		.map((p) => (p.motionKeyframes || '') + (p.spinKeyframes || ''))
+		.join('\n');
+	dynamicStyleEl.value.textContent = css;
+}
+
+onMounted(() => {
+	if (typeof document === 'undefined') return;
+	const el = document.createElement('style');
+	el.id = 'emoji-fountain-dynamic';
+	document.head.appendChild(el);
+	dynamicStyleEl.value = el;
+	applyDynamicCSS();
+});
+
+onBeforeUnmount(() => {
+	if (dynamicStyleEl.value && dynamicStyleEl.value.parentNode) {
+		dynamicStyleEl.value.parentNode.removeChild(dynamicStyleEl.value);
+	}
+	dynamicStyleEl.value = null;
+});
+
+// whenever renderParticles changes, update the CSS
+watch(renderParticles, () => {
+	applyDynamicCSS();
+});
 
 // ---------- Widget style ----------
 

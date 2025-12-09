@@ -43,8 +43,8 @@ import { ref, shallowRef } from 'vue';
 import { socketShallowRef } from 'socket-ref';
 
 // components
-import { EmojiFountainWidget } from './EmojiFountainWidget.vue';
-import { EmojiFountainPage } from './EmojiFountainPage.vue';
+import EmojiFountainWidget from './EmojiFountainWidget.vue';
+import EmojiFountainPage from './EmojiFountainPage.vue';
 
 // our app
 import Toy from '../Toy';
@@ -55,7 +55,7 @@ export default class EmojiFountain extends Toy {
 	static slug = 'emojiFountain';
 	static desc = 'Sprinkles chat emojis with fun physics-like animations.';
 	static optionsPageComponent = EmojiFountainPage;
-	static themeColor = '#FF99FF'; // 50B5D1
+	static themeColor = '#50B5D1'; // 50B5D1
 	static widgetComponents = [
 		{
 			component: EmojiFountainWidget,
@@ -193,6 +193,8 @@ export default class EmojiFountain extends Toy {
 		// Normalize emojis from msg
 		const emojis = Array.isArray(msg?.emojis) ? msg.emojis : [];
 
+		console.log(msg);
+		
 		// Helper to early-reject if we somehow got no emojis
 		const ensureEmojis = () => {
 			if (emojis.length > 0) 
