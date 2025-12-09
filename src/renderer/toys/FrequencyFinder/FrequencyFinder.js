@@ -120,6 +120,7 @@ export default class FrequencyFinder extends Toy {
 
 			// display config for the widget
 			fontColor: ref('#FFFFFF'),
+			multiplierColor: ref('#FF0000'),
 			fontSize: ref(32),
 			showShadow: ref(true),
 

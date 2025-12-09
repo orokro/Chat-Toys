@@ -89,6 +89,13 @@
 				<p>Color to use for the counts</p>
 			</SettingsInputRow>
 			<SettingsInputRow
+				type="color"
+				v-model="multiplierColor"
+			>
+				<template #title>Multiplier Color</template>
+				<p>Color to use for the 'X' multiplier</p>
+			</SettingsInputRow>
+			<SettingsInputRow
 				type="boolean"
 				v-model="showShadow"
 			>
@@ -144,6 +151,7 @@ const toy = ctApp.toyManager.toys[FrequencyFinder.slug];
 // local settings refs
 const { 
 	fontColor,
+	multiplierColor,
 	fontSize,
 	showShadow,
 	stackAlign,

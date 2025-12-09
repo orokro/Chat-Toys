@@ -26,8 +26,13 @@
 				<span class="freqWord">
 					{{ (item.word || '').toUpperCase() }}
 				</span>
-				<span class="freqCount">
-					x{{ item.count }}
+				<span
+					class="freqCount"
+					:style="{
+						color: 'var(--multColor)'
+					}"
+				>
+					X{{ item.count }}
 				</span>
 			</div>
 		</div>
@@ -65,18 +70,33 @@ const socketSettingsRef = useToySettings('frequencyFinder', 'frequencyWidgetBox'
 	ready.value = true;
 });
 
-// live data
-const frequencyItems = socketShallowRefReadOnly(slugify('frequencyItems'), []);
+// global demo mode flag (app-wide)
+const demoMode = socketShallowRefReadOnly('demoMode', false);
+
+// live data from backend
+const socketFrequencyItems = socketShallowRefReadOnly(slugify('frequencyItems'), []);
+
+// simple demo data for layout/testing in OBS
+const demoFrequencyItems = ref([
+	{ word: 'yes', count: 6, ttl: 5 },
+	{ word: 'no', count: 3, ttl: 4 },
+	{ word: 'maybe', count: 2, ttl: 2 }
+]);
+
+// what the template actually uses
+const frequencyItems = computed(() => {
+	return demoMode.value ? demoFrequencyItems.value : socketFrequencyItems.value;
+});
 
 // style computed from settings
 const widgetStyle = computed(() => {
-
 	const s = socketSettingsRef.value || {};
 	const fontSize = (s.fontSize != null ? s.fontSize : 32) + 'px';
 	const fontColor = s.fontColor || '#FFFFFF';
-
+	const multColor = s.multiplierColor || '#FFFF00';
 	return {
 		color: fontColor,
+		'--multColor': multColor,
 		fontSize,
 	};
 });
@@ -115,9 +135,11 @@ const widgetStyle = computed(() => {
 			flex-direction: column;
 			align-items: flex-start;
 
+			line-height: 0.9em;
+
 			// padding from edges
 			padding: 8px;
-			gap: 4px;
+			gap: 0px;
 
 			// default: stack on bottom
 			&.stackBottom {
@@ -130,6 +152,7 @@ const widgetStyle = computed(() => {
 			}
 
 			.freqRow {
+
 				display: flex;
 				flex-direction: row;
 				align-items: baseline;
@@ -137,12 +160,13 @@ const widgetStyle = computed(() => {
 
 				.freqWord {
 					font-weight: 400; 
+					font-weight: 700;
 				}// .freqWord
 
 				.freqCount {
 					margin-left: 0.5em;
 					font-weight: 700;
-					font-size: 1.15em;
+					/* font-size: 1.15em; */
 				}// .freqCount
 
 			}// .freqRow
