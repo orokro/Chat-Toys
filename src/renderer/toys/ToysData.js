@@ -18,6 +18,7 @@ import StreamBuddies from "./StreamBuddies/StreamBuddies";
 import Fishing from "./Fishing/Fishing";
 import OutputLog from "./OutputLog/OutputLog";
 import FrequencyFinder from "./FrequencyFinder/FrequencyFinder";
+import EmojiFountain from "./EmojiFountain/EmojiFountain";
 
 // We'll export a list of all the constructors for the various toys
 // Their classes will have the static data they need, including:
@@ -37,6 +38,7 @@ export const toysData = [
 	StreamBuddies,
 	Fishing,
 	FrequencyFinder,
+	EmojiFountain,
 ];
 
 // convert the array to an object for easier access

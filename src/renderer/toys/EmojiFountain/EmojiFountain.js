@@ -1,0 +1,564 @@
+/*
+	EmojiFountain.js
+	----------------
+
+	Emoji-based particle system Toy.
+
+	- Listens to chat messages:
+		- Ignores messages starting with "!"
+		- When enableWildEmojis is true, any emojis in a normal chat
+		  message will spawn a single particle each (in mode 'toss' or 'rain').
+
+	- Responds to command system via onCommand:
+		- commandSlug === 'rain'     -> !rain <emoji(s)>
+		- commandSlug === 'fountain' -> !fountain <emoji(s)>
+		- Uses msg.emojis (must have at least one emoji).
+
+	- Exposes particles via socketShallowRef so the widget can render
+	  and use emojiCache.js to resolve blob URLs.
+
+	Each particle:
+	{
+		id: string,
+		url: string,
+		type: 'rain' | 'toss' | 'fountain',
+		createdAt: number,   // ms
+		duration: number,    // seconds (animation duration)
+		delay: number,       // seconds (for CSS animation-delay if desired)
+		startX: number,      // % (0-100)
+		endX: number,        // % (0-100)
+		apexX: number,       // % (0-100), for arcs
+		startY: number,      // %
+		apexY: number,       // %
+		endY: number,        // %
+		bounces: number,     // 0,1,2
+		spinSpeed: number,   // deg/sec
+		scale: number,       // emojiSize
+		ttlMs: number        // ms, slightly longer than duration
+	}
+*/
+
+// vue
+import { ref, shallowRef } from 'vue';
+import { socketShallowRef } from 'socket-ref';
+
+// components
+import { EmojiFountainWidget } from './EmojiFountainWidget.vue';
+import { EmojiFountainPage } from './EmojiFountainPage.vue';
+
+// our app
+import Toy from '../Toy';
+
+export default class EmojiFountain extends Toy {
+
+	static name = 'Emoji Fountain';
+	static slug = 'emojiFountain';
+	static desc = 'Sprinkles chat emojis with fun physics-like animations.';
+	static optionsPageComponent = EmojiFountainPage;
+	static themeColor = '#FF99FF'; // 50B5D1
+	static widgetComponents = [
+		{
+			component: EmojiFountainWidget,
+			key: 'emojiFountainBox',
+			allowResize: true,
+			lockAspectRatio: false,
+			description: 'Animated emoji fountain / rain / toss.',
+			slug: 'emojiFountainWidget'
+		},
+	];
+
+
+	/**
+	 * @param {ToyManager} toyManager
+	 */
+	constructor(toyManager) {
+
+		super(toyManager);
+
+		// -----------------------
+		// Socket state
+		// -----------------------
+
+		// Array of particles (see header comment for shape)
+		this.particles = socketShallowRef(
+			this.static.slugify('particles'),
+			[]
+		);
+
+		// Track burst timeouts so we can clean them up on end()
+		this.pendingTimeouts = new Set();
+
+		// Simple ID counter
+		this.nextId = 1;
+
+		// -----------------------
+		// Chat hook
+		// -----------------------
+
+		this.handleChatMessage = this.handleChatMessage.bind(this);
+		this.chatToysApp.chatProcessor.onNewChats(this.handleChatMessage);
+	}
+
+
+	end() {
+		super.end();
+
+		// Remove chat listener
+		if (this.handleChatMessage) 
+			this.chatToysApp.chatProcessor.removeNewChatsListener(this.handleChatMessage);		
+
+		// Clear any pending burst timeouts
+		for (const id of this.pendingTimeouts)
+			window.clearElectronTimeout(id);
+		
+		this.pendingTimeouts.clear();
+	}
+
+
+	// ---------------------------------------------------------------------
+	// Settings
+	// ---------------------------------------------------------------------
+
+	initSettings() {
+
+		this.buildSettingsBlock({
+
+			// Visual
+			emojiSize: ref(1.0),				// CSS scale multiplier
+			cacheEmojiImages: ref(true),		// widget handles caching via emojiCache.js
+
+			// Counts
+			rainCount: ref(12),					// !rain default
+			fountainCount: ref(12),				// !fountain default
+			maxCount: ref(200),					// max particles alive
+
+			// Behavior
+			enableWildEmojis: ref(true),		// wild emoji scanning on/off
+			speed: ref(1.0),					// >1 faster, <1 slower
+			mode: ref('toss'),					// 'toss' | 'rain' for wild emojis
+
+			// Widget placement box
+			emojiFountainBox: shallowRef({
+				x: 0,
+				y: 0,
+				width: 1280,
+				height: 720
+			})
+		});
+	}
+
+
+	/**
+	 * Initialize the commands for this toy
+	 */
+	buildCommands() {
+
+		super.buildCommands([
+			{
+				command: 'rain',
+				params: [
+					{ name: 'message', type: 'string', optional: false, desc: 'Message with Emojis to rain' },
+				],
+				description: 'Chatter can cause a rain of emojis from their message',
+				userDesc: 'Make it rain - emojis!',
+			},
+			{
+				command: 'fountain',
+				params: [
+					{ name: 'message', type: 'string', optional: false, desc: 'Message with Emojis to burst' },
+				],
+				description: 'Chatter can cause a fountain of emojis from their message',
+				userDesc: 'Sprout a fountain of emojis!',
+			}
+		]);
+	}
+
+
+	// ---------------------------------------------------------------------
+	// Command entry point (from central command system)
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Called by the global command system when a command that this Toy
+	 * is interested in should be handled.
+	 *
+	 * @param {String} commandSlug
+	 * @param {Object} msg       - chat message object (includes .emojis)
+	 * @param {Object} user      - user object (channel points, etc.)
+	 * @param {Object} params    - parsed command params
+	 * @param {Object} handshake - has .accept() and usually .reject()
+	 */
+	onCommand(commandSlug, msg, user, params, handshake) {
+
+		// Normalize emojis from msg
+		const emojis = Array.isArray(msg?.emojis) ? msg.emojis : [];
+
+		// Helper to early-reject if we somehow got no emojis
+		const ensureEmojis = () => {
+			if (emojis.length > 0) 
+				return true;
+
+			// Safety: if there's a reject handler, use it, otherwise accept(false)			
+			handshake.reject('EmojiFountain: command requires at least one emoji.');
+			return false;
+		};
+
+		// !rain <emoji(s)>
+		if (commandSlug === 'rain') {
+
+			if (!ensureEmojis())
+				return;
+
+			const count = this.settings.rainCount.value || 12;
+			if (count > 0) {
+                // Spread over ~2 seconds
+				this.spawnBurst('rain', emojis, count, 2000);
+			}
+
+			handshake.accept();
+			return;
+		}
+
+		// !fountain <emoji(s)>
+		if (commandSlug === 'fountain') {
+
+			if (!ensureEmojis())
+				return;
+
+			const count = this.settings.fountainCount.value || 12;
+			if (count > 0) {
+                // Spread over ~2.5 seconds
+				this.spawnBurst('fountain', emojis, count, 2500);
+			}
+
+			handshake.accept();
+			return;
+		}
+	}
+
+
+	// ---------------------------------------------------------------------
+	// Chat handling (wild emojis only)
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Handle when a new chat message comes in.
+	 *
+	 * @param {Array<Object>} chats - list of new chat messages
+	 */
+	handleChatMessage(chats) {
+
+		// GTFO if we don't do wild emojis
+		if (!this.settings.enableWildEmojis.value)
+			return;
+
+		for (const chat of chats) {
+
+			const rawMessage = (chat.messageText || '').trim();
+			const emojis = Array.isArray(chat.emojis) ? chat.emojis : [];
+
+			// Ignore commands entirely to avoid double-spawning for !rain/!fountain
+			if (rawMessage.startsWith('!'))
+				continue;
+
+			// No emojis, no fun
+			if (!emojis.length)
+				continue;
+
+			const mode = (this.settings.mode.value === 'rain') ? 'rain' : 'toss';
+
+			for (const emoji of emojis)
+				this.spawnSingleEmoji(mode, emoji);
+			
+		}// next chat
+
+	}
+
+
+	// ---------------------------------------------------------------------
+	// Spawning logic
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Spawn a burst of particles over time (staggered).
+	 *
+	 * @param {'rain'|'toss'|'fountain'} type
+	 * @param {Array<Object>} emojis
+	 * @param {number} count
+	 * @param {number} spreadMs - total spread window for the whole burst
+	 */
+	spawnBurst(type, emojis, count, spreadMs) {
+
+		if (!emojis || !emojis.length || count <= 0)
+			return;
+
+		const step = count > 1 ? (spreadMs / (count - 1)) : 0;
+
+		for (let i = 0; i < count; i++) {
+			const delayMs = step * i;
+			const emoji = emojis[i % emojis.length];
+
+			const timeoutId = window.setElectronTimeout(() => {
+				this.pendingTimeouts.delete(timeoutId);
+				this.spawnSingleEmoji(type, emoji);
+			}, delayMs);
+
+			this.pendingTimeouts.add(timeoutId);
+		
+		}// next i
+
+	}
+
+
+	/**
+	 * Spawn a single emoji particle of the given type.
+	 *
+	 * @param {'rain'|'toss'|'fountain'} type
+	 * @param {{ url: string }} emoji
+	 */
+	spawnSingleEmoji(type, emoji) {
+
+		if (!emoji || !emoji.url)
+			return;
+
+		const speed = this.safeSpeed();
+		const scale = this.settings.emojiSize.value || 1.0;
+		const url = emoji.url;
+
+		let particle;
+		switch (type) {
+			case 'rain':
+				particle = this.makeRainParticle(url, speed, scale);
+				break;
+			case 'fountain':
+				particle = this.makeFountainParticle(url, speed, scale);
+				break;
+			case 'toss':
+			default:
+				particle = this.makeTossParticle(url, speed, scale);
+				break;
+		}
+
+		this.addParticle(particle);
+	}
+
+
+	/**
+	 * Add a particle to the socket array, enforcing maxCount and TTL.
+	 * TTL is derived from animation duration so taller arcs get more time.
+	 */
+	addParticle(particle) {
+
+		const maxCount = this.settings.maxCount.value || 200;
+		const now = Date.now();
+
+		const ttlMs = particle.duration * 1000 * 1.3; // 30% longer than animation
+		particle.ttlMs = ttlMs;
+		particle.createdAt = now;
+
+		let arr = this.particles.value || [];
+
+		// Cull expired
+		arr = arr.filter(p => {
+			if (!p.ttlMs || !p.createdAt) return true;
+			return (now - p.createdAt) < p.ttlMs;
+		});
+
+		// Enforce maxCount (drop oldest)
+		while (arr.length >= maxCount) {
+			arr.shift();
+		}
+
+		arr.push(particle);
+		this.particles.value = arr;
+	}
+
+
+	// ---------------------------------------------------------------------
+	// Particle factories (physics-ish parameters)
+	// ---------------------------------------------------------------------
+
+	/**
+	 * A normalized "gravity" world:
+	 *  - Vertical 0 (top) to 1 (bottom).
+	 *  - We derive animation durations from vertical distance using sqrt(distance)
+	 *    to feel like gravity; higher arcs take proportionally more time.
+	 */
+
+	safeSpeed() {
+		const s = this.settings.speed.value;
+		return (s && s > 0) ? s : 1.0;
+	}
+
+	nextParticleId() {
+		return `${this.constructor.slug}_${this.nextId++}`;
+	}
+
+	randomRange(min, max) {
+		return Math.random() * (max - min) + min;
+	}
+
+	clamp(v, min, max) {
+		return v < min ? min : v > max ? max : v;
+	}
+
+
+	/**
+	 * Rain: freefall from near top to bottom, small horizontal drift, 1–2 bounces.
+	 * Duration based on vertical distance so it feels like consistent gravity.
+	 */
+	makeRainParticle(url, speed, scale) {
+
+		// Normalized Y positions (0 top, 1 bottom)
+		const startYNorm = -0.2;		// -20% (off top)
+		const endYNorm = 1.1;			// 110% (below bottom)
+		const distance = endYNorm - startYNorm; // ~1.3
+
+		// Base freefall time constant
+		const baseTime = 1.3;			// seconds for distance ~1
+		let duration = baseTime * Math.sqrt(distance);
+
+		// Bounces
+		const bounces = Math.random() < 0.5 ? 1 : 2;
+		const bounceExtra = bounces * 0.25;
+		duration += bounceExtra;
+
+		// Apply speed multiplier (higher speed => shorter duration)
+		duration = duration / speed;
+
+		// Positions in %
+		const startX = Math.random() * 100;
+		const endX = this.clamp(startX + this.randomRange(-15, 15), 0, 100);
+
+		return {
+			id: this.nextParticleId(),
+			url,
+			type: 'rain',
+
+			duration,
+			delay: 0,
+
+			startX,
+			endX,
+			apexX: (startX + endX) / 2,		// widget may ignore for rain
+
+			startY: startYNorm * 100,
+			apexY: 100,						// "ground" for bounces
+			endY: endYNorm * 100,
+
+			bounces,
+			spinSpeed: this.randomRange(60, 180) * (Math.random() < 0.5 ? -1 : 1),
+			scale
+		};
+	}
+
+
+	/**
+	 * Toss: spawn near bottom at random X, arc up to random apex, fall offscreen.
+	 * No bounces; duration scales with arc height using sqrt(distance).
+	 */
+	makeTossParticle(url, speed, scale) {
+
+		const startYNorm = 1.05;				// just below bottom
+		const endYNorm = 1.15;					// further below bottom
+		const apexYNorm = this.randomRange(0.1, 0.5);	// 10%–50% (various heights)
+
+		// Vertical distances (up + down)
+		const upDistance = startYNorm - apexYNorm;
+		const downDistance = endYNorm - apexYNorm;
+		const distance = upDistance + downDistance;
+
+		// Base time for "full" arc
+		const baseTime = 1.2;
+		let duration = baseTime * Math.sqrt(distance);
+
+		// Apply speed
+		duration = duration / speed;
+
+		// Horizontal positions
+		const startX = Math.random() * 100;
+		const endX = this.clamp(startX + this.randomRange(-25, 25), 0, 100);
+		const apexX = this.clamp((startX + endX) / 2 + this.randomRange(-10, 10), 0, 100);
+
+		return {
+			id: this.nextParticleId(),
+			url,
+			type: 'toss',
+
+			duration,
+			delay: 0,
+
+			startX,
+			endX,
+			apexX,
+
+			startY: startYNorm * 100,
+			apexY: apexYNorm * 100,
+			endY: endYNorm * 100,
+
+			bounces: 0,
+			spinSpeed: this.randomRange(120, 360) * (Math.random() < 0.5 ? -1 : 1),
+			scale
+		};
+	}
+
+
+	/**
+	 * Fountain: always from bottom center (x = 50%), arc up to random height,
+	 * then down with 1–2 bounces. Duration scales with arc height similarly
+	 * to toss, plus extra time for bounces.
+	 */
+	makeFountainParticle(url, speed, scale) {
+
+        // Start at bottom-center
+		const startX = 50;
+		const startYNorm = 1.05;
+		const endYNorm = 1.2;
+
+		// Random apex height
+		const apexYNorm = this.randomRange(0.1, 0.5);
+		const upDistance = startYNorm - apexYNorm;
+		const downDistance = endYNorm - apexYNorm;
+		const distance = upDistance + downDistance;
+
+		// Base time for fountain arcs
+		const baseTime = 1.1;
+		let duration = baseTime * Math.sqrt(distance);
+
+		// Bounces
+		const bounces = Math.random() < 0.5 ? 1 : 2;
+		const bounceExtra = bounces * 0.3;
+		duration += bounceExtra;
+
+		// Apply speed
+		duration = duration / speed;
+
+		// Spread horizontally from center
+		const spread = this.randomRange(15, 40);
+		const direction = Math.random() < 0.5 ? -1 : 1;
+		const endX = this.clamp(startX + spread * direction, 0, 100);
+		const apexX = this.clamp(startX + (spread * 0.5 * direction), 0, 100);
+
+		return {
+			id: this.nextParticleId(),
+			url,
+			type: 'fountain',
+
+			duration,
+			delay: 0,
+
+			startX,
+			endX,
+			apexX,
+
+			startY: startYNorm * 100,
+			apexY: apexYNorm * 100,
+			endY: endYNorm * 100,
+
+			bounces,
+			spinSpeed: this.randomRange(90, 240) * (Math.random() < 0.5 ? -1 : 1),
+			scale
+		};
+	}
+
+}

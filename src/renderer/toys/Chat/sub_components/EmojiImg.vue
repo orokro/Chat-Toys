@@ -24,7 +24,7 @@
 import { ref, onMounted, watch } from 'vue';
 
 // cache helper
-import { getEmojiSource } from './emojiCache';
+import { getEmojiSource } from '../../../scripts/emojiCache';
 
 // props
 const props = defineProps({

@@ -1,0 +1,498 @@
+<!--
+	EmojiFountainWidget.vue
+	-----------------------
+
+	The widget that displays the emoji fountain/rain particles.
+-->
+<template>
+
+	<div
+		v-if="ready"
+		class="emojiFountainWidget"
+		:style="widgetStyle"
+	>
+		<!-- Per-particle keyframes -->
+		<style
+			v-for="p in renderParticles"
+			:key="p.id + '-style'"
+		>
+			{{ p.motionKeyframes }}
+			{{ p.spinKeyframes }}
+		</style>
+
+		<!-- Particles -->
+		<div
+            v-for="p in renderParticles"
+            :key="p.id"
+            class="ef-particle"
+            :style="p.outerStyle"
+        >
+			<div class="ef-scale" :style="p.scaleStyle">
+				<div class="ef-spin" :style="p.spinStyle">
+					<img class="ef-emoji" :src="p.src" alt="" />
+				</div>
+			</div>
+		</div>
+	</div>
+
+</template>
+<script setup>
+
+// vue
+import { ref, computed, shallowRef, watch } from 'vue';
+import { socketShallowRefReadOnly } from 'socket-ref';
+
+// settings system
+import { useToySettings } from '@toys/useToySettings';
+import { keepAliveSocket } from '../keepAliveSocket.js';
+
+// emoji cache helper
+import { getEmojiSource } from '../emojiCache.js';
+
+const thisSlug = 'emojiFountain';
+const widgetSlug = 'emojiFountainWidget';
+const slugify = (text) => {
+	return thisSlug + '__' + text.toLowerCase();
+};
+
+// keep socket alive so OBS widgets stay connected
+keepAliveSocket(thisSlug, widgetSlug);
+
+const emit = defineEmits([
+	'boxChange'
+]);
+
+defineProps({});
+
+// ---------- Settings / state ----------
+
+const ready = ref(false);
+const socketSettingsRef = useToySettings('emojiFountain', 'emojiFountainBox', emit, () => {
+	ready.value = true;
+});
+
+// global app-wide demo mode
+const demoMode = socketShallowRefReadOnly('demoMode', false);
+
+// particles from Toy
+const socketParticles = socketShallowRefReadOnly(slugify('particles'), []);
+
+// local map url -> src (raw or blob)
+const sources = shallowRef(new Map());
+
+
+// ---------- Emoji source handling (cache aware) ----------
+
+function ensureSrcForUrl(url, useCache) {
+	if (!url) return;
+
+	const map = sources.value;
+	if (map.has(url)) return;
+
+	// not caching: just use the raw URL
+	if (!useCache) {
+		const next = new Map(map);
+		next.set(url, url);
+		sources.value = next;
+		return;
+	}
+
+	// caching via emojiCache.js
+	getEmojiSource(url)
+		.then(({ src }) => {
+			const next = new Map(sources.value);
+			next.set(url, src);
+			sources.value = next;
+		})
+		.catch(() => {
+			const next = new Map(sources.value);
+			next.set(url, url);
+			sources.value = next;
+		});
+}
+
+// ---------- Demo particles ----------
+
+// simple demo emoji urls; replace with your own if desired
+const DEMO_EMOJI_URLS = [
+	'https://twemoji.maxcdn.com/v/latest/72x72/1f389.png', // 🎉
+	'https://twemoji.maxcdn.com/v/latest/72x72/1f602.png', // 😂
+	'https://twemoji.maxcdn.com/v/latest/72x72/2764.png',  // ❤️
+];
+
+const demoParticles = ref([]);
+
+
+function randomRange(min, max) {
+	return Math.random() * (max - min) + min;
+}
+
+
+function clamp(v, min, max) {
+	return v < min ? min : v > max ? max : v;
+}
+
+
+function safeSpeedFromSettings() {
+	const s = socketSettingsRef.value?.speed;
+	return (s && s > 0) ? s : 1.0;
+}
+
+
+function nextDemoId(index) {
+	return `demo_${index}_${Date.now()}`;
+}
+
+
+function buildDemoRainParticle(url, speed, scale, index) {
+
+	const startYNorm = -0.2;
+	const endYNorm = 1.1;
+	const distance = endYNorm - startYNorm;
+	const baseTime = 1.3;
+	let duration = baseTime * Math.sqrt(distance);
+
+	const bounces = Math.random() < 0.5 ? 1 : 2;
+	const bounceExtra = bounces * 0.25;
+	duration += bounceExtra;
+	duration = duration / speed;
+
+	const startX = Math.random() * 100;
+	const endX = clamp(startX + randomRange(-15, 15), 0, 100);
+
+	return {
+		id: nextDemoId(index),
+		url,
+		type: 'rain',
+		duration,
+		delay: randomRange(0, 1.5),
+
+		startX,
+		endX,
+		apexX: (startX + endX) / 2,
+
+		startY: startYNorm * 100,
+		apexY: 100,
+		endY: endYNorm * 100,
+
+		bounces,
+		spinSpeed: randomRange(60, 180) * (Math.random() < 0.5 ? -1 : 1),
+		scale
+	};
+}
+
+
+function buildDemoTossParticle(url, speed, scale, index) {
+
+	const startYNorm = 1.05;
+	const endYNorm = 1.15;
+	const apexYNorm = randomRange(0.1, 0.5);
+
+	const upDistance = startYNorm - apexYNorm;
+	const downDistance = endYNorm - apexYNorm;
+	const distance = upDistance + downDistance;
+
+	const baseTime = 1.2;
+	let duration = baseTime * Math.sqrt(distance);
+	duration = duration / speed;
+
+	const startX = Math.random() * 100;
+	const endX = clamp(startX + randomRange(-25, 25), 0, 100);
+	const apexX = clamp((startX + endX) / 2 + randomRange(-10, 10), 0, 100);
+
+	return {
+		id: nextDemoId(index),
+		url,
+		type: 'toss',
+		duration,
+		delay: randomRange(0, 1.0),
+
+		startX,
+		endX,
+		apexX,
+
+		startY: startYNorm * 100,
+		apexY: apexYNorm * 100,
+		endY: endYNorm * 100,
+
+		bounces: 0,
+		spinSpeed: randomRange(120, 360) * (Math.random() < 0.5 ? -1 : 1),
+		scale
+	};
+}
+
+
+function rebuildDemoParticles() {
+
+	const mode = socketSettingsRef.value?.mode === 'rain' ? 'rain' : 'toss';
+	const speed = safeSpeedFromSettings();
+	const scale = socketSettingsRef.value?.emojiSize ?? 1.0;
+
+	const items = [];
+	const total = 16;
+
+	for (let i = 0; i < total; i++) {
+		const url = DEMO_EMOJI_URLS[i % DEMO_EMOJI_URLS.length];
+		if (mode === 'rain') {
+			items.push(buildDemoRainParticle(url, speed, scale, i));
+		} else {
+			items.push(buildDemoTossParticle(url, speed, scale, i));
+		}
+	}
+
+	demoParticles.value = items;
+}
+
+
+// rebuild demo whenever demoMode toggles on or mode changes
+watch(
+	() => ({
+		demo: demoMode.value,
+		mode: socketSettingsRef.value?.mode
+	}),
+	({ demo }) => {
+		if (demo) {
+			rebuildDemoParticles();
+		}
+	},
+	{ immediate: true }
+);
+
+
+// ---------- Pick which particle set to render ----------
+
+const particlesForRender = computed(() => {
+	if (demoMode.value) {
+		return demoParticles.value || [];
+	}
+	return socketParticles.value || [];
+});
+
+
+// kick off emoji src resolution whenever particles or cache setting change
+watch(
+	() => ({
+		particles: particlesForRender.value,
+		useCache: socketSettingsRef.value?.cacheEmojiImages
+	}),
+	({ particles, useCache }) => {
+		if (!particles) return;
+		for (const p of particles) {
+			if (!p || !p.url) continue;
+			ensureSrcForUrl(p.url, !!useCache);
+		}
+	},
+	{ immediate: true, deep: false }
+);
+
+
+// ---------- Keyframe + style builders ----------
+
+function buildMotionKeyframes(p, name, loop) {
+	const sx = p.startX ?? 50;
+	const ex = p.endX ?? sx;
+	const ax = p.apexX ?? ((sx + ex) / 2);
+
+	const sy = p.startY ?? 100;
+	const ey = p.endY ?? 120;
+	const ay = p.apexY ?? 50;
+
+	if (p.type === 'rain') {
+		// Simple freefall + 1-2 bounces
+		const b1 = 70;
+		const b2 = p.bounces > 1 ? 85 : 100;
+		const peak1 = p.bounces > 1 ? 80 : 90;
+		const final = 100;
+
+		return `
+@keyframes ${name} {
+	0% {
+		transform: translate3d(${sx}%, ${sy}%, 0);
+	}
+	${b1}% {
+		transform: translate3d(${ax}%, 100%, 0);
+	}
+	${peak1}% {
+		transform: translate3d(${ax}%, 90%, 0);
+	}
+	${b2}% {
+		transform: translate3d(${ax}%, 100%, 0);
+	}
+	${final}% {
+		transform: translate3d(${ex}%, ${ey}%, 0);
+	}
+}
+`;
+	}
+
+	if (p.type === 'fountain') {
+		// Up to apex, then fall + 1-2 bounces
+		const up = 40;
+		const hit = 65;
+		const peak1 = p.bounces > 1 ? 80 : 85;
+		const final = 100;
+
+		return `
+@keyframes ${name} {
+	0% {
+		transform: translate3d(${sx}%, ${sy}%, 0);
+	}
+	${up}% {
+		transform: translate3d(${ax}%, ${ay}%, 0);
+	}
+	${hit}% {
+		transform: translate3d(${ax}%, 100%, 0);
+	}
+	${peak1}% {
+		transform: translate3d(${ax}%, 88%, 0);
+	}
+	${final}% {
+		transform: translate3d(${ex}%, ${ey}%, 0);
+	}
+}
+`;
+	}
+
+	// default: toss
+	const mid = 50;
+	return `
+@keyframes ${name} {
+	0% {
+		transform: translate3d(${sx}%, ${sy}%, 0);
+	}
+	${mid}% {
+		transform: translate3d(${ax}%, ${ay}%, 0);
+	}
+	100% {
+		transform: translate3d(${ex}%, ${ey}%, 0);
+	}
+}
+`;
+}
+
+function buildSpinKeyframes(p, name) {
+	const angle = (p.spinSpeed || 0) * (p.duration || 1);
+	return `
+@keyframes ${name} {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(${angle}deg);
+	}
+}
+`;
+}
+
+
+// ---------- Final render particles ----------
+
+const renderParticles = computed(() => {
+
+	const items = particlesForRender.value || [];
+	const s = socketSettingsRef.value || {};
+	const scaleSetting = s.emojiSize != null ? s.emojiSize : 1.0;
+	const useCache = !!s.cacheEmojiImages;
+
+	const map = sources.value;
+	const isDemo = demoMode.value;
+
+	return items
+		.filter((p) => !!p && !!p.url)
+		.map((p, idx) => {
+
+			const id = p.id || `ef_${idx}`;
+			const motionName = `ef_motion_${id}`;
+			const spinName = `ef_spin_${id}`;
+			const duration = Number(p.duration || 1);
+			const delay = Number(p.delay || 0);
+			const loop = !!isDemo; // demo mode loops animations
+
+			const src = map.get(p.url) || p.url;
+
+			const motionKeyframes = buildMotionKeyframes(p, motionName, loop);
+			const spinKeyframes = buildSpinKeyframes(p, spinName);
+
+			const outerStyle = {
+				position: 'absolute',
+				left: '0',
+				top: '0',
+				pointerEvents: 'none',
+				animationName: motionName,
+				animationDuration: `${duration}s`,
+				animationDelay: `${delay}s`,
+				animationTimingFunction: 'linear',
+				animationFillMode: loop ? 'none' : 'forwards',
+				animationIterationCount: loop ? 'infinite' : '1'
+			};
+
+			const scaleStyle = {
+				transform: `translate(-50%, -50%) scale(${(p.scale || 1) * scaleSetting})`
+			};
+
+			const spinStyle = {
+				animationName: spinName,
+				animationDuration: `${duration}s`,
+				animationDelay: `${delay}s`,
+				animationTimingFunction: 'linear',
+				animationFillMode: loop ? 'none' : 'forwards',
+				animationIterationCount: loop ? 'infinite' : '1'
+			};
+
+			return {
+				id,
+				src,
+				motionKeyframes,
+				spinKeyframes,
+				outerStyle,
+				scaleStyle,
+				spinStyle
+			};
+		});
+});
+
+
+// ---------- Widget style ----------
+
+const widgetStyle = computed(() => {
+	return {
+		width: '100%',
+		height: '100%',
+		position: 'relative',
+		overflow: 'clip'
+	};
+});
+
+</script>
+<style scoped lang="scss">
+
+	.emojiFountainWidget {
+		width: 100%;
+		height: 100%;
+		position: relative;
+		overflow: clip;
+		pointer-events: none;
+	} // .emojiFountainWidget
+
+	.ef-particle {
+		position: absolute;
+
+	}// .ef-particle
+
+	.ef-scale {
+		position: absolute;
+		left: 0;
+		top: 0;
+
+	}// .ef-scale
+
+	.ef-spin {
+	}
+
+	.ef-emoji {
+		display: block;
+		width: 48px;
+		height: 48px;
+	}// .ef-emoji
+
+</style>
