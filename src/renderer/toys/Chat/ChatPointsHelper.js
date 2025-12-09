@@ -144,8 +144,6 @@ export class ChatPointsHelper {
 		const users = await window.ytctDB.getUsers(uniqueIds);
 		if (!Array.isArray(users)) 
 			return;
-
-		console.log(uniqueIds);
 		
 		// Map DB rows to { id, points }
 		const pointsData = users.map((user) => {

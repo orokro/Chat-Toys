@@ -116,6 +116,7 @@ export default class FrequencyFinder extends Toy {
 	 * Initialize settings
 	 */
 	initSettings() {
+
 		this.buildSettingsBlock({
 
 			// display config for the widget
@@ -145,6 +146,7 @@ export default class FrequencyFinder extends Toy {
 			}),
 		});
 	}
+
 
 	// -------------------------------------------------------------------------
 	// Core chat handling

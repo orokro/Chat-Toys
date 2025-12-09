@@ -245,6 +245,7 @@ export default class Chat extends Toy {
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
 
+		console.log(msg);
 		// if we got a shout command
 		if (commandSlug === 'shout') {
 
