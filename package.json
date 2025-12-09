@@ -54,6 +54,7 @@
 		"seedrandom": "^3.0.5",
 		"serve-index": "^1.9.1",
 		"socket-ref": "",
+		"string-similarity": "^4.0.4",
 		"three": "^0.174.0",
 		"tmi.js": "^1.8.5",
 		"uuid": "^11.1.0",

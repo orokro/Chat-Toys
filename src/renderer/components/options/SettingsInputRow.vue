@@ -267,11 +267,13 @@ watch(internalValue, validate);
 		select {
 			width: 100%;
 			max-width: 300px;
+			border-radius: 5px;
 		}
 
 		input[type="text"],
 		input[type="number"],
-		input[type="password"] {
+		input[type="password"],
+		select {
 
 			padding: 8px 12px;
 			border: 2px solid black;
