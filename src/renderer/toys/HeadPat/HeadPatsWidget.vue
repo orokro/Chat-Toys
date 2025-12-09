@@ -249,11 +249,13 @@ watch(mode, (newMode)=>{
 		// fixed size (if the user wants to adjust size we'll use transforms)
 		width: 200px;
 
-		transition: transform 0.25s ease-in-out;
+		transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
 		transform: scale(1);
-		transform-origin: 25% 25% !important;
+		/* transform-origin: 25% 25% !important; */
+		opacity: 1;
 		&.idle {
-			transform: scale(0);
+			/* transform: scale(0); */
+			opacity: 0;
 		}
 
 		&.demoMode {

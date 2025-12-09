@@ -94,10 +94,12 @@ watch(mode, (newVal) => {
 		// reset stacking context
 		position: relative;
 
-		transition: transform 0.25s ease-in-out;
+		transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
 		transform: scale(1);
+		opacity: 1;
 		&.idle {
-			transform: scale(0);
+			/* transform: scale(0); */
+			opacity: 0;
 		}
 
 		&.demoMode {

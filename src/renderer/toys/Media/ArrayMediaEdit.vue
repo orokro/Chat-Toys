@@ -138,7 +138,7 @@ const emitChange = () => {
 
 
 // validate the duration input box
-const durationSchema = yup.number().nullable().min(5).max(300);
+const durationSchema = yup.number().nullable().min(2).max(300);
 const validateDuration = async () => {
 	try {
 		await durationSchema.validate(durationInput.value);

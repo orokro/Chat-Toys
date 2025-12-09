@@ -133,7 +133,6 @@ export default class Chat extends Toy {
 		electronAPI.tick(this.tickFN);
 
 		this.pointsDataHelper = (pointsData) => {
-			console.log('foo', pointsData);
 			this.pointsData.value = pointsData;
 		};
 		this.pointsDataHelper = this.pointsDataHelper.bind(this);
