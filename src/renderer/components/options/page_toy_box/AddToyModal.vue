@@ -10,7 +10,7 @@
 
 	<ModalWindowFrame
 		title="Add a Toy"
-		:width="750"
+		:width="930"
 		:height="550"
 	>
 
