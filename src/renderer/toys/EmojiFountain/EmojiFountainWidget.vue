@@ -302,7 +302,6 @@ function buildMotionKeyframes(p, name, loop) {
 		const tEnd = 1.0;
 
 		for (let i = 0; i <= steps; i++) {
-            // normalized time 0..1
 			const t = i / steps;
 
 			let x, y;
@@ -313,14 +312,13 @@ function buildMotionKeyframes(p, name, loop) {
 			if (t <= tHit) {
 				// Freefall sy -> 100 (accelerating)
 				const tau = t / tHit;
-				// quadratic towards bottom
 				y = quadBezier(sy, sy, 100, tau);
 			} else if (t <= tPeak) {
 				// Bounce up then back to bottom (100 -> 90 -> 100)
 				const tau = (t - tHit) / (tPeak - tHit);
 				y = quadBezier(100, 90, 100, tau);
 			} else {
-				// Final fall off-screen: 100 -> ey, gentle (no weird rocket)
+				// Final fall off-screen: 100 -> ey, gentle
 				const tau = (t - tPeak) / (tEnd - tPeak);
 				y = quadBezier(100, 100, ey, tau);
 			}
@@ -334,17 +332,36 @@ function buildMotionKeyframes(p, name, loop) {
 	}
 
 	if (p.type === 'fountain') {
-		// Nice parabolic fountain with a softer landing (no triangle),
-		// no hard “zoom” after bounce. We'll approximate:
-		//   start -> apex -> near bottom (98%) as one big arc.
+		// Three segments:
+		// 0..tArc   : parabolic arc start -> apex -> bottom (near 100%)
+		// tArc..tB  : bounce (100 -> 88 -> 100)
+		// tB..1     : fall off-screen (100 -> ey)
+		const tArc = 0.6;
+		const tBounce = 0.85;
+		const tEnd = 1.0;
+		const hitY = 100;
+		const bouncePeak = 88; // how high the bounce goes
 
-		const endYForArc = 98; // hit just above "ground"
 		for (let i = 0; i <= steps; i++) {
 			const t = i / steps;
+			let x, y;
 
-			// Quadratic Bézier from start -> apex -> near bottom
-			const x = quadBezier(sx, ax, ex, t);
-			const y = quadBezier(sy, ay, endYForArc, t);
+			if (t <= tArc) {
+				// Parabolic arc: start -> apex -> bottom
+				const tau = t / tArc;
+				x = quadBezier(sx, ax, ex, tau);
+				y = quadBezier(sy, ay, hitY, tau);
+			} else if (t <= tBounce) {
+				// Bounce: 100 -> 88 -> 100, keep x at endX
+				const tau = (t - tArc) / (tBounce - tArc);
+				x = ex;
+				y = quadBezier(hitY, bouncePeak, hitY, tau);
+			} else {
+				// Drift off-screen: 100 -> ey, x stays at endX
+				const tau = (t - tBounce) / (tEnd - tBounce);
+				x = ex;
+				y = quadBezier(hitY, hitY, ey, tau);
+			}
 
 			const pct = (t * 100).toFixed(1).replace(/\.0$/, '');
 			css += `\t${pct}% {\n\t\tleft: ${x}%;\n\t\ttop: ${y}%;\n\t}\n`;
@@ -354,8 +371,7 @@ function buildMotionKeyframes(p, name, loop) {
 		return css;
 	}
 
-	// Default: toss
-	// Pure arc: start -> apex -> end with quadratic Bézier.
+	// Default: toss (pure parabolic arc)
 	for (let i = 0; i <= steps; i++) {
 		const t = i / steps;
 
@@ -369,6 +385,7 @@ function buildMotionKeyframes(p, name, loop) {
 	css += '}\n';
 	return css;
 }
+
 
 
 function buildSpinKeyframes(p, name) {
