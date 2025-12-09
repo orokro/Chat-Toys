@@ -14,17 +14,32 @@
 
 		<!-- Particles -->
 		<div
-            v-for="p in renderParticles"
-            :key="p.id"
-            class="ef-particle"
-            :style="p.outerStyle"
-        >
+			v-for="p in renderParticles"
+			:key="p.id"
+			class="ef-particle"
+			:style="p.outerStyle"
+		>
 			<div class="ef-scale" :style="p.scaleStyle">
 				<div class="ef-spin" :style="p.spinStyle">
-					<img class="ef-emoji" :src="p.src" alt="" />
+					<!-- Unicode emoji -->
+					<span
+						v-if="p.char"
+						class="ef-emoji ef-emoji-char"
+					>
+						{{ p.char }}
+					</span>
+
+					<!-- Image emoji (custom / platform) -->
+					<img
+						v-else
+						class="ef-emoji"
+						:src="p.src"
+						alt=""
+					/>
 				</div>
 			</div>
 		</div>
+
 	</div>
 
 </template>
@@ -408,21 +423,21 @@ const renderParticles = computed(() => {
 	const items = particlesForRender.value || [];
 	const s = socketSettingsRef.value || {};
 	const scaleSetting = s.emojiSize != null ? s.emojiSize : 1.0;
-
 	const map = sources.value;
 	const isDemo = demoMode.value;
 
 	return items
-		.filter((p) => !!p && !!p.url)
+		.filter((p) => !!p && (!!p.url || !!p.char))
 		.map((p, idx) => {
 			const id = p.id || `ef_${idx}`;
 			const motionName = `ef_motion_${id}`;
 			const spinName = `ef_spin_${id}`;
 			const duration = Number(p.duration || 1);
 			const delay = Number(p.delay || 0);
-			const loop = !!isDemo; // demo mode loops animations
+			const loop = !!isDemo;
 
-			const src = map.get(p.url) || p.url;
+			const src = p.url ? (map.get(p.url) || p.url) : null;
+			const char = p.char || null;
 
 			const motionKeyframes = buildMotionKeyframes(p, motionName, loop);
 			const spinKeyframes = buildSpinKeyframes(p, spinName);
@@ -437,7 +452,6 @@ const renderParticles = computed(() => {
 				animationFillMode: loop ? 'none' : 'forwards',
 				animationIterationCount: loop ? 'infinite' : '1'
 			};
-
 
 			const scaleStyle = {
 				transform: `translate(-50%, -50%) scale(${(p.scale || 1) * scaleSetting})`
@@ -455,6 +469,7 @@ const renderParticles = computed(() => {
 			return {
 				id,
 				src,
+				char,
 				motionKeyframes,
 				spinKeyframes,
 				outerStyle,
@@ -463,6 +478,7 @@ const renderParticles = computed(() => {
 			};
 		});
 });
+
 
 // ---------- Inject dynamic keyframes into <head> ----------
 
@@ -538,6 +554,14 @@ const widgetStyle = computed(() => {
 		display: block;
 		width: 48px;
 		height: 48px;
-	}// .ef-emoji
+	}
+
+	.ef-emoji-char {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 40px; // close to 48px box
+		line-height: 1;
+	}
 
 </style>

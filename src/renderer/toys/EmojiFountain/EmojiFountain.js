@@ -20,7 +20,8 @@
 	Each particle:
 	{
 		id: string,
-		url: string,
+		url: string | null,
+		char: string | null,
 		type: 'rain' | 'toss' | 'fountain',
 		createdAt: number,   // ms
 		duration: number,    // seconds (animation duration)
@@ -90,6 +91,9 @@ export default class EmojiFountain extends Toy {
 
 		// Simple ID counter
 		this.nextId = 1;
+
+		// Cached regex for unicode emoji detection
+		this.unicodeEmojiRegex = null;
 
 		// -----------------------
 		// Chat hook
@@ -175,6 +179,93 @@ export default class EmojiFountain extends Toy {
 
 
 	// ---------------------------------------------------------------------
+	// Emoji extraction (custom + unicode)
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Lazily build / return a regex that matches unicode emoji-ish codepoints.
+	 * Uses \p{Extended_Pictographic} when available, falls back to a range.
+	 */
+	getUnicodeEmojiRegex() {
+
+		if (this.unicodeEmojiRegex)
+			return this.unicodeEmojiRegex;
+
+		try {
+			// Modern engines (Chromium / Electron) should support this.
+			this.unicodeEmojiRegex = new RegExp('\\p{Extended_Pictographic}', 'gu');
+		}
+		catch (e) {
+			// Fallback: BMP + SMP emoji blocks, not perfect but pretty good.
+			this.unicodeEmojiRegex = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
+		}
+
+		return this.unicodeEmojiRegex;
+	}
+
+
+	/**
+	 * Build a combined emoji list from:
+	 * - msg.emojis (custom image emojis from Twitch / YouTube)
+	 * - unicode emoji glyphs found directly in messageText
+	 *
+	 * Returns array of entries like:
+	 *  { kind: 'image', url, code? }
+	 *  { kind: 'unicode', char }
+	 *
+	 * @param {Object} msg
+	 * @returns {Array<Object>}
+	 */
+	extractEmojisFromMsg(msg) {
+
+		const result = [];
+
+		if (!msg)
+			return result;
+
+		// 1) Custom / platform emojis (already normalized by chat processor)
+		const customEmojis = Array.isArray(msg.emojis) ? msg.emojis : [];
+
+		for (const e of customEmojis) {
+			if (!e || !e.url)
+				continue;
+
+			result.push({
+                kind: 'image',
+				url: e.url,
+				code: e.code || null,
+				// keep a reference if we ever care about more fields later
+				_original: e,
+			});
+		}
+
+		// 2) Unicode emojis directly in the message text
+		const text = (msg.messageText || '').trim();
+		if (text) {
+			const re = this.getUnicodeEmojiRegex();
+			re.lastIndex = 0;
+
+			let m;
+			while ((m = re.exec(text)) !== null) {
+
+				const ch = m[0];
+				if (!ch)
+					continue;
+
+				result.push({
+					kind: 'unicode',
+					char: ch,
+					_original: null,
+				});
+
+			}// next match
+		}
+
+		return result;
+	}
+
+
+	// ---------------------------------------------------------------------
 	// Command entry point (from central command system)
 	// ---------------------------------------------------------------------
 
@@ -190,17 +281,15 @@ export default class EmojiFountain extends Toy {
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
 
-		// Normalize emojis from msg
-		const emojis = Array.isArray(msg?.emojis) ? msg.emojis : [];
+		// Combined emojis: platform images + unicode glyphs
+		const emojis = this.extractEmojisFromMsg(msg);
 
-		console.log(msg);
-		
 		// Helper to early-reject if we somehow got no emojis
 		const ensureEmojis = () => {
 			if (emojis.length > 0) 
 				return true;
 
-			// Safety: if there's a reject handler, use it, otherwise accept(false)			
+			// Safety: always reject here
 			handshake.reject('EmojiFountain: command requires at least one emoji.');
 			return false;
 		};
@@ -213,7 +302,7 @@ export default class EmojiFountain extends Toy {
 
 			const count = this.settings.rainCount.value || 12;
 			if (count > 0) {
-                // Spread over ~2 seconds
+				// Spread over ~2 seconds
 				this.spawnBurst('rain', emojis, count, 2000);
 			}
 
@@ -229,7 +318,7 @@ export default class EmojiFountain extends Toy {
 
 			const count = this.settings.fountainCount.value || 12;
 			if (count > 0) {
-                // Spread over ~2.5 seconds
+				// Spread over ~2.5 seconds
 				this.spawnBurst('fountain', emojis, count, 2500);
 			}
 
@@ -257,11 +346,13 @@ export default class EmojiFountain extends Toy {
 		for (const chat of chats) {
 
 			const rawMessage = (chat.messageText || '').trim();
-			const emojis = Array.isArray(chat.emojis) ? chat.emojis : [];
 
 			// Ignore commands entirely to avoid double-spawning for !rain/!fountain
 			if (rawMessage.startsWith('!'))
 				continue;
+
+			// Extract combined emojis (custom + unicode)
+			const emojis = this.extractEmojisFromMsg(chat);
 
 			// No emojis, no fun
 			if (!emojis.length)
@@ -316,28 +407,33 @@ export default class EmojiFountain extends Toy {
 	 * Spawn a single emoji particle of the given type.
 	 *
 	 * @param {'rain'|'toss'|'fountain'} type
-	 * @param {{ url: string }} emoji
+	 * @param {{ kind: 'image'|'unicode', url?: string, char?: string }} emoji
 	 */
 	spawnSingleEmoji(type, emoji) {
 
-		if (!emoji || !emoji.url)
+		if (!emoji)
+			return;
+
+		// Must have either a url (image emoji) or char (unicode emoji)
+		const hasUrl = !!emoji.url;
+		const hasChar = !!emoji.char;
+		if (!hasUrl && !hasChar)
 			return;
 
 		const speed = this.safeSpeed();
 		const scale = this.settings.emojiSize.value || 1.0;
-		const url = emoji.url;
 
 		let particle;
 		switch (type) {
 			case 'rain':
-				particle = this.makeRainParticle(url, speed, scale);
+				particle = this.makeRainParticle(emoji, speed, scale);
 				break;
 			case 'fountain':
-				particle = this.makeFountainParticle(url, speed, scale);
+				particle = this.makeFountainParticle(emoji, speed, scale);
 				break;
 			case 'toss':
 			default:
-				particle = this.makeTossParticle(url, speed, scale);
+				particle = this.makeTossParticle(emoji, speed, scale);
 				break;
 		}
 
@@ -408,8 +504,10 @@ export default class EmojiFountain extends Toy {
 	/**
 	 * Rain: freefall from near top to bottom, small horizontal drift, 1–2 bounces.
 	 * Duration based on vertical distance so it feels like consistent gravity.
+	 *
+	 * @param {Object} emoji - { url?: string, char?: string }
 	 */
-	makeRainParticle(url, speed, scale) {
+	makeRainParticle(emoji, speed, scale) {
 
 		// Normalized Y positions (0 top, 1 bottom)
 		const startYNorm = -0.2;		// -20% (off top)
@@ -434,7 +532,8 @@ export default class EmojiFountain extends Toy {
 
 		return {
 			id: this.nextParticleId(),
-			url,
+			url: emoji.url || null,
+			char: emoji.char || null,
 			type: 'rain',
 
 			duration,
@@ -458,8 +557,10 @@ export default class EmojiFountain extends Toy {
 	/**
 	 * Toss: spawn near bottom at random X, arc up to random apex, fall offscreen.
 	 * No bounces; duration scales with arc height using sqrt(distance).
+	 *
+	 * @param {Object} emoji - { url?: string, char?: string }
 	 */
-	makeTossParticle(url, speed, scale) {
+	makeTossParticle(emoji, speed, scale) {
 
 		const startYNorm = 1.05;				// just below bottom
 		const endYNorm = 1.15;					// further below bottom
@@ -484,7 +585,8 @@ export default class EmojiFountain extends Toy {
 
 		return {
 			id: this.nextParticleId(),
-			url,
+			url: emoji.url || null,
+			char: emoji.char || null,
 			type: 'toss',
 
 			duration,
@@ -509,10 +611,12 @@ export default class EmojiFountain extends Toy {
 	 * Fountain: always from bottom center (x = 50%), arc up to random height,
 	 * then down with 1–2 bounces. Duration scales with arc height similarly
 	 * to toss, plus extra time for bounces.
+	 *
+	 * @param {Object} emoji - { url?: string, char?: string }
 	 */
-	makeFountainParticle(url, speed, scale) {
+	makeFountainParticle(emoji, speed, scale) {
 
-        // Start at bottom-center
+		// Start at bottom-center
 		const startX = 50;
 		const startYNorm = 1.05;
 		const endYNorm = 1.2;
@@ -543,7 +647,8 @@ export default class EmojiFountain extends Toy {
 
 		return {
 			id: this.nextParticleId(),
-			url,
+			url: emoji.url || null,
+			char: emoji.char || null,
 			type: 'fountain',
 
 			duration,
