@@ -67,7 +67,7 @@
 			<SettingsInputRow
 				type="float"
 				:min="0.01"
-				:max="10"
+				:max="40"
 				:step="0.01"
 				v-model="ambientLightIntensity"
 			>
@@ -86,7 +86,7 @@
 			<SettingsInputRow
 				type="float"
 				:min="0.01"
-				:max="10"
+				:max="40"
 				:step="0.01"
 				v-model="lightIntensity"
 			>
