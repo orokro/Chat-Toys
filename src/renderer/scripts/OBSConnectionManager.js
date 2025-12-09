@@ -60,15 +60,19 @@ export class OBSConnectionManager {
 			automatically saves to (and loads from) storage.
 		*/
 
-		/** @type {import('vue').Ref<boolean>} */
+		// true if our OBS connection feature is enabled
 		this.enabled = chromeRef(this.storagePrefix + 'enabled', false);
 
-		/** @type {import('vue').Ref<number>} */
+		// The port number for OBS WebSocket connection
 		this.port = chromeRef(this.storagePrefix + 'port', 4455);
 
-		/** @type {import('vue').Ref<string>} */
+		// The password for OBS WebSocket connection
 		this.password = chromeRef(this.storagePrefix + 'password', '');
 
+		// Auto-refresh browser sources on connect
+		this.enableAutoRefresh = chromeRef(this.storagePrefix + 'enableAutoRefresh', true);
+
+		
 		/*
 			UI / reactive state
 			-------------------
@@ -312,6 +316,16 @@ export class OBSConnectionManager {
 
 			// Sync initial stream state once connected
 			this._syncInitialStreamState();
+
+			// Auto-refresh ChatToys browser sources if enabled
+			if (this.enableAutoRefresh && this.enableAutoRefresh.value) {
+				this.refreshSources().catch((err) => {
+					console.error(
+						'[OBSConnectionManager] Auto-refresh of browser sources failed:',
+						err
+					);
+				});
+			}
 		});
 
 		this._obs.on('ConnectionClosed', (error) => {
@@ -640,6 +654,70 @@ export class OBSConnectionManager {
 
 			// Not fatal; just mark as unknown
 			this.streamingStatus.value = 'unknown';
+		}
+	}
+
+
+	/**
+	 * Refresh all browser sources whose URL has ?single=true or ?single=false
+	 *
+	 * @returns {Promise<void>}
+	 */
+	async refreshSources() {
+
+		// Only run if we're actually connected
+		if (!this.isConnected.value)
+			return;
+
+		try {
+
+			// Get all inputs (sources)
+			const { inputs } = await this._obs.call('GetInputList');
+
+			if (!Array.isArray(inputs) || !inputs.length)
+				return;
+
+			// Only browser sources
+			const browserInputs = inputs.filter(
+				(input) => input.inputKind === 'browser_source'
+			);
+
+			// Matches ...?single=true or ...?single=false as a query param
+			const singleFlagPattern = /\?single=(true|false)(&|$)/;
+
+			for (const input of browserInputs) {
+
+				try {
+					// Get settings so we can inspect the URL
+					const { inputSettings } = await this._obs.call('GetInputSettings', {
+						inputName: input.inputName
+					});
+
+					const url = inputSettings && inputSettings.url;
+					if (!url || !singleFlagPattern.test(url))
+						continue;
+
+					// Press the browser source "refresh" button
+					await this._obs.call('PressInputPropertiesButton', {
+						inputName: input.inputName,
+						propertyName: 'refreshnocache'
+					});
+
+				} catch (err) {
+					console.error(
+						'[OBSConnectionManager] Failed to refresh browser source',
+						input && input.inputName,
+						err
+					);
+				}
+			}
+
+		} catch (err) {
+
+			console.error(
+				'[OBSConnectionManager] Failed to enumerate inputs for browser refresh',
+				err
+			);
 		}
 	}
 	

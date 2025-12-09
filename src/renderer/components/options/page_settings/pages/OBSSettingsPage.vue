@@ -94,6 +94,14 @@
 				<template #title>OBS WS Password</template>
 				<p>The password text from your OBS Websockets setup.</p>
 			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="ctApp.obsConnMgr.enableAutoRefresh.value"
+			>
+				<template #title>Auto Refresh Browser Sources Upon Connect </template>
+				<p>Since you may have opened OBS before ChatToys your browser-sources might have been unavailable at that time.</p>
+				<p>Enabling this option will cause ChatToys to automatically refresh all ChatToys browser-sources in OBS when a connection is made.</p>
+			</SettingsInputRow>
 			<SettingsRow>
 				Connecting Status:
 				<div class="obsStatusBox">
