@@ -271,6 +271,16 @@ watch(
 
 // ---------- Keyframe + style builders ----------
 
+
+function lerp(a, b, t) {
+	return a + (b - a) * t;
+}
+
+function quadBezier(p0, p1, p2, t) {
+	const omt = 1 - t;
+	return omt * omt * p0 + 2 * omt * t * p1 + t * t * p2;
+}
+
 function buildMotionKeyframes(p, name, loop) {
 	const sx = p.startX ?? 50;
 	const ex = p.endX ?? sx;
@@ -280,89 +290,84 @@ function buildMotionKeyframes(p, name, loop) {
 	const ey = p.endY ?? 120;
 	const ay = p.apexY ?? 50;
 
-	// All keyframes now animate left/top as percentages of the widget.
-	if (p.type === 'rain') {
-		const b1 = 70;
-		const b2 = p.bounces > 1 ? 85 : 100;
-		const peak1 = p.bounces > 1 ? 80 : 90;
-		const final = 100;
+	const steps = 24; // more steps = smoother motion
+	let css = `@keyframes ${name} {\n`;
 
-		return `
-@keyframes ${name} {
-	0% {
-		left: ${sx}%;
-		top: ${sy}%;
-	}
-	${b1}% {
-		left: ${ax}%;
-		top: 100%;
-	}
-	${peak1}% {
-		left: ${ax}%;
-		top: 90%;
-	}
-	${b2}% {
-		left: ${ax}%;
-		top: 100%;
-	}
-	${final}% {
-		left: ${ex}%;
-		top: ${ey}%;
-	}
-}
-`;
+	if (p.type === 'rain') {
+
+		// Piecewise gravity + bounce:
+		// tHit: first hit bottom, tPeak: bounce peak, tEnd: off-screen
+		const tHit = 0.7;
+		const tPeak = 0.85;
+		const tEnd = 1.0;
+
+		for (let i = 0; i <= steps; i++) {
+            // normalized time 0..1
+			const t = i / steps;
+
+			let x, y;
+
+			// Horizontal: gentle drift from sx -> ex
+			x = lerp(sx, ex, t);
+
+			if (t <= tHit) {
+				// Freefall sy -> 100 (accelerating)
+				const tau = t / tHit;
+				// quadratic towards bottom
+				y = quadBezier(sy, sy, 100, tau);
+			} else if (t <= tPeak) {
+				// Bounce up then back to bottom (100 -> 90 -> 100)
+				const tau = (t - tHit) / (tPeak - tHit);
+				y = quadBezier(100, 90, 100, tau);
+			} else {
+				// Final fall off-screen: 100 -> ey, gentle (no weird rocket)
+				const tau = (t - tPeak) / (tEnd - tPeak);
+				y = quadBezier(100, 100, ey, tau);
+			}
+
+			const pct = (t * 100).toFixed(1).replace(/\.0$/, '');
+			css += `\t${pct}% {\n\t\tleft: ${x}%;\n\t\ttop: ${y}%;\n\t}\n`;
+		}
+
+		css += '}\n';
+		return css;
 	}
 
 	if (p.type === 'fountain') {
-		const up = 40;
-		const hit = 65;
-		const peak1 = p.bounces > 1 ? 80 : 85;
-		const final = 100;
+		// Nice parabolic fountain with a softer landing (no triangle),
+		// no hard “zoom” after bounce. We'll approximate:
+		//   start -> apex -> near bottom (98%) as one big arc.
 
-		return `
-@keyframes ${name} {
-	0% {
-		left: ${sx}%;
-		top: ${sy}%;
-	}
-	${up}% {
-		left: ${ax}%;
-		top: ${ay}%;
-	}
-	${hit}% {
-		left: ${ax}%;
-		top: 100%;
-	}
-	${peak1}% {
-		left: ${ax}%;
-		top: 88%;
-	}
-	${final}% {
-		left: ${ex}%;
-		top: ${ey}%;
-	}
-}
-`;
+		const endYForArc = 98; // hit just above "ground"
+		for (let i = 0; i <= steps; i++) {
+			const t = i / steps;
+
+			// Quadratic Bézier from start -> apex -> near bottom
+			const x = quadBezier(sx, ax, ex, t);
+			const y = quadBezier(sy, ay, endYForArc, t);
+
+			const pct = (t * 100).toFixed(1).replace(/\.0$/, '');
+			css += `\t${pct}% {\n\t\tleft: ${x}%;\n\t\ttop: ${y}%;\n\t}\n`;
+		}
+
+		css += '}\n';
+		return css;
 	}
 
-	// default: toss
-	const mid = 50;
-	return `
-@keyframes ${name} {
-	0% {
-		left: ${sx}%;
-		top: ${sy}%;
+	// Default: toss
+	// Pure arc: start -> apex -> end with quadratic Bézier.
+	for (let i = 0; i <= steps; i++) {
+		const t = i / steps;
+
+		const x = quadBezier(sx, ax, ex, t);
+		const y = quadBezier(sy, ay, ey, t);
+
+		const pct = (t * 100).toFixed(1).replace(/\.0$/, '');
+		css += `\t${pct}% {\n\t\tleft: ${x}%;\n\t\ttop: ${y}%;\n\t}\n`;
 	}
-	${mid}% {
-		left: ${ax}%;
-		top: ${ay}%;
-	}
-	100% {
-		left: ${ex}%;
-		top: ${ey}%;
-	}
-}
-`;
+
+	css += '}\n';
+	return css;
 }
 
 

@@ -33,7 +33,7 @@
 			Below you can customize the commands that users can type to interact with the Head Pats system.
 		</p>
 		<CommandsConfigBox :toy="toy" />
-		
+
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
@@ -77,7 +77,7 @@
 				v-model="emojiSize"
 				:min="0.1"
 				:max="5"
-				:step="1"
+				:step=".1"
 			>
 				<template #title>Emoji Size</template>
 				<p>You can adjust the size of the spawned emojis here</p>
@@ -87,7 +87,7 @@
 				v-model="speed"
 				:min="0.1"
 				:max="5"
-				:step="1"
+				:step=".1"
 			>
 				<template #title>Emoji Speed</template>
 				<p>You can adjust the animation timing of the spawned emojis here</p>
