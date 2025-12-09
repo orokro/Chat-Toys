@@ -69,7 +69,7 @@ export default class Chat extends Toy {
 			lockAspectRatio: false,
 			description: 'Shows swarm messages. Should ideally be placed full screen for maximum effect.',
 			slug: 'swarmBox'
-		},				
+		},
 	];
 
 
@@ -87,7 +87,7 @@ export default class Chat extends Toy {
 		this.shoutQueue = new StateTickerQueue(this.handleShoutQueue.bind(this), 2, 10);
 		this.tickFN = () => this.shoutQueue.tick();
 		electronAPI.tick(this.tickFN);
-		
+
 		// our socket state
 		this.soundPath = socketShallowRef(
 			this.static.slugify('soundPath'),
@@ -122,9 +122,9 @@ export default class Chat extends Toy {
 			this.settings.swarmSize,
 			this.settings.swarmDuration,
 			(messages) => { this.swarmLog.value = messages; },
-			(swarmIsActive) => { 
+			(swarmIsActive) => {
 				this.swarmMode.value = swarmIsActive ? 'SHOWING' : 'IDLE';
-				if(swarmIsActive) {
+				if (swarmIsActive) {
 					this.chatToysApp.log.msg('SWARM ACTIVATED!');
 				}
 			}
@@ -132,9 +132,9 @@ export default class Chat extends Toy {
 		this.tickFN = () => this.swarmLogic.tick();
 		electronAPI.tick(this.tickFN);
 
-		this.pointsDataHelper = (pointsData) => { 
+		this.pointsDataHelper = (pointsData) => {
 			console.log('foo', pointsData);
-			this.pointsData.value = pointsData; 
+			this.pointsData.value = pointsData;
 		};
 		this.pointsDataHelper = this.pointsDataHelper.bind(this);
 		this.chatPointsHelper = new ChatPointsHelper(this, this.pointsDataHelper);
@@ -144,7 +144,7 @@ export default class Chat extends Toy {
 	/**
 	 * Clean up
 	 */
-	end(){
+	end() {
 		super.end();
 		electronAPI.clearTick(this.tickFN);
 		electronAPI.clearTick(this.tickFN);
@@ -286,24 +286,38 @@ export default class Chat extends Toy {
 
 	/**
 	 * Handle when a new chat message comes in
-	 * 
-	 * @param {Array<Object>} chats - list of new chat messages
+	 *      * @param {Array<Object>} chats - list of new chat messages
 	 */
 	handleChatMessage(chats) {
+
+		// Ensure our static group trackers exist (initialize if first run)
+		if (typeof Chat.groupCounter === 'undefined') Chat.groupCounter = 0;
+		if (typeof Chat.lastAuthorUniqueID === 'undefined') Chat.lastAuthorUniqueID = null;
 
 		// spread into new array for new pointer
 		const chatLogMessages = [...this.chatLog.value];
 
 		// process each of the chat messages
-		for(const chat of chats) {
+		for (const chat of chats) {
 
 			// skip chat.message starts with !
-			if(this.settings.filterCommands.value==true && chat.messageText.startsWith('!'))
+			if (this.settings.filterCommands.value == true && chat.messageText.startsWith('!'))
 				continue;
 
+			// --- 1. Standard Message Parity (Existing Logic) ---
 			Chat.evenOddCounter++;
-			if(Chat.evenOddCounter > 1000000)
+			if (Chat.evenOddCounter > 1000000)
 				Chat.evenOddCounter = 0;
+
+			// --- 2. Group Parity (New Logic) ---
+			// We check if this author is different from the absolute last one seen in the stream
+			if (chat.authorUniqueID !== Chat.lastAuthorUniqueID) {
+				Chat.groupCounter++;
+				Chat.lastAuthorUniqueID = chat.authorUniqueID;
+
+				// Reset safety (matches your existing pattern)
+				if (Chat.groupCounter > 1000000) Chat.groupCounter = 0;
+			}
 
 			// package and add smaller chat object to the array
 			const chatData = {
@@ -315,8 +329,15 @@ export default class Chat extends Toy {
 				isMember: chat.isMember,
 				emojis: chat.emojis,
 				syslogger: chat.syslogger,
+
+				// Standard Message coloring
 				isOdd: (Chat.evenOddCounter % 2 === 1),
 				moduloKey: ['a', 'b', 'c', 'd'][Chat.evenOddCounter % 4],
+
+				// NEW: Group coloring
+				// Every message knows what color its Group should be
+				isGroupOdd: (Chat.groupCounter % 2 === 1),
+				groupModuloKey: ['a', 'b', 'c', 'd'][Chat.groupCounter % 4],
 			};
 			chatLogMessages.push(chatData);
 
@@ -325,9 +346,9 @@ export default class Chat extends Toy {
 		}// next chat
 
 		// trim list if it's too long
-		while(chatLogMessages.length > 100)
+		while (chatLogMessages.length > 100)
 			chatLogMessages.shift();
-		
+
 		// update our socket ref
 		this.chatLog.value = chatLogMessages;
 	}
@@ -341,7 +362,7 @@ export default class Chat extends Toy {
 	handleShoutQueue(item) {
 
 		// if it's null, we're in wait mode
-		if(item === null) {
+		if (item === null) {
 			this.shoutMode.value = 'IDLE';
 			return;
 		}
@@ -355,17 +376,17 @@ export default class Chat extends Toy {
 	/**
 	 * Tests swarm mode by generating random messages
 	 */
-	testSwarm(){
+	testSwarm() {
 
 		// toggle the swarm mode
-		if(this.testingSwarm === undefined)
+		if (this.testingSwarm === undefined)
 			this.testingSwarm = true;
 		else
 			this.testingSwarm = !this.testingSwarm;
 
 		// stop interval & gtfo
-		if(this.testingSwarm==false){
-			if(this.swarmTimeout !== null)
+		if (this.testingSwarm == false) {
+			if (this.swarmTimeout !== null)
 				window.clearElectronTimeout(this.swarmTimeout);
 			return;
 		}
@@ -373,12 +394,12 @@ export default class Chat extends Toy {
 		// recursive timeout to send random messages
 		const randomMessage = () => {
 
-			if(this.testingSwarm === false)
+			if (this.testingSwarm === false)
 				return;
 
-			const id =  randUuid();
-			const username =  randUserName();
-			const message =  randPhrase();
+			const id = randUuid();
+			const username = randUserName();
+			const message = randPhrase();
 			this.swarmLogic.newMessage(username, id, message);
 
 			const randomTime = Math.floor(Math.random() * 1500) + 500;

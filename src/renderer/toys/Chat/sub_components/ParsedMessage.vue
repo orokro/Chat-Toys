@@ -7,22 +7,23 @@
 <template>
 
 	<div class="message-body">
+		<div class="message-inner">
 
-		<template v-for="(token, i) in tokens" :key="i">
+			<template v-for="(token, i) in tokens" :key="i">
 
-			<span v-if="token.type === 'text'">{{ token.content }}</span>
+				<span v-if="token.type === 'text'">{{ token.content }}</span>
 
-			<EmojiImg
-				v-else-if="token.type === 'emoji'"
-				:url="token.content"
-				:alt="token.alt"
-			/>
+				<EmojiImg
+					v-else-if="token.type === 'emoji'"
+					:url="token.content"
+					:alt="token.alt"
+				/>
 
-			<br v-else-if="token.type === 'br'" />
+				<br v-else-if="token.type === 'br'" />
 
-		</template>
-		<div v-html="injects.messageBodyInjects"></div>
-
+			</template>
+			<div v-html="injects.messageBodyInjects"></div>
+		</div>
 	</div>
 
 </template>

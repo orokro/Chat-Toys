@@ -163,8 +163,15 @@ const chatLogC = computed(() => {
 				}
 
 			} else {
-				// different author, so push a new message
-				groupedMessages.push({ ...message });
+
+				// different author, so push a new message group
+				groupedMessages.push({ 
+					...message,
+					
+					// OVERWRITE the visual keys with the Group keys
+					isOdd: message.isGroupOdd,         
+					moduloKey: message.groupModuloKey  
+				});
 				lastAuthorID = message.authorUniqueID;
 			}
 		}
@@ -406,6 +413,10 @@ function getUserPoints(userID) {
 
 				}
 
+				.message-body .message-inner { 
+					/* border: 1px solid red; */
+				}
+
 				// to separate from the PFP
 				.message-contents {
 
@@ -416,6 +427,7 @@ function getUserPoints(userID) {
 						display: flex;
 
 						.message-body {
+
 							display: inline-block;
 							margin-left: 12px;
 						}
