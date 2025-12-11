@@ -25,7 +25,7 @@
 				v-if="ready"
 				class="headPatsWidget"
 				:class="{ 
-					idle: mode === 'IDLE',
+					idle: mode === 'IDLE' && !demoMode,
 					showProfilePicture: showProfilePicture,
 					demoMode: demoMode,
 					showTextShadow: socketSettingsRef?.chatterNameShadow,
@@ -51,7 +51,7 @@
 				<!-- the main money - head pat gif -->
 				<img 
 					class="headPatImage"
-					:src="actionGif(currentPatData?.kind)"
+					:src="actionGif(demoMode ? 'pat' : currentPatData?.kind)"
 					alt="head pat icon"
 				/>
 
@@ -127,13 +127,18 @@ const actionGif = (kind) => {
 	kind = kind || lastActionGif;
 	lastActionGif = kind;
 
+	// if live.html is in the url, we're in dev. If the url is /live/ we're in production
+	const isDev = window.location.href.indexOf('live.html') !== -1;
+
+	// get prefix
+	const pathPrefix = isDev ? '' : '/live';
 	switch(kind){		
 		case 'pat':
-			return '/builtin/headpat-hand.gif';
+			return pathPrefix+'/builtin/headpat-hand.gif';
 		case 'slap':
-			return '/builtin/slap.gif';
+			return pathPrefix+'/builtin/slap.gif';
 		case 'bonk':
-			return '/builtin/bonk.gif';
+			return pathPrefix+'/builtin/bonk.gif';
 	}
 } 
 
