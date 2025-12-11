@@ -149,9 +149,14 @@ watch(tossQueue, (newVal) => {
 		if(!localTossHistory.value.includes(item.id)){
 
 			// toss the item
-			if(tosserSystem != null)
-				tosserSystem.tossItem(item.item);
+			if(tosserSystem != null){
 
+				if(item.isEmoji)
+					tosserSystem.tossEmoji(item.item);
+				else	
+					tosserSystem.tossItem(item.item);
+			}
+			
 			// add to local history
 			const newHistory = [...localTossHistory.value, item.id];
 			while(newHistory.length > 100)

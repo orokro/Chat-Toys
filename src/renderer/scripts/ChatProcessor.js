@@ -144,12 +144,15 @@ export class ChatProcessor {
 		// msg text
 		const adjustedMessage = data.infoMessages.join('\n');
 
+		// determine if we're in dev
+		const isDev = (window.location.host == 'localhost:8080');
+
 		// repack the data into our standard format
 		const formatted = {
 			id: data.id,
 			authorUniqueID: 'Chat Toys',
 			author: 'Chat Toys',
-			authorPFPUrl: '/builtin/ct_pfp.jpg',
+			authorPFPUrl: isDev ? '/builtin/ct_pfp.jpg' : './live/builtin/ct_pfp.jpg',
 			messageText: adjustedMessage || '',
 			raws: data.infoMessages || [],
 			emojis: [],

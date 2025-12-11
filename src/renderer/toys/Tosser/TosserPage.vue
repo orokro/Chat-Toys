@@ -84,6 +84,16 @@
 			</SettingsInputRow>
 
 			<SettingsInputRow
+				type="boolean"
+				v-model="allEmojisToBeTossed"
+			>
+				<template #title>Allow Emojis to be Tossed</template>
+				<p>If the toss command is provided an emoji, like: <span class="cmd">!{{ toss_command }} 🤣</span>
+					instead of throwing a 3d model below, it will throw a 2d emoji image instead!
+				</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
 				type="float"
 				:min="0.0"
 				:max="1"
@@ -161,6 +171,7 @@ const {
 	randomTossMode,
 	tossSpeed,
 	soundVolume,
+	allEmojisToBeTossed,
 } = toy.settings;
 
 // all of the commands system wide are stored in this chrome shallow ref

@@ -104,6 +104,7 @@ export default class Tosser extends Toy {
 			]),
 			randomTossMode: ref(true),
 			tossSpeed: ref(1),
+			allEmojisToBeTossed: ref(true),
 			soundVolume: ref(1),
 			widgetBox: shallowRef({
 				x: 20,
@@ -154,6 +155,20 @@ export default class Tosser extends Toy {
 
 		// if the slug iis 'toss' then we need to check for parameters
 		if(commandSlug === 'toss') {
+
+			// check if there's emojis in the message, if so, we toss a random item
+			const extractedEmojis = this.extractEmojisFromMsg(msg);
+			if(extractedEmojis.length > 0 && this.settings.allEmojisToBeTossed.value === true) {
+
+				// get the emoji - either the char or a link to the image
+				const firstEmoji = extractedEmojis[0];
+				const string = firstEmoji.kind === 'image' ? firstEmoji.url : firstEmoji.char;
+
+				// toss the emoji item
+				this.tossItem(msg, string, true);
+				handshake.accept();
+				return;
+			}
 
 			// if item is undefined, toss random/unspecified & gtfo
 			if(params.item === undefined) {
@@ -226,19 +241,108 @@ export default class Tosser extends Toy {
 	 * 
 	 * @param {Object} msg - message object
 	 * @param {String} itemSlug - item to toss
+	 * @param {Boolean} isEmoji - whether the item is an emoji
 	 */
-	tossItem(msg, itemSlug) {
+	tossItem(msg, itemSlug, isEmoji = false) {
 
 		// add it to our toss queue w/ a unique id
 		const tossId = uuidv4();
 		const toss = {
 			id: tossId,
 			item: itemSlug,
+			isEmoji: isEmoji,
 			createdAt: Date.now(),
 		};
 		this.tossQueue.value = [...this.tossQueue.value, toss];
 
 		this.chatToysApp.log.msg(msg.author + ' tossed a ' + itemSlug);
+	}
+
+
+	// ---------------------------------------------------------------------
+	// Emoji extraction (custom + unicode)
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Lazily build / return a regex that matches unicode emoji-ish codepoints.
+	 * Uses \p{Extended_Pictographic} when available, falls back to a range.
+	 */
+	getUnicodeEmojiRegex() {
+
+		if (this.unicodeEmojiRegex)
+			return this.unicodeEmojiRegex;
+
+		try {
+			// Modern engines (Chromium / Electron) should support this.
+			this.unicodeEmojiRegex = new RegExp('\\p{Extended_Pictographic}', 'gu');
+		}
+		catch (e) {
+			// Fallback: BMP + SMP emoji blocks, not perfect but pretty good.
+			this.unicodeEmojiRegex = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
+		}
+
+		return this.unicodeEmojiRegex;
+	}
+
+
+	/**
+	 * Build a combined emoji list from:
+	 * - msg.emojis (custom image emojis from Twitch / YouTube)
+	 * - unicode emoji glyphs found directly in messageText
+	 *
+	 * Returns array of entries like:
+	 *  { kind: 'image', url, code? }
+	 *  { kind: 'unicode', char }
+	 *
+	 * @param {Object} msg
+	 * @returns {Array<Object>}
+	 */
+	extractEmojisFromMsg(msg) {
+
+		const result = [];
+
+		if (!msg)
+			return result;
+
+		// 1) Custom / platform emojis (already normalized by chat processor)
+		const customEmojis = Array.isArray(msg.emojis) ? msg.emojis : [];
+
+		for (const e of customEmojis) {
+			if (!e || !e.url)
+				continue;
+
+			result.push({
+                kind: 'image',
+				url: e.url,
+				code: e.code || null,
+				// keep a reference if we ever care about more fields later
+				_original: e,
+			});
+		}
+
+		// 2) Unicode emojis directly in the message text
+		const text = (msg.messageText || '').trim();
+		if (text) {
+			const re = this.getUnicodeEmojiRegex();
+			re.lastIndex = 0;
+
+			let m;
+			while ((m = re.exec(text)) !== null) {
+
+				const ch = m[0];
+				if (!ch)
+					continue;
+
+				result.push({
+					kind: 'unicode',
+					char: ch,
+					_original: null,
+				});
+
+			}// next match
+		}
+
+		return result;
 	}
 
 }

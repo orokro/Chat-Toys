@@ -32,6 +32,16 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { int } from 'three/src/nodes/TSL.js';
 import { watch, unref } from 'vue';
 
+// emojiSpriteFactory.js
+import * as THREE from 'three';
+import { getEmojiSource } from '../emojiCache.js';
+
+/**
+ * Regex to grab the first emoji-ish character.
+ * This is a simplification, but works well for most cases.
+ */
+const EMOJI_REGEX = /\p{Extended_Pictographic}/u;
+
 
 /**
  * Main class to manager the tosser system state for the Tosser toy.
@@ -288,6 +298,42 @@ export class ThreeJSTosserSystem {
 		const def = this.allModels.get(slug);
 		if (!def)
 			return;
+		this._tossObject(def);
+	}
+
+
+	/**
+	 * Tosses an emoji into the scene, by making it a sprite
+	 * 
+	 * @param {String} emoji - the emoji character to toss 
+	 */
+	tossEmoji(emoji) {
+
+		// create a sprite from the emoji char
+		this.createEmojiSpriteFromString(emoji, 50, this.camera).then(sprite => {
+
+			// make a temporary object3d to hold the sprite
+			const obj = new Object3D();
+			obj.add(sprite);
+			sprite.position.set(0, 0, 0);
+			sprite.scale.set(100, 100, 1);
+
+			// make a fake def object to toss
+			const def = {
+				object: obj,
+				soundPath: 'assets/sounds/emoji_toss_hit.wav',
+			};
+			this._tossObject(def);
+		});
+	}
+
+
+	/**
+	 * Tosses an object into the scene
+	 * 
+	 * @param {Object} def - the model definition to toss
+	 */
+	async _tossObject(def) {
 
 		const box = unref(this.colliderRef);
 		const width = box.width * 0.75;
@@ -377,6 +423,111 @@ export class ThreeJSTosserSystem {
 		this.tossedItems = [];
 		this.resizeObserver.disconnect();
 	}
+
+
+	// Helper: create a texture from a cached emoji URL (YouTube/Twitch/etc).
+	// Uses getEmojiSource() so we avoid refetching when possible.
+	async _createTextureFromUrl(url) {
+		const { src } = await getEmojiSource(url); // may be blob URL or original URL
+		const loader = new THREE.TextureLoader();
+
+		return await new Promise((resolve, reject) => {
+			loader.load(
+				src,
+				texture => {
+					texture.minFilter = THREE.LinearFilter;
+					texture.magFilter = THREE.LinearFilter;
+					texture.generateMipmaps = false;
+					resolve(texture);
+				},
+				undefined,
+				err => reject(err)
+			);
+		});
+	}
+
+
+	// Helper: create a texture by drawing an emoji glyph to a canvas.
+	_createTextureFromEmojiChar(emojiChar, size = 256) {
+		const canvas = document.createElement('canvas');
+		canvas.width = size;
+		canvas.height = size;
+
+		const ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, size, size);
+
+		const fontSize = Math.floor(size * 0.8);
+		ctx.font = `${fontSize}px system-ui, Apple Color Emoji, Segoe UI Emoji, sans-serif`;
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+
+		ctx.fillText(emojiChar, size / 2, size / 2);
+
+		const texture = new THREE.CanvasTexture(canvas);
+		texture.needsUpdate = true;
+		texture.minFilter = THREE.LinearFilter;
+		texture.magFilter = THREE.LinearFilter;
+		texture.generateMipmaps = false;
+
+		return texture;
+	}
+
+
+	/**
+	 * Create a ThreeJS emoji sprite from:
+	 * - a URL (YouTube/Twitch emote) OR
+	 * - a string containing one or more unicode emojis.
+	 *
+	 * Sprites in ThreeJS are billboarded by default, so they will always face
+	 * the active camera without extra code.
+	 *
+	 * @param {string} value - URL or text containing emojis
+	 * @param {number} initialScale - base sprite size in world units
+	 * @param {THREE.Camera} [camera] - currently unused, reserved for future logic
+	 * @returns {Promise<THREE.Sprite|null>}
+	 */
+	async createEmojiSpriteFromString(value, initialScale = 1, camera) {
+		const trimmed = (value || '').trim();
+		if (!trimmed)
+			return null;
+
+		const isUrl = /^https?:\/\//i.test(trimmed);
+		let texture = null;
+
+		try {
+			if (isUrl) {
+				// URL case → use cached image via getEmojiSource
+				texture = await this._createTextureFromUrl(trimmed);
+			} else {
+				// Non-URL → try to extract the first unicode emoji
+				const EMOJI_REGEX = /\p{Extended_Pictographic}/u;
+				const match = trimmed.match(EMOJI_REGEX);
+				if (!match) {
+					// No emoji found in the string
+					return null;
+				}
+				const emojiChar = match[0];
+				texture = this._createTextureFromEmojiChar(emojiChar);
+			}
+		} catch (err) {
+			console.error('[createEmojiSpriteFromString] texture creation failed', err);
+			return null;
+		}
+
+		const material = new THREE.SpriteMaterial({
+			map: texture,
+			transparent: true
+		});
+
+		const sprite = new THREE.Sprite(material);
+
+		// Sprites always face the camera by default.
+		// Scale is uniform in X/Y; Z is usually ignored for sprites.
+		sprite.scale.set(initialScale, initialScale, 1);
+
+		return sprite;
+	}
+
 	
 }
 
