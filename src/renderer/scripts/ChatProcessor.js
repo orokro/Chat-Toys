@@ -20,9 +20,13 @@ export class ChatProcessor {
 	/**
 	 * Builds a new ChatProcessor
 	 * 
+	 * @param {ChatToysApp} ctApp - main app instance
 	 * @param {Object} options - OPTIONAL; like { rollingIDListLength: 1000, displayCount: 10 }	
 	 */
-	constructor(options = {}) {
+	constructor(ctApp, options = {}) {
+
+		// save reference to main app
+		this.ctApp = ctApp;
 
 		// handle our optional options
 		this.rollingIDListLength = options.rollingIDListLength || 1000;
@@ -190,6 +194,9 @@ export class ChatProcessor {
 		// parse out any emotes and adjust the message text accordingly
 		const { adjustedMessage, emojis } = this._parseTwitchEmojis(data);
 
+		// also parse for BTTV emojis if enabled
+		const bttvResult = this._parseBTTVEmojis(adjustedMessage, emojis);
+
 		// try to pick the best username we can for avatar lookup
 		const rawAuthor =
 			data.author ||
@@ -203,8 +210,8 @@ export class ChatProcessor {
 			authorUniqueID: data.author || '',
 			author: rawAuthor || '',
 			authorPFPUrl: undefined,
-			messageText: adjustedMessage || '',
-			emojis,
+			messageText: bttvResult.messageText || '',
+			emojis: bttvResult.emojis,
 			time: Date.now(),
 			isMember: !!data.isMember,
 			streamID: 'twitch',
@@ -316,6 +323,70 @@ export class ChatProcessor {
 
 
 	/**
+	 * Scans message text for BTTV emoji codes and normalizes them.
+	 * 
+	 * @param {string} messageText 
+	 * @param {Array<Object>} existingEmojis 
+	 * @returns {Object} - { messageText: string, emojis: Array<Object> }
+	 */
+	_parseBTTVEmojis(messageText, existingEmojis = []) {
+
+		// GTFO if BTTV is not enabled or no emojis cached
+		if (!this.ctApp?.bttvMgr?.enabled?.value) {
+			return { messageText, emojis: existingEmojis };
+		}
+
+		const bttvEmojisMap = this.ctApp.bttvMgr.emojis;
+		if (!bttvEmojisMap || bttvEmojisMap.size === 0) {
+			return { messageText, emojis: existingEmojis };
+		}
+
+		// We'll work with a copy of existing emojis to avoid mutation issues
+		const emojis = [...existingEmojis];
+		
+		// We split the message into words to identify BTTV emojis.
+		// BTTV emojis are usually standalone words.
+		const words = messageText.split(/(\s+)/); // Keep whitespace as tokens
+		let adjustedMessage = '';
+
+		words.forEach(word => {
+			
+			// If it's whitespace, just append
+			if (word.trim().length === 0) {
+				adjustedMessage += word;
+				return;
+			}
+
+			// Check if this word is a BTTV emoji
+			const bttvEmoji = bttvEmojisMap.get(word);
+
+			if (bttvEmoji) {
+				// Normalize to &code;
+				adjustedMessage += `&${word};`;
+
+				// Add to emojis array if not already present (optimization: unique list)
+				if (!emojis.some(e => e.code === word)) {
+					emojis.push({
+						code: word,
+						url: bttvEmoji.url,
+						pos: [], // BTTV doesn't have native platform positions
+						isBTTV: true,
+					});
+				}
+			} else {
+				// Not a BTTV emoji, append as is
+				adjustedMessage += word;
+			}
+		});
+
+		return {
+			messageText: adjustedMessage,
+			emojis
+		};
+	}
+
+
+	/**
 	 * Checks and parses YouTube chat messages
 	 * 
 	 * @param {Object} data - Data from chat platform
@@ -424,6 +495,11 @@ export class ChatProcessor {
 
 			}// next run
 
+			// Also parse for BTTV emojis
+			const bttvResult = this._parseBTTVEmojis(messageText, emojis);
+			messageText = bttvResult.messageText;
+			const finalEmojis = bttvResult.emojis;
+
 			// attempt to extract stream ID
 			let streamID = undefined;
 			try {
@@ -446,7 +522,7 @@ export class ChatProcessor {
 				author: authorName,
 				authorPFPUrl: authorPFPUrl,
 				messageText,
-				emojis,
+				emojis: finalEmojis,
 				time: timestampUsec ? Number(timestampUsec) : undefined,
 				isMember,
 				streamID,

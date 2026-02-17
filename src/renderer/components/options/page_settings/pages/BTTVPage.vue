@@ -10,7 +10,7 @@
 
 	<PageBox
 		title="BTTV Integration Settings"
-		themeColor="#222222"
+		themeColor="#CC4444"
 		themeImage="assets/bg_tiles/main.png"
 		bgSize="120px"
 		bgThemePos="-25px"

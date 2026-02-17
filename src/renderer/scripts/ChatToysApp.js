@@ -99,7 +99,7 @@ export default class ChatToysApp {
 		// note: this will handle messages coming from IPC messages from the electron
 		// main process. The main process gets them from a WebSocket server from
 		// a chrome plugin.
-		this.chatProcessor = new ChatProcessor();
+		this.chatProcessor = new ChatProcessor(this);
 
 		// make a new command processor to handle all incoming commands
 		this.commandProcessor = new CommandProcessor(this, this.chatProcessor);
