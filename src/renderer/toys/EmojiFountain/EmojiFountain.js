@@ -230,13 +230,18 @@ export default class EmojiFountain extends Toy {
 			if (!e || !e.url)
 				continue;
 
-			result.push({
-                kind: 'image',
-				url: e.url,
-				code: e.code || null,
-				// keep a reference if we ever care about more fields later
-				_original: e,
-			});
+			// Check if we have multiple positions for this emoji (e.g. Twitch sends positions)
+			const occurrences = (Array.isArray(e.pos) && e.pos.length > 0) ? e.pos.length : 1;
+
+			for (let i = 0; i < occurrences; i++) {
+				result.push({
+					kind: 'image',
+					url: e.url,
+					code: e.code || null,
+					// keep a reference if we ever care about more fields later
+					_original: e,
+				});
+			}
 		}
 
 		// 2) Unicode emojis directly in the message text
@@ -303,7 +308,9 @@ export default class EmojiFountain extends Toy {
 			const count = this.settings.rainCount.value || 12;
 			if (count > 0) {
 				// Spread over ~2 seconds
-				this.spawnBurst('rain', emojis, count, 2000);
+				// Use the actual emoji count from message if it's more than default
+				const finalCount = Math.max(count, emojis.length);
+				this.spawnBurst('rain', emojis, finalCount, 2000);
 			}
 
 			handshake.accept();
@@ -319,7 +326,8 @@ export default class EmojiFountain extends Toy {
 			const count = this.settings.fountainCount.value || 12;
 			if (count > 0) {
 				// Spread over ~2.5 seconds
-				this.spawnBurst('fountain', emojis, count, 2500);
+				const finalCount = Math.max(count, emojis.length);
+				this.spawnBurst('fountain', emojis, finalCount, 2500);
 			}
 
 			handshake.accept();
@@ -360,8 +368,14 @@ export default class EmojiFountain extends Toy {
 
 			const mode = (this.settings.mode.value === 'rain') ? 'rain' : 'toss';
 
-			for (const emoji of emojis)
-				this.spawnSingleEmoji(mode, emoji);
+			const newParticles = [];
+			for (const emoji of emojis) {
+				const p = this.createParticle(mode, emoji);
+				if (p) newParticles.push(p);
+			}
+			
+			if (newParticles.length > 0)
+				this.addParticles(newParticles);
 			
 		}// next chat
 
@@ -393,7 +407,8 @@ export default class EmojiFountain extends Toy {
 
 			const timeoutId = window.setElectronTimeout(() => {
 				this.pendingTimeouts.delete(timeoutId);
-				this.spawnSingleEmoji(type, emoji);
+				const p = this.createParticle(type, emoji);
+				if (p) this.addParticles([p]);
 			}, delayMs);
 
 			this.pendingTimeouts.add(timeoutId);
@@ -404,21 +419,22 @@ export default class EmojiFountain extends Toy {
 
 
 	/**
-	 * Spawn a single emoji particle of the given type.
+	 * Creates a single emoji particle data object (without adding it to state).
 	 *
 	 * @param {'rain'|'toss'|'fountain'} type
 	 * @param {{ kind: 'image'|'unicode', url?: string, char?: string }} emoji
+	 * @returns {Object|null}
 	 */
-	spawnSingleEmoji(type, emoji) {
+	createParticle(type, emoji) {
 
 		if (!emoji)
-			return;
+			return null;
 
 		// Must have either a url (image emoji) or char (unicode emoji)
 		const hasUrl = !!emoji.url;
 		const hasChar = !!emoji.char;
 		if (!hasUrl && !hasChar)
-			return;
+			return null;
 
 		const speed = this.safeSpeed();
 		const scale = this.settings.emojiSize.value || 1.0;
@@ -437,22 +453,27 @@ export default class EmojiFountain extends Toy {
 				break;
 		}
 
-		this.addParticle(particle);
+		return particle;
 	}
 
 
 	/**
-	 * Add a particle to the socket array, enforcing maxCount and TTL.
-	 * TTL is derived from animation duration so taller arcs get more time.
+	 * Batch add particles to the socket array, enforcing maxCount and TTL.
+	 * 
+	 * @param {Array<Object>} newParticles - list of particles to add
 	 */
-	addParticle(particle) {
+	addParticles(newParticles) {
 
 		const maxCount = this.settings.maxCount.value || 200;
 		const now = Date.now();
 
-		const ttlMs = particle.duration * 1000 * 1.3; // 30% longer than animation
-		particle.ttlMs = ttlMs;
-		particle.createdAt = now;
+		for (const particle of newParticles) {
+			const ttlMs = particle.duration * 1000 * 1.3;
+			particle.ttlMs = ttlMs;
+			particle.createdAt = now;
+			// ENSURE UNIQUE ID
+			particle.id = this.nextParticleId();
+		}
 
 		let arr = this.particles.value || [];
 
@@ -462,13 +483,27 @@ export default class EmojiFountain extends Toy {
 			return (now - p.createdAt) < p.ttlMs;
 		});
 
+		// Add new ones
+		arr = [...arr, ...newParticles];
+
 		// Enforce maxCount (drop oldest)
-		while (arr.length >= maxCount) {
-			arr.shift();
+		if (arr.length > maxCount) {
+			arr = arr.slice(-maxCount);
 		}
 
-		arr.push(particle);
 		this.particles.value = arr;
+	}
+
+
+	/**
+	 * Spawn a single emoji particle of the given type (Legacy wrapper).
+	 *
+	 * @param {'rain'|'toss'|'fountain'} type
+	 * @param {Object} emoji
+	 */
+	spawnSingleEmoji(type, emoji) {
+		const p = this.createParticle(type, emoji);
+		if (p) this.addParticles([p]);
 	}
 
 
