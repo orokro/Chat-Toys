@@ -21,6 +21,7 @@ import { SysLogger } from './SysLogger';
 import { OBSConnectionManager } from './OBSConnectionManager.js';
 import { YouTubeConnectionManager } from './YouTubeConnectionManager.js';
 import { VTSConnectionManager } from './VTSConnectionManager.js';
+import { BTTVManager } from './BTTVManager.js';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -65,6 +66,9 @@ export default class ChatToysApp {
 
 		// make a new VTS connection manager to handle VTube Studio connection
 		this.vtsConnMgr = new VTSConnectionManager(this);
+
+		// BTTV integration for Twitch emojis
+		this.bttvMgr = new BTTVManager(this);
 		
 		// unrelated to our logger above, we'll also receive messages from from the OBS server
 		// NOTE: this is for widgets telling us what's going on in OBS with them
