@@ -10,7 +10,7 @@
 
 // vue
 import { ref, shallowRef, watch } from 'vue';
-import { socketRef, socketShallowRef } from 'socket-ref';
+import { socketRef, socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
 
 // our app
 import { ToyManager } from "../scripts/ToyManager";
@@ -147,39 +147,54 @@ export default class Toy {
 		this.settings = settings;
 
 		// use our slug to create a unique block name
-		// make both block and camel case versions
 		const blockNameKebab = this.slug.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
-		const blockNameCamel = blockNameKebab.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-
-		// create a ref that will sync with chrome storage
-		this.settingsStorRef = chromeShallowRef(blockNameKebab + '-settings', {});
-
-		// create a ref aggregator to sync the settings & register them
-		this.settingsAggregator = new RefAggregator(this.settingsStorRef);
-		this.settingsAggregator.registerObject(this.settings);
-
-		// now for some magic - we'll watch the settings object for changes
-		// and update a socket ref with the json, so our live page can update
-		this.settingsSocketRef = socketShallowRef(blockNameKebab + '-settings', this.settingsStorRef.value);
+		const socketName = blockNameKebab + '-settings';
 
 		// FEEDBACK LOOP PREVENTION:
 		// Only the primary window (the dashboard) should sync from local storage to the socket.
 		// Secondary windows (like OBS widgets or popout managers) should be passive.
-		const isPrimaryWindow = !window.location.pathname.includes('/live/') && 
-								!window.location.pathname.includes('queue-manager.html') &&
-								!window.location.pathname.includes('chatTester.html');
+		const isPrimaryWindow = !!window.isPrimaryWindow;
 
 		if (isPrimaryWindow) {
+			
+			// In primary window, we use chrome storage as source of truth
+			this.settingsStorRef = chromeShallowRef(blockNameKebab + '-settings', {});
+			
+			// We use a socket ref to broadcast our changes TO other windows
+			this.settingsSocketRef = socketShallowRef(socketName, this.settingsStorRef.value);
+
+			// create a ref aggregator to sync the settings & register them
+			this.settingsAggregator = new RefAggregator(this.settingsStorRef);
+			this.settingsAggregator.registerObject(this.settings);
+
+			// Sync FROM storage TO socket ONLY (One way)
 			this.stopSettingsSocketWatch = watch(this.settingsStorRef, (newVal) => {
 				this.settingsSocketRef.value = newVal;
 			});
-			window.setElectronTimeout(()=>
-				this.settingsSocketRef.value = this.settingsStorRef.value, 1000);
+
+			// Initial push to socket
+			window.setElectronTimeout(() => {
+				this.settingsSocketRef.value = this.settingsStorRef.value;
+			}, 1000);
+
 		} else {
-			// In secondary windows, we don't watch settingsStorRef.
-			// Instead, we might want to sync FROM the socket TO the settingsStorRef if needed,
-			// but usually these windows just read from the socket directly via useToySettings.
-			this.stopSettingsSocketWatch = () => {}; 
+			
+			// In secondary windows, we don't want to touch chrome storage/localStorage at all
+			// to prevent RefAggregator from accidentally writing defaults or fighting.
+			// Instead, we create a dummy local storage ref that only syncs FROM the socket.
+			this.settingsStorRef = shallowRef({});
+			this.settingsSocketRef = socketShallowRefReadOnly(socketName, {});
+
+			// Register settings with the aggregator so the individual refs update
+			this.settingsAggregator = new RefAggregator(this.settingsStorRef);
+			this.settingsAggregator.registerObject(this.settings);
+
+			// Sync FROM socket TO local dummy storage
+			this.stopSettingsSocketWatch = watch(this.settingsSocketRef, (newVal) => {
+				if (newVal && typeof newVal === 'object') {
+					this.settingsStorRef.value = newVal;
+				}
+			}, { immediate: true });
 		}
 	}
 
@@ -302,7 +317,8 @@ export default class Toy {
 		this.onCommandFn = null;
 
 		// stop watching the settings
-		this.stopSettingsSocketWatch();
+		if (this.stopSettingsSocketWatch)
+			this.stopSettingsSocketWatch();
 	}
 
 

@@ -8,7 +8,7 @@
 // vue
 import { ref, shallowRef, watch } from 'vue';
 import { chromeRef, chromeShallowRef } from './chromeRef';
-import { socketShallowRef } from 'socket-ref';
+import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
 import { RefAggregator } from './RefAggregator';
 
 // our app
@@ -147,9 +147,6 @@ export default class ChatToysApp {
 	}
 
 
-	/**
-	 * Sets up some general settings for the app in a nice, state synced object.
-	 */
 	buildSettings() {
 
 		// make general settings to store the output widget box
@@ -158,18 +155,35 @@ export default class ChatToysApp {
 			stageHeight: ref(720),
 			enabledToys: this.enabledToys,	
 		};
-		this.settingsStorRef = chromeShallowRef('general-settings', {});
-		this.settingsAggregator = new RefAggregator(this.settingsStorRef);
-		this.settingsAggregator.registerObject(this.settings);
 
-		// now for some magic - we'll watch the settings object for changes
-		// and update a socket ref with the json, so our live page can update
-		this.settingsSocketRef = socketShallowRef('general-settings', {...this.settingsStorRef.value});
-		this.stopSettingsSocketWatch = watch(this.settingsStorRef, (newVal) => {
-			this.settingsSocketRef.value = {...newVal};
-		});
-		window.setElectronTimeout(()=>
-			this.settingsSocketRef.value = this.settingsStorRef.value, 1000);
+		const isPrimaryWindow = !!window.isPrimaryWindow;
+
+		if (isPrimaryWindow) {
+			this.settingsStorRef = chromeShallowRef('general-settings', {});
+			this.settingsSocketRef = socketShallowRef('general-settings', {...this.settingsStorRef.value});
+
+			this.settingsAggregator = new RefAggregator(this.settingsStorRef);
+			this.settingsAggregator.registerObject(this.settings);
+
+			this.stopSettingsSocketWatch = watch(this.settingsStorRef, (newVal) => {
+				this.settingsSocketRef.value = {...newVal};
+			});
+			window.setElectronTimeout(() => {
+				this.settingsSocketRef.value = this.settingsStorRef.value;
+			}, 1000);
+		} else {
+			this.settingsStorRef = shallowRef({});
+			this.settingsSocketRef = socketShallowRefReadOnly('general-settings', {});
+
+			this.settingsAggregator = new RefAggregator(this.settingsStorRef);
+			this.settingsAggregator.registerObject(this.settings);
+
+			this.stopSettingsSocketWatch = watch(this.settingsSocketRef, (newVal) => {
+				if (newVal && typeof newVal === 'object') {
+					this.settingsStorRef.value = newVal;
+				}
+			}, { immediate: true });
+		}
 	}
 
 
@@ -257,6 +271,21 @@ export default class ChatToysApp {
 	nukeStorageAndReload() {
 		localStorage.clear();
 		location.reload();
+	}
+
+	/**
+	 * Clean up the app when it's about to be removed
+	 */
+	end() {
+		console.log('Ending ChatToysApp...');
+
+		// stop general settings watch
+		if (this.stopSettingsSocketWatch)
+			this.stopSettingsSocketWatch();
+
+		// tell toy manager to end all toys
+		if (this.toyManager)
+			this.toyManager.restartToysState(); // this calls end() on each toy
 	}
 	
 }

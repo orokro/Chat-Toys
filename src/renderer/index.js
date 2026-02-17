@@ -20,6 +20,8 @@ async function startMain(){
 	// set the socket port for the library globally
 	setGlobalSocketRefPort(port);
 
+	window.isPrimaryWindow = true;
+
 	// enable connection logs
 	// enableConnectionLogs(true);
 

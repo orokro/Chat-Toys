@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import { ref, provide, onBeforeMount } from 'vue'
+import { ref, provide, onBeforeMount, onBeforeUnmount } from 'vue'
 import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
 import ChatToysApp from '../scripts/ChatToysApp';
 import KaraokeQueueManager from '../toys/KaraokeQueue/KaraokeQueueManager.vue';
@@ -19,6 +19,10 @@ onBeforeMount(() => {
 	ctApp = new ChatToysApp();
 	provide('ctApp', ctApp);
 	ready.value = true;
+});
+
+onBeforeUnmount(() => {
+	if (ctApp) ctApp.end();
 });
 </script>
 

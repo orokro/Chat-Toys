@@ -17,6 +17,7 @@ const socketPort = (location.port==8080) ? paramPortOrDefault : hostPort;
 
 // tell our library which port to use
 setGlobalSocketRefPort(socketPort);
+window.isPrimaryWindow = false;
 // enableConnectionLogs(true);
 
 createApp(Live).mount('#app');
