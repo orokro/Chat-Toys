@@ -138,7 +138,6 @@ const toy = computed(() => ctApp.toyManager.getToyBySlug(KaraokeQueue.slug));
 
 const pendingRequests = ref([]);
 const approvedRequests = ref([]);
-const playedSongs = ref([]);
 const currentVideo = ref({ videoId: null, title: '', state: 'idle', timestamp: 0 });
 const manualUrl = ref('');
 
@@ -149,10 +148,6 @@ watch(() => toy.value?.pendingRequests.value, (newVal) => {
 
 watch(() => toy.value?.approvedRequests.value, (newVal) => {
 	if (newVal) approvedRequests.value = [...newVal];
-}, { immediate: true });
-
-watch(() => toy.value?.playedSongs.value, (newVal) => {
-	if (newVal) playedSongs.value = [...newVal];
 }, { immediate: true });
 
 watch(() => toy.value?.currentVideo.value, (newVal) => {
@@ -194,7 +189,7 @@ function removeRequest(song, list) {
 	} else {
 		toy.value.approvedRequests.value = approvedRequests.value.filter(s => s.id !== song.id);
 		// Also remove from played if it was there
-		toy.value.playedSongs.value = playedSongs.value.filter(s => s.videoId !== song.videoId);
+		toy.value.playedSongs.value = toy.value.playedSongs.value.filter(s => s.videoId !== song.videoId);
 	}
 }
 
@@ -216,18 +211,32 @@ function playSong(song) {
 	};
 	toy.value.currentVideo.value = newState;
 	
-	// Mark as played and move to top of history
+	markAsPlayed(song);
+}
+
+function markAsPlayed(song) {
+	if (!song || !song.videoId) return;
+	
+	// Mark as played and move to top of history if not already there
 	if (!isPlayed(song)) {
-		toy.value.playedSongs.value = [song, ...playedSongs.value];
+		toy.value.playedSongs.value = [song, ...toy.value.playedSongs.value];
 	}
 }
 
 function isPlayed(song) {
-	return playedSongs.value.some(s => s.videoId === song.videoId);
+	if (!toy.value || !song) return false;
+	return toy.value.playedSongs.value.some(s => s.videoId === song.videoId);
 }
 
 function playVideo() {
-	toy.value.currentVideo.value = { ...currentVideo.value, state: 'playing' };
+	const newState = { ...currentVideo.value, state: 'playing', timestamp: Date.now() };
+	toy.value.currentVideo.value = newState;
+
+	// Also mark the current video as played if it's in our approved list
+	const song = approvedRequests.value.find(s => s.videoId === newState.videoId);
+	if (song) {
+		markAsPlayed(song);
+	}
 }
 
 function pauseVideo() {
@@ -240,7 +249,14 @@ function togglePlay() {
 }
 
 function restartVideo() {
-	toy.value.currentVideo.value = { ...currentVideo.value, state: 'playing', timestamp: Date.now() };
+	const newState = { ...currentVideo.value, state: 'playing', timestamp: Date.now() };
+	toy.value.currentVideo.value = newState;
+
+	// Ensure it's marked as played
+	const song = approvedRequests.value.find(s => s.videoId === newState.videoId);
+	if (song) {
+		markAsPlayed(song);
+	}
 }
 
 async function addManualSong() {
