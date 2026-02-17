@@ -7,6 +7,7 @@
 
 // node/electron imports
 import { app, BrowserWindow, ipcMain, session } from 'electron';
+import { join } from 'path';
 
 // local imports
 import { createMainWindow } from './windows/MainWindow.js';
@@ -107,6 +108,28 @@ app.whenReady().then(() => {
 	// Create the window.
 	mainWindow = createMainWindow();
 	openedWindows.push(mainWindow);
+
+	// Ensure new windows (like Karaoke Manager) have the correct preload and settings
+	mainWindow.webContents.setWindowOpenHandler(({ url, frameName }) => {
+		if (frameName === 'KaraokeQueueManager') {
+			const dbPath = join(app.getPath('userData'), 'ytct.db');
+			return {
+				action: 'allow',
+				overrideBrowserWindowOptions: {
+					width: 1000,
+					height: 900,
+					webPreferences: {
+						preload: join(__dirname, 'windows', 'preload.js'),
+						additionalArguments: [`--dbPath=${dbPath}`],
+						nodeIntegration: false,
+						contextIsolation: true,
+						sandbox: false
+					}
+				}
+			}
+		}
+		return { action: 'allow' }
+	});
 
 	// build a chat tester window
 	chatTesterWindow = createChatTesterWindow();

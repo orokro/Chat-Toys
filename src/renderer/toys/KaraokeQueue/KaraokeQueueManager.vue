@@ -52,62 +52,58 @@
 				<div class="colHeader">
 					<h2>Pending Requests ({{ pendingRequests.length }})</h2>
 				</div>
-				<draggable 
-					v-model="pendingRequests" 
-					item-key="id" 
-					class="songList" 
-					group="songs"
-					@change="saveLists"
-				>
-					<template #item="{ element }">
-						<div class="songItem" @click="selectVideo(element)">
-							<img :src="element.thumbnail" class="thumb" />
-							<div class="songInfo">
-								<span class="title">{{ element.title }}</span>
-								<span class="requester">By: {{ element.requestedBy }}</span>
-							</div>
-							<div class="actions">
-								<button class="approveBtn" @click.stop="approveRequest(element)">
-									<span class="material-icons">check_circle</span>
-								</button>
-								<button class="denyBtn" @click.stop="removeRequest(element, 'pending')">
-									<span class="material-icons">cancel</span>
-								</button>
-							</div>
+				<div class="songList">
+					<div v-for="(element, index) in pendingRequests" :key="element.id" class="songItem" @click="selectVideo(element)">
+						<img :src="element.thumbnail" class="thumb" />
+						<div class="songInfo">
+							<span class="title">{{ element.title }}</span>
+							<span class="requester">By: {{ element.requestedBy }}</span>
 						</div>
-					</template>
-				</draggable>
+						<div class="actions">
+							<button class="reorderBtn" @click.stop="moveItem(pendingRequests, index, -1, 'pending')" :disabled="index === 0">
+								<span class="material-icons">arrow_upward</span>
+							</button>
+							<button class="reorderBtn" @click.stop="moveItem(pendingRequests, index, 1, 'pending')" :disabled="index === pendingRequests.length - 1">
+								<span class="material-icons">arrow_downward</span>
+							</button>
+							<button class="approveBtn" @click.stop="approveRequest(element)">
+								<span class="material-icons">check_circle</span>
+							</button>
+							<button class="denyBtn" @click.stop="removeRequest(element, 'pending')">
+								<span class="material-icons">cancel</span>
+							</button>
+						</div>
+					</div>
+				</div>
 			</div>
 
 			<div class="column approvedColumn">
 				<div class="colHeader">
 					<h2>Approved Queue ({{ approvedRequests.length }})</h2>
 				</div>
-				<draggable 
-					v-model="approvedRequests" 
-					item-key="id" 
-					class="songList" 
-					group="songs"
-					@change="saveLists"
-				>
-					<template #item="{ element }">
-						<div class="songItem" :class="{ played: isPlayed(element) }" @click="selectVideo(element)">
-							<img :src="element.thumbnail" class="thumb" />
-							<div class="songInfo">
-								<span class="title">{{ element.title }}</span>
-								<span class="requester">By: {{ element.requestedBy }}</span>
-							</div>
-							<div class="actions">
-								<button class="playSongBtn" @click.stop="playSong(element)">
-									<span class="material-icons">play_circle_filled</span>
-								</button>
-								<button class="denyBtn" @click.stop="removeRequest(element, 'approved')">
-									<span class="material-icons">delete</span>
-								</button>
-							</div>
+				<div class="songList">
+					<div v-for="(element, index) in approvedRequests" :key="element.id" class="songItem" :class="{ played: isPlayed(element) }" @click="selectVideo(element)">
+						<img :src="element.thumbnail" class="thumb" />
+						<div class="songInfo">
+							<span class="title">{{ element.title }}</span>
+							<span class="requester">By: {{ element.requestedBy }}</span>
 						</div>
-					</template>
-				</draggable>
+						<div class="actions">
+							<button class="reorderBtn" @click.stop="moveItem(approvedRequests, index, -1, 'approved')" :disabled="index === 0">
+								<span class="material-icons">arrow_upward</span>
+							</button>
+							<button class="reorderBtn" @click.stop="moveItem(approvedRequests, index, 1, 'approved')" :disabled="index === approvedRequests.length - 1">
+								<span class="material-icons">arrow_downward</span>
+							</button>
+							<button class="playSongBtn" @click.stop="playSong(element)">
+								<span class="material-icons">play_circle_filled</span>
+							</button>
+							<button class="denyBtn" @click.stop="removeRequest(element, 'approved')">
+								<span class="material-icons">delete</span>
+							</button>
+						</div>
+					</div>
+				</div>
 			</div>
 		</section>
 
@@ -132,8 +128,7 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, onMounted } from 'vue';
-import draggable from 'vuedraggable';
+import { ref, computed, inject, watch } from 'vue';
 import KaraokeQueue from './KaraokeQueue';
 
 const ctApp = inject('ctApp');
@@ -163,10 +158,20 @@ watch(() => toy.value?.currentVideo.value, (newVal) => {
 }, { immediate: true });
 
 
-function saveLists() {
-	if (!toy.value) return;
-	toy.value.pendingRequests.value = [...pendingRequests.value];
-	toy.value.approvedRequests.value = [...approvedRequests.value];
+function moveItem(list, index, direction, listName) {
+	const newIndex = index + direction;
+	if (newIndex < 0 || newIndex >= list.length) return;
+
+	const newList = [...list];
+	const item = newList[index];
+	newList.splice(index, 1);
+	newList.splice(newIndex, 0, item);
+
+	if (listName === 'pending') {
+		toy.value.pendingRequests.value = newList;
+	} else {
+		toy.value.approvedRequests.value = newList;
+	}
 }
 
 function enableToy() {
@@ -192,7 +197,7 @@ function removeRequest(song, list) {
 }
 
 function selectVideo(song) {
-	// Previews the video in the top box but doesn't change global play state unless play is hit
+	// Previews the video in the top box but doesn't change global play state
 	currentVideo.value = { 
 		...currentVideo.value, 
 		videoId: song.videoId, 
@@ -407,6 +412,11 @@ async function addManualSong() {
 							&.approveBtn { color: #27ae60; }
 							&.denyBtn { color: #e74c3c; }
 							&.playSongBtn { color: #3498db; }
+							&.reorderBtn { 
+								color: #888; 
+								&:hover:not(:disabled) { color: white; }
+								&:disabled { opacity: 0.3; cursor: default; }
+							}
 						}
 					}
 				}
