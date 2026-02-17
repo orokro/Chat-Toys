@@ -38,6 +38,7 @@ const config = defineConfig({
 				main: Path.join(__dirname, 'src', 'renderer', 'index.html'),
 				live: Path.join(__dirname, 'src', 'renderer', 'live.html'),
 				test: Path.join(__dirname, 'src', 'renderer', 'obsTestPage.html'),
+				queueManager: Path.join(__dirname, 'src', 'renderer', 'queue-manager.html'),
 			},
 		},
 	},

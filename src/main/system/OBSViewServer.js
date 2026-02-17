@@ -272,6 +272,15 @@ class OBSViewServer {
 					res.sendFile('live.html', { root: rendererPath });
 				});
 
+				// Serve queue-manager.html manually
+				expressApp.get('/live/queue-manager/', (req, res) => {
+					res.sendFile('queue-manager.html', { root: rendererPath });
+				});
+
+				expressApp.get('/live/queue-manager.html', (req, res) => {
+					res.sendFile('queue-manager.html', { root: rendererPath });
+				});
+
 				// Serve static assets, but disable default index.html serving
 				expressApp.use('/live', express.static(rendererPath, {
 					index: false,
