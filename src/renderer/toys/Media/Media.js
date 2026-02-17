@@ -131,17 +131,20 @@ export default class Media extends Toy {
 	 * Queues a media item when command is run
 	 * 
 	 * @param {Object} msg - the message object that invoked the command
-	 * @param {String} slug - the command slug
+	 * @param {String} shortSlug - the command slug suffix (e.g. "1")
 	 */
-	queueMediaItem(msg, slug) {
+	queueMediaItem(msg, shortSlug) {
+
+		// reconstruct the full slug (e.g. "media__1")
+		const fullSlug = this.static.slugify(shortSlug);
 
 		// get the media item from the settings via slug
 		const mediaAssets = this.settings.mediaAssets.value;
-		const mediaItem = mediaAssets.find(item => item.commandSlug === slug);
+		const mediaItem = mediaAssets.find(item => item.commandSlug === fullSlug);
 
 		// GTFO if we don't have this item
 		if (!mediaItem) {
-			console.error(`Media item not found for slug: ${slug}`);
+			console.error(`Media item not found for slug: ${fullSlug}`);
 			return;
 		}
 
