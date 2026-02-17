@@ -147,6 +147,8 @@ function reconcileMediaAssets(currentCommands){
 				hasSound: true,
 				soundId: "13",
 				duration: 10,
+				volume: 1,
+				scale: 1,
 			});
 		}
 	});

@@ -60,6 +60,8 @@ export default class Media extends Toy {
 		this.message = socketShallowRef(this.static.slugify('message'), '');
 		this.soundPath = socketShallowRef(this.static.slugify('soundPath'), null);
 		this.imagePath = socketShallowRef(this.static.slugify('imagePath'), null);
+		this.volume = socketShallowRef(this.static.slugify('volume'), 1);
+		this.scale = socketShallowRef(this.static.slugify('scale'), 1);
 
 	}
 
@@ -129,16 +131,19 @@ export default class Media extends Toy {
 	 * Queues a media item when command is run
 	 * 
 	 * @param {Object} msg - the message object that invoked the command
-	 * @param {String} item - the raw media slug i.e. _1, _2, etc
+	 * @param {String} slug - the command slug
 	 */
-	queueMediaItem(msg, item) {
+	queueMediaItem(msg, slug) {
 
-		// convert the item to index
-		const mediaIndex = parseInt(item, 10)-1;
-
-		// get the media item from the settings
+		// get the media item from the settings via slug
 		const mediaAssets = this.settings.mediaAssets.value;
-		const mediaItem = mediaAssets[mediaIndex];
+		const mediaItem = mediaAssets.find(item => item.commandSlug === slug);
+
+		// GTFO if we don't have this item
+		if (!mediaItem) {
+			console.error(`Media item not found for slug: ${slug}`);
+			return;
+		}
 
 		// show on system console
 		this.chatToysApp.log.msg(`${msg.author} used media !${mediaItem.commandName}`);
@@ -149,6 +154,8 @@ export default class Media extends Toy {
 			imagePath: mediaItem.hasImage ? this.getAssetPath(mediaItem.imageId) : null,
 			soundPath: mediaItem.hasSound ? this.getAssetPath(mediaItem.soundId) : null,
 			duration: mediaItem.duration,
+			volume: mediaItem.volume !== undefined ? mediaItem.volume : 1,
+			scale: mediaItem.scale !== undefined ? mediaItem.scale : 1,
 		}
 		this.stateTickerQueue.addToQueue(queueItem);
 	}
@@ -170,6 +177,11 @@ export default class Media extends Toy {
 		this.message.value = mediaItem.message;
 		this.soundPath.value = mediaItem.soundPath;
 		this.imagePath.value = mediaItem.imagePath;
+
+		// notify our socket refs for volume and scale
+		this.volume.value = mediaItem.volume;
+		this.scale.value = mediaItem.scale;
+
 		this.stateTimeout = window.setElectronTimeout(()=>{
 			this.mode.value = 'PLAY';
 		}, 100);
