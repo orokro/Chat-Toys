@@ -57,6 +57,8 @@ export default class Media extends Toy {
 
 		// live socket settings
 		this.mode = socketShallowRef(this.static.slugify('mode'), 'IDLE');
+		this.author = socketShallowRef(this.static.slugify('author'), '');
+		this.commandName = socketShallowRef(this.static.slugify('commandName'), '');
 		this.message = socketShallowRef(this.static.slugify('message'), '');
 		this.soundPath = socketShallowRef(this.static.slugify('soundPath'), null);
 		this.imagePath = socketShallowRef(this.static.slugify('imagePath'), null);
@@ -162,7 +164,8 @@ export default class Media extends Toy {
 
 		// repack the media item into a queue item
 		const queueItem = {
-			message: `${msg.author} used !${mediaItem.commandName}`,
+			author: msg.author,
+			commandName: mediaItem.commandName,
 			imagePath: mediaItem.hasImage ? this.getAssetPath(mediaItem.imageId) : null,
 			soundPath: mediaItem.hasSound ? this.getAssetPath(mediaItem.soundId) : null,
 			duration: mediaItem.duration,
@@ -186,7 +189,8 @@ export default class Media extends Toy {
 
 		// otherwise, set the media item
 		const mediaItem = data;
-		this.message.value = mediaItem.message;
+		this.author.value = mediaItem.author;
+		this.commandName.value = mediaItem.commandName;
 		this.soundPath.value = mediaItem.soundPath;
 		this.imagePath.value = mediaItem.imagePath;
 

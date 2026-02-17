@@ -13,19 +13,34 @@
 		:class="{ 
 			idle: mode === 'IDLE',
 			demoMode: demoMode,
+			showTextShadow: socketSettingsRef?.chatterNameShadow
+		}"
+		:style="{
+			'--chatterNameColor': socketSettingsRef?.chatterNameColor || '#00ABAE',
+			'--chatterTextColor': socketSettingsRef?.chatterTextColor || '#FFFFFF',
+			'--chatterNameFontSize': (socketSettingsRef?.chatterNameFontSize || 25) + 'px',
 		}"
 	>
-		<!-- the main money - head pat gif -->
+		<!-- the main media image/gif -->
 		<img 
 			v-if="demoMode || imagePath !== null"
-			width="100%"
 			class="mediaImage"
 			:src="demoMode ? 'builtin/yay.gif' : imagePath"
+			:style="{
+				transform: `scale(${scale})`,
+				transformOrigin: 'top left',
+				maxWidth: '100%',
+				maxHeight: '100%',
+				objectFit: 'contain'
+			}"
 		/>
 
-		<!-- the name of the user doing the pat -->
-		<div class="messageText">
-			{{ demoMode ? 'yay! lets goooooo!' : message }}
+		<!-- the message / user name -->
+		<div 
+			v-if="socketSettingsRef?.showPatterName"
+			class="messageText"
+		>
+			<span class="authorName">{{ demoMode ? 'yay!' : author }}</span> {{ demoMode ? ' lets goooooo!' : 'used !' + commandName }}
 		</div>
 
 	</div>
@@ -68,15 +83,19 @@ const socketSettingsRef = useToySettings('media', 'widgetBox', emit, () => {
 // gets live sockets
 const demoMode = socketShallowRefReadOnly('demoMode', false);
 const mode = socketShallowRefReadOnly(slugify('mode'), 'IDLE');
-const message = socketShallowRefReadOnly(slugify('message'), '');
+const author = socketShallowRefReadOnly(slugify('author'), '');
+const commandName = socketShallowRefReadOnly(slugify('commandName'), '');
 const soundPath = socketShallowRefReadOnly(slugify('soundPath'), null);
 const imagePath = socketShallowRefReadOnly(slugify('imagePath'), null);
+const volume = socketShallowRefReadOnly(slugify('volume'), 1);
+const scale = socketShallowRefReadOnly(slugify('scale'), 1);
 
 // we only want to play the sound when we switch from IDLE to PLAY
 watch(mode, (newVal) => {
 
 	if(newVal === 'PLAY' && soundPath.value !== null) {
 		const audio = new Audio(soundPath.value);
+		audio.volume = volume.value !== undefined ? volume.value : 1;
 		audio.play();
 	}
 });
@@ -98,13 +117,20 @@ watch(mode, (newVal) => {
 		transform: scale(1);
 		opacity: 1;
 		&.idle {
-			/* transform: scale(0); */
 			opacity: 0;
 		}
 
 		&.demoMode {
 			border: 1px dashed rgba(255, 255, 255, 0.5) !important;
 			transform: scale(1);
+		}
+
+		// image positioning
+		.mediaImage {
+			position: absolute;
+			top: 0;
+			left: 0;
+			display: block;
 		}
 
 		// text settings
@@ -115,16 +141,30 @@ watch(mode, (newVal) => {
 			top: 0px;
 			left: 0px;
 
-			color: white;
+			color: var(--chatterTextColor);
 
 			// text settings
-			text-shadow: 2px 2px 0px black;
-			font-size: 25px;
+			font-size: var(--chatterNameFontSize);
 			font-weight: bold;
 			text-align: left;
 			white-space: nowrap;
 
+			.authorName {
+				color: var(--chatterNameColor);
+			}
+
+			// Optional shadow
+			&.showTextShadow {
+				text-shadow: 0.1em 0.085em 0px black;
+			}
+
 		}// .messageText
+
+		&.showTextShadow {
+			.messageText {
+				text-shadow: 0.1em 0.085em 0px black;
+			}
+		}
 
 	}// .mediaWidget
 
