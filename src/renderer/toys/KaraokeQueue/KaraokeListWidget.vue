@@ -17,7 +17,7 @@
 				class="songEntry"
 				:class="{ 'isPlayed': isPlayed(song) }"
 			>
-				<span class="requester" v-if="song.requestedBy !== 'Streamer'">[{{ song.requestedBy }}] </span>
+				<span class="requester" v-if="socketSettingsRef?.showRequesterName && song.requestedBy !== 'Streamer'">[{{ song.requestedBy }}] </span>
 				<span class="title">{{ song.title }}</span>
 			</div>
 		</div>

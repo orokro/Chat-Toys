@@ -78,6 +78,7 @@ export default class KaraokeQueue extends Toy {
 			playedSongsColor: ref('#888888'),
 			showPendingCount: ref(true),
 			showPendingList: ref(true),
+			showRequesterName: ref(true),
 			hidePlayedSongs: ref(false),
 			
 			listWidgetBox: shallowRef({

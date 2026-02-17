@@ -161,11 +161,26 @@ export default class Toy {
 		// now for some magic - we'll watch the settings object for changes
 		// and update a socket ref with the json, so our live page can update
 		this.settingsSocketRef = socketShallowRef(blockNameKebab + '-settings', this.settingsStorRef.value);
-		this.stopSettingsSocketWatch = watch(this.settingsStorRef, (newVal) => {
-			this.settingsSocketRef.value = newVal;
-		});
-		window.setElectronTimeout(()=>
-			this.settingsSocketRef.value = this.settingsStorRef.value, 1000);
+
+		// FEEDBACK LOOP PREVENTION:
+		// Only the primary window (the dashboard) should sync from local storage to the socket.
+		// Secondary windows (like OBS widgets or popout managers) should be passive.
+		const isPrimaryWindow = !window.location.pathname.includes('/live/') && 
+								!window.location.pathname.includes('queue-manager.html') &&
+								!window.location.pathname.includes('chatTester.html');
+
+		if (isPrimaryWindow) {
+			this.stopSettingsSocketWatch = watch(this.settingsStorRef, (newVal) => {
+				this.settingsSocketRef.value = newVal;
+			});
+			window.setElectronTimeout(()=>
+				this.settingsSocketRef.value = this.settingsStorRef.value, 1000);
+		} else {
+			// In secondary windows, we don't watch settingsStorRef.
+			// Instead, we might want to sync FROM the socket TO the settingsStorRef if needed,
+			// but usually these windows just read from the socket directly via useToySettings.
+			this.stopSettingsSocketWatch = () => {}; 
+		}
 	}
 
 

@@ -74,6 +74,11 @@
 				<p>Show the full list of pending requests below approved ones.</p>
 			</SettingsInputRow>
 
+			<SettingsInputRow type="boolean" v-model="showRequesterName">
+				<template #title>Show Requester Name</template>
+				<p>Show the name of the chatter who requested each song in the list.</p>
+			</SettingsInputRow>
+
 			<SettingsInputRow type="boolean" v-model="hidePlayedSongs">
 				<template #title>Hide Played Songs</template>
 				<p>Remove played songs from the List Widget entirely.</p>
@@ -102,6 +107,7 @@ const {
 	playedSongsColor,
 	showPendingCount,
 	showPendingList,
+	showRequesterName,
 	hidePlayedSongs
 } = toy.settings;
 

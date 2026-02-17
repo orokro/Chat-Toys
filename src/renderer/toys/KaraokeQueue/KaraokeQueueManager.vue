@@ -35,9 +35,11 @@
 			<div class="playbackControls" v-if="currentVideo.videoId">
 				<h3>Now Playing: {{ currentVideo.title }}</h3>
 				<div class="btnGroup">
-					<button @click="togglePlay" class="controlBtn">
-						<span class="material-icons">{{ currentVideo.state === 'playing' ? 'pause' : 'play_arrow' }}</span>
-						{{ currentVideo.state === 'playing' ? 'Pause' : 'Play' }}
+					<button @click="playVideo" class="controlBtn play" :class="{ active: currentVideo.state === 'playing' }">
+						<span class="material-icons">play_arrow</span> Play
+					</button>
+					<button @click="pauseVideo" class="controlBtn pause" :class="{ active: currentVideo.state === 'paused' }">
+						<span class="material-icons">pause</span> Pause
 					</button>
 					<button @click="restartVideo" class="controlBtn">
 						<span class="material-icons">replay</span> Restart
@@ -224,6 +226,14 @@ function isPlayed(song) {
 	return playedSongs.value.some(s => s.videoId === song.videoId);
 }
 
+function playVideo() {
+	toy.value.currentVideo.value = { ...currentVideo.value, state: 'playing' };
+}
+
+function pauseVideo() {
+	toy.value.currentVideo.value = { ...currentVideo.value, state: 'paused' };
+}
+
 function togglePlay() {
 	const newState = currentVideo.value.state === 'playing' ? 'paused' : 'playing';
 	toy.value.currentVideo.value = { ...currentVideo.value, state: newState };
@@ -295,7 +305,7 @@ async function addManualSong() {
 	}
 
 	.playbackSection {
-		padding: 20px;
+		padding: 20px 20px 40px 20px;
 		background: #222;
 		display: flex;
 		gap: 20px;
@@ -319,7 +329,7 @@ async function addManualSong() {
 				position: relative;
 				.ytLink {
 					position: absolute;
-					bottom: -25px;
+					bottom: -35px;
 					left: 0;
 					font-size: 12px;
 					color: #3498db;
@@ -350,6 +360,11 @@ async function addManualSong() {
 					background: #34495e;
 					color: white;
 					&:hover { background: #4e6a85; }
+
+					&.active {
+						&.play { background: #27ae60; }
+						&.pause { background: #f39c12; }
+					}
 				}
 			}
 		}
@@ -362,6 +377,7 @@ async function addManualSong() {
 
 		.column {
 			flex: 1;
+			min-width: 0; // CRITICAL: Allow columns to shrink below content size
 			display: flex;
 			flex-direction: column;
 			border-right: 1px solid #333;
@@ -388,24 +404,40 @@ async function addManualSong() {
 					border-radius: 4px;
 					cursor: pointer;
 					transition: transform 0.1s;
+					min-width: 0; // Allow item to shrink
 
 					&:hover { background: #333; }
 					&.played { opacity: 0.6; filter: grayscale(0.5); border-left: 4px solid #555; }
 
-					.thumb { width: 60px; height: 45px; object-fit: cover; border-radius: 2px; }
+					.thumb { 
+						width: 60px; 
+						height: 45px; 
+						object-fit: cover; 
+						border-radius: 2px;
+						flex-shrink: 0; // Don't squash the thumb
+					}
 					
 					.songInfo {
 						flex: 1;
 						display: flex;
 						flex-direction: column;
-						overflow: hidden;
-						.title { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+						overflow: hidden; // Truncate content
+						min-width: 0; 
+
+						.title { 
+							font-size: 13px; 
+							font-weight: bold; 
+							white-space: nowrap; 
+							overflow: hidden; 
+							text-overflow: ellipsis; 
+						}
 						.requester { font-size: 11px; color: #888; }
 					}
 
 					.actions {
 						display: flex;
 						gap: 5px;
+						flex-shrink: 0; // Don't squash buttons
 						button {
 							background: none; border: none; padding: 0; cursor: pointer;
 							.material-icons { font-size: 20px; }

@@ -7,11 +7,13 @@
 		<div v-if="currentVideo.videoId" class="videoWrapper">
 			<!-- We use a key based on videoId + timestamp to force a reload when restarted -->
 			<iframe 
+				ref="iframeRef"
 				:key="currentVideo.videoId + '_' + currentVideo.timestamp"
 				:src="videoUrl" 
 				frameborder="0" 
 				allow="autoplay; encrypted-media" 
-				class="ytIframe">
+				class="ytIframe"
+				@load="handleIframeLoad">
 			</iframe>
 		</div>
 		<div v-else class="idlePlaceholder"></div>
@@ -38,20 +40,41 @@ const socketSettingsRef = useToySettings(thisSlug, 'videoWidgetBox', emit, () =>
 
 const currentVideo = socketShallowRefReadOnly(slugify('currentVideo'), { videoId: null, state: 'idle', timestamp: 0 });
 
+const iframeRef = ref(null);
+
 const videoUrl = computed(() => {
 	if (!currentVideo.value.videoId) return '';
 	
 	let url = `https://www.youtube.com/embed/${currentVideo.value.videoId}?autoplay=1&controls=0&enablejsapi=1&iv_load_policy=3&modestbranding=1&rel=0`;
-	
-	// If paused, we can't easily pause an iframe from outside without the API, 
-	// but for now, we assume if it's set to 'paused' the user just doesn't want it visible or we'll let it keep running
-	// In a more complex version we would use window.postMessage to the iframe.
-	
 	return url;
 });
 
-// If the state is 'paused', we could hide the video, but usually streamers just want it to keep going
-// until they manually stop it or it finishes. 
+function sendCommand(cmd) {
+	if (!iframeRef.value || !iframeRef.value.contentWindow) return;
+	
+	iframeRef.value.contentWindow.postMessage(JSON.stringify({
+		event: 'command',
+		func: cmd,
+		args: ''
+	}), '*');
+}
+
+// When iframe loads, check if we should immediately pause
+function handleIframeLoad() {
+	if (currentVideo.value.state === 'paused') {
+		sendCommand('pauseVideo');
+	}
+}
+
+// Watch for state changes to send commands to the iframe
+watch(() => currentVideo.value.state, (newState) => {
+	const command = newState === 'playing' ? 'playVideo' : 'pauseVideo';
+	sendCommand(command);
+});
+
+// If the timestamp changes, it means a restart was requested. 
+// Since we have :key="currentVideo.videoId + '_' + currentVideo.timestamp" on the iframe,
+// Vue will automatically recreate the iframe, which performs a natural restart.
 </script>
 
 <style lang="scss" scoped>
