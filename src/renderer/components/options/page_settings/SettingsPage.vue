@@ -17,6 +17,7 @@
 		<VTubeStudioPage v-if="selectedPage === 'vtsSettings'" />
 		<PluginPage v-if="selectedPage === 'plugin'" />
 		<CommandsDescPage v-if="selectedPage === 'copy_details'" />
+		<BTTVPage v-if="selectedPage === 'bttv'" />
 
 	</VerticalItemsPage>
 
@@ -35,6 +36,7 @@ import ChatPage from './pages/ChatPage.vue';
 import TwitchPage from './pages/TwitchPage.vue';
 import PluginPage from './pages/PluginPage.vue';
 import CommandsDescPage	 from './pages/CommandsDescPage.vue';
+import BTTVPage from './pages/BTTVPage.vue';
 
 // this will generate the icons for the vertical strip items
 const pageItems = [
@@ -53,6 +55,10 @@ const pageItems = [
 	{
 		slug: 'vtsSettings',
 		name: 'VTubeStudio Settings',
+	},
+	{
+		slug: 'bttv',
+		name: 'BTTV Integration',
 	},
 	{
 		slug: 'copy_details',
