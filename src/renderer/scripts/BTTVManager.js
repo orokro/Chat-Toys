@@ -49,6 +49,12 @@ export class BTTVManager {
 		// Whether BTTV integration is enabled
 		this.enabled = chromeRef('bttv_enabled', false);
 
+		// Whether to use global BTTV emojis
+		this.useGlobal = chromeRef('bttv_use_global', true);
+
+		// Manually added shared emojis
+		this.manualEmojis = chromeShallowRef('bttv_manual_emojis', []);
+
 		// Specific Twitch channel IDs to pull extra emojis from
 		// (Users should provide numerical Twitch IDs for the BTTV API)
 		this.twitchChannels = chromeShallowRef('bttv_twitch_channels', []);
@@ -90,6 +96,21 @@ export class BTTVManager {
 			}
 		}, { immediate: true });
 
+		// Watch for changes in global toggle
+		watch(this.useGlobal, () => {
+			if (this.enabled.value) {
+				this._log('info', 'BTTV Global toggle changed, refreshing');
+				this.init();
+			}
+		});
+
+		// Watch for changes in manual emojis
+		watch(this.manualEmojis, () => {
+			if (this.enabled.value) {
+				this.init();
+			}
+		}, { deep: true });
+
 		// Watch for changes in extra channels
 		watch(this.twitchChannels, () => {
 			if (this.enabled.value) {
@@ -109,8 +130,62 @@ export class BTTVManager {
 	async init() {
 		if (!this.enabled.value) return;
 
-		await this._loadGlobalEmojis();
+		this.emojis.clear();
+		
+		if (this.useGlobal.value) {
+			await this._loadGlobalEmojis();
+		}
+
 		await this._refreshChannelEmojis();
+		this._loadManualEmojis();
+	}
+
+	/**
+	 * Loads manually added emojis into the memory map
+	 */
+	_loadManualEmojis() {
+		this._log('info', `Loading ${this.manualEmojis.value.length} manually added emojis`);
+		this._processEmojiList(this.manualEmojis.value, 'manual');
+	}
+
+	/**
+	 * Adds an emoji to the manual list
+	 * 
+	 * @param {Object} emoji - {id, code}
+	 */
+	addManualEmoji(emoji) {
+		if (this.isManualEmoji(emoji.id)) return;
+
+		this.manualEmojis.value = [...this.manualEmojis.value, {
+			id: emoji.id,
+			code: emoji.code
+		}];
+		this._log('info', `Added manual emoji: ${emoji.code}`);
+		this.init(); // Refresh to update memory map
+	}
+
+	/**
+	 * Removes an emoji from the manual list
+	 * 
+	 * @param {string} emojiId 
+	 */
+	removeManualEmoji(emojiId) {
+		const emoji = this.manualEmojis.value.find(e => e.id === emojiId);
+		this.manualEmojis.value = this.manualEmojis.value.filter(e => e.id !== emojiId);
+		if (emoji) {
+			this._log('info', `Removed manual emoji: ${emoji.code}`);
+		}
+		this.init(); // Refresh to update memory map
+	}
+
+	/**
+	 * Checks if an emoji is in the manual list
+	 * 
+	 * @param {string} emojiId 
+	 * @returns {boolean}
+	 */
+	isManualEmoji(emojiId) {
+		return this.manualEmojis.value.some(e => e.id === emojiId);
 	}
 
 	/**

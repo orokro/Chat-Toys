@@ -45,7 +45,27 @@
 				<template #title>Enable BTTV Integration</template>
 				<p>When enabled, Chat-Toys will fetch global BTTV emojis and cache them locally.</p>
 			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="useGlobal"
+			>
+				<template #title>Use Global BTTV Emojis</template>
+				<p>When enabled, Chat-Toys will fetch and use the standard global BTTV emojis.</p>
+			</SettingsInputRow>
 		</div>
+
+		<SectionHeader title="Enabled BTTV Emojis"/>
+		<p>
+			The grid below shows all BTTV emojis currently active in the system.
+		</p>
+		<EnabledBTTVList />
+
+		<SectionHeader title="Browse & Search Shared Emojis"/>
+		<p>
+			Browse or search for shared BTTV emojis. Check an emoji to enable it permanently in Chat-Toys.
+		</p>
+		<BTTVBrowser />
 
 		<SectionHeader title="Channel Emojis"/>
 		<p>
@@ -92,12 +112,15 @@ import SettingsRow from '@components/options/SettingsRow.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayTextInput from '@components/options/ArrayTextInput.vue';
 import RawLogPreview from '../RawLogPreview.vue';
+import EnabledBTTVList from '../EnabledBTTVList.vue';
+import BTTVBrowser from '../BTTVBrowser.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
 
 // settings refs
 const bttvEnabled = ctApp.bttvMgr.enabled;
+const useGlobal = ctApp.bttvMgr.useGlobal;
 const twitchChannels = ctApp.bttvMgr.twitchChannels;
 
 // validation schema for twitch IDs (numeric strings)
