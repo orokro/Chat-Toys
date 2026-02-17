@@ -117,7 +117,7 @@ async function openQueueManager() {
 	
 	// Opens the manager in a new window
 	const isDev = window.location.port === '8080';
-	const url = isDev ? '/queue-manager.html' : `http://localhost:${port}/live/queue-manager/`;
+	const url = isDev ? '/queue-manager.html' : `http://localhost:${port}/live/queue-manager.html`;
 	window.open(url, 'KaraokeQueueManager', 'width=1000,height=900');
 }
 </script>

@@ -272,9 +272,9 @@ class OBSViewServer {
 					res.sendFile('live.html', { root: rendererPath });
 				});
 
-				// Serve queue-manager.html manually
+				// Redirect pretty URL to actual file to keep relative asset paths working
 				expressApp.get('/live/queue-manager/', (req, res) => {
-					res.sendFile('queue-manager.html', { root: rendererPath });
+					res.redirect('/live/queue-manager.html');
 				});
 
 				expressApp.get('/live/queue-manager.html', (req, res) => {
@@ -288,7 +288,7 @@ class OBSViewServer {
 
 				// Serve obsTestPage.html manually when accessing /obsTestPage/
 				expressApp.get('/obsTestPage/', (req, res) => {
-					res.sendFile('obsTestPage.html', { root: rendererPath });
+					res.redirect('/live/obsTestPage.html');
 				});
 
 				// Serve static assets, but disable default index.html serving
