@@ -62,6 +62,10 @@ export default class Media extends Toy {
 		this.imagePath = socketShallowRef(this.static.slugify('imagePath'), null);
 		this.volume = socketShallowRef(this.static.slugify('volume'), 1);
 		this.scale = socketShallowRef(this.static.slugify('scale'), 1);
+		this.chatterNameFontSize = socketShallowRef(this.static.slugify('chatterNameFontSize'), 25);
+		this.chatterNameColor = socketShallowRef(this.static.slugify('chatterNameColor'), '#00ABAE');
+		this.chatterTextColor = socketShallowRef(this.static.slugify('chatterTextColor'), '#FFFFFF');
+		this.chatterNameShadow = socketShallowRef(this.static.slugify('chatterNameShadow'), true);
 
 	}
 
@@ -86,6 +90,11 @@ export default class Media extends Toy {
 		this.buildSettingsBlock({
 
 			mediaAssets: shallowRef([]),
+			showPatterName: ref(true),
+			chatterNameFontSize: ref(25),
+			chatterNameColor: ref('#00ABAE'),
+			chatterTextColor: ref('#FFFFFF'),
+			chatterNameShadow: ref(true),
 			widgetBox: shallowRef({
 				x: 20,
 				y: 20,

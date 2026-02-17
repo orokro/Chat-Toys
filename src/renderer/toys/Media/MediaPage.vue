@@ -44,21 +44,11 @@
 		<WidgetSection :toy="toy" />
 		
 		<SectionHeader title="Settings"/>
+
+		<h2>Media Item Settings</h2>
+
 		<div class="settingsBlock">
-			<SettingsRow>
-				<h3>Media</h3>
-				<p>
-					Each command can show
-				</p>
-				<ul>
-					<li>an image</li>
-					<li>a sound</li>
-					<li>or both</li>
-				</ul>
-				<p>
-					You can also set the duration that the image will be shown for.
-				</p>
-				
+			<SettingsRow>				
 				<ArrayEdit
 					v-model="mediaAssets"
 					:component="ArrayMediaEdit"
@@ -67,6 +57,49 @@
 				/>
 			
 			</SettingsRow>
+		</div>
+
+		<br/>
+		<h2>Text Settings</h2>
+		<div class="settingsBlock">
+			<!-- <SettingsInputRow
+				type="boolean"
+				v-model="showPatterName"
+			>
+				<template #title>Show Patter Name</template>
+				<p>Show the name of the chatter who triggered the media</p>
+			</SettingsInputRow> -->
+			<SettingsInputRow
+				type="number"
+				v-model="chatterNameFontSize"
+				:min="8"
+				:max="72"
+				:step="1"
+			>
+				<template #title>Chatter Name Font Size</template>
+				<p>Font size to use for the chatter's name</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="chatterNameColor"
+			>
+				<template #title>Chatter Name Color</template>
+				<p>Color to use for the chatter's name</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="color"
+				v-model="chatterTextColor"
+			>
+				<template #title>Chatter Text Color</template>
+				<p>Color to use for any additional text shown</p>
+			</SettingsInputRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="chatterNameShadow"
+			>
+				<template #title>Chatter Name Shadow</template>
+				<p>Add a shadow to the name for better visibility</p>
+			</SettingsInputRow>
 		</div>
 		
 		<SectionHeader title="Video Help"/>
@@ -90,6 +123,7 @@ import SectionHeader from '@components/options/SectionHeader.vue';
 import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
+import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayMediaEdit from './ArrayMediaEdit.vue';
@@ -106,6 +140,11 @@ const toy = ctApp.toyManager.toys[Media.slug];
 // local settings refs
 const { 
 	mediaAssets,
+	showPatterName,
+	chatterNameFontSize,
+	chatterNameColor,
+	chatterTextColor,
+	chatterNameShadow,
 } = toy.settings;
 
 
