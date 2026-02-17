@@ -464,7 +464,7 @@ export class CommandProcessor {
 					streamID: msg.streamID,
 					command: commandData.command,
 					relativePoints: (this.enableCosts.value === true && commandData.costEnabled)
-						? commandData.cost
+						? -commandData.cost
 						: 0,
 				});
 
