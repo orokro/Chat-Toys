@@ -240,12 +240,14 @@ export class CommandProcessor {
 		// get from database
 		const userFromDB = window.ytctDB.getUser(id);
 
-		// patch ID on
-		userFromDB.id = id;
-
 		// if not null, return as is
-		if (userFromDB)
+		if (userFromDB){
+
+			// patch ID on
+			userFromDB.id = id;
+
 			return userFromDB;
+		}
 
 		// if not found, return a dummy user
 		return {
