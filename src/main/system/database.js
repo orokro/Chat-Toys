@@ -249,6 +249,25 @@ class DatabaseManager {
 
 
 	/**
+	 * Gets the top users by points
+	 * 
+	 * @param {Number} limit - the number of users to get
+	 * @returns {Array<Object>} - list of top users from the database
+	 */
+	getTopUsers(limit = 5) {
+		return this.db
+			.prepare(`
+				SELECT display_name, points 
+				FROM users 
+				WHERE banned = 0 AND youtube_id NOT LIKE 'fake-%'
+				ORDER BY points DESC 
+				LIMIT ?
+			`)
+			.all(limit);
+	}
+
+
+	/**
 	 * Updates a user's data in the database
 	 * 
 	 * @param {String} youtube_id - the channel id for a YouTuber user

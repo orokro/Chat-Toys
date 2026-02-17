@@ -183,6 +183,12 @@ export default class ChannelPoints extends Toy {
 				],
 				description: 'One user can give points to another user',
 				userDesc: 'Give points to another user!',
+			},
+			{
+				command: 'leaderboard',
+				description: 'Prints the top 5 chatters with the most points',
+				userDesc: 'Show the points leaderboard',
+				costEnabled: false,
 			},			
 		]);
 	}
@@ -214,6 +220,12 @@ export default class ChannelPoints extends Toy {
 		// handle give attempts
 		if(commandSlug === 'give'){
 			this.doGive(msg, user, params, handshake);
+			return;
+		}
+
+		// handle leaderboard attempts
+		if(commandSlug === 'leaderboard'){
+			this.doLeaderboard(msg, user, params, handshake);
 			return;
 		}
 		
@@ -300,6 +312,37 @@ export default class ChannelPoints extends Toy {
 			id: uuidv4(),
 			text: `${msg.author}: ₱ ${points}`,
 		}];
+
+		// we have accepted the command
+		handshake.accept();
+	}
+
+
+	/**
+	 * Prints the top 5 chatters with the most points
+	 * 
+	 * @param {Object} msg - the message object
+	 * @param {Object} user - the user object
+	 * @param {Object} params - the parameters passed to the command
+	 * @param {Object} handshake - object like { accept: Function, reject: Function } to accept or reject the command
+	 */
+	doLeaderboard(msg, user, params, handshake) {
+
+		// get the top 5 users
+		const topUsers = window.ytctDB.getTopUsers(5);
+
+		if (!topUsers || topUsers.length === 0) {
+			this.chatToysApp.log.info('Leaderboard is currently empty.');
+			handshake.accept();
+			return;
+		}
+
+		// format the leaderboard message
+		let leaderboardMsg = '🏆 Points Leaderboard: ';
+		leaderboardMsg += topUsers.map((u, i) => `${i + 1}. ${u.display_name} (₱ ${u.points})`).join(' | ');
+
+		// log to the system console/chat log
+		this.chatToysApp.log.info(leaderboardMsg);
 
 		// we have accepted the command
 		handshake.accept();
