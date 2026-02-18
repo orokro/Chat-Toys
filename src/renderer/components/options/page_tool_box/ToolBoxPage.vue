@@ -9,10 +9,10 @@
 	
 	<VerticalItemsPage
 		:verticalItems="verticalItems"
-		:selectedTab="ctApp.selectedToy.value"
+		:selectedTab="ctApp.selectedTool.value"
 		:showAddButton="allToysAdded===false"
 		:showDeleteButton="true"
-		@changeTab="(tab)=>ctApp.selectToy(tab)"
+		@changeTab="(tab)=>ctApp.selectTool(tab)"
 		@addItem="handleAddToy"			
 		@removeItem="(toy)=>handleRemoveToy(toy)"
 	>
@@ -21,7 +21,7 @@
 		<template v-if="verticalItems.length<=0">
 			<img
 				class="clickToAddFirstToy"
-				:src="'assets/click_to_add_first_tool.png'" 
+				:src="'assets/click_to_add_first_toy.png'" 
 				alt="arrow"
 			/>
 		</template>
@@ -56,10 +56,10 @@ import { openModal, promptModal } from "jenesius-vue-modal"
 const ctApp = inject('ctApp');
 
 
-// the component to load based on the current toy slug
+// the component to load based on the current tool slug
 const toyComponent = computed(() => {
 
-	const toySlug = ctApp.selectedToy.value;
+	const toySlug = ctApp.selectedTool.value;
 	if (!toySlug) return null;
 	
 	const toyConstructor = ctApp.toysData.asObject[toySlug];
@@ -130,8 +130,8 @@ const handleAddToy = async () => {
 };
 
 
-// when the current toy changes, reset the scroll of the toyPageArea container
-watch(() => ctApp.selectedToy.value, (newVal, oldVal) => {
+// when the current tool changes, reset the scroll of the toyPageArea container
+watch(() => ctApp.selectedTool.value, (newVal, oldVal) => {
 	if(toyPageArea.value)
 		toyPageArea.value.scrollTop = 0;
 });

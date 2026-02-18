@@ -87,9 +87,18 @@ export default class ChatToysApp {
 		// this doesn't need to persist across tabs or even refreshes
 		this.selectedToy = chromeRef('selectedToy', null);
 
+		// similar to selectedToy, we'll also have a selectedTool for the tool box
+		this.selectedTool = chromeRef('selectedTool', null);
+
 		// if we have at least one enabled toy, set the first one as the active toy
-		if (this.selectedToy.value==null && this.enabledToys.value.length > 0)
-			this.selectedToy.value = this.enabledToys.value[0];
+		const enabledToySlugs = this.enabledToys.value.filter(slug => !this.toysData.asObject[slug].isTool);
+		if (this.selectedToy.value==null && enabledToySlugs.length > 0)
+			this.selectedToy.value = enabledToySlugs[0];
+
+		// and the same for tools
+		const enabledToolSlugs = this.enabledToys.value.filter(slug => !!this.toysData.asObject[slug].isTool);
+		if (this.selectedTool.value==null && enabledToolSlugs.length > 0)
+			this.selectedTool.value = enabledToolSlugs[0];
 
 		// we'll load our assets from the AssetManager here in the Options class
 		// the popup will also have it's own assets manager ref
@@ -210,6 +219,24 @@ export default class ChatToysApp {
 
 
 	/**
+	 * Selects a tool to be the selected tool.
+	 * 
+	 * @param {string} tool - OPTIONAL; tool slug to set as selected, or leave undefined to clear the selected tool
+	 */
+	selectTool(tool) {
+
+		// if tool is undefined, set selected tool to null
+		if (tool === undefined) {
+			this.selectedTool.value = null;
+			return;
+		}
+
+		// set the selected tool
+		this.selectedTool.value = tool;
+	}
+
+
+	/**
 	 * Adds a toy to the user's enabled toys.
 	 * 
 	 * @param {string} slug - toy slug to add to our list of enabled toys
@@ -223,9 +250,18 @@ export default class ChatToysApp {
 		// add the toy to the list of enabled toys
 		this.enabledToys.value = [...this.enabledToys.value, slug];
 
-		// if this is the first toy added, set it as the active toy
-		if (this.selectedToy.value === null)
-			this.selectedToy.value = slug;
+		// get the toy constructor to see if it's a tool
+		const toyConstructor = this.toysData.asObject[slug];
+		const isTool = !!toyConstructor.isTool;
+
+		// if this is the first toy/tool added, set it as the active one
+		if (isTool) {
+			if (this.selectedTool.value === null)
+				this.selectedTool.value = slug;
+		} else {
+			if (this.selectedToy.value === null)
+				this.selectedToy.value = slug;
+		}
 	}
 
 
@@ -236,27 +272,43 @@ export default class ChatToysApp {
 	 */
 	removeToy(slug) {
 
-		// find where the toy was in the list index wise
-		const index = this.enabledToys.value.indexOf(slug);
+		// get the toy constructor to see if it's a tool
+		const toyConstructor = this.toysData.asObject[slug];
+		const isTool = !!toyConstructor.isTool;
 
-		// remove the toy from the list of enabled toys
+		// filter for the corresponding list (toys or tools)
+		const currentList = this.enabledToys.value.filter(s => {
+			const constructor = this.toysData.asObject[s];
+			return isTool ? !!constructor.isTool : !constructor.isTool;
+		});
+
+		// find where it was in the sub-list index wise
+		const index = currentList.indexOf(slug);
+
+		// remove the toy from the global list of enabled toys
 		this.enabledToys.value = this.enabledToys.value.filter(s => s !== slug);
+
+		// use the appropriate selection ref
+		const selectionRef = isTool ? this.selectedTool : this.selectedToy;
 
 		// if the toy was the active toy, we should select the next closest index
 		// that is still valid in the array
-		if (this.selectedToy.value === slug) {
+		if (selectionRef.value === slug) {
+
+			// updated list after removal
+			const updatedList = currentList.filter(s => s !== slug);
 
 			// if there are no toys left, set active toy to null
-			if (this.enabledToys.value.length === 0) {
-				this.selectedToy.value = null;
+			if (updatedList.length === 0) {
+				selectionRef.value = null;
 				return;
 			}
 
 			// if the toy was the last in the list, select the previous toy
-			if (index === this.enabledToys.value.length)
-				this.selectedToy.value = this.enabledToys.value[index - 1];
+			if (index >= updatedList.length)
+				selectionRef.value = updatedList[updatedList.length - 1];
 			else
-				this.selectedToy.value = this.enabledToys.value[index];
+				selectionRef.value = updatedList[index];
 		}		
 	}
 
