@@ -10,7 +10,7 @@
 	This only needs to be instantiated once per Chat instance.
 */
 
-import { chromeShallowRef } from "../../scripts/chromeRef";
+import { shallowRef } from 'vue';
 
 /**
  * Helper class to keep track of recent chat users and fetch their point balances
@@ -30,7 +30,7 @@ export class ChatPointsHelper {
 		this.onPointsUpdate = typeof onPointsUpdate === 'function' ? onPointsUpdate : () => {};
 
 		// FIFO list of the last 100 user IDs seen in chat.
-		this._recentUserIds = chromeShallowRef('chatPointsHelper_recentUserIds', []);
+		this._recentUserIds = shallowRef([]);
 
 		// Handle to the active Electron timeout, if any.
 		this._timeoutId = null;

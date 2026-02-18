@@ -54,7 +54,18 @@ async function putEntry(entry) {
 }
 
 async function touchEntry(entry) {
-	entry.lastAccess = Date.now();
+	
+	const now = Date.now();
+	const lastAccess = entry.lastAccess || 0;
+
+	// Throttle: only update the DB if it's been more than 24 hours since the last access
+	// (86,400,000 ms = 24 hours)
+	const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+	if (now - lastAccess < TWENTY_FOUR_HOURS) {
+		return;
+	}
+
+	entry.lastAccess = now;
 	entry.accessCount = (entry.accessCount || 0) + 1;
 
 	try {

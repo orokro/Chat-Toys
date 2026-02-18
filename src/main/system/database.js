@@ -28,6 +28,9 @@ class DatabaseManager {
 		this.dbPath = dbPath;
 		this.db = new Database(dbPath);
 
+		// set journal mode to WAL for better performance
+		this.db.pragma('journal_mode = WAL');
+
 		// set up the schema
 		this.setupSchema();
 	}
