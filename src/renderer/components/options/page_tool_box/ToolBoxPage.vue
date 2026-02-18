@@ -21,7 +21,7 @@
 		<template v-if="verticalItems.length<=0">
 			<img
 				class="clickToAddFirstToy"
-				:src="'assets/click_to_add_first_toy.png'" 
+				:src="'assets/click_to_add_first_tool.png'" 
 				alt="arrow"
 			/>
 		</template>
