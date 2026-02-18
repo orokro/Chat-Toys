@@ -94,7 +94,10 @@ import { openModal, promptModal } from "jenesius-vue-modal"
 const ctApp = inject('ctApp');
 
 // the currently selected row
-const selectedRow = ref(ctApp.assetsMgr.assets.value[0].id);
+const selectedRow = ref(null);
+if (ctApp.assetsMgr.assets.value && ctApp.assetsMgr.assets.value.length > 0) {
+	selectedRow.value = ctApp.assetsMgr.assets.value[0].id;
+}
 
 // handle when a row is clicked
 function rowClick({ id, data }){

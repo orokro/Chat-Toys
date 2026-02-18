@@ -176,26 +176,37 @@ const selectedUserData = shallowRef(null);
 
 
 // list of users for the table
-const users = shallowRef(ytctDB.getAllUsersFull().map(user=>{
-	return {
-		id: user.youtube_id,
-		...user,
-		last_seen: formatDate(user.last_seen, true),
-	}
-}));
+const users = shallowRef([]);
 
-
-// make sure users DB is up-to-date
-function handleRefreshList(){
-
-	// refresh the list of users
-	users.value = ytctDB.getAllUsersFull().map(user=>{
+// initialize the list
+const allUsersRaw = ytctDB.getAllUsersFull();
+if (Array.isArray(allUsersRaw)) {
+	users.value = allUsersRaw.map(user => {
 		return {
 			id: user.youtube_id,
 			...user,
 			last_seen: formatDate(user.last_seen, true),
 		}
 	});
+}
+
+
+// make sure users DB is up-to-date
+function handleRefreshList(){
+
+	// refresh the list of users
+	const allUsersRaw = ytctDB.getAllUsersFull();
+	if (Array.isArray(allUsersRaw)) {
+		users.value = allUsersRaw.map(user => {
+			return {
+				id: user.youtube_id,
+				...user,
+				last_seen: formatDate(user.last_seen, true),
+			}
+		});
+	} else {
+		users.value = [];
+	}
 
 }
 

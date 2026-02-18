@@ -146,6 +146,7 @@ const filteredKeys = computed(() => {
 // the sort will determine order in column, but also, optional filter
 const sortedData = computed(() => {
 
+	if (!props.data) return [];
 	const filteredData = [...props.data.filter(props.filter)];
 
 	if (!sortKey.value) return filteredData;
