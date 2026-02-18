@@ -82,53 +82,54 @@ const CDN_BASE = 'https://cdn.betterttv.net/emote';
 let searchTimeout = null;
 
 onMounted(() => {
-	fetchTopEmojis();
+	fetchEmojis();
 });
 
 /**
- * Fetch top popular emojis (URL A)
+ * Unified fetch for emojis (Top or Search)
+ * 
+ * @param {boolean} append - Whether to append to existing results
  */
-async function fetchTopEmojis() {
+async function fetchEmojis(append = false) {
 	loading.value = true;
 	try {
-		const res = await fetch(`${API_BASE}/top?offset=0&limit=${limit}`);
-		if (!res.ok) throw new Error('Failed to fetch top emojis');
-		const data = await res.json();
-		results.value = data;
-		hasMore.value = data.length === limit;
-		offset.value = limit;
-	} catch (err) {
-		console.error('[BTTVBrowser] fetchTopEmojis error', err);
-	} finally {
-		loading.value = false;
-	}
-}
-
-/**
- * Search for emojis (URL B)
- */
-async function searchEmojis(append = false) {
-	if (!searchQuery.value) {
-		if (!append) fetchTopEmojis();
-		return;
-	}
-
-	loading.value = true;
-	try {
-		const res = await fetch(`${API_BASE}/search?query=${encodeURIComponent(searchQuery.value)}&offset=${offset.value}&limit=${limit}`);
-		if (!res.ok) throw new Error('Failed to search emojis');
-		const data = await res.json();
+		const isSearch = !!searchQuery.value;
+		let url = '';
 		
-		if (append) {
-			results.value = [...results.value, ...data];
+		if (isSearch) {
+			url = `${API_BASE}/search?query=${encodeURIComponent(searchQuery.value)}&offset=${offset.value}&limit=${limit}`;
 		} else {
-			results.value = data;
+			// URL A: Top popular emojis (no offset/limit params)
+			url = `${API_BASE}/top`;
 		}
 		
-		hasMore.value = data.length === limit;
+		const res = await fetch(url);
+		if (!res.ok) throw new Error(`Failed to fetch emojis (${isSearch ? 'search' : 'top'})`);
+		
+		const data = await res.json();
+		
+		// Normalize data: URL A (top) wraps in { emote, total, id }, URL B (search) is direct
+		const items = Array.isArray(data) ? data : (data.emotes || []);
+		const normalizedData = items.map(item => {
+			// If it's the "top" structure, the emote info is in item.emote
+			if (item.emote && typeof item.emote === 'object') {
+				return item.emote;
+			}
+			// Otherwise assume it's the "search" structure or already normalized
+			return item;
+		}).filter(item => item && item.id && item.code);
+
+		if (append) {
+			results.value = [...results.value, ...normalizedData];
+		} else {
+			results.value = normalizedData;
+		}
+		
+		// Only search endpoint supports pagination properly
+		hasMore.value = isSearch && data.length === limit;
 		offset.value += limit;
 	} catch (err) {
-		console.error('[BTTVBrowser] searchEmojis error', err);
+		console.error('[BTTVBrowser] fetchEmojis error', err);
 	} finally {
 		loading.value = false;
 	}
@@ -138,24 +139,18 @@ function handleSearch() {
 	clearTimeout(searchTimeout);
 	searchTimeout = setTimeout(() => {
 		offset.value = 0;
-		searchEmojis();
+		fetchEmojis();
 	}, 500);
 }
 
 function clearSearch() {
 	searchQuery.value = '';
 	offset.value = 0;
-	fetchTopEmojis();
+	fetchEmojis();
 }
 
 function loadMore() {
-	if (searchQuery.value) {
-		searchEmojis(true);
-	} else {
-		// Currently top doesn't seem to support offset/limit in the same way for "popular"
-		// but BTTV API is a bit inconsistent. We'll try just adding more offset.
-		searchEmojis(true);
-	}
+	fetchEmojis(true);
 }
 
 function getEmojiUrl(id) {

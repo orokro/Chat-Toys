@@ -21,12 +21,18 @@
 
 		<br><br>
 		<p>
-			BetterTTV (BTTV) adds extra emojis to Twitch chat. 
+			BetterTTV (BTTV) adds extra emojis to the ChatToys system.
 			Enable this integration to allow Chat-Toys to recognize and display BTTV global and channel-specific emojis.
 		</p>
 		<p>
 			For more information, visit <span class="fakeLink" @click="openLink('https://betterttv.com/')">betterttv.com</span>.
 		</p>
+
+		<InfoBox icon="lightbulb">
+			<strong>NOTE:</strong> BTTV Support in ChatToys is still experimental.
+			<br><br>
+			<p>BTTV Emotes currently don't work in the Tosser system.</p>
+		</InfoBox>
 		
 		<SectionHeader title="Connection Status"/>
 
@@ -70,7 +76,7 @@
 		<SectionHeader title="Channel Emojis"/>
 		<p>
 			Enter Twitch <strong>Numerical Channel IDs</strong> below to pull custom BTTV emojis for those specific channels.
-			You can find a user's ID using tools like <span class="fakeLink" @click="openLink('https://www.streamweasels.com/tools/convert-twitch-username-to-id/')">StreamWeasels</span>.
+			You can find a user's ID using tools like <span class="fakeLink" @click="openLink('https://www.streamweasels.com/tools/convert-twitch-username-%20to-user-id/')">StreamWeasels</span>.
 		</p>
 
 		<div class="settingsBlock">
@@ -114,6 +120,7 @@ import ArrayTextInput from '@components/options/ArrayTextInput.vue';
 import RawLogPreview from '../RawLogPreview.vue';
 import EnabledBTTVList from '../EnabledBTTVList.vue';
 import BTTVBrowser from '../BTTVBrowser.vue';
+import InfoBox from '@components/options/InfoBox.vue';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');

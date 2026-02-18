@@ -10,7 +10,7 @@
 */
 
 // vue
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, reactive } from 'vue';
 import { chromeRef, chromeShallowRef } from './chromeRef';
 
 /**
@@ -71,7 +71,7 @@ export class BTTVManager {
 
 		// Memory cache for active emojis
 		// Map of code -> { id, url, channel? }
-		this.emojis = new Map();
+		this.emojis = reactive(new Map());
 
 		// Cache expiration (1 week in ms)
 		this._cacheTTL = 7 * 24 * 60 * 60 * 1000;
