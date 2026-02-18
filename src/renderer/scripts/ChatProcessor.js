@@ -528,6 +528,7 @@ export class ChatProcessor {
 				streamID,
 				isSuper,
 				headerBackgroundColor: renderer.headerBackgroundColor,
+				youtube: true,
 			};
 
 			if (isSuper) {

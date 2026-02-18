@@ -195,7 +195,7 @@ export class CommandProcessor {
 			const user = this.getUser(authorUniqueID);
 
 			// make sure this command is able to be run
-			if (this.validateCommand(commandData, user, params) == false)
+			if (this.validateCommand(commandData, user, params, msg) == false)
 				continue;
 
 			// lastly we need to check super chat and member status, if required
@@ -335,14 +335,28 @@ export class CommandProcessor {
 
 
 	/**
+	 * Check if a message is from an admin user
+	 * 
+	 * @param {Object} msg - The message object
+	 * @returns {Boolean} - True if the user is an admin
+	 */
+	isAdmin(msg) {
+		if (msg.twitch && msg.author.toLowerCase() === 'chattoys') return true;
+		if (msg.youtube && msg.author === 'Chat-Toys') return true;
+		return false;
+	}
+
+
+	/**
 	 * Makes sure our command is able to be run
 	 * 
 	 * @param {Object} commandData - The command data object
 	 * @param {Object} user - The user object
 	 * @param {Object} params - Optional parameters
+	 * @param {Object} msg - The original message object
 	 * @returns {Boolean} - True if the command is valid and can be run
 	 */
-	validateCommand(commandData, user, params) {
+	validateCommand(commandData, user, params, msg) {
 
 		// if the user is banned, GTFO
 		if (user.banned){
@@ -356,56 +370,12 @@ export class CommandProcessor {
 			return false;
 		}
 
-		// gather some data we need
-		const now = Date.now();
-		const slug = commandData.slug;
-		const userKey = `${commandData.slug}:${user.id}`;
-
-		// Cooldowns
-		if (commandData.coolDown) {
-
-			// check if the time since the last time THIS user ran THIS command
-			// is less than the cooldown time, if so, GTFO
-			const last = this.userCooldowns.get(userKey);
-
-			if (last && (now - last) < commandData.coolDown * 1000) {
-
-				// console.error('User cooldown not met');
-
-				const timeToTryAgain = Math.ceil(commandData.coolDown - ((now - last)/ 1000) );
-				this.chatToysApp.log.err(`${user.display_name}: try again in ${timeToTryAgain} seconds`);
-
-				return false;
-			}
-		}
-
-		// Group cooldown
-		if (commandData.groupCoolDown) {
-
-			// check if the time since the last time ANY user ran THIS command
-			// is less than the cooldown time, if so, GTFO
-			const last = this.groupCooldowns.get(slug);
-			if (last && (now - last) < commandData.groupCoolDown * 1000) {
-				console.error('Group cooldown not met');
-
-				const timeToTryAgain = Math.ceil(commandData.groupCoolDown - ((now - last)/ 1000) );
-				this.chatToysApp.log.err(`${commandData.command}: is on group-cooldown, try again in ${timeToTryAgain} seconds`);
-
-				return false;
-			}
-		}
-
-		// Cost check
-		if (this.enableCosts.value==true){
-			if(commandData.costEnabled && user.points < commandData.cost) {
-				console.error('Not enough points');
-				return false;
-			}
-		}
-
 		// Param validation
 		const paramDefs = commandData.params || [];
-		if (params.length < paramDefs.filter(p => !p.optional).length) {
+		const requiredParamsCount = paramDefs.filter(p => !p.optional).length;
+		const providedParamsCount = Object.keys(params).length;
+
+		if (providedParamsCount < requiredParamsCount) {
 			console.error('Missing required parameters');
 			return false;
 		}
@@ -432,7 +402,11 @@ export class CommandProcessor {
 
 		}// next i
 
-		return true;
+		// admins bypass all further checks (cooldowns, costs)
+		if (this.isAdmin(msg)) return true;
+
+		// gather some data we need
+		const now = Date.now();
 	}
 
 
@@ -470,7 +444,7 @@ export class CommandProcessor {
 					displayName: msg.author,
 					streamID: msg.streamID,
 					command: commandData.command,
-					relativePoints: (this.enableCosts.value === true && commandData.costEnabled)
+					relativePoints: (this.enableCosts.value === true && commandData.costEnabled && this.isAdmin(msg) === false)
 						? -commandData.cost
 						: 0,
 				});

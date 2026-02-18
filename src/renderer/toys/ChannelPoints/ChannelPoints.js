@@ -359,12 +359,15 @@ export default class ChannelPoints extends Toy {
 	 */
 	doGive(msg, user, params, handshake) {
 
+		// admin users can give points for free
+		const isAdmin = this.chatToysApp.commandProcessor.isAdmin(msg);
+
 		// first we have to see if the user has enough points to give
 		const giveUserData = window.ytctDB.getUser(msg.authorUniqueID);
 		const giveUserPoints = giveUserData ? giveUserData.points : 0;
 
-		// if the user doesn't have enough points, reject the command
-		if(giveUserPoints < params.amount){
+		// if the user doesn't have enough points, and they aren't an admin, reject the command
+		if(giveUserPoints < params.amount && !isAdmin){
 			handshake.reject(`${msg.author}: Not enough points to give`);
 			return;
 		}
@@ -375,10 +378,12 @@ export default class ChannelPoints extends Toy {
 		// if we have it, we can: subtract points from the caller user & add points to the receiver user
 		if(receiveUserData){
 
-			// update the user's points and other data
-			window.ytctDB.updateUser(msg.authorUniqueID, {
-				relativePoints: -params.amount,
-			});
+			// update the user's points and other data (skip for admins)
+			if (!isAdmin) {
+				window.ytctDB.updateUser(msg.authorUniqueID, {
+					relativePoints: -params.amount,
+				});
+			}
 
 			// update the user's points and other data
 			window.ytctDB.updateUser(receiveUserData.youtube_id, {
@@ -410,10 +415,12 @@ export default class ChannelPoints extends Toy {
 			relativePoints: params.amount,
 		});
 
-		// subtract points from the caller user
-		window.ytctDB.updateUser(msg.authorUniqueID, {
-			relativePoints: -params.amount,
-		});
+		// subtract points from the caller user (skip for admins)
+		if (!isAdmin) {
+			window.ytctDB.updateUser(msg.authorUniqueID, {
+				relativePoints: -params.amount,
+			});
+		}
 
 		// log success!
 		this.chatToysApp.log.msg(`${msg.author} gave ${params.amount} points to ${params.user}`);
