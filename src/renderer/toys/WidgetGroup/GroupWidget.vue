@@ -22,7 +22,9 @@
 				left: item.x + 'px',
 				top: item.y + 'px',
 				width: item.width + 'px',
-				height: item.height + 'px'
+				height: item.height + 'px',
+				transform: `scale(${item.scale || 1})`,
+				transformOrigin: 'top left'
 			}"
 			frameborder="0"
 			scrolling="no"

@@ -31,6 +31,27 @@
 		<template v-if="groups.length > 0">
 			<SectionHeader title="Layout Editor" />
 			<p>Select a group to edit its dimensions and arrange widgets.</p>
+
+			<div class="help-block">
+				<div class="help-header" @click="showHelp = !showHelp">
+					<span class="material-icons">{{ showHelp ? 'expand_more' : 'chevron_right' }}</span>
+					Editor Controls Help
+				</div>
+				<div class="help-content" v-if="showHelp">
+					<ul>
+						<li><strong>Zoom:</strong> Mouse Wheel</li>
+						<li><strong>Pan:</strong> Right-Click + Drag</li>
+						<li><strong>Move Widget:</strong> Click + Drag</li>
+						<li><strong>Snap Move:</strong> Hold <strong>Shift</strong> while dragging (10% grid)</li>
+						<li><strong>Resize Widget:</strong> Drag handles</li>
+						<li><strong>Lock Aspect Ratio:</strong> Hold <strong>Shift</strong> while resizing</li>
+						<li><strong>Scale Widget:</strong> Hold <strong>Alt</strong> while resizing (CSS Transform)</li>
+						<li><strong>Delete:</strong> (X) icon on top right of widget</li>
+						<li><strong>Change Type:</strong> (V) icon on top left of widget</li>
+					</ul>
+				</div>
+			</div>
+
 			<div class="settingsBlock editor-controls">
 				<div class="control-group">
 					<label>Editing Group:</label>
@@ -42,11 +63,19 @@
 				</div>
 				<div class="control-group">
 					<label>Width:</label>
-					<input type="number" v-model.number="currentGroup.width" />
+					<input 
+						type="number" 
+						:value="currentGroup.width" 
+						@input="e => updateCurrentGroupDim('width', e.target.value)" 
+					/>
 				</div>
 				<div class="control-group">
 					<label>Height:</label>
-					<input type="number" v-model.number="currentGroup.height" />
+					<input 
+						type="number" 
+						:value="currentGroup.height" 
+						@input="e => updateCurrentGroupDim('height', e.target.value)" 
+					/>
 				</div>
 			</div>
 
@@ -56,7 +85,7 @@
 				@update="handleGroupUpdate"
 			/>
 
-			<WidgetSection :toy="toy" />
+			<WidgetSection :toy="toy" :key="`ws-${groups.length}`" />
 			
 			<div class="url-tip" v-if="currentGroup">
 				<p><strong>Pro Tip:</strong> To load a specific group in OBS, append <code>&index={{ selectedGroupIndex }}</code> or <code>&name={{ encodeURIComponent(currentGroup.name) }}</code> to the widget URL above.</p>
@@ -81,6 +110,7 @@ const toy = ctApp.toyManager.getToyBySlug('WidgetGroup');
 const { groups } = toy.settings;
 
 const selectedGroupIndex = ref(0);
+const showHelp = ref(true);
 
 const currentGroup = computed(() => {
 	if (!groups.value || groups.value.length === 0) return null;
@@ -91,6 +121,11 @@ const handleGroupUpdate = (updatedGroup) => {
 	const newGroups = [...groups.value];
 	newGroups[selectedGroupIndex.value] = updatedGroup;
 	groups.value = newGroups;
+};
+
+const updateCurrentGroupDim = (prop, val) => {
+	const updated = { ...currentGroup.value, [prop]: parseInt(val, 10) || 0 };
+	handleGroupUpdate(updated);
 };
 
 // Ensure selected index is valid if groups are removed
@@ -105,6 +140,43 @@ watch(() => groups.value.length, (newLength) => {
 <style lang="scss" scoped>
 .settingsBlock {
 	margin-bottom: 30px;
+}
+
+.help-block {
+	background: #222;
+	border: 2px solid black;
+	border-radius: 10px;
+	margin-bottom: 20px;
+	overflow: hidden;
+	color: #eee;
+
+	.help-header {
+		padding: 10px 15px;
+		background: #333;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font-weight: bold;
+		user-select: none;
+		&:hover { background: #444; }
+	}
+
+	.help-content {
+		padding: 15px;
+		font-size: 14px;
+		border-top: 1px solid #444;
+
+		ul {
+			margin: 0;
+			padding-left: 20px;
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 5px 20px;
+		}
+
+		li { margin-bottom: 5px; }
+	}
 }
 
 .editor-controls {

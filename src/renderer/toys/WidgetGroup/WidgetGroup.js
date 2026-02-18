@@ -51,4 +51,25 @@ export default class WidgetGroup extends Toy {
 			}),
 		});
 	}
+
+	/**
+	 * Overrides the base getWidgetURLs to return one for each group
+	 */
+	getWidgetURLs() {
+		const groups = this.settings.groups.value;
+		const baseURLs = super.getWidgetURLs();
+		if (baseURLs.length === 0) return [];
+
+		const result = [];
+		groups.forEach((group, index) => {
+			const base = baseURLs[0]; // There's only one widget component defined
+			result.push({
+				...base,
+				url: `${base.url}&index=${index}`,
+				desc: `URL for group: ${group.name}`
+			});
+		});
+
+		return result;
+	}
 }
