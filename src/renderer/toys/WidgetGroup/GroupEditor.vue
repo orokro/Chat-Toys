@@ -66,54 +66,53 @@
 					height: group.height + 'px'
 				}"
 			>
-				<!-- Widget Items -->
-				<div 
-					v-for="(item, index) in group.items" 
-					:key="index"
-					class="widget-item"
-					:class="{ selected: selectedItemIndex === index }"
-					:style="{
-						left: item.x + 'px',
-						top: item.y + 'px',
-						width: item.width + 'px',
-						height: item.height + 'px',
-						'--themeColor': item.color || '#4A90E2',
-						'--invZoom': 1/zoom,
-						zIndex: selectedItemIndex === index ? 9001 : index
-					}"
-					@mousedown.stop="handleItemMouseDown($event, index)"
-				>
-					<div class="widget-label">{{ item.width }}x{{ item.height }} <span v-if="item.scale && item.scale !== 1">(Scale: {{ item.scale.toFixed(2) }})</span></div>
-					
-					<!-- Toolbar -->
-					<div class="widget-toolbar" :style="{ height: `calc(25px / var(--invZoom))`, top: `calc(-25px / var(--invZoom))`, padding: `0 calc(5px / var(--invZoom))` }">
-						<span class="material-icons icon-btn" :style="{ fontSize: `calc(18px / var(--invZoom))` }" @click.stop="showChangeWidgetMenu($event, index)" title="Change Widget">expand_more</span>
+					<div 
+						v-for="(item, index) in group.items" 
+						:key="index"
+						class="widget-item"
+						:class="{ selected: selectedItemIndex === index }"
+						:style="{
+							left: item.x + 'px',
+							top: item.y + 'px',
+							width: item.width + 'px',
+							height: item.height + 'px',
+							'--themeColor': item.color || '#4A90E2',
+							'--invZoom': 1/zoom,
+							zIndex: selectedItemIndex === index ? 9001 : index
+						}"
+						@mousedown="handleItemMouseDown($event, index)"
+					>
+						<div class="widget-label">{{ item.width }}x{{ item.height }} <span v-if="item.scale && item.scale !== 1">(Scale: {{ item.scale.toFixed(2) }})</span></div>
 						
-						<div class="order-btns">
-							<span class="material-icons icon-btn" :style="{ fontSize: `calc(16px / var(--invZoom))` }" @click.stop="moveItem(index, 'front')" title="Bring to Front">vertical_align_top</span>
-							<span class="material-icons icon-btn" :style="{ fontSize: `calc(16px / var(--invZoom))` }" @click.stop="moveItem(index, 'back')" title="Send to Back">vertical_align_bottom</span>
+						<!-- Toolbar -->
+						<div class="widget-toolbar" :style="{ height: `calc(25px / var(--invZoom))`, top: `calc(-25px / var(--invZoom))`, padding: `0 calc(5px / var(--invZoom))` }">
+							<span class="material-icons icon-btn" :style="{ fontSize: `calc(18px / var(--invZoom))` }" @click.stop="showChangeWidgetMenu($event, index)" title="Change Widget">expand_more</span>
+							
+							<div class="order-btns">
+								<span class="material-icons icon-btn" :style="{ fontSize: `calc(16px / var(--invZoom))` }" @click.stop="moveItem(index, 'front')" title="Bring to Front">vertical_align_top</span>
+								<span class="material-icons icon-btn" :style="{ fontSize: `calc(16px / var(--invZoom))` }" @click.stop="moveItem(index, 'back')" title="Send to Back">vertical_align_bottom</span>
+							</div>
+
+							<span class="widget-name" :style="{ fontSize: `calc(12px / var(--invZoom))` }">{{ item.name }}</span>
+							<span class="material-icons icon-btn delete" :style="{ fontSize: `calc(18px / var(--invZoom))` }" @click.stop="removeItem(index)">close</span>
 						</div>
 
-						<span class="widget-name" :style="{ fontSize: `calc(12px / var(--invZoom))` }">{{ item.name }}</span>
-						<span class="material-icons icon-btn delete" :style="{ fontSize: `calc(18px / var(--invZoom))` }" @click.stop="removeItem(index)">close</span>
-					</div>
+						<div class="iframe-container" :style="{ transform: `scale(${item.scale || 1})`, transformOrigin: 'top left', border: (item.scale && item.scale !== 1) ? '2px solid black' : 'none' }">
+							<iframe :src="item.url" class="widget-preview-iframe"></iframe>
+						</div>
 
-					<div class="iframe-container" :style="{ transform: `scale(${item.scale || 1})`, transformOrigin: 'top left', border: (item.scale && item.scale !== 1) ? '2px solid black' : 'none' }">
-						<iframe :src="item.url" class="widget-preview-iframe"></iframe>
+						<!-- Resize Handles -->
+						<template v-if="selectedItemIndex === index">
+							<div class="resizer tl" @mousedown.stop="handleResizeStart($event, index, 'tl')"></div>
+							<div class="resizer tr" @mousedown.stop="handleResizeStart($event, index, 'tr')"></div>
+							<div class="resizer bl" @mousedown.stop="handleResizeStart($event, index, 'bl')"></div>
+							<div class="resizer br" @mousedown.stop="handleResizeStart($event, index, 'br')"></div>
+							<div class="resizer t" @mousedown.stop="handleResizeStart($event, index, 't')"></div>
+							<div class="resizer r" @mousedown.stop="handleResizeStart($event, index, 'r')"></div>
+							<div class="resizer b" @mousedown.stop="handleResizeStart($event, index, 'b')"></div>
+							<div class="resizer l" @mousedown.stop="handleResizeStart($event, index, 'l')"></div>
+						</template>
 					</div>
-
-					<!-- Resize Handles -->
-					<template v-if="selectedItemIndex === index">
-						<div class="resizer tl" @mousedown.stop="handleResizeStart($event, index, 'tl')"></div>
-						<div class="resizer tr" @mousedown.stop="handleResizeStart($event, index, 'tr')"></div>
-						<div class="resizer bl" @mousedown.stop="handleResizeStart($event, index, 'bl')"></div>
-						<div class="resizer br" @mousedown.stop="handleResizeStart($event, index, 'br')"></div>
-						<div class="resizer t" @mousedown.stop="handleResizeStart($event, index, 't')"></div>
-						<div class="resizer r" @mousedown.stop="handleResizeStart($event, index, 'r')"></div>
-						<div class="resizer b" @mousedown.stop="handleResizeStart($event, index, 'b')"></div>
-						<div class="resizer l" @mousedown.stop="handleResizeStart($event, index, 'l')"></div>
-					</template>
-				</div>
 			</div>
 		</div>
 
@@ -309,6 +308,9 @@ const handleMouseDown = (e) => {
 };
 
 const handleItemMouseDown = (e, index) => {
+	if (e.button !== 0) return;
+	e.stopPropagation();
+
 	selectedItemIndex.value = index;
 	const item = props.group.items[index];
 	const startX = item.x;
@@ -351,6 +353,9 @@ const handleItemMouseDown = (e, index) => {
 };
 
 const handleResizeStart = (e, index, type) => {
+	if (e.button !== 0) return;
+	e.stopPropagation();
+
 	const item = props.group.items[index];
 	const startX = item.x;
 	const startY = item.y;
