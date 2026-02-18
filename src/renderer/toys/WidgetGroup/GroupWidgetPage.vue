@@ -87,9 +87,9 @@
 
 			<WidgetSection :toy="toy" :key="`ws-${groups.length}`" />
 			
-			<div class="url-tip" v-if="currentGroup">
+			<!-- <div class="url-tip" v-if="currentGroup">
 				<p><strong>Pro Tip:</strong> To load a specific group in OBS, append <code>&index={{ selectedGroupIndex }}</code> or <code>&name={{ encodeURIComponent(currentGroup.name) }}</code> to the widget URL above.</p>
-			</div>
+			</div> -->
 		</template>
 
 	</PageBox>
