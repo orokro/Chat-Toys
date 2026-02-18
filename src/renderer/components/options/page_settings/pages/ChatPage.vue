@@ -149,8 +149,8 @@ import { ref, computed,	inject } from 'vue';
 import { chromeShallowRef } from '@scripts/chromeRef';
 
 // components
-import PageBox from '../../PageBox.vue';
-import SectionHeader from '../../SectionHeader.vue';
+import PageBox from '@components/options/PageBox.vue';
+import SectionHeader from '@components/options/SectionHeader.vue';
 import InfoBox from '../../InfoBox.vue';
 import CatsumIpsum from '../../../CatsumIpsum.vue';
 import RawLogPreview from '../RawLogPreview.vue';

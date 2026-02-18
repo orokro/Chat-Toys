@@ -527,6 +527,7 @@ export class ChatProcessor {
 				isMember,
 				streamID,
 				isSuper,
+				headerBackgroundColor: renderer.headerBackgroundColor,
 			};
 
 			if (isSuper) {

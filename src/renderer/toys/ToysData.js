@@ -22,6 +22,7 @@ import EmojiFountain from "./EmojiFountain/EmojiFountain";
 import Shout from "./Shout/Shout";
 import Swarm from "./Swarm/Swarm";
 import KaraokeQueue from "./KaraokeQueue/KaraokeQueue";
+import SCConversion from "./SCConversion/SCConversion";
 
 // We'll export a list of all the constructors for the various toys
 // Their classes will have the static data they need, including:
@@ -32,6 +33,7 @@ export const toysData = [
 	ChannelPoints,
 	OutputLog,
 	Chat,
+	SCConversion,
 	Shout,
 	Media,
 	Tosser,
