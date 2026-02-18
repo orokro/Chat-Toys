@@ -24,7 +24,8 @@
 				width: item.width + 'px',
 				height: item.height + 'px',
 				transform: `scale(${item.scale || 1})`,
-				transformOrigin: 'top left'
+				transformOrigin: 'top left',
+				border: (item.scale && item.scale !== 1) ? '2px solid black' : 'none'
 			}"
 			frameborder="0"
 			scrolling="no"

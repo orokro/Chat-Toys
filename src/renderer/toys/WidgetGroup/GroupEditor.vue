@@ -49,13 +49,13 @@
 					<div class="widget-label">{{ item.width }}x{{ item.height }} <span v-if="item.scale && item.scale !== 1">(Scale: {{ item.scale.toFixed(2) }})</span></div>
 					
 					<!-- Toolbar -->
-					<div class="widget-toolbar" :style="{ transform: `scale(calc(1 / var(--invZoom)))`, transformOrigin: 'top left', width: `calc(100% * var(--invZoom))` }">
-						<span class="material-icons icon-btn" @click.stop="showChangeWidgetMenu($event, index)">expand_more</span>
-						<span class="widget-name">{{ item.name }}</span>
-						<span class="material-icons icon-btn delete" @click.stop="removeItem(index)">close</span>
+					<div class="widget-toolbar" :style="{ height: `calc(25px / var(--invZoom))`, top: `calc(-25px / var(--invZoom))`, padding: `0 calc(5px / var(--invZoom))` }">
+						<span class="material-icons icon-btn" :style="{ fontSize: `calc(18px / var(--invZoom))` }" @click.stop="showChangeWidgetMenu($event, index)">expand_more</span>
+						<span class="widget-name" :style="{ fontSize: `calc(12px / var(--invZoom))` }">{{ item.name }}</span>
+						<span class="material-icons icon-btn delete" :style="{ fontSize: `calc(18px / var(--invZoom))` }" @click.stop="removeItem(index)">close</span>
 					</div>
 
-					<div class="iframe-container" :style="{ transform: `scale(${item.scale || 1})`, transformOrigin: 'top left' }">
+					<div class="iframe-container" :style="{ transform: `scale(${item.scale || 1})`, transformOrigin: 'top left', border: (item.scale && item.scale !== 1) ? '2px solid black' : 'none' }">
 						<iframe :src="item.url" class="widget-preview-iframe"></iframe>
 					</div>
 
@@ -266,7 +266,7 @@ const handleResizeStart = (e, index, type) => {
 		if (isAlt) {
 			// Scaling mode (CSS Transform)
 			const delta = 1 - (adx / startW);
-			ns = Math.max(0.1, startScale * delta);
+			ns = Math.max(0.1, Math.min(1.0, startScale * delta));
 		} else {
 			// Normal Resize mode
 			if (type.includes('r')) nw = Math.max(20, startW - adx);
@@ -481,15 +481,12 @@ onBeforeUnmount(() => {
 
 .widget-toolbar {
 	position: absolute;
-	top: -25px;
 	left: -2px;
-	height: 25px;
+	right: -2px;
 	background: var(--themeColor);
 	display: flex;
 	align-items: center;
-	padding: 0 5px;
 	color: white;
-	font-size: 12px;
 	font-weight: bold;
 	border-radius: 4px 4px 0 0;
 	box-sizing: border-box;
