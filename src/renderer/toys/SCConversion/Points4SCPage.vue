@@ -24,12 +24,12 @@
 
 		<div class="settingsBlock">
 			
-			<SettingsInputRow type="boolean" v-model="settings.enabled">
+			<SettingsInputRow type="boolean" v-model="enabled">
 				<template #title>Enable Points 4 SuperChats</template>
 				<p>When enabled, Chat-Toys will monitor for YouTube Super Chats and award points.</p>
 			</SettingsInputRow>
 
-			<SettingsInputRow type="boolean" v-model="settings.showPointsInChat">
+			<SettingsInputRow type="boolean" v-model="showPointsInChat">
 				<template #title>Show earned points in chat</template>
 				<p>When enabled, a system message will be added to the live chat announcing the points earned.</p>
 			</SettingsInputRow>
@@ -49,7 +49,8 @@
 				:tier="tier.tier"
 				:name="tier.name"
 				:color="tier.color"
-				v-model="settings.tierSettings.value[index]"
+				:data="tierSettings[index]"
+				@update:data="(newData) => updateTier(index, newData)"
 			/>
 		</div>
 
@@ -73,7 +74,23 @@ const ctApp = inject('ctApp');
 
 // get the toy instance
 const toy = ctApp.toyManager.getToyBySlug('scConversion');
-const settings = toy.settings;
+
+// destructure settings for easy use in template
+const {
+	enabled,
+	showPointsInChat,
+	tierSettings
+} = toy.settings;
+
+/**
+ * Updates a single tier in the array and reassigns the array
+ * to trigger reactivity for the aggregator.
+ */
+const updateTier = (index, newData) => {
+	const newArr = [...tierSettings.value];
+	newArr[index] = newData;
+	tierSettings.value = newArr;
+};
 
 /**
  * Static info about the tiers for display

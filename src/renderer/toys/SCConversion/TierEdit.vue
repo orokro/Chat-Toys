@@ -16,12 +16,12 @@
 			
 			<div class="value-input">
 				<label>Points:</label>
-				<input type="number" v-model.number="model.value" />
+				<input type="number" :value="data.value" @input="updateValue" />
 			</div>
 
 			<div class="enable-toggle">
 				<label>Enabled:</label>
-				<ToggleCheck v-model="model.enabled" />
+				<ToggleCheck :modelValue="data.enabled" @update:modelValue="updateEnabled" />
 			</div>
 
 		</div>
@@ -32,7 +32,7 @@
 <script setup>
 
 // vue
-import { defineModel } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 
 // components
 import ToggleCheck from '@components/ToggleCheck.vue';
@@ -42,10 +42,20 @@ const props = defineProps({
 	tier: Number,
 	name: String,
 	color: String,
+	data: Object, // { tier, enabled, value }
 });
 
-// model
-const model = defineModel();
+// emits
+const emit = defineEmits(['update:data']);
+
+const updateValue = (e) => {
+	const val = parseInt(e.target.value, 10);
+	emit('update:data', { ...props.data, value: val });
+};
+
+const updateEnabled = (val) => {
+	emit('update:data', { ...props.data, enabled: val });
+};
 
 </script>
 
