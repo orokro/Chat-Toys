@@ -114,8 +114,8 @@ export class BTTVManager {
 		// Watch for changes in extra channels
 		watch(this.twitchChannels, () => {
 			if (this.enabled.value) {
-				this._log('info', 'BTTV channels updated, refreshing channel emojis');
-				this._refreshChannelEmojis();
+				this._log('info', 'BTTV channels updated, refreshing everything');
+				this.init();
 			}
 		}, { deep: true });
 
@@ -217,6 +217,22 @@ export class BTTVManager {
 		} catch (err) {
 			this._log('error', `Error fetching global BTTV emojis: ${err.message}`);
 		}
+	}
+
+	/**
+	 * Force a refresh of all channel emojis by clearing their caches
+	 */
+	async refreshChannels() {
+		this._log('info', 'Forcing refresh of all channel emoji caches...');
+		
+		for (const channelId of this.twitchChannels.value) {
+			if (!channelId) continue;
+			const cacheKey = `bttv_channel_cache_${channelId}`;
+			localStorage.removeItem(cacheKey);
+		}
+
+		await this.init();
+		this._log('info', 'Channel emojis refreshed');
 	}
 
 	/**

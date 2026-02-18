@@ -84,6 +84,15 @@
 				<h3>Extra Twitch Channels</h3>
 				<p>Add Twitch IDs (e.g., "123456") to load their custom BTTV emotes.</p>
 				
+				<div class="refresh-container">
+					<button class="refresh-btn" @click="ctApp.bttvMgr.refreshChannels()">
+						<span class="material-icons">refresh</span>
+						Refresh Channel Emojis
+					</button>
+					<p class="small">Forces a reload of all custom channel emotes (bypasses cache).</p>
+				</div>
+				<br>
+
 				<ArrayEdit
 					v-model="twitchChannels"
 					:component="ArrayTextInput"
@@ -182,6 +191,42 @@ const openLink = (url) => {
 
 	.settingsBlock {
 		margin-bottom: 30px;
+	}
+
+	.refresh-container {
+		margin-top: 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+
+		.refresh-btn {
+			align-self: flex-start;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			background: #222;
+			color: #eee;
+			border: 2px solid #444;
+			border-radius: 20px;
+			padding: 8px 16px;
+			cursor: pointer;
+			font-weight: bold;
+			
+			.material-icons {
+				font-size: 18px;
+			}
+
+			&:hover {
+				background: #333;
+				border-color: #eee;
+			}
+		}
+
+		.small {
+			font-size: 12px;
+			color: #888;
+			margin: 0;
+		}
 	}
 
 </style>
