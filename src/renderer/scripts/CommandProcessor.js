@@ -265,63 +265,70 @@ export class CommandProcessor {
 	 * 
 	 * @param {Object} commandData - The command data object
 	 * @param {String} messageText - The full message text
-	 * @returns {Array<String>} - Array of parsed parameters
+	 * @returns {Object} - Object of parsed parameters
 	 */
 	parseParams(commandData, messageText) {
 
-		console.log('commandData', commandData, messageText);
-		// get the raw message text, trim it, and remove the command part
-		// +2 for '!' and space
-		const raw = messageText.trim().slice(commandData.command.length + 2); 
+		// get the raw message text, trim it
+		const trimmedMsg = messageText.trim();
 		const paramDefs = commandData.params || [];
 
-		// if this command doesn't have any params, return an empty array
+		// if this command doesn't have any params, return an empty object
 		if (paramDefs.length === 0) return {};
 
-		// if this command only has one param, return the raw remainder of the message
+		// Split the message by whitespace, but ignore the command itself.
+		// We use a regex to skip the command and leading '!'
+		const commandAndRest = trimmedMsg.match(/^!(\S+)\s*(.*)$/);
+		if (!commandAndRest) return {};
+		
+		const rawRemaining = commandAndRest[2] || "";
+		if (rawRemaining.length === 0) return {};
+
+		// If we only have one param, we can potentially take the whole raw remaining string
+		// depending on the type.
 		if (paramDefs.length === 1) {
+			const def = paramDefs[0];
+			let val = rawRemaining;
 
-			if(raw.length === 0)
-				return {};
-			
-			let val = raw;
-			if(paramDefs[0].type === 'number')
+			if (def.type === 'number') {
+				val = val.split(/\s+/)[0]; // only take first word
 				val = parseFloat(val, 10);
-			if(paramDefs[0].type === 'username' && val.startsWith('@'))
-				val = val.slice(1);
-			return {
-				[paramDefs[0].name]: val
+			} else if (def.type === 'username') {
+				val = val.split(/\s+/)[0]; // only take first word
+				if (val.startsWith('@')) val = val.slice(1);
+			} else if (def.type === 'string') {
+				// Keep whole string for 'string' type
 			}
-		};
 
-		// If we got here, we have multiple params, so we need to parse them
-		// some of them might be quoted, so we need to handle that
-		const quoted = raw.match(/"(.*?)"|(\S+)/g) || [];
-		const clean = quoted.map(str => str.replace(/(^"|"$)/g, ''));
-
-		// if there's more params than defined, combine the last ones into one
-		if (clean.length > paramDefs.length) {
-			const last = clean.slice(paramDefs.length - 1).join(' ');
-			clean.splice(paramDefs.length - 1, clean.length - paramDefs.length + 1, last);
+			return { [def.name]: val };
 		}
 
-		// add some extra processing for params based on type
-		for (let i = 0; i < paramDefs.length; i++) {
+		// For multiple parameters, use a smarter split that respects quotes
+		const tokens = rawRemaining.match(/"(.*?)"|(\S+)/g) || [];
+		const cleanTokens = tokens.map(str => str.replace(/(^"|"$)/g, ''));
 
-			// convert numbers to actual numbers (i.e. not strings)
-			if (paramDefs[i].type === 'number')
-				clean[i] = parseFloat(clean[i], 10);
-
-			// if the type is username, remove potential @ symbol
-			if (paramDefs[i].type === 'username' && clean[i].startsWith('@'))
-				clean[i] = clean[i].slice(1);
-			
-		}// next i
-		
-		// instead of returning an array, make an object with the names as keys
 		const obj = {};
-		for (let i = 0; i < paramDefs.length; i++)
-			obj[paramDefs[i].name] = clean[i];
+		for (let i = 0; i < paramDefs.length; i++) {
+			const def = paramDefs[i];
+			let val = cleanTokens[i];
+
+			// If this is the last parameter and it's a string, we might want to 
+			// re-join any remaining tokens if they weren't quoted.
+			if (i === paramDefs.length - 1 && def.type === 'string' && cleanTokens.length > paramDefs.length) {
+				// Re-calculate the start index of the last parameter in rawRemaining
+				// This is a bit complex, but for now we'll just join the remaining tokens.
+				val = cleanTokens.slice(i).join(' ');
+			}
+
+			if (val !== undefined) {
+				if (def.type === 'number') {
+					val = parseFloat(val, 10);
+				} else if (def.type === 'username' && val.startsWith('@')) {
+					val = val.slice(1);
+				}
+				obj[def.name] = val;
+			}
+		}
 
 		return obj;
 	}

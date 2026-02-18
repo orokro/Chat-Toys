@@ -207,7 +207,7 @@ export default class HeadPat extends Toy {
 						patter: msg.author, pattee:params.user, duration: this.settings.timeToShow.value, kind: commandSlug});
 				} else {
 					this.streamerPatQueue.addToQueue({
-						patter: msg.author, pattee: '', duration: this.settings.timeToShow.value});
+						patter: msg.author, pattee: '', duration: this.settings.timeToShow.value, kind: commandSlug});
 				}
 			} else {
 				this.streamerPatQueue.addToQueue({
@@ -262,7 +262,7 @@ export default class HeadPat extends Toy {
 		// otherwise we're in SHOWING mode
 		this.currentChatterPat.value = stateDetails;
 		nextTick(()=>{
-			this.streamerMode.value = 'SHOWING';		
+			this.chatterMode.value = 'SHOWING';		
 		});
 	}
 
