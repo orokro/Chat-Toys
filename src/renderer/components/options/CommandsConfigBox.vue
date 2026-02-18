@@ -170,7 +170,7 @@ import { directive as VTippy } from 'vue-tippy';
 import 'tippy.js/dist/tippy.css';
 
 // components
-import EditCommandModal from './page_toy_box/EditCommandModal.vue';
+import EditCommandModal from './EditCommandModal.vue';
 import ConfirmModal from './ConfirmModal.vue';
 
 // lib/ misc

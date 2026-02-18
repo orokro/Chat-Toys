@@ -20,6 +20,9 @@ import { chromeShallowRef } from "../scripts/chromeRef";
 // main export
 export default class Toy {
 
+	// some toys will be classified as a "tool", but most are not
+	static isTool = false;
+	
 	/**
 	 * Constructs the Toy object
 	 * 

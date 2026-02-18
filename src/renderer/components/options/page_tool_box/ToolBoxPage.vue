@@ -1,8 +1,9 @@
 <!--
-	ToyBoxPage.vue
-	--------------
+	ToolBoxPage.vue
+	---------------
 
-	This is the top level component for when the "Toy Box" tab is active.
+	This is the top level component for when the "Tool Box" tab is active.
+	It's essentially a clone of the ToyBoxPage but filters for tools.
 -->
 <template>
 	
@@ -16,8 +17,8 @@
 		@removeItem="(toy)=>handleRemoveToy(toy)"
 	>
 
-		<!-- if no toy is selected, show arrow -->
-		<template v-if="ctApp.enabledToys.value.length<=0">
+		<!-- if no tool is selected, show arrow -->
+		<template v-if="verticalItems.length<=0">
 			<img
 				class="clickToAddFirstToy"
 				:src="'assets/click_to_add_first_toy.png'" 
@@ -59,7 +60,11 @@ const ctApp = inject('ctApp');
 const toyComponent = computed(() => {
 
 	const toySlug = ctApp.selectedToy.value;
+	if (!toySlug) return null;
+	
 	const toyConstructor = ctApp.toysData.asObject[toySlug];
+	if (!toyConstructor || !toyConstructor.isTool) return null;
+
 	return toyConstructor.optionsPageComponent;
 });
 
@@ -67,15 +72,15 @@ const toyComponent = computed(() => {
 const verticalItems = computed(() => {
 	return ctApp.enabledToys.value
 		.map((slug)=>(ctApp.toysData.asObject[slug]))
-		.filter(toy => !toy.isTool);
+		.filter(toy => !!toy.isTool);
 });
 
 
-// true when the user has added all the toys
+// true when the user has added all the tools
 const allToysAdded = computed(() => {
-	const totalToys = ctApp.toysData.filter(toy => !toy.isTool).length;
-	const currentToys = verticalItems.value.length;
-	return currentToys >= totalToys;
+	const totalTools = ctApp.toysData.filter(toy => !!toy.isTool).length;
+	const currentTools = verticalItems.value.length;
+	return currentTools >= totalTools;
 });
 
 
@@ -83,13 +88,13 @@ const allToysAdded = computed(() => {
 const toyPageArea = ref(null);
 
 
-// handle when the remove toy button was clicked on the strip
+// handle when the remove tool button was clicked on the strip
 async function handleRemoveToy(toy){
 
 	const toyDetails = ctApp.toysData.asObject[toy];
 	const response = await promptModal(ConfirmModal, {
 		title: 'Are you sure?',
-		prompt: `Are you sure you want to remove the toy: ${toyDetails.name}?`,
+		prompt: `Are you sure you want to remove the tool: ${toyDetails.name}?`,
 		buttons: ['yes', 'nevermind'],
 		icon: 'warning'
 	});
@@ -107,20 +112,19 @@ async function handleRemoveToy(toy){
 }
 
 
-// handle when the add a toy button was clicked on the strip
-// (i.e. show the modal to add toys to our system)
+// handle when the add a tool button was clicked on the strip
 const handleAddToy = async () => {
 
 	const result = await promptModal(AddToyModal, {
-		isTool: false,
-		title: 'Add a Toy'
+		isTool: true,
+		title: 'Add a Tool'
 	});
 	
-	// if no toy was selected, return
+	// if no tool was selected, return
 	if(result==null)
 		return;
 
-	// add the toy to the toy box
+	// add the toy (tool) to the toy box
 	const toySlug = result.slug;
 	ctApp.addToy(toySlug)
 };
@@ -149,8 +153,6 @@ watch(() => ctApp.selectedToy.value, (newVal, oldVal) => {
 			inset: 0px auto 0px 0px;
 		}
 
-		// for debug
-		/* border: 2px solid red; */
 		// image to guide user to add their first item
 		.clickToAddFirstToy{
 

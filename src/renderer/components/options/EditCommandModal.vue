@@ -131,7 +131,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 
 // components
-import ModalWindowFrame from '../ModalWindowFrame.vue';
+import ModalWindowFrame from './ModalWindowFrame.vue';
 
 // lib misc
 import { Modal } from 'jenesius-vue-modal';

@@ -29,6 +29,9 @@ export default class WidgetGroup extends Toy {
 		},
 	];
 
+	// This toy is a tool, not a traditional toy, since it doesn't directly interact with chat or have its own widget. Instead, it manages groups of other widgets.
+	static isTool = true;
+
 	constructor(toyManager) {
 		super(toyManager);
 	}

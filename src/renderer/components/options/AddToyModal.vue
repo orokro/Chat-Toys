@@ -9,7 +9,7 @@
 <template>
 
 	<ModalWindowFrame
-		title="Add a Toy"
+		:title="title"
 		:width="930"
 		:height="550"
 	>
@@ -19,7 +19,7 @@
 			
 			<!-- loop through the toys and display them -->
 			<div
-				v-for="toy in ctApp.toysData"
+				v-for="toy in filteredToys"
 				:key="toy.slug"
 				class="toyIcon"
 				:class="{ alreadyAdded: includedToys[toy.slug] }"
@@ -74,10 +74,22 @@
 import { ref, computed, inject } from 'vue';
 
 // components
-import ModalWindowFrame from '../ModalWindowFrame.vue';
+import ModalWindowFrame from './ModalWindowFrame.vue';
 
 // lib misc
 import { closeModal, Modal } from 'jenesius-vue-modal';
+
+// props
+const props = defineProps({
+	isTool: {
+		type: Boolean,
+		default: false
+	},
+	title: {
+		type: String,
+		default: 'Add a Toy'
+	}
+});
 
 // which item is hovered
 const hoveredToySlug = ref(null);
@@ -96,6 +108,11 @@ const includedToys = computed(() => {
 		data[toy.slug] = ctApp.enabledToys.value.includes(toy.slug);
 	});
 	return data;
+});
+
+// filter toys based on isTool
+const filteredToys = computed(() => {
+	return ctApp.toysData.filter(toy => !!toy.isTool === props.isTool);
 });
 
 // cache description text

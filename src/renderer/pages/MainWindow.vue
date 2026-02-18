@@ -32,8 +32,9 @@
 			<HelpPage v-if="activeTab === 0" />
 			<SettingsPage v-if="activeTab === 1" />			
 			<ToyBoxPage v-if="activeTab === 2" />
-			<!-- <LayoutPage v-if="activeTab === 3" />	 -->
-			<DatabasePage v-if="activeTab === 3" />
+			<ToolBoxPage v-if="activeTab === 3" />
+			<!-- <LayoutPage v-if="activeTab === 4" />	 -->
+			<DatabasePage v-if="activeTab === 4" />
 
 		</div>
 
@@ -50,6 +51,7 @@ import TopTabBar from '../components/options/TopTabBar.vue'
 import HelpPage from '../components/options/page_help/HelpPage.vue'
 import SettingsPage from '../components/options/page_settings/SettingsPage.vue'
 import ToyBoxPage from '../components/options/page_toy_box/ToyBoxPage.vue'
+import ToolBoxPage from '../components/options/page_tool_box/ToolBoxPage.vue'
 import LayoutPage from '../components/options/page_layout/LayoutPage.vue'
 import DatabasePage from '../components/options/page_database/DatabasePage.vue'
 import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
@@ -63,6 +65,7 @@ const tabs = [
 	{ title: 'Help', icon: 'help', slug: 'help' },
 	{ title: 'Connection Settings', icon: 'settings_ethernet', slug: 'settings' },	
 	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
+	{ title: 'Tool Box', icon: 'build', slug: 'toolbox' },
 	// { title: 'Layout', icon: 'monitor', slug: 'layout' },
 	{ title: 'Database', icon: 'storage', slug: 'settings' },
 
