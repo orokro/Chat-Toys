@@ -11,7 +11,7 @@ fi
 npm version patch
 
 # Push commit and tags to GitHub
-git push origin main --tags
+git push origin master --tags
 
 # Optional: publish to npm
 # npm publish
