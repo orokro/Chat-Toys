@@ -26,6 +26,15 @@
 				<div class="apple-label">!eat {{ apple.number }}</div>
 			</div>
 
+			<!-- Finish Notifications -->
+			<div class="finish-notifications">
+				<transition-group name="notif">
+					<div v-for="n in notifications" :key="n.id" class="notif-item" :class="'rank-' + n.rank">
+						{{ n.text }}
+					</div>
+				</transition-group>
+			</div>
+
 			<!-- UI Overlays -->
 			<div class="overlay" v-if="gameState !== 'IDLE' && gameState !== 'GAME'">
 				<div class="overlay-content">
@@ -106,9 +115,40 @@ const bets = socketShallowRefReadOnly(slugify('bets'), []);
 const apples = socketShallowRefReadOnly(slugify('apples'), []);
 const timer = socketShallowRefReadOnly(slugify('timer'), 0);
 const winners = socketShallowRefReadOnly(slugify('winners'), []);
+const finishedList = socketShallowRefReadOnly(slugify('finishedList'), []);
+
+// Notifications for when a horse finishes
+const notifications = ref([]);
+watch(() => finishedList.value.length, (newLen, oldLen) => {
+	if (newLen > (oldLen || 0)) {
+		const latest = finishedList.value[newLen - 1];
+		const rankText = newLen === 1 ? 'FIRST' : newLen === 2 ? 'SECOND' : 'THIRD';
+		const id = Date.now();
+		notifications.value.push({
+			id,
+			text: `@${latest.username} finished ${rankText}!`,
+			rank: newLen
+		});
+
+		// Remove notification after 4 seconds
+		setTimeout(() => {
+			notifications.value = notifications.value.filter(n => n.id !== id);
+		}, 4000);
+	}
+});
 
 const getPlayerInLane = (laneIndex) => {
-	return players.value.find(p => p.lane === laneIndex);
+	const player = players.value.find(p => p.lane === laneIndex);
+	if (!player) return null;
+
+	// Determine rank if in finishedList
+	const finishIndex = finishedList.value.findIndex(f => f.userID === player.userID);
+	const rank = finishIndex !== -1 ? finishIndex + 1 : 0;
+
+	return {
+		...player,
+		rank
+	};
 };
 
 const getLaneStyle = (index) => {
@@ -243,5 +283,47 @@ const getLaneStyle = (index) => {
 	border-radius: 20px;
 	font-size: 24px;
 	font-weight: bold;
+}
+
+.finish-notifications {
+	position: absolute;
+	top: 20px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	align-items: center;
+	z-index: 200;
+	pointer-events: none;
+
+	.notif-item {
+		background: rgba(0, 0, 0, 0.8);
+		color: white;
+		padding: 10px 20px;
+		border-radius: 10px;
+		font-size: 24px;
+		font-weight: bold;
+		border: 2px solid white;
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+		text-shadow: 2px 2px 0px black;
+
+		&.rank-1 { background: #FFD700; color: black; border-color: #B8860B; text-shadow: none; }
+		&.rank-2 { background: #C0C0C0; color: black; border-color: #808080; text-shadow: none; }
+		&.rank-3 { background: #CD7F32; color: white; border-color: #8B4513; }
+	}
+}
+
+// Notifications transition
+.notif-enter-active, .notif-leave-active {
+	transition: all 0.5s ease;
+}
+.notif-enter-from {
+	opacity: 0;
+	transform: translateY(-20px);
+}
+.notif-leave-to {
+	opacity: 0;
+	transform: scale(0.8);
 }
 </style>

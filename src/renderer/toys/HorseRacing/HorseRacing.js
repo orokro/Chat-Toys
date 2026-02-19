@@ -53,6 +53,7 @@ export default class HorseRacing extends Toy {
 		this.apples = socketShallowRef(this.static.slugify('apples'), []);
 		this.timer = socketShallowRef(this.static.slugify('timer'), 0);
 		this.winners = socketShallowRef(this.static.slugify('winners'), []);
+		this.finishedList = socketShallowRef(this.static.slugify('finishedList'), []); // Order of finishing
 
 		// Internal state
 		this.stateTimer = null;
@@ -228,6 +229,17 @@ export default class HorseRacing extends Toy {
 		updatedPlayers[pIdx].points += apple.value;
 		this.players.value = updatedPlayers;
 
+		// Check if this horse just finished
+		if (updatedPlayers[pIdx].points >= this.settings.raceLength.value) {
+			if (!this.finishedList.value.find(f => f.userID === racer.userID)) {
+				this.finishedList.value = [...this.finishedList.value, {
+					userID: racer.userID,
+					username: racer.username,
+					time: Date.now()
+				}];
+			}
+		}
+
 		// Remove apple
 		const updatedApples = [...this.apples.value];
 		updatedApples.splice(appleIndex, 1);
@@ -359,6 +371,7 @@ export default class HorseRacing extends Toy {
 		this.apples.value = [];
 		this.timer.value = 0;
 		this.winners.value = [];
+		this.finishedList.value = [];
 	}
 
 	startTimer(seconds, callback) {

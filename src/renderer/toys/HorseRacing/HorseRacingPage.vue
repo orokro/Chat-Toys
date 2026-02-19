@@ -105,12 +105,12 @@
 				Reset Game
 			</button>
 		</div>
-
+<!-- 
 		<SectionHeader title="Video Help"/>
 		<YTVideoBox 
 			url="https://youtu.be/dQw4w9WgXcQ"
 			width="100%"
-		/>
+		/> -->
 
 	</PageBox>
 
