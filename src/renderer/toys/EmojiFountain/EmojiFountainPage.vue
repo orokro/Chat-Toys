@@ -12,10 +12,14 @@
 		themeImage="assets/bg_tiles/chat.png"
 		bgThemePos="32px"
 	>
-		<div class="picBox" :style="{ height: '350px',}">
+		<!-- <div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/chat_solid/chat.png" height="300px" style="float:right"/>
+		</div> -->
+		<div class="picBox" :style="{ height: '350px',}">
+			<!-- Icon will be auto-resolved by slug if matching file exists in assets -->
+			<img src="/assets/icons/emojiFountain.png" height="300px" style="float:right"/>
 		</div>
-		
+
 		<br>
 
 		<p>

@@ -67,6 +67,9 @@ export default class HorseRacing extends Toy {
 			raceLength: ref(1000),
 			allowBetting: ref(true),
 			betTime: ref(30),
+			payout1st: ref(5000),
+			payout2nd: ref(3500),
+			payout3rd: ref(2000),
 			widgetBox: shallowRef({
 				x: 0,
 				y: 0,
@@ -328,6 +331,20 @@ export default class HorseRacing extends Toy {
 
 		const sorted = [...this.players.value].sort((a, b) => b.points - a.points);
 		this.winners.value = sorted.slice(0, 3);
+
+		// Reward the top racers
+		if (this.winners.value[0]) {
+			window.ytctDB.updateUser(this.winners.value[0].userID, { relativePoints: this.settings.payout1st.value });
+			this.chatToysApp.log.info(`${this.winners.value[0].username} won the race and earned ₱ ${this.settings.payout1st.value}!`);
+		}
+		if (this.winners.value[1]) {
+			window.ytctDB.updateUser(this.winners.value[1].userID, { relativePoints: this.settings.payout2nd.value });
+			this.chatToysApp.log.info(`${this.winners.value[1].username} came in 2nd and earned ₱ ${this.settings.payout2nd.value}!`);
+		}
+		if (this.winners.value[2]) {
+			window.ytctDB.updateUser(this.winners.value[2].userID, { relativePoints: this.settings.payout3rd.value });
+			this.chatToysApp.log.info(`${this.winners.value[2].username} came in 3rd and earned ₱ ${this.settings.payout3rd.value}!`);
+		}
 
 		window.setElectronTimeout(() => {
 			if (this.settings.allowBetting.value && this.bets.value.length > 0) {

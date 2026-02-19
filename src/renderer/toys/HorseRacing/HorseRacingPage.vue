@@ -9,13 +9,15 @@
 	<PageBox
 		title="Horse Racing Settings"
 		:themeColor="toy.static.themeColor"
-		themeImage="assets/bg_tiles/main.png"
-		bgSize="120px"
+		themeImage="assets/bg_tiles/horseRacing.png"
 		bgThemePos="35px"
 	>
-		<div class="picBox" :style="{ height: '350px',}">
-			<!-- Note: Using a placeholder image or a relevant one if available -->
+		<!-- <div class="picBox" :style="{ height: '350px',}">
 			<img src="/assets/chat_solid/users_db.png" height="300px" style="float:right; filter: hue-rotate(150deg);"/>
+		</div> -->
+		<div class="picBox" :style="{ height: '350px',}">
+			<!-- Icon will be auto-resolved by slug if matching file exists in assets -->
+			<img src="/assets/icons/horseRacing.png" height="300px" style="float:right"/>
 		</div>
 		
 		<br>
@@ -66,11 +68,13 @@
 				<p>How many points are needed to finish the race (default is 1000).</p>
 			</SettingsInputRow>
 
-			<SettingsRow>
+			<SettingsInputRow
+				type="boolean"
+				v-model="allowBetting"
+			>
 				<template #title>Allow Betting</template>
 				<p>If enabled, non-players can bet points on racers during the BET phase.</p>
-				<ToggleCheck v-model="allowBetting" />
-			</SettingsRow>
+			</SettingsInputRow>
 
 			<SettingsInputRow
 				v-if="allowBetting"
@@ -80,6 +84,33 @@
 			>
 				<template #title>Betting Time</template>
 				<p>How many seconds to allow bets to be placed before the race begins.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				:min="0"
+				v-model="payout1st"
+			>
+				<template #title>1st Place Payout</template>
+				<p>Amount of points to reward the winner of the race.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				:min="0"
+				v-model="payout2nd"
+			>
+				<template #title>2nd Place Payout</template>
+				<p>Amount of points to reward the second place finisher.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				:min="0"
+				v-model="payout3rd"
+			>
+				<template #title>3rd Place Payout</template>
+				<p>Amount of points to reward the third place finisher.</p>
 			</SettingsInputRow>
 		</div>
 
@@ -150,6 +181,9 @@ const {
 	raceLength,
 	allowBetting,
 	betTime,
+	payout1st,
+	payout2nd,
+	payout3rd,
 } = toy.settings;
 
 // reactive state from the toy for the UI
