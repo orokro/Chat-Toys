@@ -466,9 +466,26 @@ watch(
 			.icon {
 				position: absolute;
 				left: 50%;
-				top: 53%;
-				transform: translate(-50%, -50%);
+				top: 50%;
+				
+				// Fix: Use margins instead of translate(-50%, -50%) for centering.
+				// This prevents a Chromium rendering glitch where the animated translate
+				// is sometimes calculated incorrectly before the image loads, 
+				// causing it to appear offset in iframes and OBS.
+				width: 60px;
+				height: 60px;
+				margin-left: -30px;
+				margin-top: -30px;
+
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
 				animation: throb 2s ease-in-out infinite;
+				
+				// Force a new compositor layer
+				will-change: transform;
+				transform-origin: center center;
 			}
 
 			.timerCircle {
@@ -611,15 +628,15 @@ watch(
 
 	@keyframes throb {
 		0% {
-			transform: translate(-50%, -50%) scale(1);
+			transform: scale(1);
 		}
 
 		50% {
-			transform: translate(-50%, -50%) scale(1.5);
+			transform: scale(1.5);
 		}
 
 		100% {
-			transform: translate(-50%, -50%) scale(1);
+			transform: scale(1);
 		}
 	}
 
