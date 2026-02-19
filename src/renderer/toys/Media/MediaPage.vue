@@ -114,8 +114,7 @@
 <script setup>
 
 // vue
-import { ref, computed, watch, onMounted, shallowRef, inject } from 'vue';
-import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
+import { inject } from 'vue';
 
 // components
 import PageBox from '@components/options/PageBox.vue';
@@ -124,7 +123,6 @@ import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
-import CatsumIpsum from '@components/options/../CatsumIpsum.vue';
 import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayMediaEdit from './ArrayMediaEdit.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
@@ -140,91 +138,11 @@ const toy = ctApp.toyManager.toys[Media.slug];
 // local settings refs
 const { 
 	mediaAssets,
-	showPatterName,
 	chatterNameFontSize,
 	chatterNameColor,
 	chatterTextColor,
 	chatterNameShadow,
 } = toy.settings;
-
-
-// all of the commands system wide are stored in this chrome shallow ref
-const commandsRef = chromeShallowRef('commands', {});
-
-
-// compute array of the custom commands
-const customCommands = computed(() => {
-
-	// get all keys of the commandsRef.value as an array
-	const commandKeys = Object.keys(commandsRef.value);
-	return commandKeys.filter(cmd => cmd.startsWith(Media.slug));
-});
-
-
-// make sure the commands we have in state are in sync with the commandsRef
-function reconcileMediaAssets(currentCommands){
-
-	// keep list of new media assets to add to our settings state
-	const newMediaAssets = [];
-
-	// loop over our new command slugs & make new media assets objects if they don't exist
-	currentCommands.forEach((slug) => {
-
-		// get the command object
-		const command = commandsRef.value[slug];
-
-		// check if we already have a media asset for this command
-		const existingAsset = mediaAssets.value.find(asset => asset.commandSlug === slug);
-		if(!existingAsset){
-
-			// create a new media asset object
-			newMediaAssets.push({
-				commandSlug: slug,
-				commandName: command.command,
-				hasImage: true,
-				imageId: "6",
-				hasSound: true,
-				soundId: "13",
-				duration: 10,
-				volume: 1,
-				scale: 1,
-			});
-		}
-	});
-
-	// now loop over the existing media assets and remove any that don't have a corresponding command
-	const filteredMediaAssets = mediaAssets.value.filter(asset => {
-		return currentCommands.includes(asset.commandSlug);
-	});
-
-	// mix into new array
-	const newMediaAssetsArray = [...filteredMediaAssets, ...newMediaAssets];
-
-	// make sure the commands are up-to-date even if the slugs diddnt change
-	// this is because the commands themselves could have changed
-	newMediaAssetsArray.forEach((asset) => {
-		const command = commandsRef.value[asset.commandSlug];
-		asset.commandName = command.command;
-	});
-
-	// add the new media assets to the existing, remaining ones
-	mediaAssets.value = newMediaAssetsArray;	
-}
-
-
-// reconcile the media assets on load
-onMounted(() => {
-	reconcileMediaAssets(customCommands.value);
-});
-
-
-// when our custom commands list change, we need to reconcile the media assets
-// because unlike other systems, the media system doesn't have any built in commands
-// for deleting the assets directly. They are paired with the custom commands
-watch(customCommands, (currentCommands) => {
-	reconcileMediaAssets(currentCommands);
-});
-
 
 </script>
 <style lang="scss" scoped>	

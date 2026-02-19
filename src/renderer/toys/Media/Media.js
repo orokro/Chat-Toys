@@ -64,11 +64,74 @@ export default class Media extends Toy {
 		this.imagePath = socketShallowRef(this.static.slugify('imagePath'), null);
 		this.volume = socketShallowRef(this.static.slugify('volume'), 1);
 		this.scale = socketShallowRef(this.static.slugify('scale'), 1);
-		this.chatterNameFontSize = socketShallowRef(this.static.slugify('chatterNameFontSize'), 25);
-		this.chatterNameColor = socketShallowRef(this.static.slugify('chatterNameColor'), '#00ABAE');
-		this.chatterTextColor = socketShallowRef(this.static.slugify('chatterTextColor'), '#FFFFFF');
-		this.chatterNameShadow = socketShallowRef(this.static.slugify('chatterNameShadow'), true);
 
+		// keep our media assets in sync with the custom commands
+		this.reconcileMediaAssets();
+		watch(this.chatToysApp.commands, () => {
+			this.reconcileMediaAssets();
+		}, { deep: true });
+
+	}
+
+
+	/**
+	 * Reconciles the media assets with the current list of custom commands for this toy.
+	 */
+	reconcileMediaAssets() {
+
+		const commands = this.chatToysApp.commands.value;
+		const mediaAssets = this.settings.mediaAssets.value;
+
+		// get all keys of the commandsRef.value as an array
+		const commandKeys = Object.keys(commands);
+		const currentCommandsSlugs = commandKeys.filter(slug => slug.startsWith(this.slug));
+
+		// keep list of new media assets to add to our settings state
+		const newMediaAssets = [];
+
+		// loop over our new command slugs & make new media assets objects if they don't exist
+		currentCommandsSlugs.forEach((slug) => {
+
+			// get the command object
+			const command = commands[slug];
+
+			// check if we already have a media asset for this command
+			const existingAsset = mediaAssets.find(asset => asset.commandSlug === slug);
+			if(!existingAsset){
+
+				// create a new media asset object
+				newMediaAssets.push({
+					commandSlug: slug,
+					commandName: command.command,
+					hasImage: true,
+					imageId: "6",
+					hasSound: true,
+					soundId: "13",
+					duration: 10,
+					volume: 1,
+					scale: 1,
+				});
+			}
+		});
+
+		// now loop over the existing media assets and remove any that don't have a corresponding command
+		const filteredMediaAssets = mediaAssets.filter(asset => {
+			return currentCommandsSlugs.includes(asset.commandSlug);
+		});
+
+		// mix into new array
+		const newMediaAssetsArray = [...filteredMediaAssets, ...newMediaAssets];
+
+		// make sure the commands are up-to-date even if the slugs diddnt change
+		// this is because the commands themselves could have changed
+		newMediaAssetsArray.forEach((asset) => {
+			const command = commands[asset.commandSlug];
+			if (command)
+				asset.commandName = command.command;
+		});
+
+		// add the new media assets to the existing, remaining ones
+		this.settings.mediaAssets.value = newMediaAssetsArray;
 	}
 
 
@@ -79,7 +142,7 @@ export default class Media extends Toy {
 		super.end();
 		electronAPI.clearTick(this.tickFN);
 		if(this.stateTimeout)
-			window.clearTimeout(this.stateTimeout);
+			window.clearElectronTimeout(this.stateTimeout);
 	}
 
 
@@ -184,6 +247,8 @@ export default class Media extends Toy {
 		// if we got null, return to IDLE
 		if(data === null) {
 			this.mode.value = 'IDLE';
+			this.imagePath.value = null;
+			this.soundPath.value = null;
 			return;
 		}
 

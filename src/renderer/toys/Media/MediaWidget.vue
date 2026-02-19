@@ -1,8 +1,8 @@
 <!--
-	HeadPatsWidget.vue
-	------------------
+	MediaWidget.vue
+	---------------
 	
-	The icon that will periodically appear to allow chatters to claim points.
+	Shows pictures, gifs, and plays sounds.
 -->
 <template>
 
@@ -23,17 +23,16 @@
 	>
 		<!-- the main media image/gif -->
 		<img 
-			v-if="demoMode || imagePath !== null"
+			v-if="demoMode || (imagePath !== null && imageLoaded)"
 			class="mediaImage"
 			:src="demoMode ? 'builtin/yay.gif' : imagePath"
+			@load="imageLoaded = true"
 			:style="{
 				transform: `scale(${scale})`,
-				transformOrigin: 'top left',
-				maxWidth: '100%',
-				maxHeight: '100%',
-				objectFit: 'contain'
+				transformOrigin: 'top left'
 			}"
 		/>
+		<img v-if="imagePath !== null && !imageLoaded" :src="imagePath" @load="imageLoaded = true" style="display:none" />
 
 		<!-- the message / user name -->
 		<div 
@@ -90,15 +89,31 @@ const imagePath = socketShallowRefReadOnly(slugify('imagePath'), null);
 const volume = socketShallowRefReadOnly(slugify('volume'), 1);
 const scale = socketShallowRefReadOnly(slugify('scale'), 1);
 
-// we only want to play the sound when we switch from IDLE to PLAY
-watch(mode, (newVal) => {
+// track if the image has finished loading
+const imageLoaded = ref(false);
+watch(imagePath, () => {
+	imageLoaded.value = false;
+});
 
-	if(newVal === 'PLAY' && soundPath.value !== null) {
+// keep track of the last sound we played to avoid double playing
+let lastSoundPlayed = null;
+
+// we only want to play the sound when we switch from IDLE to PLAY
+// or if the soundPath arrives while we are already in PLAY mode
+const maybePlaySound = () => {
+	if(mode.value === 'PLAY' && soundPath.value !== null && soundPath.value !== lastSoundPlayed) {
 		const audio = new Audio(soundPath.value);
 		audio.volume = volume.value !== undefined ? volume.value : 1;
-		audio.play();
+		audio.play().catch(e => console.error('Error playing audio:', e));
+		lastSoundPlayed = soundPath.value;
 	}
-});
+
+	if(mode.value === 'IDLE') {
+		lastSoundPlayed = null;
+	}
+}
+
+watch([mode, soundPath], maybePlaySound);
 
 </script>
 <style lang="scss" scoped>
@@ -130,7 +145,12 @@ watch(mode, (newVal) => {
 			position: absolute;
 			top: 0;
 			left: 0;
-			display: block;
+			
+			// Fit to container while maintaining aspect ratio, anchored top-left
+			width: 100%;
+			height: 100%;
+			object-fit: contain;
+			object-position: top left;
 		}
 
 		// text settings
