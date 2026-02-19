@@ -7,7 +7,7 @@
 <template>
 	<div class="horseRacingWidget" v-if="ready">
 		<!-- Track Background -->
-		<div class="track-bg" :style="{ backgroundImage: `url(/assets/horse_racing/track.png)` }">
+		<div class="track-bg" :style="{ backgroundImage: `url(${bgImagePath})` }">
 			
 			<!-- Lanes and Horses -->
 			<div class="lanes-container">
@@ -116,6 +116,7 @@ const apples = socketShallowRefReadOnly(slugify('apples'), []);
 const timer = socketShallowRefReadOnly(slugify('timer'), 0);
 const winners = socketShallowRefReadOnly(slugify('winners'), []);
 const finishedList = socketShallowRefReadOnly(slugify('finishedList'), []);
+const bgImagePath = socketShallowRefReadOnly(slugify('bgImagePath'), '');
 
 // Notifications for when a horse finishes
 const notifications = ref([]);

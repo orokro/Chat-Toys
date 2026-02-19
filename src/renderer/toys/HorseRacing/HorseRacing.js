@@ -55,6 +55,16 @@ export default class HorseRacing extends Toy {
 		this.winners = socketShallowRef(this.static.slugify('winners'), []);
 		this.finishedList = socketShallowRef(this.static.slugify('finishedList'), []); // Order of finishing
 
+		// because the CSS in the widget resolves paths differently, we gotta make the path more explicit when live
+		const fixPathForLive = (path) => {
+			return window.env.isDev ? path : `/live/${path}`;
+		}
+
+		// path to the background image for the track
+		this.bgImagePath = socketShallowRef(
+			this.static.slugify('bgImagePath'), 
+			fixPathForLive('assets/horse_racing/track.png'));
+
 		// Internal state
 		this.stateTimer = null;
 		this.appleTimer = null;
