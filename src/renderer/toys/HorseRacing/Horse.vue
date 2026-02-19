@@ -7,12 +7,15 @@
 <template>
 	<div class="horse-container" :style="{ left: progress + '%' }">
 		<div class="horse-visual">
+			
+			<!-- Horse Overlay -->
+			<img src="/assets/horse_racing/horse_avatar.png" class="horse-img" />
+
 			<!-- User Avatar (behind) -->
 			<div class="user-avatar-circle">
 				<img :src="pfpUrl || defaultPfp" class="avatar-img" />
 			</div>
-			<!-- Horse Overlay -->
-			<img src="/assets/horse_racing/horse_avatar.png" class="horse-img" />
+
 		</div>
 		<div class="user-name">{{ username }}</div>
 	</div>
@@ -56,21 +59,24 @@ const progress = computed(() => {
 
 .user-avatar-circle {
 	position: absolute;
-	top: 50%;
-	left: 50%;
+	top: 15px;
+	left: 45px;
 	transform: translate(-50%, -50%);
-	width: 50px;
-	height: 50px;
+	width: 30px;
+	height: 30px;
 	border-radius: 50%;
 	overflow: hidden;
 	background: #ccc;
-	border: 2px solid white;
+	// border: 2px solid white;
+	border: 2px solid black;
 }
 
 .avatar-img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+	z-index: 2;
+	
 }
 
 .horse-img {
@@ -79,7 +85,7 @@ const progress = computed(() => {
 	left: 0;
 	width: 80px;
 	height: 80px;
-	z-index: 2;
+	
 }
 
 .user-name {
@@ -91,5 +97,7 @@ const progress = computed(() => {
 	font-weight: bold;
 	margin-top: 4px;
 	white-space: nowrap;
+	position: relative;
+	top: -20px;
 }
 </style>

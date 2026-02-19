@@ -137,8 +137,8 @@ const getLaneStyle = (index) => {
 .track-bg {
 	width: 100%;
 	height: 100%;
-	background-size: cover;
-	background-position: center;
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
 	position: relative;
 }
 
