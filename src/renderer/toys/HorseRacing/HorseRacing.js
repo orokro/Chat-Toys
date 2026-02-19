@@ -215,6 +215,12 @@ export default class HorseRacing extends Toy {
 			return;
 		}
 
+		// check if the racer has already finished
+		if (racer.points >= this.settings.raceLength.value) {
+			handshake.reject('You have already finished the race!');
+			return;
+		}
+
 		const appleIndex = this.apples.value.findIndex(a => a.number === params.number);
 		if (appleIndex === -1) {
 			handshake.reject('Apple not found');
