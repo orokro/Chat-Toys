@@ -11,9 +11,9 @@
 	<PageBox
 		title="BTTV Integration Settings"
 		themeColor="#CC4444"
-		themeImage="assets/bg_tiles/main.png"
+		themeImage="assets/bg_tiles/bttv.png"
 		bgSize="120px"
-		bgThemePos="-25px"
+		bgThemePos="0px"
 	>
 		<div class="picBox" :style="{ height: '200px',}">
 			<img src="/assets/icons/bttv.png" height="150px" style="float:right" v-if="hasBttvIcon"/>

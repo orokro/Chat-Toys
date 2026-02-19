@@ -8,8 +8,7 @@
 	<PageBox
 		title="Karaoke Queue Settings"
 		:themeColor="toy.static.themeColor"
-		themeImage="assets/bg_tiles/videos.png"
-		bgThemePos="-20px"
+		themeImage="assets/bg_tiles/karaokeQueue.png"
 	>
 		<div class="picBox" :style="{ height: '350px',}">
 			<!-- Icon will be auto-resolved by slug if matching file exists in assets -->

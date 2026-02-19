@@ -8,9 +8,7 @@
 	<PageBox
 		title="Widget Group Settings"
 		:themeColor="toy.static.themeColor"
-		themeImage="assets/bg_tiles/main.png"
-		bgSize="120px"
-		bgThemePos="-25px"
+		themeImage="assets/bg_tiles/widgetGroup.png"
 	>
 		<br><br>
 		<p>

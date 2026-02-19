@@ -9,9 +9,7 @@
 	<PageBox
 		title="Points 4 SuperChats"
 		themeColor="darkred"
-		themeImage="assets/bg_tiles/main.png"
-		bgSize="120px"
-		bgThemePos="-25px"
+		themeImage="assets/bg_tiles/channelPoints.png"
 	>
 		
 		<br><br>
