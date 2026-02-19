@@ -10,7 +10,7 @@
 
 	<ModalWindowFrame
 		:title="title"
-		:width="930"
+		:width="940"
 		:height="550"
 	>
 

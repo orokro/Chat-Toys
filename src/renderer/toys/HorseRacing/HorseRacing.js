@@ -63,7 +63,7 @@ export default class HorseRacing extends Toy {
 	initSettings() {
 		this.buildSettingsBlock({
 			timeToJoin: ref(30),
-			appleFrequency: ref(3),
+			appleFrequency: ref(30),
 			raceLength: ref(1000),
 			allowBetting: ref(true),
 			betTime: ref(30),
@@ -82,7 +82,7 @@ export default class HorseRacing extends Toy {
 				command: 'joinrace',
 				description: 'Join the current horse race',
 				userDesc: 'Join the race!',
-				costEnabled: false,
+				costEnabled: true,
 			},
 			{
 				command: 'horsebet',
@@ -92,7 +92,7 @@ export default class HorseRacing extends Toy {
 				],
 				description: 'Bet on a racer',
 				userDesc: 'Place your bets!',
-				costEnabled: false, // We handle point deduction manually
+				costEnabled: true,
 			},
 			{
 				command: 'eat',
@@ -101,7 +101,7 @@ export default class HorseRacing extends Toy {
 				],
 				description: 'Eat an apple to gain points',
 				userDesc: 'Eat!',
-				costEnabled: false,
+				costEnabled: true,
 			}
 		]);
 	}
