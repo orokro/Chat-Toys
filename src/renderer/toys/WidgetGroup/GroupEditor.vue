@@ -255,6 +255,10 @@ const availableWidgets = computed(() => {
 	const result = [];
 	for (const slug in toys) {
 		const toy = toys[slug];
+
+		// Prevent recursive nesting by excluding WidgetGroup from the available widgets
+		if (toy.slug === 'WidgetGroup') continue;
+
 		if (toy.static.widgetComponents) {
 			const urls = toy.getWidgetURLs();
 			for (const widget of toy.static.widgetComponents) {
