@@ -48,6 +48,8 @@
 		"idb": "^8.0.2",
 		"jenesius-vue-modal": "^1.11.9",
 		"material-icons": "^1.13.14",
+		"matter-js": "^0.20.0",
+		"poly-decomp": "^0.3.0",
 		"node-gyp": "^11.1.0",
 		"obs-websocket-js": "^5.0.7",
 		"sass": "^1.86.0",

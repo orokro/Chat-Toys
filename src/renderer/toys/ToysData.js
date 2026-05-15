@@ -25,6 +25,7 @@ import KaraokeQueue from "./KaraokeQueue/KaraokeQueue";
 import SCConversion from "./SCConversion/SCConversion";
 import WidgetGroup from "./WidgetGroup/WidgetGroup";
 import HorseRacing from "./HorseRacing/HorseRacing";
+import ClawGame from "./ClawGame/ClawGame";
 
 // We'll export a list of all the constructors for the various toys
 // Their classes will have the static data they need, including:
@@ -51,6 +52,7 @@ export const toysData = [
 	Swarm,
 	KaraokeQueue,
 	HorseRacing,
+	ClawGame,
 ];
 
 // convert the array to an object for easier access
