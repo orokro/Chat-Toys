@@ -21,46 +21,41 @@
 -->
 <template>
 
-	<FixedAutoSizer
-		:targetWidth="STAGE_W"
-		:targetHeight="STAGE_H"
-		v-model="scale"
-	>
+	<!--
+		Responsive wrapper: takes up whatever the widget box / OBS browser
+		source gives it. A ResizeObserver inside the script updates stageW /
+		stageH from this element's clientWidth / clientHeight so the matter
+		world matches the actual rendered size - more space gives the prizes
+		more room to spread out, no letterboxing.
+	-->
+	<div ref="wrapper" class="claw-machine-wrapper">
 
-		<!-- box to scale: the entire claw machine lives at fixed 1280x720 and
-			 FixedAutoSizer transforms it to fit the widget box. -->
-		<div
-			class="scaleBox"
-			:style="{ transform: `translate(-50%, -50%) scale(${scale})` }"
-		>
-			<div v-if="ready" class="claw-stage">
+		<div v-if="ready" class="claw-stage">
 
-				<!-- Layer 1: back_grip canvas (drawn BEHIND prizes) -->
-				<canvas
-					ref="bgCanvas"
-					class="bg-canvas"
-					:width="STAGE_W"
-					:height="STAGE_H"
-				></canvas>
+			<!-- Layer 1: back_grip canvas (drawn BEHIND prizes) -->
+			<canvas
+				ref="bgCanvas"
+				class="bg-canvas"
+				:width="stageW"
+				:height="stageH"
+			></canvas>
 
-				<!-- Layer 2: matter.js prizes + foreground claw -->
-				<canvas
-					ref="canvas"
-					:width="STAGE_W"
-					:height="STAGE_H"
-				></canvas>
+			<!-- Layer 2: matter.js prizes + foreground claw sprites -->
+			<canvas
+				ref="canvas"
+				:width="stageW"
+				:height="stageH"
+			></canvas>
 
-				<!-- Layer 3: win chute (purely visual; the physics chute wall
-					 is built inside the Matter.js world) -->
-				<div class="shoot" :style="{ width: chuteWidth + 'px' }">
-					<div class="shoot-text">WIN AREA</div>
-					<div class="shoot-wins">PRIZES WON: {{ wonPrizesCount }}</div>
-				</div>
-
+			<!-- Layer 3: win chute (purely visual; the physics chute wall
+				 is built inside the Matter.js world) -->
+			<div class="shoot" :style="{ width: chuteWidth + 'px' }">
+				<div class="shoot-text">WIN AREA</div>
+				<div class="shoot-wins">PRIZES WON: {{ wonPrizesCount }}</div>
 			</div>
-		</div>
 
-	</FixedAutoSizer>
+		</div>
+	</div>
 
 </template>
 <script setup>
@@ -72,7 +67,6 @@ import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
 // chat-toys plumbing
 import { useToySettings } from '@toys/useToySettings';
 import { keepAliveSocket } from '../keepAliveSocket.js';
-import FixedAutoSizer from '@components/FixedAutoSizer.vue';
 
 // physics
 import Matter from 'matter-js';
@@ -94,14 +88,19 @@ const {
 } = Matter;
 
 
-// ── Fixed stage size ─────────────────────────────────────────────────────────
-// The widget renders at this size and FixedAutoSizer scales the result to fit
-// the actual OBS browser-source dimensions. We render at 1920x1080 to match
-// the resolution the demo was tuned at - the claw / prize size constants are
-// absolute pixel values that look right at that stage size. The FixedAutoSizer
-// will downscale to whatever the streamer's widget box is.
-const STAGE_W = 1920;
-const STAGE_H = 1080;
+// ── Stage size (responsive) ─────────────────────────────────────────────────
+// The matter world matches the actual rendered size of the wrapper element,
+// so a wider widget box gives prizes more horizontal room (rather than
+// letterboxing a fixed-resolution stage). Updated by a ResizeObserver in
+// onMounted - see resizeStage(). 1080p defaults are placeholders used until
+// the first observer callback fires.
+const stageW = ref(1920);
+const stageH = ref(1080);
+
+// Plain-JS aliases that we read from non-reactive callbacks (matter render
+// loop, drop sequence, etc.). resizeStage() keeps them in sync with the refs.
+let stageWidth = stageW.value;
+let stageHeight = stageH.value;
 
 
 // ── Claw sprite metadata (matches misc/claw-game-demo) ──────────────────────
@@ -156,12 +155,13 @@ const emit = defineEmits(['boxChange']);
 
 
 // ── State refs ───────────────────────────────────────────────────────────────
+const wrapper = ref(null);
 const canvas = ref(null);
 const bgCanvas = ref(null);
-const scale = ref(1);
 
-// FixedAutoSizer calls our callback once it knows its container size, at
-// which point we mark the widget ready and the template renders the canvases.
+// useToySettings flips `ready` once the settings socket has arrived.
+// (The wrapper element is rendered before the inner stage so the
+// ResizeObserver has something to observe even when ready is still false.)
 const ready = ref(false);
 const settings = useToySettings(thisSlug, 'widgetBox', emit, () => {
 	ready.value = true;
@@ -178,6 +178,7 @@ const dropAck = socketShallowRef(slugify('dropAck'), null);
 
 // ── Tunable accessors (pulled from settings socket; safe defaults) ──────────
 const prizeScale  = computed(() => settings.value?.prizeScale  ?? 0.9);
+const uiScale     = computed(() => settings.value?.uiScale     ?? 1.0);
 const slipChance  = computed(() => settings.value?.slipChance  ?? 50);
 const slipMinTime = computed(() => settings.value?.slipMinTime ?? 1.5);
 const slipMaxTime = computed(() => settings.value?.slipMaxTime ?? 3);
@@ -187,9 +188,9 @@ const pushOnMiss  = computed(() => settings.value?.pushOnMiss  ?? true);
 const spawnCount  = computed(() => settings.value?.spawnCount  ?? 18);
 
 
-// ── Dynamic chute width (scales with prize size) ────────────────────────────
+// ── Dynamic chute width (scales with prize size + UI scale) ─────────────────
 const chuteWidth = computed(() => {
-	const cs = Math.max(0.8, prizeScale.value / 0.45);
+	const cs = Math.max(0.8, prizeScale.value / 0.45) * uiScale.value;
 	return Math.round(180 * cs);
 });
 
@@ -232,8 +233,22 @@ let leftGripImg = null;
 let rightGripImg = null;
 let backGripImg = null;
 
-// Physics chute divider wall (rebuilt when chuteWidth changes).
+// Physics chute divider wall (rebuilt when chuteWidth or stage changes).
 let chuteWall = null;
+
+// Outer world boundaries (left / right / floor). Rebuilt on resize so the
+// physics world tracks the actual rendered widget size.
+let outerWalls = [];
+
+// ResizeObserver instance, kept so onBeforeUnmount can disconnect.
+let resizeObserver = null;
+
+/**
+ * Base prize width in pixels at prizeScale=1.0, uiScale=1.0. Derived from
+ * the demo's `targetWidth = window.innerWidth / 9` at a ~1920px stage, so
+ * the default look matches the demo when the widget runs at 1080p.
+ */
+const PRIZE_BASE_WIDTH_PX = 1920 / 9;
 
 // Currently displayed name on the claw housing.
 let activeUsername = '';
@@ -271,14 +286,14 @@ const roundRectPath = (ctx, x, y, w, h, r) => {
 
 
 /**
- * Resolve scaled claw dimensions for the current prizeScale.
+ * Resolve scaled claw dimensions for the current prizeScale + uiScale.
  *
  * @returns {{ cs:number, armLen:number, maxSpread:number, sensorYOff:number,
  *   grabHalfW:number, intHalfW:number, intBot:number, clawRenderScale:number,
  *   attachOffset:number }}
  */
 const getDims = () => {
-	const cs              = Math.max(0.8, prizeScale.value / 0.45);
+	const cs              = Math.max(0.8, prizeScale.value / 0.45) * uiScale.value;
 	const armLen          = ARM_LENGTH_BASE * cs;
 	const clawRenderScale = armLen / GRIP_LENGTH_NATIVE;
 	const attachOffset    = GRIP_ATTACH_NATIVE_Y * clawRenderScale;
@@ -349,7 +364,7 @@ const loadClawImages = () => {
  */
 const initPhysics = () => {
 
-	clawX = STAGE_W / 2;
+	clawX = stageWidth / 2;
 	clawY = 100;
 
 	engine = Engine.create();
@@ -360,8 +375,8 @@ const initPhysics = () => {
 		canvas: canvas.value,
 		engine,
 		options: {
-			width: STAGE_W,
-			height: STAGE_H,
+			width: stageWidth,
+			height: stageHeight,
 			wireframes: false,
 			background: 'transparent',
 		},
@@ -371,23 +386,89 @@ const initPhysics = () => {
 	runner = Runner.create();
 	Runner.run(runner, engine);
 
+	rebuildWalls();
+	rebuildChute();
+	spawnPrizes();
+
+	Events.on(engine, 'afterUpdate', onPhysicsUpdate);
+	Events.on(render,  'afterRender', drawClaw);
+};
+
+
+/**
+ * (Re)build the outer world boundaries (floor, left wall, right wall) for
+ * the current stage size. Called once at init and again whenever the widget
+ * is resized, so the matter world stays in lockstep with the rendered size.
+ */
+const rebuildWalls = () => {
+	if (!world) return;
+
+	outerWalls.forEach(w => Composite.remove(world, w));
+	outerWalls = [];
+
 	const wallOpts = {
 		isStatic: true,
 		collisionFilter: { category: WALL_CATEGORY },
 		render: { visible: false },
 	};
 
-	Composite.add(world, [
-		Bodies.rectangle(STAGE_W / 2, STAGE_H + 25, STAGE_W, 50, wallOpts),
-		Bodies.rectangle(-25,         STAGE_H / 2,   50, STAGE_H,  wallOpts),
-		Bodies.rectangle(STAGE_W + 25, STAGE_H / 2,  50, STAGE_H,  wallOpts),
-	]);
+	outerWalls = [
+		Bodies.rectangle(stageWidth / 2, stageHeight + 25, stageWidth, 50, wallOpts),
+		Bodies.rectangle(-25, stageHeight / 2, 50, stageHeight, wallOpts),
+		Bodies.rectangle(stageWidth + 25, stageHeight / 2, 50, stageHeight, wallOpts),
+	];
+	Composite.add(world, outerWalls);
+};
 
+
+/**
+ * React to a wrapper size change: update the stage refs + non-reactive
+ * aliases, resize the canvas / render, rebuild the walls + chute, and clamp
+ * the claw so it doesn't end up outside the new bounds. Existing prizes are
+ * left where they are (physics will settle them) - the streamer can hit
+ * "Re-spawn Prizes" if the pile gets weird after a big resize.
+ *
+ * @param {number} w - new wrapper width in CSS pixels
+ * @param {number} h - new wrapper height in CSS pixels
+ */
+const resizeStage = (w, h) => {
+
+	const newW = Math.max(200, Math.floor(w));
+	const newH = Math.max(200, Math.floor(h));
+	if (newW === stageWidth && newH === stageHeight) return;
+
+	stageWidth = newW;
+	stageHeight = newH;
+	stageW.value = newW;
+	stageH.value = newH;
+
+	// If physics isn't running yet (first resize before initPhysics()), the
+	// new size will be picked up by init itself - nothing else to do.
+	if (!engine || !render) return;
+
+	// Resize the matter renderer's canvas + options. Both have to update or
+	// matter will draw into a clipped/stale viewport.
+	if (render.canvas) {
+		render.canvas.width = newW;
+		render.canvas.height = newH;
+	}
+	if (render.options) {
+		render.options.width = newW;
+		render.options.height = newH;
+	}
+	if (bgCanvas.value) {
+		bgCanvas.value.width = newW;
+		bgCanvas.value.height = newH;
+	}
+
+	rebuildWalls();
 	rebuildChute();
-	spawnPrizes();
 
-	Events.on(engine, 'afterUpdate', onPhysicsUpdate);
-	Events.on(render,  'afterRender', drawClaw);
+	// Keep the claw inside the new viewport. Don't yank it mid-drop, just
+	// clamp - the drop sequence's own moveClaw() targets are recomputed off
+	// the current stage on the next drop anyway.
+	clawX = Math.min(Math.max(50, clawX), stageWidth - 50);
+	clawY = Math.min(Math.max(50, clawY), stageHeight - 200);
 };
 
 
@@ -399,7 +480,7 @@ const rebuildChute = () => {
 	if (!world) return;
 	if (chuteWall) Composite.remove(world, chuteWall);
 	const w = chuteWidth.value;
-	chuteWall = Bodies.rectangle(w, STAGE_H - 150, 15, 400, {
+	chuteWall = Bodies.rectangle(w, stageHeight - 150, 15, 400, {
 		isStatic: true,
 		collisionFilter: { category: WALL_CATEGORY },
 		render: { fillStyle: '#2c3e50' },
@@ -486,7 +567,7 @@ const checkWin = () => {
 	for (let i = prizes.length - 1; i >= 0; i--) {
 		const p = prizes[i];
 		if (p === grabbedPrize) continue;
-		if (p.position.x < cw && p.position.y > STAGE_H - 200) {
+		if (p.position.x < cw && p.position.y > stageHeight - 200) {
 			Composite.remove(world, p);
 			prizes.splice(i, 1);
 			wonPrizesCount.value++;
@@ -809,8 +890,8 @@ const runDropSequence = async (targetX) => {
 	if (grabbedPrize) releasePrize();
 
 	const topY   = 100;
-	const floorY = STAGE_H - 110;
-	const destX  = (targetX / 100) * (STAGE_W - 500) + 400;
+	const floorY = stageHeight - 110;
+	const destX  = (targetX / 100) * (stageWidth - 500) + 400;
 
 	await animateClawTo(1.0);
 	await moveClaw(destX, topY, 8);
@@ -910,7 +991,7 @@ const spawnPrizes = async () => {
 	if (pool.length === 0) return; // streamer hasn't set up any prizes yet
 
 	const spawnMin = chuteWidth.value + 50;
-	const spawnMax = STAGE_W - spawnMin;
+	const spawnMax = stageWidth - spawnMin;
 	const count = Math.max(1, Math.floor(spawnCount.value));
 
 	for (let i = 0; i < count; i++) {
@@ -950,7 +1031,11 @@ const createPrize = async (url, extraScale, x, y) => {
 		return;
 	}
 
-	const targetWidth = (STAGE_W / 9) * prizeScale.value * extraScale;
+	// Prize size is an absolute pixel value (not stage-relative) so making
+	// the widget bigger gives *more space* for the same-size prizes, rather
+	// than just zooming everything. uiScale lets 4K streamers bump the whole
+	// machine without changing per-prize relative scale.
+	const targetWidth = PRIZE_BASE_WIDTH_PX * prizeScale.value * uiScale.value * extraScale;
 	const scale       = targetWidth / img.width;
 	const tc          = document.createElement('canvas');
 	const ctx         = tc.getContext('2d');
@@ -1003,9 +1088,9 @@ watch(resolvedPrizes, () => {
 	spawnPrizes();
 });
 
-// When prizeScale changes the chute width changes too - rebuild the divider
-// wall so physics stays consistent with visuals.
-watch(prizeScale, () => {
+// chuteWidth depends on both prizeScale and uiScale, so rebuild the divider
+// wall whenever either of them changes.
+watch(chuteWidth, () => {
 	rebuildChute();
 });
 
@@ -1013,6 +1098,20 @@ watch(prizeScale, () => {
 // ── Lifecycle ───────────────────────────────────────────────────────────────
 
 onMounted(async () => {
+	// Capture the initial wrapper size BEFORE waiting for settings - the
+	// wrapper element exists from first render (it's outside v-if="ready").
+	// This way the eventual initPhysics() call uses real dimensions rather
+	// than the 1920x1080 placeholders.
+	if (wrapper.value) {
+		const rect = wrapper.value.getBoundingClientRect();
+		if (rect.width > 0 && rect.height > 0) {
+			stageWidth = Math.max(200, Math.floor(rect.width));
+			stageHeight = Math.max(200, Math.floor(rect.height));
+			stageW.value = stageWidth;
+			stageH.value = stageHeight;
+		}
+	}
+
 	// Wait until useToySettings flips `ready` (its socket has populated).
 	const waitForReady = () => new Promise(resolve => {
 		if (ready.value) return resolve();
@@ -1027,10 +1126,26 @@ onMounted(async () => {
 
 	await loadClawImages();
 	initPhysics();
+
+	// Track wrapper resizes so the matter world stays the same size as the
+	// rendered widget (responsive sizing, no letterboxing).
+	if (wrapper.value && typeof window !== 'undefined' && window.ResizeObserver) {
+		resizeObserver = new ResizeObserver(entries => {
+			for (const entry of entries) {
+				const cr = entry.contentRect;
+				resizeStage(cr.width, cr.height);
+			}
+		});
+		resizeObserver.observe(wrapper.value);
+	}
 });
 
 
 onBeforeUnmount(() => {
+	if (resizeObserver) {
+		resizeObserver.disconnect();
+		resizeObserver = null;
+	}
 	if (runner) Runner.stop(runner);
 	if (render) Render.stop(render);
 	if (world) {
@@ -1043,14 +1158,17 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
 
-.scaleBox {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform-origin: center center;
-	width: 1280px;
-	height: 720px;
+// Outer responsive wrapper - fills whatever the widget box / OBS browser
+// source dimensions are. A ResizeObserver in the script tracks size changes
+// and propagates them to the matter world.
+.claw-machine-wrapper {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
 	font-family: 'Rajdhani', sans-serif;
+	// Transparent background so OBS scenes / chroma key can show through.
+	background: transparent;
 }
 
 .claw-stage {
@@ -1058,7 +1176,6 @@ onBeforeUnmount(() => {
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
-	// Transparent background so OBS scenes / chroma key can show through.
 	background: transparent;
 }
 

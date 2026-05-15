@@ -144,6 +144,11 @@ export default class ClawGame extends Toy {
 			// claw is derived from prizeScale in the widget).
 			prizeScale: ref(0.9),
 
+			// Global UI multiplier on top of prizeScale, so a 4K streamer can
+			// scale the whole machine up (claw + prizes + chute) without
+			// changing the per-prize relative scale.
+			uiScale: ref(1.0),
+
 			// How likely (0-100%) the held prize is to slip out before delivery.
 			slipChance: ref(50),
 

@@ -60,6 +60,22 @@
 			</SettingsInputRow>
 
 			<SettingsInputRow
+				type="float"
+				:min="0.5"
+				:max="3.0"
+				:step="0.1"
+				v-model="uiScale"
+			>
+				<template #title>UI Scale</template>
+				<p>
+					Global multiplier on top of Prize Scale. The machine is
+					tuned to look right at 1080p with UI Scale = 1.0 - bump
+					this up (e.g. 2.0) if you're running the widget at 4K and
+					the claw / prizes look too small relative to the scene.
+				</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
 				type="number"
 				:min="6"
 				:max="40"
@@ -207,6 +223,7 @@ const toy = ctApp.toyManager.toys[ClawGame.slug];
 // destructured setting refs - tabs/auto-unwrapping in templates
 const {
 	prizeScale,
+	uiScale,
 	spawnCount,
 	slipChance,
 	slipMinTime,
