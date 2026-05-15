@@ -202,6 +202,16 @@ export default class ClawGame extends Toy {
 			// changing the per-prize relative scale.
 			uiScale: ref(1.0),
 
+			// Toggle the on-prize "₱<value>" labels. Wins are still logged
+			// and points still paid out when false - this just hides the
+			// visual clutter for streamers who prefer the cleaner look.
+			showPrizeLabels: ref(true),
+
+			// Multiplier on the on-prize label font size. Labels already
+			// auto-scale with prize size; this is a per-streamer fine-tune
+			// on top of that.
+			labelScale: ref(1.0),
+
 			// How likely (0-100%) the held prize is to slip out before delivery.
 			slipChance: ref(50),
 

@@ -184,6 +184,8 @@ const lastWin = socketShallowRef(slugify('lastWin'), null);
 // ── Tunable accessors (pulled from settings socket; safe defaults) ──────────
 const prizeScale  = computed(() => settings.value?.prizeScale  ?? 0.9);
 const uiScale     = computed(() => settings.value?.uiScale     ?? 1.0);
+const showPrizeLabels = computed(() => settings.value?.showPrizeLabels ?? true);
+const labelScale  = computed(() => settings.value?.labelScale  ?? 1.0);
 const slipChance  = computed(() => settings.value?.slipChance  ?? 50);
 const slipMinTime = computed(() => settings.value?.slipMinTime ?? 1.5);
 const slipMaxTime = computed(() => settings.value?.slipMaxTime ?? 3);
@@ -612,19 +614,30 @@ const checkWin = () => {
  * skipped (the claw / housing covers that area).
  */
 const drawPrizeLabels = () => {
+
+	// Streamer-toggleable: when off, no labels paint at all. Wins still
+	// happen, points still award - we just skip the visual pass.
+	if (!showPrizeLabels.value) return;
+
 	const ctx = render?.context;
 	if (!ctx) return;
+
+	// Multiplier on the prize's rendered width. Sized so the default label
+	// sits readably above the prize art without dominating it (was 0.22
+	// initially, halved on streamer feedback). The labelScale setting is a
+	// per-streamer fine-tune on top of that.
+	const FONT_FACTOR = 0.11;
 
 	for (const p of prizes) {
 		if (p === grabbedPrize) continue;
 		const tag = p.plugin?.clawGame;
 		if (!tag || tag.value == null) continue;
 
-		// Font sizes scale with the prize's rendered width so the label
-		// looks proportional whether the streamer cranked up uiScale or
-		// dropped prizeScale way down. Floored so we don't render fractional
-		// font sizes at very small scales.
-		const fontSize = Math.max(11, Math.floor((tag.targetWidth || 100) * 0.22));
+		// Font sizes scale with the prize's rendered width AND the streamer's
+		// labelScale slider. Floor at 8 so labels stay (barely) readable at
+		// extreme scale-downs.
+		const baseSize = (tag.targetWidth || 100) * FONT_FACTOR * labelScale.value;
+		const fontSize = Math.max(8, Math.floor(baseSize));
 		const cx = p.position.x;
 		const cy = p.position.y;
 		const text = `₱${tag.value}`;

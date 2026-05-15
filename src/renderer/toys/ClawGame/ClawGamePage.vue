@@ -47,7 +47,7 @@
 			<SettingsInputRow
 				type="float"
 				:min="0.2"
-				:max="1.0"
+				:max="2.0"
 				:step="0.05"
 				v-model="prizeScale"
 			>
@@ -55,7 +55,7 @@
 				<p>
 					Visual size of prizes (and by extension the claw arm length).
 					Larger prizes are easier to push around and harder to fit
-					through the chute. Range 0.2 - 1.0.
+					through the chute. Range 0.2 - 2.0.
 				</p>
 			</SettingsInputRow>
 
@@ -83,6 +83,36 @@
 			>
 				<template #title>Prize Count</template>
 				<p>How many prizes to drop into the machine when it (re)spawns.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="showPrizeLabels"
+			>
+				<template #title>Show Prize Values on Prizes</template>
+				<p>
+					Display each prize's rolled value as a "₱<i>N</i>" pill on top
+					of the prize. Wins are still logged and channel points are
+					still paid out when this is off - it just hides the on-screen
+					labels for a cleaner look.
+				</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				v-if="showPrizeLabels"
+				type="float"
+				:min="0.3"
+				:max="3.0"
+				:step="0.1"
+				v-model="labelScale"
+			>
+				<template #title>Label Size</template>
+				<p>
+					Multiplier on the prize-label font size. Labels already
+					auto-scale with prize size; use this to nudge them bigger or
+					smaller without changing the prizes themselves. 1.0 is the
+					default.
+				</p>
 			</SettingsInputRow>
 
 			<SettingsInputRow
@@ -224,6 +254,8 @@ const toy = ctApp.toyManager.toys[ClawGame.slug];
 const {
 	prizeScale,
 	uiScale,
+	showPrizeLabels,
+	labelScale,
 	spawnCount,
 	slipChance,
 	slipMinTime,
