@@ -96,10 +96,12 @@ const {
 
 // ── Fixed stage size ─────────────────────────────────────────────────────────
 // The widget renders at this size and FixedAutoSizer scales the result to fit
-// the actual OBS browser-source dimensions. 16:9 is the most common stream
-// aspect ratio.
-const STAGE_W = 1280;
-const STAGE_H = 720;
+// the actual OBS browser-source dimensions. We render at 1920x1080 to match
+// the resolution the demo was tuned at - the claw / prize size constants are
+// absolute pixel values that look right at that stage size. The FixedAutoSizer
+// will downscale to whatever the streamer's widget box is.
+const STAGE_W = 1920;
+const STAGE_H = 1080;
 
 
 // ── Claw sprite metadata (matches misc/claw-game-demo) ──────────────────────
@@ -930,6 +932,12 @@ const spawnPrizes = async () => {
 const createPrize = async (url, extraScale, x, y) => {
 
 	const img = new Image();
+	// Prize images can come from the asset server on a different origin than
+	// the widget host (in dev: widget @ :8080, assets @ :3001). Request the
+	// load as CORS-anonymous so getImageData below doesn't trip the
+	// "tainted canvas" SecurityError. The Express CORS middleware on the
+	// asset server explicitly allows :8080. MUST be set before .src.
+	img.crossOrigin = 'anonymous';
 	img.src = url;
 	try {
 		await new Promise((resolve, reject) => {

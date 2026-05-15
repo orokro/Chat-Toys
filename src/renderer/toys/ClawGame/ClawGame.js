@@ -165,13 +165,15 @@ export default class ClawGame extends Toy {
 			// Mirrors the Fishing-toy "fishList" pattern + ArrayPrizeItemEdit.
 			prizes: shallowRef([]),
 
-			// Live-widget placement (widescreen by default - the demo was
-			// designed for desktop full-window).
+			// Live-widget placement. The widget renders at 1920x1080 internally
+			// (the resolution the demo's claw / prize constants were tuned for)
+			// and FixedAutoSizer scales to fit whatever box the streamer picks.
+			// Defaulting to the native stage size avoids any initial scaling.
 			widgetBox: shallowRef({
 				x: 0,
 				y: 0,
-				width: 1280,
-				height: 720,
+				width: 1920,
+				height: 1080,
 			}),
 		});
 	}
