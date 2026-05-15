@@ -66,14 +66,24 @@
 						<h2>Race Results!</h2>
 						<div class="winners-list">
 							<div v-for="(winner, index) in winners" :key="winner.userID" class="winner-item">
-								<span class="rank">{{ index + 1 }}st:</span>
+								<span class="rank">{{ ordinal(index + 1) }}:</span>
 								<span class="name">{{ winner.username }}</span>
 							</div>
 						</div>
 					</template>
 
 					<template v-if="gameState === 'PAYOUT'">
-						<h2>Paying out winners...</h2>
+						<template v-if="payoutInfo.hasWinningBets">
+							<h2>Paying out winners!</h2>
+							<div class="msg">
+								{{ payoutInfo.winnerCount }} winning bet{{ payoutInfo.winnerCount === 1 ? '' : 's' }}
+								splitting ₱ {{ payoutInfo.totalPool }}
+							</div>
+						</template>
+						<template v-else>
+							<h2>No winning bets!</h2>
+							<div class="msg">All bets go to the house.</div>
+						</template>
 					</template>
 				</div>
 			</div>
@@ -117,6 +127,22 @@ const timer = socketShallowRefReadOnly(slugify('timer'), 0);
 const winners = socketShallowRefReadOnly(slugify('winners'), []);
 const finishedList = socketShallowRefReadOnly(slugify('finishedList'), []);
 const bgImagePath = socketShallowRefReadOnly(slugify('bgImagePath'), '');
+const payoutInfo = socketShallowRefReadOnly(slugify('payoutInfo'), {
+	hasWinningBets: false,
+	winnerCount: 0,
+	totalPool: 0
+});
+
+/**
+ * Format a 1-based rank as an English ordinal string (1 -> "1st", 2 -> "2nd", ...).
+ * @param {number} n
+ * @returns {string}
+ */
+function ordinal(n) {
+	const suffixes = ['th', 'st', 'nd', 'rd'];
+	const v = n % 100;
+	return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
+}
 
 // Notifications for when a horse finishes
 const notifications = ref([]);

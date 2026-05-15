@@ -130,6 +130,13 @@
 
 		<div class="actionButtons">
 			<button
+				v-if="gameState === 'GAME'"
+				class="end-btn"
+				@click="handleEndRace"
+			>
+				End Race
+			</button>
+			<button
 				class="reset-btn"
 				@click="handleReset"
 			>
@@ -191,7 +198,7 @@ const gameState = socketShallowRefReadOnly(toy.static.slugify('gameState'), 'IDL
 const timer = socketShallowRefReadOnly(toy.static.slugify('timer'), 0);
 
 /**
- * Force reset the game
+ * Force reset the game.
  */
 async function handleReset() {
 	const response = await promptModal(ConfirmModal, {
@@ -206,12 +213,31 @@ async function handleReset() {
 	}
 }
 
+/**
+ * Force-finish the race using current standings. Used as an escape hatch when
+ * racers refuse to keep playing - awards the top 3 by current points and
+ * resolves bets as normal.
+ */
+async function handleEndRace() {
+	const response = await promptModal(ConfirmModal, {
+		title: 'End the race?',
+		prompt: `Stop the race now and award the podium based on current standings? Any racers still on the track won't get another chance to finish.`,
+		buttons: ['yes', 'nevermind'],
+		icon: 'warning'
+	});
+
+	if (response && response.index === 0) {
+		toy.forceEndRace();
+	}
+}
+
 </script>
 <style lang="scss" scoped>
 
 	.actionButtons {
 		display: flex;
 		justify-content: center;
+		gap: 16px;
 		padding: 20px;
 
 		button {
@@ -222,11 +248,22 @@ async function handleReset() {
 			cursor: pointer;
 			color: white;
 			border: 2px solid black;
-			background: #d32f2f;
 			text-shadow: 1px 1px 0px black;
+		}
+
+		.reset-btn {
+			background: #d32f2f;
 
 			&:hover {
 				background: #b71c1c;
+			}
+		}
+
+		.end-btn {
+			background: #f57c00;
+
+			&:hover {
+				background: #e65100;
 			}
 		}
 	}

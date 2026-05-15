@@ -43,6 +43,19 @@ export default class HorseRacing extends Toy {
 		PAYOUT: 'PAYOUT'
 	};
 
+	/**
+	 * Bonus points awarded to a horse the instant it crosses the finish line,
+	 * indexed by finish position (0 = 1st, 1 = 2nd, 2 = 3rd).
+	 *
+	 * Because points double as the horse's distance down the track, a sort by
+	 * points alone can put a horse that crossed second above the horse that
+	 * actually crossed first (e.g. they grabbed a 99-value apple on their last
+	 * tick). Stacking a finish bonus that dwarfs anything reachable from a
+	 * single apple keeps the points-sort and the true podium in agreement
+	 * without having to change how the widget renders progress.
+	 */
+	static FINISH_BONUSES = [100000, 70000, 50000];
+
 	constructor(toyManager) {
 		super(toyManager);
 
@@ -54,6 +67,16 @@ export default class HorseRacing extends Toy {
 		this.timer = socketShallowRef(this.static.slugify('timer'), 0);
 		this.winners = socketShallowRef(this.static.slugify('winners'), []);
 		this.finishedList = socketShallowRef(this.static.slugify('finishedList'), []); // Order of finishing
+
+		// Summary of how the betting pool resolved, so the widget's PAYOUT
+		// overlay can show "$X paid to N winners" or "no winning bets - all
+		// points go to the house" instead of a generic "paying out winners"
+		// message that lies when nobody won.
+		this.payoutInfo = socketShallowRef(this.static.slugify('payoutInfo'), {
+			hasWinningBets: false,
+			winnerCount: 0,
+			totalPool: 0
+		});
 
 		// because the CSS in the widget resolves paths differently, we gotta make the path more explicit when live
 		const fixPathForLive = (path) => {
@@ -234,29 +257,43 @@ export default class HorseRacing extends Toy {
 			return;
 		}
 
-		const appleIndex = this.apples.value.findIndex(a => a.number === params.number);
+		// Sanitize - chat-sourced params are usually numbers already, but be
+		// defensive in case a future code path delivers a string.
+		const eatNumber = Number(params.number);
+		const appleIndex = this.apples.value.findIndex(a => a.number === eatNumber);
 		if (appleIndex === -1) {
 			handshake.reject('Apple not found');
 			return;
 		}
 
 		const apple = this.apples.value[appleIndex];
-		
+
 		// Update racer points
 		const updatedPlayers = [...this.players.value];
 		const pIdx = updatedPlayers.findIndex(p => p.userID === racer.userID);
 		updatedPlayers[pIdx].points += apple.value;
+
+		// Did this apple push the racer across the finish line for the first time?
+		const justFinished = updatedPlayers[pIdx].points >= this.settings.raceLength.value
+			&& !this.finishedList.value.find(f => f.userID === racer.userID);
+
+		// Stack the finish bonus before re-publishing the players list so the
+		// podium sort in endRace lines up with actual finish order. See the
+		// note on HorseRacing.FINISH_BONUSES.
+		if (justFinished) {
+			const finishPosition = this.finishedList.value.length; // 0 = 1st, 1 = 2nd, 2 = 3rd
+			const bonus = HorseRacing.FINISH_BONUSES[finishPosition] ?? 0;
+			updatedPlayers[pIdx].points += bonus;
+		}
+
 		this.players.value = updatedPlayers;
 
-		// Check if this horse just finished
-		if (updatedPlayers[pIdx].points >= this.settings.raceLength.value) {
-			if (!this.finishedList.value.find(f => f.userID === racer.userID)) {
-				this.finishedList.value = [...this.finishedList.value, {
-					userID: racer.userID,
-					username: racer.username,
-					time: Date.now()
-				}];
-			}
+		if (justFinished) {
+			this.finishedList.value = [...this.finishedList.value, {
+				userID: racer.userID,
+				username: racer.username,
+				time: Date.now()
+			}];
 		}
 
 		// Remove apple
@@ -368,23 +405,43 @@ export default class HorseRacing extends Toy {
 	payoutBets() {
 		this.gameState.value = HorseRacing.STATES.PAYOUT;
 		const winner = this.winners.value[0];
-		
-		if (winner) {
-			const winningBets = this.bets.value.filter(b => b.targetID === winner.userID);
-			const totalPool = this.bets.value.reduce((sum, b) => sum + b.amount, 0);
-			const totalWinningBets = winningBets.reduce((sum, b) => sum + b.amount, 0);
+		const totalPool = this.bets.value.reduce((sum, b) => sum + b.amount, 0);
+		const winningBets = winner
+			? this.bets.value.filter(b => b.targetID === winner.userID)
+			: [];
+		const totalWinningBets = winningBets.reduce((sum, b) => sum + b.amount, 0);
 
-			if (totalWinningBets > 0) {
-				for (const bet of winningBets) {
-					const share = bet.amount / totalWinningBets;
-					const payout = Math.floor(share * totalPool);
-					window.ytctDB.updateUser(bet.bettorID, { relativePoints: payout });
-					this.chatToysApp.log.info(`${bet.bettorName} won ${payout} points betting on ${winner.username}!`);
-				}
+		if (totalWinningBets > 0) {
+			for (const bet of winningBets) {
+				const share = bet.amount / totalWinningBets;
+				const payout = Math.floor(share * totalPool);
+				window.ytctDB.updateUser(bet.bettorID, { relativePoints: payout });
+				this.chatToysApp.log.info(`${bet.bettorName} won ${payout} points betting on ${winner.username}!`);
 			}
+		} else if (totalPool > 0) {
+			// Nobody backed the actual winner - the pool stays with the house.
+			this.chatToysApp.log.info(`No winning bets - ${totalPool} points go to the house.`);
 		}
 
+		// Tell the widget how to label the PAYOUT overlay.
+		this.payoutInfo.value = {
+			hasWinningBets: totalWinningBets > 0,
+			winnerCount: winningBets.length,
+			totalPool: totalPool
+		};
+
 		window.setElectronTimeout(() => this.resetGame(), 10000);
+	}
+
+	/**
+	 * Force-finish a race that's stuck in GAME state by transitioning straight
+	 * into RESULTS using whatever points the racers have right now. The
+	 * settings page exposes this so the streamer has an escape hatch when
+	 * racers refuse to keep playing - otherwise the race never ends.
+	 */
+	forceEndRace() {
+		if (this.gameState.value !== HorseRacing.STATES.GAME) return;
+		this.endRace();
 	}
 
 	resetGame() {
@@ -405,6 +462,7 @@ export default class HorseRacing extends Toy {
 		this.timer.value = 0;
 		this.winners.value = [];
 		this.finishedList.value = [];
+		this.payoutInfo.value = { hasWinningBets: false, winnerCount: 0, totalPool: 0 };
 	}
 
 	startTimer(seconds, callback) {
