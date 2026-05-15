@@ -18,6 +18,8 @@
 				<th>Prize Image</th>
 				<th>Name</th>
 				<th>Scale <span class="tippySpan" v-tippy="scaleTippyText">ℹ️</span></th>
+				<th>Min Value <span class="tippySpan" v-tippy="valueTippyText">ℹ️</span></th>
+				<th>Max Value</th>
 			</tr>
 		</thead>
 
@@ -38,6 +40,12 @@
 				<td>
 					<input type="number" step="0.1" v-model="scaleInput" @input="validateScale" />
 				</td>
+				<td>
+					<input type="number" step="1" v-model="minValueInput" @input="validateMinValue" @blur="validateMinValue" />
+				</td>
+				<td>
+					<input type="number" step="1" v-model="maxValueInput" @input="validateMaxValue" @blur="validateMaxValue" />
+				</td>
 			</tr>
 
 			<tr>
@@ -56,6 +64,9 @@
 						@input="validateScale"
 					/>
 				</td>
+				<td colspan="2" class="rangePreview">
+					Each spawn rolls a random value in [{{ effectiveMin }} … {{ effectiveMax }}].
+				</td>
 			</tr>
 		</tbody>
 	</table>
@@ -64,7 +75,7 @@
 <script setup>
 
 // vue
-import { ref, watch, markRaw } from 'vue';
+import { ref, computed, watch, markRaw } from 'vue';
 import { directive as VTippy } from 'vue-tippy';
 import 'tippy.js/dist/tippy.css';
 
@@ -80,6 +91,12 @@ const scaleTippyText = `
 	How large this prize is in the machine, relative to the default size.
 	1.0 is the baseline. Larger prizes are easier to push around and harder
 	to fit through the chute.
+`;
+
+const valueTippyText = `
+	Each time a prize spawns it rolls a random integer value between Min
+	Value and Max Value (inclusive). When a viewer wins the prize, they get
+	that many channel points. Set both to the same number for a fixed value.
 `;
 
 const props = defineProps({
@@ -102,15 +119,24 @@ const emit = defineEmits(['change']);
 // yup schemas
 const scaleSchema = yup.number().min(0.1).max(5);
 const textSchema = yup.string().trim().required();
+const valueSchema = yup.number().integer().min(0);
 
 // local state, copied from props
 const nameInput = ref(props.value.name);
 const scaleInput = ref(props.value.scale);
+const minValueInput = ref(props.value.minValue ?? 10);
+const maxValueInput = ref(props.value.maxValue ?? 50);
 
 watch(() => props.value, (newValue) => {
 	nameInput.value = newValue.name;
 	scaleInput.value = newValue.scale;
+	minValueInput.value = newValue.minValue ?? 10;
+	maxValueInput.value = newValue.maxValue ?? 50;
 });
+
+/** Sanitized values used for the "rolls a random …" preview text. */
+const effectiveMin = computed(() => Math.max(0, Math.floor(Number(minValueInput.value) || 0)));
+const effectiveMax = computed(() => Math.max(effectiveMin.value, Math.floor(Number(maxValueInput.value) || 0)));
 
 
 /**
@@ -122,6 +148,8 @@ const emitChange = () => {
 	emit('change', {
 		name: nameInput.value,
 		scale: scaleInput.value,
+		minValue: effectiveMin.value,
+		maxValue: effectiveMax.value,
 		image: props.value.image,
 	});
 };
@@ -145,6 +173,28 @@ const validateScale = async () => {
 		emitChange();
 	} catch (err) {
 		scaleInput.value = props.value.scale;
+	}
+};
+
+
+/** Validate the prize's minimum spawn value (non-negative integer). */
+const validateMinValue = async () => {
+	try {
+		await valueSchema.validate(minValueInput.value);
+		emitChange();
+	} catch (err) {
+		minValueInput.value = props.value.minValue ?? 10;
+	}
+};
+
+
+/** Validate the prize's maximum spawn value (non-negative integer). */
+const validateMaxValue = async () => {
+	try {
+		await valueSchema.validate(maxValueInput.value);
+		emitChange();
+	} catch (err) {
+		maxValueInput.value = props.value.maxValue ?? 50;
 	}
 };
 
@@ -205,7 +255,7 @@ const handlePickImage = async () => {
 
 		input[type="text"], input[type="number"] {
 
-			width: 150px;
+			width: 110px;
 
 			border: 1px solid black;
 			outline: 1px solid black;
@@ -217,6 +267,12 @@ const handlePickImage = async () => {
 				border-color: rgb(255, 8, 8);
 				outline: 1px solid rgb(255, 8, 8);
 			}
+		}
+
+		.rangePreview {
+			font-size: 0.85em;
+			font-style: italic;
+			color: #333;
 		}
 
 		input[type="range"] {

@@ -87,6 +87,11 @@ export default class ClawGame extends Toy {
 		// current prizes and respawn a fresh pile (post-settings edits, "RE-SPAWN ALL").
 		this.respawnNonce = socketShallowRef(this.static.slugify('respawnNonce'), 0);
 
+		// Latest win event published by the widget when a prize crosses the
+		// chute threshold. Shape: { id, userId, username, prizeName, value, t }.
+		// The toy watches this and pays out / logs once per unique id.
+		this.lastWin = socketShallowRef(this.static.slugify('lastWin'), null);
+
 		// ── Watchers ──────────────────────────────────────────────────
 		// Re-resolve prize URLs when the array changes. Even though `prizes`
 		// is a shallowRef, ArrayEdit replaces the array on edits so this fires.
@@ -100,12 +105,46 @@ export default class ClawGame extends Toy {
 			if (val.id === this.currentDrop.value.id) this.advanceQueue();
 		});
 
+		// Pay out + log whenever the widget reports a new win. De-duped by id
+		// so re-fires of the same value (page reload, socket re-sync) don't
+		// double-credit. Also ignores null / id-less values.
+		watch(this.lastWin, (val) => {
+			if (!val || !val.id) return;
+			if (val.id === this.lastProcessedWinId) return;
+			this.lastProcessedWinId = val.id;
+			this.handleWin(val);
+		});
+
 		// ── Internal state ────────────────────────────────────────────
-		/** @type {Array<{id:string,username:string,targetX:number}>} */
+		/** @type {Array<{id:string,username:string,userID:string,targetX:number}>} */
 		this.queue = [];
 
 		/** Timeout that force-advances the queue if the widget never acks. */
 		this.dropSafetyTimer = null;
+
+		/** Id of the most recently-processed win, for de-duping lastWin. */
+		this.lastProcessedWinId = null;
+	}
+
+
+	/**
+	 * Award the points + log the prize when the widget reports a win.
+	 *
+	 * @param {{userId:?string, username:?string, prizeName:string, value:number}} win
+	 */
+	handleWin(win) {
+		const value = Number.isFinite(win.value) ? Math.floor(win.value) : 0;
+		const prizeName = win.prizeName || 'a prize';
+		const username = win.username || 'someone';
+
+		// Mirror the Fishing toy: ytctDB awards via relativePoints.
+		if (win.userId && value > 0) {
+			window.ytctDB.updateUser(win.userId, { relativePoints: value });
+		}
+
+		this.chatToysApp.log.info(
+			`${username} won ${prizeName}` + (value > 0 ? ` (₱${value})` : '')
+		);
 	}
 
 
@@ -114,17 +153,31 @@ export default class ClawGame extends Toy {
 	 * concrete image URLs. Empty/blank entries are skipped so a misconfigured
 	 * row doesn't trip up image loading in the widget.
 	 *
-	 * @returns {Array<{name:string,imageUrl:string,scale:number}>}
+	 * Defaults a sensible value range (10..50) for prizes that pre-date the
+	 * min/max fields so older saved settings still work.
+	 *
+	 * @returns {Array<{name:string,imageUrl:string,scale:number,minValue:number,maxValue:number}>}
 	 */
 	resolvePrizes() {
 		const list = this.settings?.prizes?.value ?? [];
 		const out = [];
 		for (const p of list) {
 			if (!p || !p.image) continue;
+
+			// Clamp + sanitize values so the widget never has to defend
+			// against a NaN that'd make Math.random() blow up.
+			const rawMin = Number(p.minValue);
+			const rawMax = Number(p.maxValue);
+			const minValue = Number.isFinite(rawMin) ? Math.max(0, Math.floor(rawMin)) : 10;
+			const maxValueCandidate = Number.isFinite(rawMax) ? Math.max(0, Math.floor(rawMax)) : 50;
+			const maxValue = Math.max(minValue, maxValueCandidate);
+
 			out.push({
 				name: p.name || '',
 				imageUrl: this.getAssetPath(p.image),
 				scale: typeof p.scale === 'number' ? p.scale : 1,
+				minValue,
+				maxValue,
 			});
 		}
 		return out;
@@ -230,10 +283,13 @@ export default class ClawGame extends Toy {
 		const targetX = Math.max(0, Math.min(100, raw));
 
 		// Enqueue the drop. The username travels with it so the widget can
-		// paint the chatter's name on the claw housing.
+		// paint the chatter's name on the claw housing, and the unique user
+		// id rides along so the widget can attribute the eventual prize win
+		// back to this user when the prize crosses the chute.
 		const item = {
 			id: uuidv4(),
 			username: msg.author,
+			userID: msg.authorUniqueID,
 			targetX,
 		};
 		this.queue.push(item);
@@ -253,6 +309,8 @@ export default class ClawGame extends Toy {
 	 */
 	refreshPendingDisplay() {
 		// Shallow copy of just the public fields so we don't leak internals.
+		// userID is intentionally omitted from the public queue view - the
+		// active drop carries it because the widget needs to tag wins.
 		this.pendingQueue.value = this.queue.map(q => ({
 			id: q.id,
 			username: q.username,

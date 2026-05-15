@@ -67,6 +67,7 @@ import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
 // chat-toys plumbing
 import { useToySettings } from '@toys/useToySettings';
 import { keepAliveSocket } from '../keepAliveSocket.js';
+import { v4 as uuidv4 } from 'uuid';
 
 // physics
 import Matter from 'matter-js';
@@ -174,6 +175,10 @@ const respawnNonce = socketShallowRefReadOnly(slugify('respawnNonce'), 0);
 
 // Acknowledgement back to the toy. Writable; the toy watches it to advance the queue.
 const dropAck = socketShallowRef(slugify('dropAck'), null);
+
+// Win event back-channel. Writable; the toy watches it and pays out points
+// once per unique `id`. Shape: { id, userId, username, prizeName, value, t }.
+const lastWin = socketShallowRef(slugify('lastWin'), null);
 
 
 // ── Tunable accessors (pulled from settings socket; safe defaults) ──────────
@@ -391,7 +396,12 @@ const initPhysics = () => {
 	spawnPrizes();
 
 	Events.on(engine, 'afterUpdate', onPhysicsUpdate);
-	Events.on(render,  'afterRender', drawClaw);
+
+	// afterRender listeners fire in registration order, so labels draw
+	// first and the claw goes on top (it already covers the grabbed prize
+	// label which we also skip in drawPrizeLabels).
+	Events.on(render, 'afterRender', drawPrizeLabels);
+	Events.on(render, 'afterRender', drawClaw);
 };
 
 
@@ -559,8 +569,10 @@ const tickFakePhysics = () => {
 
 
 /**
- * Sweep free prizes - anything fully inside the chute and below the chute
- * mouth counts as won. Stripped from the world and the counter ticks up.
+ * Sweep free prizes - anything inside the chute and below the chute mouth
+ * counts as won. Stripped from the world, counter ticks up, and a win event
+ * is pushed up to the toy via the `lastWin` socket-ref so it can pay out
+ * points + log the win to the chat-toys log.
  */
 const checkWin = () => {
 	const cw = chuteWidth.value;
@@ -568,10 +580,83 @@ const checkWin = () => {
 		const p = prizes[i];
 		if (p === grabbedPrize) continue;
 		if (p.position.x < cw && p.position.y > stageHeight - 200) {
+			const tag = p.plugin?.clawGame || {};
+
+			// Send the win up to the toy. The toy de-dupes by id so it pays
+			// out exactly once per unique win - re-renders or socket re-syncs
+			// can't double-credit a viewer.
+			lastWin.value = {
+				id: uuidv4(),
+				userId: tag.grabbedByUserID || null,
+				username: tag.grabbedBy || null,
+				prizeName: tag.name || 'a prize',
+				value: tag.value || 0,
+				t: Date.now(),
+			};
+
 			Composite.remove(world, p);
 			prizes.splice(i, 1);
 			wonPrizesCount.value++;
 		}
+	}
+};
+
+
+// ── Prize value labels ──────────────────────────────────────────────────────
+
+/**
+ * Draw a "₱<value>" pill on each prize, scaled with the prize's rendered
+ * width so it stays readable regardless of prizeScale / uiScale. Drawn as
+ * an afterRender step on the matter Render context so it lives on the same
+ * canvas as the prize sprites; labels for the currently-grabbed prize are
+ * skipped (the claw / housing covers that area).
+ */
+const drawPrizeLabels = () => {
+	const ctx = render?.context;
+	if (!ctx) return;
+
+	for (const p of prizes) {
+		if (p === grabbedPrize) continue;
+		const tag = p.plugin?.clawGame;
+		if (!tag || tag.value == null) continue;
+
+		// Font sizes scale with the prize's rendered width so the label
+		// looks proportional whether the streamer cranked up uiScale or
+		// dropped prizeScale way down. Floored so we don't render fractional
+		// font sizes at very small scales.
+		const fontSize = Math.max(11, Math.floor((tag.targetWidth || 100) * 0.22));
+		const cx = p.position.x;
+		const cy = p.position.y;
+		const text = `₱${tag.value}`;
+
+		ctx.save();
+		ctx.font = `bold ${fontSize}px Rajdhani, sans-serif`;
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+
+		const textWidth = ctx.measureText(text).width;
+		const padX = fontSize * 0.5;
+		const padY = fontSize * 0.22;
+		const pillW = textWidth + padX * 2;
+		const pillH = fontSize + padY * 2;
+		const pillR = pillH / 2;
+		const pillX = cx - pillW / 2;
+		const pillY = cy - pillH / 2;
+
+		ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+		roundRectPath(ctx, pillX, pillY, pillW, pillH, pillR);
+		ctx.fill();
+
+		ctx.fillStyle = '#fff';
+		ctx.shadowColor = '#000';
+		ctx.shadowOffsetX = 1;
+		ctx.shadowOffsetY = 1;
+		ctx.fillText(text, cx, cy);
+
+		ctx.shadowColor = 'transparent';
+		ctx.shadowOffsetX = 0;
+		ctx.shadowOffsetY = 0;
+		ctx.restore();
 	}
 };
 
@@ -774,6 +859,17 @@ const grabPrize = (prize) => {
 	fakeVelY     = 0;
 	isSlipping   = false;
 	Body.set(prize, { collisionFilter: { category: 0, mask: 0 } });
+
+	// Tag the prize with whoever is currently dropping so checkWin can
+	// attribute the eventual win when (if) the prize crosses the chute. We
+	// tag at grab time rather than at chute entry because by the time the
+	// prize falls into the chute the active drop may have already cleared.
+	const drop = currentDrop.value;
+	const tag = prize.plugin?.clawGame;
+	if (drop && tag) {
+		tag.grabbedBy = drop.username || '';
+		tag.grabbedByUserID = drop.userID || null;
+	}
 
 	if (Math.random() * 100 < slipChance.value) {
 		const minT    = Math.min(slipMinTime.value, slipMaxTime.value);
@@ -997,20 +1093,28 @@ const spawnPrizes = async () => {
 	for (let i = 0; i < count; i++) {
 		const prize = pool[i % pool.length];
 		const x = spawnMin + Math.random() * Math.max(0, spawnMax - spawnMin);
-		await createPrize(prize.imageUrl, prize.scale || 1, x, -100 - (i * 120));
+		await createPrize(prize, x, -100 - (i * 120));
 	}
 };
 
 
 /**
- * Loads a prize image, builds a convex-hull physics body, adds to world.
+ * Loads a prize image, builds a convex-hull physics body, adds it to the
+ * world, and stamps it with the metadata the rest of the widget / toy needs:
  *
- * @param {string} url
- * @param {number} extraScale - per-prize scale multiplier from settings
+ *   body.plugin.clawGame = {
+ *     name, value, targetWidth,    // for labels + win events
+ *     grabbedBy, grabbedByUserID,  // tagged on grab; read on chute entry
+ *   }
+ *
+ * @param {{name:string,imageUrl:string,scale:number,minValue:number,maxValue:number}} prize
  * @param {number} x
  * @param {number} y
  */
-const createPrize = async (url, extraScale, x, y) => {
+const createPrize = async (prize, x, y) => {
+
+	const url = prize.imageUrl;
+	const extraScale = prize.scale || 1;
 
 	const img = new Image();
 	// Prize images can come from the asset server on a different origin than
@@ -1062,6 +1166,24 @@ const createPrize = async (url, extraScale, x, y) => {
 		density:         0.002,
 	});
 	if (body) {
+		// Roll a value in [min, max] (inclusive integer). Sanitized upstream
+		// in ClawGame.resolvePrizes so we don't have to defend against NaN.
+		const min = Number.isFinite(prize.minValue) ? prize.minValue : 10;
+		const maxCandidate = Number.isFinite(prize.maxValue) ? prize.maxValue : 50;
+		const max = Math.max(min, maxCandidate);
+		const value = min + Math.floor(Math.random() * (max - min + 1));
+
+		// Stash everything matter-side so checkWin / drawPrizeLabels don't
+		// have to thread it through other state.
+		body.plugin = body.plugin || {};
+		body.plugin.clawGame = {
+			name: prize.name || 'prize',
+			value,
+			targetWidth,
+			grabbedBy: null,
+			grabbedByUserID: null,
+		};
+
 		Composite.add(world, body);
 		prizes.push(body);
 	}
