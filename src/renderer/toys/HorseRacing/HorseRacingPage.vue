@@ -69,6 +69,19 @@
 			</SettingsInputRow>
 
 			<SettingsInputRow
+				type="number"
+				:min="1"
+				v-model="raceTimeoutMinutes"
+			>
+				<template #title>Race Timeout (minutes)</template>
+				<p>
+					Maximum number of minutes the race is allowed to run before it auto-ends.
+					Prevents a race from getting stuck forever if chatters disengage or close their tabs.
+					The remaining time is shown on the track during the race.
+				</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
 				type="boolean"
 				v-model="allowBetting"
 			>
@@ -186,6 +199,7 @@ const {
 	timeToJoin,
 	appleFrequency,
 	raceLength,
+	raceTimeoutMinutes,
 	allowBetting,
 	betTime,
 	payout1st,

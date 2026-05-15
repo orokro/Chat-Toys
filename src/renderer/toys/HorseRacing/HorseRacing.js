@@ -98,6 +98,7 @@ export default class HorseRacing extends Toy {
 			timeToJoin: ref(30),
 			appleFrequency: ref(30),
 			raceLength: ref(1000),
+			raceTimeoutMinutes: ref(5),
 			allowBetting: ref(true),
 			betTime: ref(30),
 			payout1st: ref(5000),
@@ -138,6 +139,12 @@ export default class HorseRacing extends Toy {
 				description: 'Eat an apple to gain points',
 				userDesc: 'Eat!',
 				costEnabled: true,
+			},
+			{
+				command: 'exitrace',
+				description: 'Quit the current horse race early',
+				userDesc: 'Drop out of the current race.',
+				costEnabled: false,
 			}
 		]);
 	}
@@ -151,6 +158,8 @@ export default class HorseRacing extends Toy {
 			this.handleHorseBet(msg, user, params, handshake);
 		} else if (commandSlug === 'eat') {
 			this.handleEat(msg, user, params, handshake);
+		} else if (commandSlug === 'exitrace') {
+			this.handleExitRace(msg, user, handshake);
 		} else {
 			handshake.reject('Invalid command');
 		}
@@ -306,6 +315,64 @@ export default class HorseRacing extends Toy {
 		this.checkRaceEnd();
 	}
 
+	/**
+	 * Handle a user dropping out of the race before it ends.
+	 *
+	 * Allowed during LOBBY, BET, PRERACE, and GAME. Players that already
+	 * crossed the finish line can't bail since they've effectively locked in
+	 * their podium spot. If the player list empties out (or every remaining
+	 * racer has already finished) we re-evaluate the end-of-race conditions
+	 * so the toy doesn't get stuck in GAME with nobody actually playing.
+	 *
+	 * @param {Object} msg - chat message that triggered the command
+	 * @param {Object} user - resolved user record
+	 * @param {Object} handshake - { accept, reject } from CommandProcessor
+	 */
+	handleExitRace(msg, user, handshake) {
+		const state = this.gameState.value;
+		const allowedStates = [
+			HorseRacing.STATES.LOBBY,
+			HorseRacing.STATES.BET,
+			HorseRacing.STATES.PRERACE,
+			HorseRacing.STATES.GAME
+		];
+		if (!allowedStates.includes(state)) {
+			handshake.reject('No active race to exit');
+			return;
+		}
+
+		const racer = this.players.value.find(p => p.userID === msg.authorUniqueID);
+		if (!racer) {
+			handshake.reject('You are not in the race');
+			return;
+		}
+
+		// Finishers have already locked in their podium spot - the race is over for them.
+		if (this.finishedList.value.find(f => f.userID === racer.userID)) {
+			handshake.reject('You already finished - no take-backs!');
+			return;
+		}
+
+		// Yank them out of the lane.
+		this.players.value = this.players.value.filter(p => p.userID !== racer.userID);
+		this.chatToysApp.log.info(`${racer.username} dropped out of the race.`);
+
+		handshake.accept();
+
+		// If everyone left, just bail back to idle. resetGame's existing rule
+		// (refund bets if state isn't RESULTS/PAYOUT) covers refund correctly.
+		if (this.players.value.length === 0) {
+			this.resetGame();
+			return;
+		}
+
+		// Mid-race, re-check whether the remaining field has already settled
+		// (e.g. only finishers left, in which case the race is effectively over).
+		if (state === HorseRacing.STATES.GAME) {
+			this.checkRaceEnd();
+		}
+	}
+
 	startLobby() {
 		this.gameState.value = HorseRacing.STATES.LOBBY;
 		this.startTimer(this.settings.timeToJoin.value, () => {
@@ -338,6 +405,13 @@ export default class HorseRacing extends Toy {
 		this.gameState.value = HorseRacing.STATES.GAME;
 		this.spawnApples();
 		this.appleTimer = window.setElectronInterval(() => this.spawnApples(), this.settings.appleFrequency.value * 1000);
+
+		// Race timeout - prevents a stuck race (chatters disengage / tabs
+		// closed) from sitting in GAME state forever. Reuses the shared
+		// `timer` socket ref that the widget already renders, so the racers
+		// can see how long they have left to finish.
+		const timeoutSeconds = Math.max(1, Math.floor(this.settings.raceTimeoutMinutes.value * 60));
+		this.startTimer(timeoutSeconds, () => this.forceEndRace());
 	}
 
 	spawnApples() {
@@ -372,7 +446,11 @@ export default class HorseRacing extends Toy {
 	}
 
 	endRace() {
+		// Stop both the apple spawner and the race-timeout countdown so neither
+		// fires again after the race has been called.
 		window.clearElectronInterval(this.appleTimer);
+		this.stopTimer();
+		this.timer.value = 0;
 		this.apples.value = [];
 		this.gameState.value = HorseRacing.STATES.RESULTS;
 

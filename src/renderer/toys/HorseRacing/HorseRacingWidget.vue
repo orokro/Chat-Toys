@@ -26,6 +26,12 @@
 				<div class="apple-label">!eat {{ apple.number }}</div>
 			</div>
 
+			<!-- In-race countdown HUD - shows how long racers have left before auto-end -->
+			<div class="race-timer" v-if="gameState === 'GAME'">
+				<span class="label">Time left</span>
+				<span class="value">{{ formatTime(timer) }}</span>
+			</div>
+
 			<!-- Finish Notifications -->
 			<div class="finish-notifications">
 				<transition-group name="notif">
@@ -142,6 +148,20 @@ function ordinal(n) {
 	const suffixes = ['th', 'st', 'nd', 'rd'];
 	const v = n % 100;
 	return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
+}
+
+/**
+ * Format a duration in seconds as a "M:SS" string for the in-race countdown HUD.
+ * Clamps to 0 so the display doesn't briefly flash a negative value if a tick
+ * happens to land just below zero before the state transitions.
+ * @param {number} seconds
+ * @returns {string}
+ */
+function formatTime(seconds) {
+	const total = Math.max(0, Math.floor(seconds));
+	const m = Math.floor(total / 60);
+	const s = total % 60;
+	return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 // Notifications for when a horse finishes
@@ -310,6 +330,43 @@ const getLaneStyle = (index) => {
 	border-radius: 20px;
 	font-size: 24px;
 	font-weight: bold;
+}
+
+.race-timer {
+	position: absolute;
+	top: 12px;
+	right: 16px;
+	z-index: 30;
+
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+
+	background: rgba(0, 0, 0, 0.75);
+	color: white;
+	padding: 6px 12px;
+	border-radius: 10px;
+	border: 2px solid #5D4037;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+
+	font-family: 'Consolas', 'Menlo', monospace;
+	line-height: 1;
+	text-shadow: 1px 1px 0 black;
+	pointer-events: none;
+
+	.label {
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: 1px;
+		opacity: 0.85;
+		margin-bottom: 2px;
+	}
+
+	.value {
+		font-size: 22px;
+		font-weight: bold;
+		color: #EED43A;
+	}
 }
 
 .finish-notifications {
