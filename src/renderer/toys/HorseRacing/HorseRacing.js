@@ -119,6 +119,7 @@ export default class HorseRacing extends Toy {
 				command: 'joinrace',
 				description: 'Join the current horse race',
 				userDesc: 'Join the race!',
+				tipText: 'Use {cmd} to join the next horse race — once 2+ people join, it starts',
 				costEnabled: true,
 			},
 			{

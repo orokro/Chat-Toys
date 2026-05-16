@@ -85,6 +85,7 @@ export default class Toy {
                 command,
                 description,
 				userDesc,
+				tipText = '',
                 slug = this.constructor.slugify(command),
                 params = [],
                 enabled = true,
@@ -101,11 +102,17 @@ export default class Toy {
                 throw new Error(`Command "${command}" is missing required fields.`);
             }
 
-			// return the command object
+			// return the command object.
+			// `tipText` is consumed by the Help toy to surface a periodic
+			// usage hint to chatters. Use {cmd} as a placeholder for the
+			// command name - the Help widget substitutes the current
+			// (possibly-renamed) command at render time. Empty string opts
+			// out of being surfaced as a tip.
             return {
                 command,
                 description,
 				userDesc,
+				tipText,
                 slug,
                 params,
                 enabled,
@@ -274,9 +281,17 @@ export default class Toy {
 				newSlugs.push(slug);
 			
 			}
-			// otherwise, we'll just add the command from the commands state
+			// otherwise, we already have a stored copy with the user's
+			// customizations (renamed command text, cost, cooldown, enabled
+			// flag). Merge the factory defaults *under* the stored copy so:
+			//   1. user-edited fields still win (e.g. their custom !cmd name)
+			//   2. fields newly introduced in code (e.g. tipText, added long
+			//      after the streamer first saved this command) still
+			//      propagate to localCommandsList - previously they got
+			//      silently dropped.
 			else {
-				newLocalCommandsList.push(commandsState[slug]);
+				const stored = commandsState[slug];
+				newLocalCommandsList.push({ ...command, ...stored });
 				newSlugs.push(slug);
 			}
 			

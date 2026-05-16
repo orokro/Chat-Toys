@@ -133,6 +133,7 @@ export default class PrizeWheel extends Toy {
 				],
 				description: 'Lets the chatter spin the wheel!',
 				userDesc: 'Spin the prize wheel, with an optional strength!',
+				tipText: 'Use {cmd} to spin the wheel; try {cmd} 100 for a hard spin',
 			},
 		]);
 	}

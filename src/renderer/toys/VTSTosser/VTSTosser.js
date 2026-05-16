@@ -136,7 +136,8 @@ export default class VTSTosser extends Toy {
 				],
 				description: 'Lets the toss an item!',
 				userDesc: 'Toss at item at a user! (Optionally specify the item)',
-			},	
+				tipText: 'Yeet stuff at the streamer with {cmd}, or at another chatter: {cmd} @user',
+			},
 		]);
 	}
 	

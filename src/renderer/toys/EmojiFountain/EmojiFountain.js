@@ -165,6 +165,7 @@ export default class EmojiFountain extends Toy {
 				],
 				description: 'Chatter can cause a rain of emojis from their message',
 				userDesc: 'Make it rain - emojis!',
+				tipText: 'Use {cmd} with any emojis in your message and watch them rain down',
 			},
 			{
 				command: 'fountain',
@@ -173,6 +174,7 @@ export default class EmojiFountain extends Toy {
 				],
 				description: 'Chatter can cause a fountain of emojis from their message',
 				userDesc: 'Sprout a fountain of emojis!',
+				tipText: 'Use {cmd} with any emojis to shoot them up like a fountain',
 			}
 		]);
 	}

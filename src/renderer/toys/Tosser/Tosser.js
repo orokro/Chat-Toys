@@ -130,7 +130,8 @@ export default class Tosser extends Toy {
 				],
 				description: 'Lets the toss an item!',
 				userDesc: 'Toss at item at a user! (Optionally specify the item)',
-			},	
+				tipText: 'Throw something at the streamer with {cmd}, or at another chatter: {cmd} @user',
+			},
 		]);
 	}
 	

@@ -204,6 +204,7 @@ export default class Gamba extends Toy {
 				],
 				description: 'Gamble points on options set up by the Streamer',
 				userDesc: 'Place a bet on the streamers prompt',
+				tipText: 'When the streamer opens betting, use {cmd} to place yours',
 			},
 			{
 				command: 'cancel_bet',

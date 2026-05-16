@@ -132,6 +132,7 @@ export default class KaraokeQueue extends Toy {
 				],
 				description: 'Request a song for the karaoke queue',
 				userDesc: 'Request a song!',
+				tipText: 'Add a song to the queue: {cmd} <YouTube URL>',
 				costEnabled: true,
 				cost: 500,
 			}

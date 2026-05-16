@@ -209,6 +209,7 @@ export default class Fishing extends Toy {
 				],
 				description: 'Cast your fishing line, optionally specify x and y coordinates',
 				userDesc: 'Cast your rod in the fishing mini game, with an optional location',
+				tipText: 'Cast your line: {cmd}, or aim with coordinates {cmd} 2 3 (grid is 0–4 on each axis)',
 			},
 			{
 				command: 'reel',
@@ -217,6 +218,8 @@ export default class Fishing extends Toy {
 				],
 				description: 'Attempt to reel in your fishing line',
 				userDesc: 'Reel in your rod in the fishing mini game',
+				// no tipText: only useful once a fish is biting, surfacing
+				// it as a standalone tip would be confusing
 			}
 		]);
 	}

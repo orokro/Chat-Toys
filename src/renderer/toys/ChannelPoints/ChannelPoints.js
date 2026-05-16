@@ -167,12 +167,14 @@ export default class ChannelPoints extends Toy {
 				command: 'get',
 				description: 'Claim points',
 				userDesc: 'Claim channel points!',
+				tipText: 'Use {cmd} to claim your channel points',
 				costEnabled: false,
-			},	
+			},
 			{
 				command: 'me',
 				description: 'Have on screen text show your points',
 				userDesc: 'Log your points total',
+				tipText: 'Type {cmd} to see your points total',
 				costEnabled: false,
 			},
 			{
@@ -183,13 +185,15 @@ export default class ChannelPoints extends Toy {
 				],
 				description: 'One user can give points to another user',
 				userDesc: 'Give points to another user!',
+				tipText: 'Share points with another viewer: {cmd} 100 @someone',
 			},
 			{
 				command: 'leaderboard',
 				description: 'Prints the top 5 chatters with the most points',
 				userDesc: 'Show the points leaderboard',
+				tipText: "Use {cmd} to see who's ahead — the top point earners",
 				costEnabled: false,
-			},			
+			},
 		]);
 	}
 

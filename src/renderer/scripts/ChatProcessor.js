@@ -204,6 +204,15 @@ export class ChatProcessor {
 			data.data?.tags?.username ||
 			'';
 
+		// tmi.js exposes Bits cheers via tags.bits as a string of the cheer
+		// amount. Surface it on the formatted message so the Donations toy
+		// (and any future bits-aware feature) can react. 0 / undefined means
+		// not a cheer.
+		const rawBits = data?.data?.tags?.bits;
+		const bits = rawBits !== undefined && rawBits !== null
+			? (parseInt(rawBits, 10) || 0)
+			: 0;
+
 		// repack the data into our standard format
 		const formatted = {
 			id: data.id,
@@ -216,6 +225,7 @@ export class ChatProcessor {
 			isMember: !!data.isMember,
 			streamID: 'twitch',
 			isSuper: false,
+			bits,
 			twitch: true,
 		};
 

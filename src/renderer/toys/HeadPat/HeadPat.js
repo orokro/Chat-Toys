@@ -190,7 +190,8 @@ export default class HeadPat extends Toy {
 				],
 				description: 'Show head pat graphic on streamer, or optionally a chatter!',
 				userDesc: 'Give out head pats!',
-			},	
+				tipText: 'Pat the streamer with {cmd}, or pat someone else: {cmd} @user',
+			},
 			{
 				command: 'bonk',
 				params: [
@@ -198,7 +199,8 @@ export default class HeadPat extends Toy {
 				],
 				description: 'Show bonk graphic on streamer, or optionally a chatter!',
 				userDesc: 'Give out bonks!',
-			},	
+				tipText: 'Bonk the streamer with {cmd}, or bonk someone else: {cmd} @user',
+			},
 			{
 				command: 'slap',
 				params: [
@@ -206,7 +208,8 @@ export default class HeadPat extends Toy {
 				],
 				description: 'Show slap graphic on streamer, or optionally a chatter!',
 				userDesc: 'Give out slaps!',
-			},	
+				tipText: 'Slap the streamer with {cmd}, or slap someone else: {cmd} @user',
+			},
 		]);
 	}
 	

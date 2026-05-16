@@ -152,6 +152,7 @@ export default class Chat extends Toy {
 				],
 				description: 'If enough chatters swarm at once, their messages will appear on screen',
 				userDesc: 'When many chatters use this at once, it may appear on steam',
+				tipText: 'If a bunch of chatters use {cmd} at once, your messages flood the screen',
 			}
 		]);
 	}

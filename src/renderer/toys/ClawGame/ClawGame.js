@@ -262,6 +262,7 @@ export default class ClawGame extends Toy {
 				],
 				description: 'Drop the claw at the given horizontal position (0 = far left, 100 = far right)',
 				userDesc: 'Drop the claw! Pick a number 0-100 for how far across the machine.',
+				tipText: 'Drop the claw 0-100% across the machine: {cmd} 50 for a centered drop',
 				costEnabled: true,
 			},
 		]);

@@ -129,6 +129,7 @@ export default class StreamBuddies extends Toy {
 				command: 'join',
 				description: 'Being on screen is optional, users can opt-in with this command.',
 				userDesc: 'Join the chatters on-screen!',
+				tipText: "Use {cmd} to hop on stream; once you're in, try !left, !right, !jump, !dance, !hug, and more",
 			},
 			{
 				command: 'leave',

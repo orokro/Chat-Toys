@@ -149,6 +149,7 @@ export default class Shout extends Toy {
 				],
 				description: 'A chatter can shout a message in exchange for channel points',
 				userDesc: 'Like Super Chat, but spend channel points',
+				tipText: 'Got something to say? {cmd} <message> shouts it on stream',
 			},
 		]);
 	}
