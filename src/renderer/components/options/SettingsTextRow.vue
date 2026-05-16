@@ -84,7 +84,7 @@
 <script setup>
 
 // vue
-import { computed } from 'vue';
+import { computed, markRaw } from 'vue';
 
 // lib/misc
 import { openModal } from 'jenesius-vue-modal';
@@ -165,10 +165,18 @@ const previewTooltip = computed(() => {
 /**
  * Open the text-settings modal for this group. Changes apply live via the
  * underlying refs, so nothing needs to come back from the modal.
+ *
+ * The toy is passed through `markRaw` because jenesius-vue-modal wraps its
+ * propsData in a reactive proxy, and Vue's reactive proxies auto-unwrap any
+ * refs they find on object properties - which would convert
+ * `toy.settings.someRef` into the unwrapped string/number/bool, leaving the
+ * modal with no way to write changes back. (This is the same reason every
+ * other modal invocation in the codebase uses markRaw, e.g. AssetPickerModal
+ * being given a markRaw'd assetManager.)
  */
 function openTextModal() {
 	openModal(TextSettingsModal, {
-		toy: props.toy,
+		toy: markRaw(props.toy),
 		groupKey: group.value.groupKey,
 	});
 }

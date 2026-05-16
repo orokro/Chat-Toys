@@ -35,8 +35,7 @@
 					:min="field.min"
 					:max="field.max"
 					:step="field.step"
-					:modelValue="readField(field.key)"
-					@update:modelValue="writeField(field.key, $event)"
+					v-model="fieldProxy[field.key]"
 				>
 					<template #title>{{ field.label }}</template>
 					<p v-if="field.description">{{ field.description }}</p>
@@ -94,6 +93,40 @@ const group = computed(() => {
 
 
 /**
+ * Plain object whose properties are getters/setters that delegate to the
+ * toy's setting refs. Bound via `v-model="fieldProxy[field.key]"` on each
+ * SettingsInputRow so the compiler-side v-model expansion handles read /
+ * write correctly. (Going through :modelValue + @update:modelValue instead
+ * left SettingsInputRow's `defineModel()` ref non-writable, which threw
+ * "Cannot create property 'value' on string '...'" the moment the inner
+ * `setting.value = ...` ran.)
+ *
+ * Reactivity: each getter reads `someRef.value`, which is tracked by the
+ * render effect, so the inputs re-render when the underlying refs change
+ * (including externally - e.g. someone else editing the same setting on a
+ * different page).
+ *
+ * @type {Object<string, *>}
+ */
+const fieldProxy = {};
+for (const field of group.value.fields) {
+	const key = field.key;
+	Object.defineProperty(fieldProxy, key, {
+		enumerable: true,
+		configurable: true,
+		get() {
+			const r = props.toy?.settings?.[key];
+			return r ? r.value : undefined;
+		},
+		set(v) {
+			const r = props.toy?.settings?.[key];
+			if (r) r.value = v;
+		},
+	});
+}
+
+
+/**
  * Modal height scales with field count so a 1-field group doesn't waste
  * vertical space and a 4-field group doesn't need to scroll for typical
  * use. The .scroller's overflow-y handles overflow safely either way.
@@ -107,36 +140,16 @@ const modalHeight = computed(() => {
 
 
 /**
- * Read a setting field's current value via the toy's setting refs.
- * @param {string} key
- * @returns {*}
- */
-function readField(key) {
-	const r = props.toy?.settings?.[key];
-	return r ? r.value : undefined;
-}
-
-
-/**
- * Write a setting field's value back through the toy's setting ref.
- * @param {string} key
- * @param {*} value
- */
-function writeField(key, value) {
-	const r = props.toy?.settings?.[key];
-	if (r) r.value = value;
-}
-
-
-/**
  * Reset every field in this group to its descriptor-declared default.
- * Fields without a default in the descriptor are left as-is.
+ * Fields without a default in the descriptor are left as-is. Writes go
+ * through the same fieldProxy setter as v-model edits, so reactivity /
+ * persistence behave identically.
  */
 function resetToDefaults() {
 	const defaults = group.value.defaults || {};
 	for (const field of group.value.fields) {
 		if (Object.prototype.hasOwnProperty.call(defaults, field.key)) {
-			writeField(field.key, defaults[field.key]);
+			fieldProxy[field.key] = defaults[field.key];
 		}
 	}
 }
