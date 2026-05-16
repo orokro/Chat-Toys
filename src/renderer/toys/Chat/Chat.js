@@ -88,12 +88,22 @@ export default class Chat extends Toy {
 
 
 	/**
-	 * Clean up
+	 * Clean up when the toy is removed.
+	 *
+	 * Two bugs lived here previously, both of which threw
+	 *   "The 'listener' argument must be of type function. Received undefined"
+	 * because the wrong (undefined) value was being passed to a removeListener-
+	 * style API:
+	 *   - electronAPI.clearTick(this.tickFN) - this toy never assigned tickFN
+	 *     (it has no tick loop), so the arg was always undefined. Removed
+	 *     entirely.
+	 *   - removeNewChatsListener(this.onNewChats) - the listener was actually
+	 *     registered as this.handleChatMessage (see the constructor); the
+	 *     `onNewChats` field doesn't exist on Chat. Fixed.
 	 */
 	end() {
 		super.end();
-		electronAPI.clearTick(this.tickFN);
-		this.chatToysApp.chatProcessor.removeNewChatsListener(this.onNewChats);
+		this.chatToysApp.chatProcessor.removeNewChatsListener(this.handleChatMessage);
 		this.chatPointsHelper.destroy();
 	}
 

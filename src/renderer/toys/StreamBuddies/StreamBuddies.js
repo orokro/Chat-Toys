@@ -80,9 +80,14 @@ export default class StreamBuddies extends Toy {
 	
 
 	/**
-	 * Clean up
+	 * Clean up when the toy is removed.
+	 *
+	 * NOTE: super.end() is what unhooks the command processor and stops
+	 * the settings socket watch. Without it the toy would keep responding
+	 * to its commands even after being disabled.
 	 */
 	end(){
+		super.end();
 		window.clearElectronInterval(this.buddyInterval);
 		this.buddySystem.end();
 	}
