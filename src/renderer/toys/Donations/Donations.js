@@ -117,6 +117,14 @@ export default class Donations extends Toy {
 			showUsername: ref(true),
 			showMessage: ref(true),
 
+			// Card chrome - matches the Help toy's settings shape so the
+			// streamer has a consistent way to style overlay surfaces.
+			bgColor: ref('#0F0F0F'),
+			bgOpacity: ref(0.92),
+			borderColor: ref('#E62117'),
+			borderOpacity: ref(1.0),
+			borderWidth: ref(2),
+
 			// 7 tiers. Image / sound IDs default to '' (unset); the widget
 			// gracefully skips rendering when an asset isn't configured.
 			tierSettings: shallowRef([

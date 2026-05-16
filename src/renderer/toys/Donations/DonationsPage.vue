@@ -64,6 +64,51 @@
 
 		</div>
 
+		<SectionHeader title="Appearance"/>
+		<div class="settingsBlock">
+
+			<SettingsInputRow type="color" v-model="bgColor">
+				<template #title>Background Color</template>
+				<p>Panel background color behind the donation popup.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="float"
+				:min="0"
+				:max="1"
+				:step="0.05"
+				v-model="bgOpacity"
+			>
+				<template #title>Background Opacity</template>
+				<p>0 is fully transparent, 1 is fully opaque.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow type="color" v-model="borderColor">
+				<template #title>Border Color</template>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="float"
+				:min="0"
+				:max="1"
+				:step="0.05"
+				v-model="borderOpacity"
+			>
+				<template #title>Border Opacity</template>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				:min="0"
+				:max="20"
+				v-model="borderWidth"
+			>
+				<template #title>Border Width (px)</template>
+				<p>Set to 0 to hide the border entirely.</p>
+			</SettingsInputRow>
+
+		</div>
+
 		<SectionHeader title="Tiers"/>
 		<p>
 			Each row controls a tier. <strong>Min bits</strong> is the lowest
@@ -136,6 +181,11 @@ const {
 	displaySeconds,
 	showUsername,
 	showMessage,
+	bgColor,
+	bgOpacity,
+	borderColor,
+	borderOpacity,
+	borderWidth,
 	tierSettings,
 } = toy.settings;
 

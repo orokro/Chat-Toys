@@ -105,6 +105,32 @@ const usernameColor = computed(() => settings.value?.usernameColor ?? '#FFCA28')
 const messageColor  = computed(() => settings.value?.messageColor  ?? '#FFFFFF');
 const textSize      = computed(() => settings.value?.textSize      ?? 28);
 const textShadow    = computed(() => settings.value?.textShadow    ?? true);
+const bgColor       = computed(() => settings.value?.bgColor       ?? '#0F0F0F');
+const bgOpacity     = computed(() => settings.value?.bgOpacity     ?? 0.92);
+const borderColor   = computed(() => settings.value?.borderColor   ?? '#E62117');
+const borderOpacity = computed(() => settings.value?.borderOpacity ?? 1.0);
+const borderWidth   = computed(() => settings.value?.borderWidth   ?? 2);
+
+
+/**
+ * Convert a "#rrggbb" hex string + opacity (0..1) into an rgba() CSS color
+ * so background and border can be opacity-tuned independently. Falls back
+ * to the input if it doesn't look like a hex.
+ *
+ * @param {string} hex
+ * @param {number} opacity
+ * @returns {string}
+ */
+function hexToRgba(hex, opacity) {
+	if (typeof hex !== 'string') return hex;
+	const m = hex.trim().match(/^#?([0-9a-f]{6})$/i);
+	if (!m) return hex;
+	const v = parseInt(m[1], 16);
+	const r = (v >> 16) & 0xff;
+	const g = (v >> 8) & 0xff;
+	const b = v & 0xff;
+	return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
 
 
 /**
@@ -114,6 +140,9 @@ const textShadow    = computed(() => settings.value?.textShadow    ?? true);
 const cardStyle = computed(() => ({
 	'--textSize':    textSize.value + 'px',
 	'--textShadow':  textShadow.value ? '2px 2px 0 rgba(0, 0, 0, 0.6)' : 'none',
+	'--bgColor':     hexToRgba(bgColor.value, bgOpacity.value),
+	'--borderColor': hexToRgba(borderColor.value, borderOpacity.value),
+	'--borderWidth': borderWidth.value + 'px',
 }));
 
 
@@ -165,7 +194,8 @@ watch(() => currentDono.value?.id, (newId, oldId) => {
 		max-width: 90%;
 		max-height: 90%;
 
-		background: rgba(15, 15, 15, 0.92);
+		background: var(--bgColor);
+		border: var(--borderWidth) solid var(--borderColor);
 		border-radius: 14px;
 		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
 

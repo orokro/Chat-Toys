@@ -12,6 +12,13 @@
 import { ref, shallowRef, watch } from 'vue';
 import { socketRef, socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
 
+
+/**
+ * How long (ms) since the most recent heartbeat counts a widget as "live".
+ * Matches the freshness threshold used by WidgetRow.vue in the UI.
+ */
+const HEARTBEAT_STALENESS_MS = 10 * 1000;
+
 // our app
 import { ToyManager } from "../scripts/ToyManager";
 import { RefAggregator } from "../scripts/RefAggregator";
@@ -55,6 +62,60 @@ export default class Toy {
 		// we'll use a callback that can be overridden by the toy
 		this.onCommandFn = this.onCommand.bind(this);
 		this.chatToysApp.commandProcessor.hookToyCommands(this.slug, this.onCommandFn);
+
+		// Auto-managed heartbeat tracking. `heartBeatAlive` becomes true
+		// whenever ANY of this toy's widgets has sent a keep-alive heartbeat
+		// in the last HEARTBEAT_STALENESS_MS. Other systems (e.g. the Help
+		// toy) read `toy.heartBeatAlive.value` instead of building their
+		// own per-widget socket-ref scaffolding.
+		this.heartBeatAlive = ref(false);
+		this._heartBeatRefs = [];
+		this._heartBeatInterval = null;
+		this.initHeartBeatTracking();
+	}
+
+
+	/**
+	 * Set up live-state socket subscriptions for each of this toy's widgets
+	 * and start a 1-second ticker that maintains `this.heartBeatAlive`.
+	 * No-op for toys with no widgets (pure tools like SCConversion) - they
+	 * can't be "live" by heartbeat and stay heartBeatAlive=false.
+	 *
+	 * Idempotent / safe to call multiple times.
+	 */
+	initHeartBeatTracking() {
+
+		// Bail for toys without widgets - no heartbeats to listen for.
+		const widgets = this.constructor.widgetComponents || [];
+		if (widgets.length === 0) return;
+
+		// Subscribe once per widget. Same socket key the widget side writes
+		// to via keepAliveSocket(). socket-ref creates a real WebSocket on
+		// construction - flagged in misc/architecture-notes.md, still ours
+		// to live with until the socket-mux refactor.
+		for (const w of widgets) {
+			const socketKey = `live-state-${this.slug}-${w.slug}`;
+			this._heartBeatRefs.push(socketShallowRefReadOnly(socketKey, 'U_0'));
+		}
+
+		// Recompute every second. Plain ref + manual tick (rather than a
+		// computed) because freshness is time-based and computeds don't
+		// re-evaluate just because `Date.now()` advances.
+		this._heartBeatInterval = window.setElectronInterval(() => {
+			const now = Date.now();
+			let alive = false;
+			for (const r of this._heartBeatRefs) {
+				const raw = r.value || 'U_0';
+				const ts = parseInt(raw.split('_')[1], 10) || 0;
+				if (now - ts < HEARTBEAT_STALENESS_MS) {
+					alive = true;
+					break;
+				}
+			}
+			if (alive !== this.heartBeatAlive.value) {
+				this.heartBeatAlive.value = alive;
+			}
+		}, 1000);
 	}
 
 
@@ -337,6 +398,15 @@ export default class Toy {
 		// stop watching the settings
 		if (this.stopSettingsSocketWatch)
 			this.stopSettingsSocketWatch();
+
+		// stop the heartbeat ticker (socket refs themselves can't be
+		// "disposed" via socket-ref's current API; they'll go away with
+		// garbage collection once we drop our references to them).
+		if (this._heartBeatInterval) {
+			window.clearElectronInterval(this._heartBeatInterval);
+			this._heartBeatInterval = null;
+		}
+		this._heartBeatRefs = [];
 	}
 
 

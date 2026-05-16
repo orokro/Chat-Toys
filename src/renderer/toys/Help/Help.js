@@ -29,7 +29,7 @@
 */
 
 import { ref, shallowRef, watch } from 'vue';
-import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRef } from 'socket-ref';
 
 import Toy from '../Toy';
 import HelpPage from './HelpPage.vue';
@@ -38,9 +38,6 @@ import HelpWidget from './HelpWidget.vue';
 
 /** How many recent tip IDs to remember (prevents back-to-back duplicates). */
 const RECENT_TIP_BUFFER = 10;
-
-/** Widget keep-alive freshness threshold, matches WidgetRow.vue. */
-const LIVE_STALENESS_MS = 10 * 1000;
 
 
 export default class Help extends Toy {
@@ -75,14 +72,6 @@ export default class Help extends Toy {
 		// Live state published to the widget.
 		this.currentTip = socketShallowRef(this.static.slugify('currentTip'), null);
 
-		// Per-(toy, widget) keep-alive ref cache. Each entry is a
-		// socketShallowRefReadOnly; we create them lazily as tips are
-		// evaluated and reuse forever. Yes this is one WebSocket per
-		// (toy, widget) pair - same socket-per-ref cost flagged in
-		// misc/architecture-notes.md, applies here too.
-		/** @type {Map<string, import('vue').ComputedRef<string>>} */
-		this.liveStateRefs = new Map();
-
 		// Ring buffer of recent tip IDs (e.g. 'prizeWheel:spin') so the same
 		// tip doesn't reappear immediately.
 		/** @type {Array<string>} */
@@ -92,13 +81,6 @@ export default class Help extends Toy {
 		this.tickInterval = null;
 		this.hideTimeout = null;
 
-		// Pre-create live-state refs for every registered toy + widget pair
-		// so they have time to connect + receive their current heartbeat
-		// value before the first tick reads them. Without this, the first
-		// "Show Tip Now" press after enabling the toy reads stale defaults
-		// ('U_0', timestamp 0) and considers every toy not-live -> no tip.
-		this.preCreateLiveStateRefs();
-
 		this.startTipRotation();
 
 		// Restart the rotation if the streamer edits the interval so the
@@ -106,25 +88,6 @@ export default class Help extends Toy {
 		this.stopIntervalWatch = watch(this.settings.intervalSeconds, () => {
 			this.startTipRotation();
 		});
-	}
-
-
-	/**
-	 * Eagerly instantiate the live-state socket refs for every registered
-	 * toy's widgets. Idempotent (the `liveStateRefs` cache short-circuits
-	 * duplicates). Iterates `chatToysApp.toysData` (the static registry)
-	 * rather than `toyManager.toys` so we cover even toys not yet enabled
-	 * - if the streamer enables one later, its ref is already standing by.
-	 */
-	preCreateLiveStateRefs() {
-		const registry = this.chatToysApp?.toysData || [];
-		for (const ToyClass of registry) {
-			if (!ToyClass || ToyClass === this.constructor) continue;
-			const widgets = ToyClass.widgetComponents || [];
-			for (const w of widgets) {
-				this.getLiveStateRef(ToyClass.slug, w.slug);
-			}
-		}
 	}
 
 
@@ -190,44 +153,18 @@ export default class Help extends Toy {
 
 
 	/**
-	 * Get (or lazily create) the keep-alive ref for a (toySlug, widgetSlug)
-	 * pair. Caches on the instance so we don't spin up duplicate WebSocket
-	 * connections.
-	 *
-	 * @param {string} toySlug
-	 * @param {string} widgetSlug
-	 * @returns {import('vue').ComputedRef<string>}
-	 */
-	getLiveStateRef(toySlug, widgetSlug) {
-		const cacheKey = `${toySlug}__${widgetSlug}`;
-		if (!this.liveStateRefs.has(cacheKey)) {
-			const socketKey = `live-state-${toySlug}-${widgetSlug}`;
-			this.liveStateRefs.set(cacheKey, socketShallowRefReadOnly(socketKey, 'U_0'));
-		}
-		return this.liveStateRefs.get(cacheKey);
-	}
-
-
-	/**
 	 * True when at least one of the toy's widgets has reported a keep-alive
-	 * heartbeat within the freshness window. Toys with no widgets (pure
-	 * tools) are never considered active for tip-rotation purposes.
+	 * heartbeat recently. Reads the `heartBeatAlive` ref auto-managed by the
+	 * Toy base class - we don't have to own any socket-ref scaffolding here.
+	 *
+	 * Toys without widgets (pure tools) leave `heartBeatAlive` at false, so
+	 * they're naturally excluded from the tip pool.
 	 *
 	 * @param {*} toy - a Toy instance
 	 * @returns {boolean}
 	 */
 	isToyActive(toy) {
-		const widgets = toy?.static?.widgetComponents || [];
-		if (widgets.length === 0) return false;
-
-		const now = Date.now();
-		for (const w of widgets) {
-			const ref = this.getLiveStateRef(toy.static.slug, w.slug);
-			const value = ref.value || 'U_0';
-			const ts = parseInt(value.split('_')[1], 10) || 0;
-			if (now - ts < LIVE_STALENESS_MS) return true;
-		}
-		return false;
+		return toy?.heartBeatAlive?.value === true;
 	}
 
 
