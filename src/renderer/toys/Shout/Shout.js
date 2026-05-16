@@ -44,6 +44,27 @@ export default class Shout extends Toy {
 		},
 	];
 
+	// Descriptor for the consolidated text-settings modal.
+	static textSettings = [
+		{
+			groupKey: 'shout',
+			groupLabel: 'Shout Text',
+			groupDescription: 'Style for usernames and message bodies in the on-screen shout.',
+			fields: [
+				{ key: 'chatNameColor',  label: 'Username color', type: 'color' },
+				{ key: 'chatTextColor',  label: 'Text color',     type: 'color' },
+				{ key: 'chatTextSize',   label: 'Font size',      type: 'number', min: 8, max: 96 },
+				{ key: 'chatTextShadow', label: 'Text shadow',    type: 'boolean' },
+			],
+			defaults: {
+				chatNameColor:  '#00ABAE',
+				chatTextColor:  '#FFFFFF',
+				chatTextSize:   24,
+				chatTextShadow: true,
+			},
+		},
+	];
+
 
 	/**
 	 * Constructs the Chat object

@@ -72,37 +72,13 @@
 				<template #title>Show Patter Name</template>
 				<p>Show the name of the chatter who triggered the head pat</p>
 			</SettingsInputRow>
-			<SettingsInputRow
-				type="number"
-				v-model="chatterNameFontSize"
-				:min="8"
-				:max="72"
-				:step="1"
-			>
-				<template #title>Chatter Name Font Size</template>
-				<p>Font size to use for the patter's name</p>
-			</SettingsInputRow>
-			<SettingsInputRow
-				type="color"
-				v-model="chatterNameColor"
-			>
-				<template #title>Chatter Name Color</template>
-				<p>Color to use for the patter's name</p>
-			</SettingsInputRow>
-			<SettingsInputRow
-				type="color"
-				v-model="chatterTextColor"
-			>
-				<template #title>Chatter Text Color</template>
-				<p>Color to use for any text shown for the patter</p>
-			</SettingsInputRow>
-			<SettingsInputRow
-				type="boolean"
-				v-model="chatterNameShadow"
-			>
-				<template #title>Chatter Name Shadow</template>
-				<p>Add a shadow to the patter's name for better visibility</p>
-			</SettingsInputRow>
+			<!-- Consolidated text-style settings. -->
+			<SettingsTextRow
+				v-for="group in toy.static.textSettings"
+				:key="group.groupKey"
+				:toy="toy"
+				:groupKey="group.groupKey"
+			/>
 
 			<SettingsInputRow
 				type="boolean"
@@ -171,6 +147,7 @@ import SectionHeader from '@components/options/SectionHeader.vue';
 import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import SettingsTextRow from '@components/options/SettingsTextRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import CatsumIpsum from '@components/CatsumIpsum.vue';

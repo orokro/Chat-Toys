@@ -43,25 +43,13 @@
 		
 		<SectionHeader title="Settings"/>
 		<div class="settingsBlock">
-			<SettingsInputRow type="number" v-model="fontSize" :min="8" :max="72">
-				<template #title>Font Size</template>
-				<p>Size of the text in the List Widget.</p>
-			</SettingsInputRow>
-
-			<SettingsInputRow type="color" v-model="fontColor">
-				<template #title>Font Color</template>
-				<p>Color of the upcoming songs in the list.</p>
-			</SettingsInputRow>
-
-			<SettingsInputRow type="color" v-model="playedSongsColor">
-				<template #title>Played Songs Color</template>
-				<p>Color of the songs that have already been played.</p>
-			</SettingsInputRow>
-
-			<SettingsInputRow type="boolean" v-model="fontShadow">
-				<template #title>Font Shadow</template>
-				<p>Enable a drop shadow for better visibility on overlays.</p>
-			</SettingsInputRow>
+			<!-- Consolidated text-style settings. -->
+			<SettingsTextRow
+				v-for="group in toy.static.textSettings"
+				:key="group.groupKey"
+				:toy="toy"
+				:groupKey="group.groupKey"
+			/>
 
 			<SettingsInputRow type="boolean" v-model="showPendingCount">
 				<template #title>Show Pending Count</template>
@@ -93,6 +81,7 @@ import PageBox from '@components/options/PageBox.vue';
 import SectionHeader from '@components/options/SectionHeader.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import SettingsTextRow from '@components/options/SettingsTextRow.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import KaraokeQueue from './KaraokeQueue';
 

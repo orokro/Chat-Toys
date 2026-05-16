@@ -38,6 +38,34 @@ export default class Gamba extends Toy {
 		},
 	];
 
+	// Two text groups: the widget header (title bar at the top) and the body
+	// (bet options + status). Each gets its own SettingsTextRow on the page
+	// so the streamer can edit them independently.
+	static textSettings = [
+		{
+			groupKey: 'header',
+			groupLabel: 'Header Text',
+			groupDescription: 'Style for the title-bar text at the top of the gamba widget.',
+			fields: [
+				{ key: 'windowHeaderTextColor', label: 'Text color', type: 'color' },
+			],
+			defaults: {
+				windowHeaderTextColor: '#FFFFFF',
+			},
+		},
+		{
+			groupKey: 'body',
+			groupLabel: 'Body Text',
+			groupDescription: 'Style for the bet options and status text in the widget body.',
+			fields: [
+				{ key: 'windowBodyTextColor', label: 'Text color', type: 'color' },
+			],
+			defaults: {
+				windowBodyTextColor: '#555555',
+			},
+		},
+	];
+
 	// define modes for the gamba state
 	static MODE = {
 		OFF: 'OFF',

@@ -37,7 +37,27 @@ export default class OutputLog extends Toy {
 			lockAspectRatio: false,
 			description: 'Displays output from the system / commands run on screen.',
 			slug: 'log'
-		},	
+		},
+	];
+
+	// Descriptor for the consolidated text-settings modal. logTextShadow is
+	// newly introduced alongside this refactor - the widget's text was
+	// previously un-shadowed, but now that we have a clean place to put the
+	// toggle there's no reason not to expose it.
+	static textSettings = [
+		{
+			groupKey: 'log',
+			groupLabel: 'Log Text',
+			groupDescription: 'Style for the log messages shown in the output-log widget.',
+			fields: [
+				{ key: 'logTextColor',  label: 'Text color',   type: 'color' },
+				{ key: 'logTextShadow', label: 'Text shadow',  type: 'boolean' },
+			],
+			defaults: {
+				logTextColor:  '#FFFFFF',
+				logTextShadow: true,
+			},
+		},
 	];
 
 	// This toy is a tool, not a traditional toy, since it doesn't directly interact with chat or have its own widget. Instead, it manages groups of other widgets.
@@ -80,6 +100,7 @@ export default class OutputLog extends Toy {
 			logBGColor: ref('#FFFFFF'),
 			logBGOpacity: ref(0.2),
 			logTextColor: ref('#FFFFFF'),
+			logTextShadow: ref(true),
 			widgetBox: shallowRef({
 				x: 1280-150-300,
 				y: 720-150,

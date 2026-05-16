@@ -10,10 +10,11 @@
 <template>
 
 	<!-- outermost log box -->
-	<div 
+	<div
 		class="logBox"
-		:class="{ 
+		:class="{
 			demoMode: demoMode,
+			hasTextShadow: socketSettingsRef?.logTextShadow,
 		}"
 		:style="{
 			'--logBGColor': socketSettingsRef?.logBGColor || 'white',
@@ -136,8 +137,7 @@ window.msgs = messages;
 				// text settings
 				color: var(--logTextColor);
 				font-size: 12px;
-				text-shadow: 2px 2px 0px black;
-				
+
 				// padding
 				padding: 0px 5px;
 
@@ -164,6 +164,16 @@ window.msgs = messages;
 			}// .logRow
 
 		}// .logList
+
+		// Optional drop shadow on all log text. Toggled by the logTextShadow
+		// setting via the consolidated text-settings modal. Matches the
+		// previously-hardcoded shadow exactly so existing layouts look
+		// identical when the toggle is on (the default).
+		&.hasTextShadow {
+			.logRow {
+				text-shadow: 2px 2px 0px black;
+			}
+		}
 
 	}// .logBox
 

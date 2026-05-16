@@ -53,6 +53,29 @@ export default class Chat extends Toy {
 		},
 	];
 
+	// Text-style settings, grouped for the consolidated text-settings modal.
+	// Keys here MUST match the refs declared in initSettings() below; this is
+	// purely a presentation descriptor for the SettingsTextRow + TextSettingsModal.
+	static textSettings = [
+		{
+			groupKey: 'chat',
+			groupLabel: 'Chat Text',
+			groupDescription: 'Style for usernames and message bodies in the chat overlay.',
+			fields: [
+				{ key: 'chatNameColor',  label: 'Username color', type: 'color' },
+				{ key: 'chatTextColor',  label: 'Text color',     type: 'color' },
+				{ key: 'chatTextSize',   label: 'Font size',      type: 'number', min: 8, max: 96 },
+				{ key: 'chatTextShadow', label: 'Text shadow',    type: 'boolean' },
+			],
+			defaults: {
+				chatNameColor:  '#00ABAE',
+				chatTextColor:  '#FFFFFF',
+				chatTextSize:   24,
+				chatTextShadow: true,
+			},
+		},
+	];
+
 
 	/**
 	 * Constructs the Chat object

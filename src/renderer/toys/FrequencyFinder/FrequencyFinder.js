@@ -44,6 +44,30 @@ export default class FrequencyFinder extends Toy {
 		},
 	];
 
+	// Descriptor for the consolidated text-settings modal. The `multiplierColor`
+	// is the repeat-count number ("x12") that appears next to each tracked
+	// phrase, so it gets its own field rather than reusing "Text color".
+	static textSettings = [
+		{
+			groupKey: 'freq',
+			groupLabel: 'Frequency Text',
+			groupDescription: 'Style for the frequently-repeated phrases and their repeat counters.',
+			fields: [
+				{ key: 'fontSize',        label: 'Font size',        type: 'number', min: 8, max: 96 },
+				{ key: 'fontColor',       label: 'Text color',       type: 'color' },
+				{ key: 'multiplierColor', label: 'Multiplier color', type: 'color',
+					description: 'Color of the "x12" repeat-count number next to each phrase.' },
+				{ key: 'showShadow',      label: 'Text shadow',      type: 'boolean' },
+			],
+			defaults: {
+				fontSize:        32,
+				fontColor:       '#FFFFFF',
+				multiplierColor: '#FF0000',
+				showShadow:      true,
+			},
+		},
+	];
+
 
 	/**
 	 * @param {ToyManager} toyManager

@@ -43,10 +43,36 @@ export default class HeadPat extends Toy {
 			component: HeadPatsUserWidget,
 			key: 'chatterWidgetBox',
 			allowResize: true,
-			lockAspectRatio: true,			
+			lockAspectRatio: true,
 			description: 'This widget will show a head-pat over a generic profile picture of a chatter, and can be placed anywhere.',
 			slug: 'chat'
 		}
+	];
+
+	// Descriptor for the consolidated text-settings modal. The
+	// `chatterNameShadow` ref here actually only shadows the username
+	// elements (verified in HeadPatsWidget.vue's
+	// `&.showTextShadow .patUserName, .targetUserName`), so the label
+	// stays "Name shadow" rather than the generic "Text shadow" used
+	// elsewhere.
+	static textSettings = [
+		{
+			groupKey: 'chatter',
+			groupLabel: 'Chatter Name',
+			groupDescription: 'Style for the chatter names shown above the pat/bonk/slap targets.',
+			fields: [
+				{ key: 'chatterNameFontSize', label: 'Font size',      type: 'number', min: 8, max: 96 },
+				{ key: 'chatterNameColor',    label: 'Username color', type: 'color' },
+				{ key: 'chatterTextColor',    label: 'Text color',     type: 'color' },
+				{ key: 'chatterNameShadow',   label: 'Name shadow',    type: 'boolean' },
+			],
+			defaults: {
+				chatterNameFontSize: 25,
+				chatterNameColor:    '#00ABAE',
+				chatterTextColor:    '#FFFFFF',
+				chatterNameShadow:   true,
+			},
+		},
 	];
 
 

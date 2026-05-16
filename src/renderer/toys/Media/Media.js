@@ -39,6 +39,31 @@ export default class Media extends Toy {
 		}
 	];
 
+	// Descriptor for the consolidated text-settings modal. Note: the
+	// underlying `chatterNameShadow` ref actually shadows *all* message text
+	// in the widget (see MediaWidget.vue's `&.showTextShadow .messageText`).
+	// We expose it here as "Text shadow" to match what it actually does -
+	// the storage key stays the same to avoid a setting migration.
+	static textSettings = [
+		{
+			groupKey: 'chatter',
+			groupLabel: 'Chatter Text',
+			groupDescription: 'Style for the chatter\'s name and any message text shown by the media toy.',
+			fields: [
+				{ key: 'chatterNameFontSize', label: 'Font size',      type: 'number', min: 8, max: 96 },
+				{ key: 'chatterNameColor',    label: 'Username color', type: 'color' },
+				{ key: 'chatterTextColor',    label: 'Text color',     type: 'color' },
+				{ key: 'chatterNameShadow',   label: 'Text shadow',    type: 'boolean' },
+			],
+			defaults: {
+				chatterNameFontSize: 25,
+				chatterNameColor:    '#00ABAE',
+				chatterTextColor:    '#FFFFFF',
+				chatterNameShadow:   true,
+			},
+		},
+	];
+
 
 	/**
 	 * Constructs the Media object

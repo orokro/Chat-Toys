@@ -45,6 +45,30 @@ export default class KaraokeQueue extends Toy {
 		}
 	];
 
+	// Descriptor for the consolidated text-settings modal. `playedSongsColor`
+	// is the muted color used for songs that have already played, so it gets
+	// its own field rather than collapsing into the base text color.
+	static textSettings = [
+		{
+			groupKey: 'list',
+			groupLabel: 'Queue Text',
+			groupDescription: 'Style for the song-queue list shown in the karaoke widget.',
+			fields: [
+				{ key: 'fontSize',         label: 'Font size',          type: 'number', min: 8, max: 72 },
+				{ key: 'fontColor',        label: 'Text color',         type: 'color' },
+				{ key: 'playedSongsColor', label: 'Played-songs color', type: 'color',
+					description: 'Color used for songs that have already played and are dimmed in the list.' },
+				{ key: 'fontShadow',       label: 'Text shadow',        type: 'boolean' },
+			],
+			defaults: {
+				fontSize:         24,
+				fontColor:        '#FFFFFF',
+				playedSongsColor: '#888888',
+				fontShadow:       true,
+			},
+		},
+	];
+
 	/**
 	 * Constructs the KaraokeQueue object
 	 * 

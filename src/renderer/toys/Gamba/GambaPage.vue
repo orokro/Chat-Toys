@@ -52,6 +52,7 @@
 		
 		<SectionHeader title="Theme Colors"/>
 		<div class="settingsBlock">
+			<!-- Panel background colors stay inline (not "text" settings) -->
 			<SettingsInputRow
 				type="color"
 				v-model="windowHeaderColor"
@@ -66,20 +67,16 @@
 				<template #title>Widget Body Color</template>
 				<p>What color body of the widgets be?</p>
 			</SettingsInputRow>
-			<SettingsInputRow
-				type="color"
-				v-model="windowHeaderTextColor"
-			>
-				<template #title>Widget Header Text Color</template>
-				<p>What color header text of the widgets be?</p>	
-			</SettingsInputRow>
-			<SettingsInputRow
-				type="color"
-				v-model="windowBodyTextColor"
-			>
-				<template #title>Widget Body Text Color</template>
-				<p>What color body text of the widgets be?</p>
-			</SettingsInputRow>
+
+			<!-- Text colors moved into the consolidated text-settings modal.
+				 Two groups: Header Text and Body Text, each rendered as its
+				 own row. -->
+			<SettingsTextRow
+				v-for="group in toy.static.textSettings"
+				:key="group.groupKey"
+				:toy="toy"
+				:groupKey="group.groupKey"
+			/>
 		</div>
 
 		<SectionHeader title="Settings"/>
@@ -226,6 +223,7 @@ import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsRow from '../../components/options/SettingsRow.vue';
 import SettingsInputRow from '../../components/options/SettingsInputRow.vue';
+import SettingsTextRow from '@components/options/SettingsTextRow.vue';
 import ArrayEdit from '../../components/options/ArrayEdit.vue';
 import ArrayTextInput from '../../components/options/ArrayTextInput.vue';
 import CatsumIpsum from '@components/options/../CatsumIpsum.vue';

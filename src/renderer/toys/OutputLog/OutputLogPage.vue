@@ -60,13 +60,13 @@
 		
 		<SectionHeader title="Settings"/>
 		<div class="settingsBlock">
-			<SettingsInputRow
-				type="color"
-				v-model="logTextColor"
-			>
-				<template #title>Text Color</template>
-				<p>The color to render the log text on the log widget.</p>
-			</SettingsInputRow>
+			<!-- Consolidated text-style settings (Text Color + Text Shadow). -->
+			<SettingsTextRow
+				v-for="group in toy.static.textSettings"
+				:key="group.groupKey"
+				:toy="toy"
+				:groupKey="group.groupKey"
+			/>
 
 			<SettingsInputRow
 				type="boolean"
@@ -118,6 +118,7 @@ import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import SettingsTextRow from '@components/options/SettingsTextRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import CatsumIpsum from '@components/CatsumIpsum.vue';

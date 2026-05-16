@@ -69,37 +69,13 @@
 				<template #title>Show Chatter Names</template>
 				<p>Disable to show messages only.</p>
 			</SettingsInputRow>
-			<SettingsInputRow
-				type="color"
-				v-model="chatNameColor"
-			>
-				<template #title>User Name Chat Color</template>
-				<p>What color to use for chat's user names?</p>
-			</SettingsInputRow>
-			<SettingsInputRow
-				type="color"
-				v-model="chatTextColor"
-			>
-				<template #title>Chat Text Color</template>
-				<p>What color to use for message text?</p>
-			</SettingsInputRow>
-			<SettingsInputRow
-				type="number"
-				:min="1"
-				:max="100"
-				:step="1"
-				v-model="chatTextSize"
-			>
-				<template #title>Chat Text Size.</template>
-				<p>Font size for the chat box text.</p>
-			</SettingsInputRow>
-			<SettingsInputRow
-				type="boolean"
-				v-model="chatTextShadow"
-			>
-				<template #title>Chat Text Shadow</template>
-				<p>Enable to add a shadow to chat text for better visibility.</p>
-			</SettingsInputRow>
+			<!-- Consolidated text-style settings. -->
+			<SettingsTextRow
+				v-for="group in toy.static.textSettings"
+				:key="group.groupKey"
+				:toy="toy"
+				:groupKey="group.groupKey"
+			/>
 
 		</div>
 		<SectionHeader title="Video Help"/>
@@ -123,6 +99,7 @@ import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
+import SettingsTextRow from '@components/options/SettingsTextRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import CatsumIpsum from '@components/CatsumIpsum.vue';
