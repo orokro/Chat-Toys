@@ -15,17 +15,26 @@ export class StateTickerQueue {
 
 	/**
 	 * Builds the StateTickerQueue object
-	 * 
+	 *
 	 * @param {Function} onStateChange - callback to call when a state change is needed
 	 * @param {Number} defaultWait - default time to wait between state changes
 	 * @param {Number} defaultDuration - default time to keep a state change
+	 * @param {Object} [options]
+	 * @param {Function} [options.canFire] - optional gate fn. Called before
+	 *   popping the next item; if it returns false, the queue holds and
+	 *   tries again on the next tick. Used by the Omni system so an alert
+	 *   toy holds its fire while the omni is busy showing another included
+	 *   toy. Returns true (or absent callback) means fire normally.
 	 */
-	constructor(onStateChange, defaultWait=2, defaultDuration=5) {
+	constructor(onStateChange, defaultWait=2, defaultDuration=5, options = {}) {
 
 		// save our callback & default times
 		this.onStateChange = onStateChange;
 		this.defaultWait = defaultWait;
 		this.defaultDuration = defaultDuration
+
+		// optional pre-fire gate; see constructor docs.
+		this.canFire = typeof options.canFire === 'function' ? options.canFire : null;
 
 		// the state queue
 		this.queue = [];
@@ -33,7 +42,7 @@ export class StateTickerQueue {
 		// true when we're in wait mode
 		// (between items)
 		this.waiting = false;
-		
+
 		// timer for the queue
 		this.timer = 0;
 	}
@@ -98,8 +107,18 @@ export class StateTickerQueue {
 		// if the queue is empty, call our callback with null & gtfo
 		// (we can leave time at 0)
 		if(this.queue.length == 0){
-			this.timer = 0;			
+			this.timer = 0;
 			this.onStateChange(null);
+			return;
+		}
+
+		// Omni-gate: if an owning omni is currently busy showing something
+		// else from its include list, hold the pop. Leave timer at 0 so
+		// the next tick() calls popQueue again - we'll try again then.
+		// This polls at the tick rate (1Hz) so worst-case latency between
+		// "omni frees up" and "we fire" is ~1 second.
+		if (this.canFire && !this.canFire()) {
+			this.timer = 0;
 			return;
 		}
 

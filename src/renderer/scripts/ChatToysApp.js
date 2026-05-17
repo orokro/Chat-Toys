@@ -17,6 +17,7 @@ import { AssetManager } from './assets_state/AssetManager';
 import { ChatProcessor } from './ChatProcessor';
 import { CommandProcessor } from './CommandProcessor';
 import { ToyManager } from './ToyManager';
+import { OmniRegistry } from './OmniRegistry';
 import { SysLogger } from './SysLogger';
 import { OBSConnectionManager } from './OBSConnectionManager.js';
 import { YouTubeConnectionManager } from './YouTubeConnectionManager.js';
@@ -112,6 +113,14 @@ export default class ChatToysApp {
 
 		// make a new command processor to handle all incoming commands
 		this.commandProcessor = new CommandProcessor(this, this.chatProcessor);
+
+		// in-process registry that coordinates the Omni toy's "gating" of
+		// alert-style toys (Shout, Donations, Help, Media, HeadPat-chatter,
+		// PrizeWheel). Toys check this before firing; if an owning omni is
+		// currently busy with another included toy, the firing is held.
+		// Must be available before toyManager constructs toys, since alert
+		// toys reference it from their constructors.
+		this.omniRegistry = new OmniRegistry();
 
 		// this will actually instantiate the toys and manage their state
 		this.toyManager = new ToyManager(this);

@@ -28,6 +28,7 @@ import HorseRacing from "./HorseRacing/HorseRacing";
 import ClawGame from "./ClawGame/ClawGame";
 import Help from "./Help/Help";
 import Donations from "./Donations/Donations";
+import Omni from "./Omni/Omni";
 
 // We'll export a list of all the constructors for the various toys
 // Their classes will have the static data they need, including:
@@ -57,6 +58,7 @@ export const toysData = [
 	ClawGame,
 	Help,
 	Donations,
+	Omni,
 ];
 
 // convert the array to an object for easier access

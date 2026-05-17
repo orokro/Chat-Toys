@@ -124,6 +124,7 @@ export default class OutputLog extends Toy {
 				],
 				description: 'Adds message to log box on screen.',
 				userDesc: 'Display something in the on-screen log',
+				tipText: 'Print your text into the streamer\'s on-screen log: {cmd} <message>',
 			},
 		]);
 	}

@@ -39,6 +39,10 @@ export default class Media extends Toy {
 		}
 	];
 
+	// Marks this toy as omni-includable + names its alert-eligible widget.
+	static isAlertToy = true;
+	static alertWidgetSlug = 'mediaBox';
+
 	// Descriptor for the consolidated text-settings modal. Note: the
 	// underlying `chatterNameShadow` ref actually shadows *all* message text
 	// in the widget (see MediaWidget.vue's `&.showTextShadow .messageText`).
@@ -76,7 +80,13 @@ export default class Media extends Toy {
 		super(toyManager);
 
 		// our state ticker queue
-		this.stateTickerQueue = new StateTickerQueue(this.handleStateChange.bind(this), 2, 5);
+		// Omni-gated queue: canFire holds the queue while another included
+		// toy is showing in an omni this Media toy is registered to.
+		this.stateTickerQueue = new StateTickerQueue(
+			this.handleStateChange.bind(this),
+			2, 5,
+			{ canFire: () => !this.chatToysApp.omniRegistry.isBlocking(this.slug) }
+		);
 		this.tickFN = () => this.stateTickerQueue.tick()
 		electronAPI.tick(this.tickFN);
 
@@ -157,6 +167,17 @@ export default class Media extends Toy {
 
 		// add the new media assets to the existing, remaining ones
 		this.settings.mediaAssets.value = newMediaAssetsArray;
+	}
+
+
+	/**
+	 * Whether a media popup is currently on screen. Used by the Omni
+	 * registry to gate other included toys.
+	 *
+	 * @returns {boolean}
+	 */
+	isShowing(){
+		return this.mode.value !== 'IDLE';
 	}
 
 

@@ -44,6 +44,12 @@ export default class Shout extends Toy {
 		},
 	];
 
+	// Marks this toy as omni-includable + names which of its widgets is
+	// the alert-style widget (Shout only has one, but the convention is
+	// uniform across toys).
+	static isAlertToy = true;
+	static alertWidgetSlug = 'shoutBox';
+
 	// Descriptor for the consolidated text-settings modal.
 	static textSettings = [
 		{
@@ -76,8 +82,15 @@ export default class Shout extends Toy {
 		// call the parent constructor
 		super(toyManager);
 
-		// we'll use a ticker for queuing up shout messages
-		this.shoutQueue = new StateTickerQueue(this.handleShoutQueue.bind(this), 2, 10);
+		// we'll use a ticker for queuing up shout messages.
+		// The canFire gate lets the Omni toy hold this queue while another
+		// included toy is showing, so alerts serialize through a single visual
+		// slot when the streamer's bundled them in an Omni widget.
+		this.shoutQueue = new StateTickerQueue(
+			this.handleShoutQueue.bind(this),
+			2, 10,
+			{ canFire: () => !this.chatToysApp.omniRegistry.isBlocking(this.slug) }
+		);
 		this.tickFN = () => this.shoutQueue.tick();
 		electronAPI.tick(this.tickFN);
 
@@ -96,6 +109,17 @@ export default class Shout extends Toy {
 		watch(this.settings.shoutSoundId, (value) => {
 			this.soundPath.value = this.getAssetPath(value);
 		});
+	}
+
+
+	/**
+	 * Whether this toy is currently displaying a shout. Used by the Omni
+	 * registry to gate other included toys.
+	 *
+	 * @returns {boolean}
+	 */
+	isShowing() {
+		return this.shoutMode.value !== 'IDLE';
 	}
 
 

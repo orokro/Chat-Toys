@@ -75,6 +75,10 @@ export default class Donations extends Toy {
 	// Tools tab: no chat commands, only reacts to chat events.
 	static isTool = true;
 
+	// Marks this toy as omni-includable + names its alert-eligible widget.
+	static isAlertToy = true;
+	static alertWidgetSlug = 'popup';
+
 
 	/**
 	 * @param {import('../../scripts/ToyManager').ToyManager} toyManager
@@ -90,10 +94,14 @@ export default class Donations extends Toy {
 		// Queue: defaultWait = QUEUE_GAP_SECONDS between items, default
 		// duration falls back to settings.displaySeconds when an item omits
 		// its own duration. Tick comes from the main-driven electronAPI.tick.
+		// canFire gates on the Omni registry so when this toy is included
+		// in an omni group, dono popups serialize behind whatever else is
+		// currently showing in that omni.
 		this.queue = new StateTickerQueue(
 			this.handleQueue.bind(this),
 			QUEUE_GAP_SECONDS,
-			this.settings.displaySeconds.value || 8
+			this.settings.displaySeconds.value || 8,
+			{ canFire: () => !this.chatToysApp.omniRegistry.isBlocking(this.slug) }
 		);
 		this.tickFN = () => this.queue.tick();
 		electronAPI.tick(this.tickFN);
@@ -311,6 +319,17 @@ export default class Donations extends Toy {
 			tier,
 			cfg
 		);
+	}
+
+
+	/**
+	 * Whether a donation popup is currently on screen. Used by the Omni
+	 * registry to gate other included toys.
+	 *
+	 * @returns {boolean}
+	 */
+	isShowing() {
+		return this.currentDono.value !== null;
 	}
 
 

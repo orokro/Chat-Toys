@@ -39,6 +39,10 @@ export default class PrizeWheel extends Toy {
 		}
 	];
 
+	// Marks this toy as omni-includable + names its alert-eligible widget.
+	static isAlertToy = true;
+	static alertWidgetSlug = 'wheel';
+
 
 	/**
 	 * Constructs the PrizeWheel object
@@ -50,8 +54,15 @@ export default class PrizeWheel extends Toy {
 		// call the parent constructor
 		super(toyManager);
 
-		// new queue for scheduling multiple requests to spin
-		this.spinQueue = new StateTickerQueue(this.handleSpinQueue.bind(this), 2, 10);
+		// new queue for scheduling multiple requests to spin.
+		// canFire gates the queue while an Omni group containing this toy is
+		// busy with another included toy - the spin will be held until the
+		// Omni's current event clears.
+		this.spinQueue = new StateTickerQueue(
+			this.handleSpinQueue.bind(this),
+			2, 10,
+			{ canFire: () => !this.chatToysApp.omniRegistry.isBlocking(this.slug) }
+		);
 		this.tickFN = () => this.spinQueue.tick();
 		electronAPI.tick(this.tickFN);
 
@@ -77,6 +88,17 @@ export default class PrizeWheel extends Toy {
 		watch(this.rotation, (value) => {
 			this.spinItem.value = this.computeSpinItem(value);
 		})
+	}
+
+
+	/**
+	 * Whether the wheel is currently spinning (or in any non-idle state).
+	 * Used by the Omni registry to gate other included toys.
+	 *
+	 * @returns {boolean}
+	 */
+	isShowing(){
+		return this.wheelMode.value !== 'IDLE';
 	}
 
 

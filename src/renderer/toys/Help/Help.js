@@ -32,6 +32,7 @@ import { ref, shallowRef, watch } from 'vue';
 import { socketShallowRef } from 'socket-ref';
 
 import Toy from '../Toy';
+import { StateTickerQueue } from '@scripts/StateTickerQueue';
 import HelpPage from './HelpPage.vue';
 import HelpWidget from './HelpWidget.vue';
 
@@ -61,6 +62,10 @@ export default class Help extends Toy {
 	// Tools tab in the UI (alongside OutputLog, SCConversion, Donations).
 	static isTool = true;
 
+	// Marks this toy as omni-includable + names its alert-eligible widget.
+	static isAlertToy = true;
+	static alertWidgetSlug = 'tipCard';
+
 
 	/**
 	 * @param {import('../../scripts/ToyManager').ToyManager} toyManager
@@ -77,16 +82,30 @@ export default class Help extends Toy {
 		/** @type {Array<string>} */
 		this.recentTipIds = [];
 
-		// Internal timer handles.
+		// Display queue: handles "show this tip for N seconds" pacing and
+		// the Omni gate. The producer is the picker-interval below; this
+		// queue is just the consumer. Default duration is displaySeconds
+		// (per-item duration overrides this; we set it on each enqueue).
+		this.tipQueue = new StateTickerQueue(
+			this.handleTipQueue.bind(this),
+			0, // defaultWait between items: 0 (we don't want gaps between back-to-back tips)
+			this.settings.displaySeconds.value || 10,
+			{ canFire: () => !this.chatToysApp.omniRegistry.isBlocking(this.slug) }
+		);
+		this.queueTickFn = () => this.tipQueue.tick();
+		electronAPI.tick(this.queueTickFn);
+
+		// Producer: every intervalSeconds, pick a fresh tip and (if the
+		// queue isn't already sitting on one) enqueue it. Capping the
+		// pending queue at 1 means tips don't pile up during long omni
+		// busy stretches - we just hold whatever's most recent.
 		this.tickInterval = null;
-		this.hideTimeout = null;
+		this.startTipPicker();
 
-		this.startTipRotation();
-
-		// Restart the rotation if the streamer edits the interval so the
+		// Restart the picker if the streamer edits the interval so the
 		// change is live (otherwise they'd have to disable/re-enable the toy).
 		this.stopIntervalWatch = watch(this.settings.intervalSeconds, () => {
-			this.startTipRotation();
+			this.startTipPicker();
 		});
 	}
 
@@ -255,54 +274,64 @@ export default class Help extends Toy {
 
 
 	/**
-	 * Kick off the periodic tick. Uses setElectronInterval so backgrounding
-	 * the main app doesn't throttle it.
+	 * (Re)start the producer interval that picks tips at the configured
+	 * cadence. The interval enqueues onto `tipQueue` rather than firing
+	 * directly, so display pacing + omni gating live in one place (the STQ).
+	 * Uses setElectronInterval so backgrounding the main app doesn't throttle.
 	 */
-	startTipRotation() {
-		this.stopTipRotation();
+	startTipPicker() {
+		this.stopTipPicker();
 		const everyMs = Math.max(5, Math.floor((this.settings.intervalSeconds.value || 120))) * 1000;
-		this.tickInterval = window.setElectronInterval(() => this.tick(), everyMs);
+		this.tickInterval = window.setElectronInterval(() => this.scheduleNextTip(), everyMs);
 	}
 
 
-	/** Stop the periodic tick and any pending hide-timeout. */
-	stopTipRotation() {
+	/** Stop the producer interval. */
+	stopTipPicker() {
 		if (this.tickInterval) {
 			window.clearElectronInterval(this.tickInterval);
 			this.tickInterval = null;
-		}
-		if (this.hideTimeout) {
-			window.clearElectronTimeout(this.hideTimeout);
-			this.hideTimeout = null;
 		}
 	}
 
 
 	/**
-	 * One interval iteration: pick a tip, publish it, schedule auto-hide.
-	 * No-op silently if no eligible tip is available right now (which is
-	 * common early on - chatters might not have any toys live yet). The
-	 * `verbose` flag is passed by showTipNow so the streamer gets actionable
-	 * feedback when their explicit button-press finds nothing.
+	 * Pick a fresh tip and (if nothing is currently showing AND nothing's
+	 * already queued) enqueue it onto `tipQueue`. The cap-at-1 means tips
+	 * don't pile up during long omni-busy stretches - we'd rather show one
+	 * fresh tip than a backlog of stale ones.
 	 *
-	 * @param {boolean} [verbose=false]
+	 * @param {boolean} [verbose=false] - log a reason if no tip can be picked
 	 */
-	tick(verbose = false) {
+	scheduleNextTip(verbose = false) {
+
+		// Hold off if a tip is on screen or pending.
+		if (this.currentTip.value !== null || this.tipQueue.queue.length > 0) {
+			return;
+		}
+
 		const pick = this.pickNextTip();
 		if (!pick) {
 			if (verbose) this.logTipUnavailableReason();
 			return;
 		}
 
-		this.currentTip.value = this.buildTipPayload(pick);
+		const item = this.buildTipPayload(pick);
+		// Per-item duration override on the queue (overrides defaultDuration).
+		item.duration = Math.max(1, Math.floor((this.settings.displaySeconds.value || 10)));
+		this.tipQueue.addToQueue(item);
+	}
 
-		// Auto-hide after the configured display window.
-		if (this.hideTimeout) window.clearElectronTimeout(this.hideTimeout);
-		const hideMs = Math.max(1, Math.floor((this.settings.displaySeconds.value || 10))) * 1000;
-		this.hideTimeout = window.setElectronTimeout(() => {
-			this.currentTip.value = null;
-			this.hideTimeout = null;
-		}, hideMs);
+
+	/**
+	 * Tip queue handler. Called by StateTickerQueue when an item pops (the
+	 * canFire gate passed), and with null between items / when empty.
+	 * `currentTip` going non-null is what drives the widget render.
+	 *
+	 * @param {?Object} item
+	 */
+	handleTipQueue(item) {
+		this.currentTip.value = item;
 	}
 
 
@@ -347,12 +376,24 @@ export default class Help extends Toy {
 
 	/**
 	 * Streamer-facing "show one now" hook - used by a button on the page so
-	 * they can preview without waiting for the next interval. Runs the tick
-	 * in verbose mode so the streamer gets a log line when nothing fires
-	 * (otherwise the button looks broken).
+	 * they can preview without waiting for the next interval. Routes through
+	 * scheduleNextTip so the omni gate / cap-at-1 rules still apply, and
+	 * uses verbose mode to log a reason in the system log if nothing fires
+	 * (otherwise the button just looks broken).
 	 */
 	showTipNow() {
-		this.tick(true);
+		this.scheduleNextTip(true);
+	}
+
+
+	/**
+	 * Whether a tip is currently on screen. Used by the Omni registry to
+	 * gate other included toys.
+	 *
+	 * @returns {boolean}
+	 */
+	isShowing() {
+		return this.currentTip.value !== null;
 	}
 
 
@@ -363,7 +404,11 @@ export default class Help extends Toy {
 			this.stopIntervalWatch();
 			this.stopIntervalWatch = null;
 		}
-		this.stopTipRotation();
+		this.stopTipPicker();
+		if (this.queueTickFn) {
+			electronAPI.clearTick(this.queueTickFn);
+			this.queueTickFn = null;
+		}
 		this.currentTip.value = null;
 	}
 }

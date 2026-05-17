@@ -49,6 +49,12 @@ export default class HeadPat extends Toy {
 		}
 	];
 
+	// Marks this toy as omni-includable. Only the chatter widget is alert-
+	// eligible (the streamer-cam variant is persistent overlay state, not a
+	// transient popup).
+	static isAlertToy = true;
+	static alertWidgetSlug = 'chat';
+
 	// Descriptor for the consolidated text-settings modal. The
 	// `chatterNameShadow` ref here actually only shadows the username
 	// elements (verified in HeadPatsWidget.vue's
@@ -86,9 +92,16 @@ export default class HeadPat extends Toy {
 		// call the parent constructor
 		super(toyManager);
 
-		// make two queues - one for chatter pats and one for streamer pats
+		// make two queues - one for chatter pats and one for streamer pats.
+		// Only the chatter queue is omni-gated - the streamer widget lives
+		// over the streamer's avatar / cam and runs continuously, it's not
+		// an alert-style popup and isn't included in omnis.
 		this.streamerPatQueue = new StateTickerQueue(this.handlePatQueue.bind(this), 2, 10);
-		this.chatterPatQueue = new StateTickerQueue(this.handleChatQueue.bind(this), 2, 10);
+		this.chatterPatQueue = new StateTickerQueue(
+			this.handleChatQueue.bind(this),
+			2, 10,
+			{ canFire: () => !this.chatToysApp.omniRegistry.isBlocking(this.slug) }
+		);
 		
 		// listen to ticks
 		this.tickFN = () => {
@@ -131,6 +144,19 @@ export default class HeadPat extends Toy {
 		watch(this.settings.slapSoundId, () => {
 			this.slapSoundPath.value = this.getAssetPath(this.settings.slapSoundId.value);
 		}, { immediate: true });
+	}
+
+
+	/**
+	 * Whether the chatter pat popup is currently on screen. Used by the
+	 * Omni registry to gate other included toys. Only the chatter widget
+	 * is considered for omni purposes - the streamer-cam variant doesn't
+	 * count, it runs persistently over the avatar.
+	 *
+	 * @returns {boolean}
+	 */
+	isShowing(){
+		return this.chatterMode.value !== 'IDLE';
 	}
 
 
