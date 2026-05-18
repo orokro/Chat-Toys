@@ -41,10 +41,16 @@
 </template>
 <script setup>
 
-import { ref, computed, inject } from 'vue';
+import { ref, computed } from 'vue';
 import { socketShallowRefReadOnly } from 'socket-ref';
 
 import { keepAliveSocket } from '../keepAliveSocket.js';
+
+// Direct registry import - the omni widget runs in the OBS browser source
+// context (live.html) where `inject('ctApp')` returns null (ctApp only
+// exists in the main app window). The toysData module is a plain ES export
+// and works in every context.
+import { toysData } from '@toys/ToysData';
 
 
 const thisSlug = 'omni';
@@ -83,13 +89,35 @@ const group = computed(() => {
 
 
 /**
- * Detect the host port + dev mode so we can build the same widget URLs the
- * main app would build for these toys. Mirrors logic in Toy.getWidgetURLs().
+ * Determine which port to use where. There are two ports in play:
+ *   - pagePort: where this widget itself is being served (8080 in dev,
+ *     OBS server port in prod, typically 3001).
+ *   - wsPort: where the WebSocket socket-ref server is running (always
+ *     the OBS server port - 3001 by default).
+ *
+ * In dev these differ - the Vite dev server hosts the page at 8080 while
+ * the WS server runs at 3001. The earlier version of this code conflated
+ * them and ended up writing `port=8080` into iframe URLs, which made the
+ * iframes' socket-refs try to connect to the dev server's WebSocket port
+ * instead of the actual OBS server - widgets loaded but never received
+ * state, so the omni's panel stayed transparent / unhealthy.
+ *
+ * Logic matches live.js's socketPort detection so iframes inherit the
+ * same server.
  */
 const isDev = (location.host === 'localhost:8080');
-const serverPort = parseInt(location.port || '3001', 10);
-const showPort = (serverPort !== 3001);
-const hostPort = isDev ? 8080 : serverPort;
+const queryPort = parseInt(new URL(location.href).searchParams.get('port') || '3001', 10);
+const pagePort = parseInt(location.port || '3001', 10);
+const wsPort = isDev ? queryPort : pagePort;
+
+// Where to point the iframe's `src` host:
+//   dev → 8080 (Vite dev server)
+//   prod → the OBS server port (which is also the page port)
+const hostPort = isDev ? 8080 : wsPort;
+
+// Only include `port=N` in the iframe URL when the WS port isn't the
+// default 3001 (matches Toy.getWidgetURLs's `showPort` behavior).
+const showPort = (wsPort !== 3001);
 
 
 /**
@@ -98,19 +126,17 @@ const hostPort = isDev ? 8080 : serverPort;
  *
  * @type {import('vue').ComputedRef<Array<{toySlug, toyName, url}>>}
  */
-const ctApp = inject('ctApp', null);
-
 const iframeSpecs = computed(() => {
 	const g = group.value;
 	if (!g) return [];
 
 	const out = [];
 	for (const toySlug of (g.includedToys || [])) {
-		// Resolve the alert widget slug for this toy. We need to know which
-		// of the toy's widgetComponents is the alert one. The toy class
-		// exposes static alertWidgetSlug for this; fall back to the first
-		// widget if not set.
-		const ToyClass = ctApp?.toysData?.asObject?.[toySlug];
+		// Resolve the alert widget slug for this toy via the static toys
+		// registry (works in every context, unlike injected ctApp).
+		// `static alertWidgetSlug` names the omni-eligible widget; we fall
+		// back to the first widget if the toy didn't opt in.
+		const ToyClass = toysData.asObject?.[toySlug];
 		if (!ToyClass) continue;
 		const widgetSlugForToy = ToyClass.alertWidgetSlug
 			|| (ToyClass.widgetComponents?.[0]?.slug)
@@ -119,7 +145,7 @@ const iframeSpecs = computed(() => {
 
 		let url = `http://localhost:${hostPort}/`;
 		url += isDev ? 'live.html?' : 'live/?';
-		url += showPort ? `port=${serverPort}&` : '';
+		url += showPort ? `port=${wsPort}&` : '';
 		url += 'single=true&';
 		url += `toy=${toySlug}&widget=${widgetSlugForToy}`;
 
