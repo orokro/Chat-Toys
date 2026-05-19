@@ -12,6 +12,7 @@
 		@changeTab="(tab)=>selectedPage = tab"
 	>
 		<WidgetsPage  v-if="selectedPage === 'widgets'" />
+		<CommandsPage v-if="selectedPage === 'commands'" />
 		<AssetsPage   v-if="selectedPage === 'assets_db'" />
 		<UsersPage    v-if="selectedPage === 'users_db'" />
 	</VerticalItemsPage>
@@ -28,15 +29,20 @@ import VerticalItemsPage from '../VerticalItemsPage.vue';
 import AssetsPage from './pages/AssetsPage.vue';
 import UsersPage from './pages/UsersPage.vue';
 import WidgetsPage from './pages/WidgetsPage.vue';
+import CommandsPage from './pages/CommandsPage.vue';
 
 // Vertical strip items for the System tab. Non-database entries (Widgets,
-// future system tabs) sit above the database-flavored entries (Assets,
-// Users) so the page reads as "system overview" first, "system data
-// stores" second.
+// Commands, future system tabs) sit above the database-flavored entries
+// (Assets, Users) so the page reads as "system overview" first, "system
+// data stores" second.
 const pageItems = [
 	{
 		slug: 'widgets',
 		name: 'Widgets',
+	},
+	{
+		slug: 'commands',
+		name: 'Commands',
 	},
 	{
 		slug: 'assets_db',

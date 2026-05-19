@@ -20,7 +20,14 @@ import { socketRef, socketShallowRef, socketShallowRefReadOnly } from 'socket-re
 const HEARTBEAT_STALENESS_MS = 10 * 1000;
 
 // our app
-import { ToyManager } from "../scripts/ToyManager";
+// NOTE: we deliberately do NOT `import { ToyManager } from '../scripts/ToyManager'`
+// here. ToyManager pulls in ChatToysApp, which pulls in ToysData, which pulls
+// in every concrete Toy subclass (Chat, Media, …). Each subclass does
+// `class X extends Toy` at module-eval time - so adding ToyManager to Toy.js's
+// import list creates a cycle where a subclass tries to read `Toy` before
+// Toy.js has finished evaluating, producing a runtime TDZ error
+// ("Cannot access 'Toy' before initialization"). ToyManager was only ever
+// referenced from JSDoc here, never at runtime, so the import is unneeded.
 import { RefAggregator } from "../scripts/RefAggregator";
 import { chromeShallowRef } from "../scripts/chromeRef";
 
@@ -29,11 +36,11 @@ export default class Toy {
 
 	// some toys will be classified as a "tool", but most are not
 	static isTool = false;
-	
+
 	/**
 	 * Constructs the Toy object
-	 * 
-	 * @param {ToyManager} toyManager - reference to the toy manager
+	 *
+	 * @param {import('../scripts/ToyManager').ToyManager} toyManager - reference to the toy manager
 	 */
 	constructor(toyManager) {
 

@@ -31,6 +31,12 @@ export default class VTSTosser extends Toy {
 	static themeColor = '#E65A5A';
 	static widgetComponents = [];
 
+	// VTSTosser ships with no built-in commands - the user wires their
+	// own custom commands to each tossable item. Read by the master
+	// Commands page so it includes this toy even though localCommandsList
+	// is empty by default.
+	static enableCustomCommands = true;
+
 
 	/**
 	 * Constructs the Tosser object

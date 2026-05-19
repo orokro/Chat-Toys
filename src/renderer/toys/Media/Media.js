@@ -43,6 +43,11 @@ export default class Media extends Toy {
 	static isAlertToy = true;
 	static alertWidgetSlug = 'mediaBox';
 
+	// Media ships with no built-in commands - the user defines a custom
+	// command per media asset. Read by the master Commands page so it
+	// still surfaces this toy when localCommandsList is empty.
+	static enableCustomCommands = true;
+
 	// Descriptor for the consolidated text-settings modal. Note: the
 	// underlying `chatterNameShadow` ref actually shadows *all* message text
 	// in the widget (see MediaWidget.vue's `&.showTextShadow .messageText`).

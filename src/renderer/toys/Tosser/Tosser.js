@@ -30,6 +30,12 @@ export default class Tosser extends Toy {
 	static desc = 'Let viewers toss objects onto your stream.';
 	static optionsPageComponent = TosserPage;
 	static themeColor = '#E65A5A';
+
+	// Tosser ships with no built-in commands - the user wires their own
+	// custom commands to each tossable item. The master Commands page
+	// reads this flag to decide whether to show the toy even when its
+	// localCommandsList is empty.
+	static enableCustomCommands = true;
 	static widgetComponents = [
 		{
 			component: TosserWidget,

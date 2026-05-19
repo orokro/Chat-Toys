@@ -16,7 +16,6 @@
 		<TwitchPage v-if="selectedPage === 'twitch'" />
 		<VTubeStudioPage v-if="selectedPage === 'vtsSettings'" />
 		<PluginPage v-if="selectedPage === 'plugin'" />
-		<CommandsDescPage v-if="selectedPage === 'copy_details'" />
 		<BTTVPage v-if="selectedPage === 'bttv'" />
 
 	</VerticalItemsPage>
@@ -35,7 +34,9 @@ import VTubeStudioPage from './pages/VTubeStudioPage.vue';
 import ChatPage from './pages/ChatPage.vue';
 import TwitchPage from './pages/TwitchPage.vue';
 import PluginPage from './pages/PluginPage.vue';
-import CommandsDescPage	 from './pages/CommandsDescPage.vue';
+// CommandsDescPage moved to the System -> Commands tab (the copy / paste
+// command-list snippet now lives on the master CommandsPage). Connection
+// Settings is no longer the right home for it.
 import BTTVPage from './pages/BTTVPage.vue';
 
 // this will generate the icons for the vertical strip items
@@ -60,10 +61,6 @@ const pageItems = [
 		slug: 'bttv',
 		name: 'BTTV Integration',
 	},
-	{
-		slug: 'copy_details',
-		name: 'Commands Desc',
-	}
 	// {
 	// 	slug: 'plugin',
 	// 	name: 'Plugin Settings',
@@ -72,6 +69,12 @@ const pageItems = [
 
 // refs
 const selectedPage = chromeRef('settingsPageTab', 'chatSettings');
+
+// One-shot migration: if a user had the (now-removed) 'copy_details'
+// tab persisted from a previous version, bounce them back to chat
+// settings so they don't land on a blank page.
+if (selectedPage.value === 'copy_details')
+	selectedPage.value = 'chatSettings';
 
 </script>
 <style lang="scss" scoped>
