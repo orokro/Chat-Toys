@@ -8,6 +8,7 @@ import { createApp } from 'vue'
 import MainWindow from './pages/MainWindow.vue'
 import 'material-icons/iconfont/material-icons.css';
 import { setGlobalSocketRefPort, enableConnectionLogs } from 'socket-ref';
+import { installHelpPrimitives } from './components/options/page_help/help_system/helpPrimitivesPlugin';
 
 // wrap async logic in helper function
 async function startMain(){
@@ -26,7 +27,16 @@ async function startMain(){
 	// enableConnectionLogs(true);
 
 	// now we'll create the main window, so the socketRefs use the correct port
-	createApp(MainWindow).mount('#app');
+	const app = createApp(MainWindow);
+
+	// Global-register the help-system's content primitives so topic
+	// SFCs can use <HelpSection>, <HelpLink>, <HelpTip>, etc. without
+	// importing each one in every file. There are likely 50+ topic
+	// files - the savings outweighs the small global-namespace cost
+	// (all primitives are Help-prefixed).
+	installHelpPrimitives(app);
+
+	app.mount('#app');
 }
 
 // start up
