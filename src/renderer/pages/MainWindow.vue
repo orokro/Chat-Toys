@@ -67,7 +67,7 @@ const tabs = [
 	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
 	{ title: 'Tool Box', icon: 'build', slug: 'toolbox' },
 	// { title: 'Layout', icon: 'monitor', slug: 'layout' },
-	{ title: 'Database', icon: 'storage', slug: 'settings' },
+	{ title: 'System', icon: 'storage', slug: 'system' },
 
 	// deprecated page
 	// { title: 'Showtime Buttons Board', icon: 'dialpad', slug: 'buttons' },

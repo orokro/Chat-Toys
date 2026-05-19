@@ -5,14 +5,15 @@
 	This is the top level component for when the "Database" tab is active.
 -->
 <template>
-	ads
+
 	<VerticalItemsPage
 		:verticalItems="pageItems"
 		:selectedTab="selectedPage"
 		@changeTab="(tab)=>selectedPage = tab"
-	>	
-		<AssetsPage v-if="selectedPage === 'assets_db'" />
-		<UsersPage v-if="selectedPage === 'users_db'" />
+	>
+		<WidgetsPage  v-if="selectedPage === 'widgets'" />
+		<AssetsPage   v-if="selectedPage === 'assets_db'" />
+		<UsersPage    v-if="selectedPage === 'users_db'" />
 	</VerticalItemsPage>
 
 </template>
@@ -26,9 +27,17 @@ import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 import VerticalItemsPage from '../VerticalItemsPage.vue';
 import AssetsPage from './pages/AssetsPage.vue';
 import UsersPage from './pages/UsersPage.vue';
+import WidgetsPage from './pages/WidgetsPage.vue';
 
-// this will generate the icons for the vertical strip items
+// Vertical strip items for the System tab. Non-database entries (Widgets,
+// future system tabs) sit above the database-flavored entries (Assets,
+// Users) so the page reads as "system overview" first, "system data
+// stores" second.
 const pageItems = [
+	{
+		slug: 'widgets',
+		name: 'Widgets',
+	},
 	{
 		slug: 'assets_db',
 		name: 'Assets',
@@ -40,7 +49,7 @@ const pageItems = [
 ];
 
 // refs
-const selectedPage = chromeRef('databasePageTab', 'assets_db');
+const selectedPage = chromeRef('databasePageTab', 'widgets');
 
 </script>
 <style lang="scss" scoped>
