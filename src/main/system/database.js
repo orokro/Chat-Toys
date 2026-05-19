@@ -18,8 +18,15 @@ const builtInAssets = require(path.join(__dirname, "..", "..", "shared", "builtI
 
 // Schema version pragma. Increment when adding a new schema migration
 // that needs to run conditionally. Lives in SQLite's PRAGMA user_version.
-//   1 -> initial asset_paths virtualization (this commit)
-const ASSET_PATHS_SCHEMA_VERSION = 1;
+//   1 -> initial asset_paths virtualization
+//   2 -> fix-up malformed `assets:///<name>` paths (3 slashes) created by
+//        the early createAssetFolder/insertAssetFile bug.
+//   3 -> dedup asset_paths rows that share the same asset_ref. The v2
+//        bump accidentally re-ran the full v1 seed against existing
+//        databases, which inserted fresh /My Assets/<original_name>.png
+//        rows even when the user had previously renamed the asset.
+//        Keep the earliest-created row per asset_ref.
+const ASSET_PATHS_SCHEMA_VERSION = 3;
 
 // Virtual-storage prefix used by the vuefinder UI. Paths look like
 // `assets:///Built-in/Fish/big.png`. The Express vuefinder endpoint
@@ -215,7 +222,17 @@ class DatabaseManager {
 			VALUES (?, ?, ?, 0, ?, ?, ?)
 		`);
 
+		// Whether to run the initial v1 seed at all. Critical: when a
+		// later schema bump runs against a database that already has
+		// v1 seeding applied, we MUST NOT re-seed - doing so created
+		// duplicate /My Assets/<name>.png rows that survived the v1
+		// path-prefix INSERT OR IGNORE check because the user had
+		// already renamed their original file to a different basename.
+		const shouldRunV1Seed = currentVersion < 1;
+
 		const tx = this.db.transaction(() => {
+
+			if (!shouldRunV1Seed) return; // v2/v3 bumps run only the targeted fix-ups below
 
 			// ensure the root virtual folders exist. Order matters - parents
 			// before children - so the parent_path lookup always resolves.
@@ -238,9 +255,21 @@ class DatabaseManager {
 			// place each built-in at its canonicalPath. INSERT OR IGNORE so
 			// users who somehow already have a row at the target path don't
 			// get clobbered.
+			// helper: only insert a row for this asset_ref if no row
+			// already references it. Prevents duplicate path rows when
+			// the seeding re-runs for any reason (and defends against
+			// future migrations that may also touch this area).
+			const alreadySeeded = (assetRef, isInternal) => {
+				return !!this.db.prepare(`
+					SELECT 1 FROM asset_paths
+					WHERE asset_ref = ? AND is_internal = ?
+				`).get(assetRef, isInternal ? 1 : 0);
+			};
+
 			for (const asset of builtInAssets) {
+				if (alreadySeeded(String(asset.id), true)) continue;
 				const folderPath = asset.canonicalPath;
-				const filePath = `${folderPath}/${asset.name}`;
+				const filePath = joinAssetPath(folderPath, asset.name);
 				// strip the `assets://` prefix to derive the segments
 				ensureFolderChain(insertFolder, folderPath.slice(ASSET_STORAGE_PREFIX.length));
 				insertFile.run(
@@ -260,10 +289,11 @@ class DatabaseManager {
 			const userAssets = this.db.prepare(`SELECT uuid, original_name, type FROM custom_assets`).all();
 			const myAssetsRoot = `${ASSET_STORAGE_PREFIX}My Assets`;
 			for (const ua of userAssets) {
+				if (alreadySeeded(ua.uuid, false)) continue;
 				const desiredBase = ua.original_name || ua.uuid;
 				const resolvedBase = resolveBasenameCollision(this.db, myAssetsRoot, desiredBase);
 				insertFile.run(
-					`${myAssetsRoot}/${resolvedBase}`,
+					joinAssetPath(myAssetsRoot, resolvedBase),
 					myAssetsRoot,
 					resolvedBase,
 					ua.uuid,
@@ -279,6 +309,49 @@ class DatabaseManager {
 			console.log('[asset_paths] migration complete');
 		} catch (err) {
 			console.error('[asset_paths] migration failed; rolled back:', err);
+		}
+
+		// v1 -> v2 fix-up: any path that begins with `assets:///` (three
+		// slashes) was created by the broken joiner that concatenated
+		// `parent + '/' + basename` for parents equal to the storage
+		// prefix. Strip one slash off the front. Idempotent - once
+		// fixed, no row matches the WHERE clause.
+		if (currentVersion < 2) {
+			this.db.prepare(`
+				UPDATE asset_paths
+				SET path = 'assets://' || SUBSTR(path, 11)
+				WHERE path LIKE 'assets:///%'
+			`).run();
+			this.db.prepare(`
+				UPDATE asset_paths
+				SET parent_path = 'assets://' || SUBSTR(parent_path, 11)
+				WHERE parent_path LIKE 'assets:///%'
+			`).run();
+		}
+
+		// v2 -> v3 dedup: collapse duplicate rows that share the same
+		// asset_ref. Caused by a previous version of this migration
+		// re-running the v1 seed when bumping currentVersion < 2. Keep
+		// the earliest-created row per asset_ref (which is typically the
+		// user's intended placement - they may have renamed it, the
+		// duplicate is the migration's fresh re-insert of the original
+		// basename). Window functions need SQLite 3.25+ which
+		// better-sqlite3 ships with comfortably.
+		if (currentVersion < 3) {
+			this.db.prepare(`
+				DELETE FROM asset_paths
+				WHERE rowid IN (
+					SELECT rowid FROM (
+						SELECT rowid, ROW_NUMBER() OVER (
+							PARTITION BY asset_ref, is_internal
+							ORDER BY created_at ASC, rowid ASC
+						) AS rn
+						FROM asset_paths
+						WHERE asset_ref IS NOT NULL AND is_folder = 0
+					)
+					WHERE rn > 1
+				)
+			`).run();
 		}
 	}
 
@@ -645,7 +718,15 @@ class DatabaseManager {
 	 */
 	searchAssetPaths(rootPath, filter) {
 		const term = `%${filter}%`;
-		const prefix = `${rootPath}/%`;
+		// When rootPath is the storage root (e.g. `assets://`), appending
+		// `/%` to it produces `assets:///%` which doesn't match anything
+		// (real rows start with two slashes, like `assets://Built-in/...`).
+		// So if the rootPath is the storage prefix itself, just match
+		// against the prefix; otherwise treat it as a folder and require
+		// children to start with `{folder}/`.
+		const prefix = (rootPath === ASSET_STORAGE_PREFIX)
+			? `${rootPath}%`
+			: `${rootPath}/%`;
 		return this.db.prepare(`
 			SELECT * FROM asset_paths
 			WHERE (path LIKE ? OR path = ?)
@@ -665,7 +746,7 @@ class DatabaseManager {
 	 * @returns {Object} the new (or existing) folder row
 	 */
 	createAssetFolder(parentPath, basename) {
-		const newPath = `${parentPath}/${basename}`;
+		const newPath = joinAssetPath(parentPath, basename);
 		const existing = this.getAssetPathRow(newPath);
 		if (existing) {
 			if (!existing.is_folder)
@@ -695,7 +776,7 @@ class DatabaseManager {
 	 */
 	insertAssetFile({ parentPath, basename, assetRef, isInternal, assetKind }) {
 		const resolved = this._resolveBasenameCollision(parentPath, basename);
-		const newPath = `${parentPath}/${resolved}`;
+		const newPath = joinAssetPath(parentPath, resolved);
 		this.db.prepare(`
 			INSERT INTO asset_paths
 				(path, parent_path, basename, is_folder, asset_ref, is_internal, asset_kind)
@@ -719,7 +800,7 @@ class DatabaseManager {
 
 		const parent = row.parent_path;
 		const desired = this._resolveBasenameCollision(parent, newBasename, oldPath);
-		const newPath = `${parent}/${desired}`;
+		const newPath = joinAssetPath(parent, desired);
 		if (newPath === oldPath) return row; // nothing to do
 
 		// Transaction so descendant cascade can't end up partially applied.
@@ -758,7 +839,7 @@ class DatabaseManager {
 			throw new Error(`Destination is not a folder: ${destParent}`);
 
 		const resolved = this._resolveBasenameCollision(destParent, row.basename);
-		const newPath = `${destParent}/${resolved}`;
+		const newPath = joinAssetPath(destParent, resolved);
 		if (newPath === sourcePath) return row;
 
 		const tx = this.db.transaction(() => {
@@ -780,6 +861,109 @@ class DatabaseManager {
 		});
 		tx();
 		return this.getAssetPathRow(newPath);
+	}
+
+
+	/**
+	 * Copy a path row (and its descendants, for folders) to a new
+	 * parent. For built-in file rows, just inserts new asset_paths rows
+	 * pointing at the same `asset_ref` - the bundled file is shared.
+	 * For user-imported files, physically duplicates the on-disk file
+	 * with a fresh uuid, inserts a new custom_assets row, then a new
+	 * asset_paths row at the destination.
+	 *
+	 * @param {string} sourcePath
+	 * @param {string} destParent
+	 * @param {string} customAssetsDir - userData/custom_assets path (for file dup)
+	 * @returns {Object} the new top-level row at the destination
+	 */
+	copyAssetPath(sourcePath, destParent, customAssetsDir) {
+		const row = this.getAssetPathRow(sourcePath);
+		if (!row) throw new Error(`No such path: ${sourcePath}`);
+		const destRow = this.getAssetPathRow(destParent);
+		if (!destRow || !destRow.is_folder)
+			throw new Error(`Destination is not a folder: ${destParent}`);
+
+		const fs   = require('fs');
+		const path = require('path');
+		const { v4: uuidv4 } = require('uuid');
+
+		// Internal helper: copy one row into a target parent and return
+		// the newly-inserted record. For folders the caller recurses on
+		// descendants separately.
+		const copyOne = (srcRow, parent) => {
+			const baseName = this._resolveBasenameCollision(parent, srcRow.basename);
+			const newPath  = joinAssetPath(parent, baseName);
+
+			if (srcRow.is_folder) {
+				this.db.prepare(`
+					INSERT INTO asset_paths (path, parent_path, basename, is_folder)
+					VALUES (?, ?, ?, 1)
+				`).run(newPath, parent, baseName);
+			} else {
+				let assetRef = srcRow.asset_ref;
+				if (!srcRow.is_internal && customAssetsDir && srcRow.asset_ref) {
+					// physically duplicate the on-disk file with a fresh
+					// uuid so the two paths don't end up sharing storage
+					// (deletes would otherwise yank the file out from
+					// under the surviving copy).
+					const srcFile = path.join(customAssetsDir, srcRow.asset_ref);
+					const ext = path.extname(srcRow.asset_ref);
+					const newUuid = `${uuidv4()}${ext}`;
+					const dstFile = path.join(customAssetsDir, newUuid);
+					if (fs.existsSync(srcFile)) {
+						fs.copyFileSync(srcFile, dstFile);
+						// mirror the custom_assets row too
+						const orig = this.db.prepare(`SELECT original_name, extension, type FROM custom_assets WHERE uuid = ?`).get(srcRow.asset_ref);
+						if (orig) {
+							this.addAsset({
+								uuid: newUuid,
+								originalName: orig.original_name,
+								extension: orig.extension,
+								type: orig.type,
+							});
+						}
+						assetRef = newUuid;
+					}
+				}
+				this.db.prepare(`
+					INSERT INTO asset_paths
+						(path, parent_path, basename, is_folder, asset_ref, is_internal, asset_kind)
+					VALUES (?, ?, ?, 0, ?, ?, ?)
+				`).run(newPath, parent, baseName, assetRef, srcRow.is_internal ? 1 : 0, srcRow.asset_kind);
+			}
+			return this.getAssetPathRow(newPath);
+		};
+
+		// Transaction so a folder copy is all-or-nothing on the DB side.
+		// File copies happen outside the txn (writeFileSync) but if the
+		// DB part rolls back, the orphaned files just sit in custom_assets
+		// dir until cleaned up (harmless).
+		const result = this.db.transaction(() => {
+			const top = copyOne(row, destParent);
+			if (row.is_folder) {
+				// recurse children. We walk the source tree breadth-first
+				// keyed by the OLD prefix and rebuild under the new one.
+				const oldPrefix = `${sourcePath}/`;
+				const newPrefix = `${top.path}/`;
+				const descendants = this.db.prepare(`
+					SELECT * FROM asset_paths
+					WHERE path LIKE ?
+					ORDER BY LENGTH(path) ASC
+				`).all(`${sourcePath}/%`);
+				for (const d of descendants) {
+					const newParent = d.parent_path.replace(oldPrefix, newPrefix) === d.parent_path
+						? (d.parent_path === sourcePath ? top.path : d.parent_path)
+						: d.parent_path.replace(oldPrefix, newPrefix);
+					// If the source parent was the source root, the new
+					// parent is `top.path` directly.
+					copyOne(d, newParent);
+				}
+			}
+			return top;
+		})();
+
+		return result;
 	}
 
 
@@ -823,6 +1007,84 @@ class DatabaseManager {
 
 
 	/**
+	 * Count how many asset_paths rows still reference a given custom
+	 * asset uuid. Used by the asset filesystem delete handler to decide
+	 * whether wiping the on-disk file is safe (zero references) or
+	 * unsafe (other rows still point at it, deleting would leave them
+	 * dangling).
+	 *
+	 * @param {string} assetRef - the uuid stored in custom_assets / asset_paths
+	 * @returns {number}
+	 */
+	countAssetPathsByRef(assetRef) {
+		const row = this.db.prepare(`
+			SELECT COUNT(*) AS c FROM asset_paths
+			WHERE asset_ref = ? AND is_folder = 0
+		`).get(assetRef);
+		return (row && row.c) || 0;
+	}
+
+
+	/**
+	 * Diagnostic: walk asset_paths rows and report ones that look
+	 * broken. Used from the renderer's dev tools to spot data issues
+	 * without having to open the SQLite file.
+	 *
+	 *   - missing_custom_asset:  asset_paths row references a uuid
+	 *                            that no longer has a custom_assets row
+	 *   - missing_builtin:       references a built-in id we don't ship
+	 *   - orphan_custom_asset:   a custom_assets uuid is present but
+	 *                            no asset_paths row references it
+	 *
+	 * @param {Function} builtInExists - test (id:string) => boolean
+	 * @returns {{
+	 *   missingCustomAsset:  Array<{path:string, asset_ref:string}>,
+	 *   missingBuiltin:      Array<{path:string, asset_ref:string}>,
+	 *   orphanCustomAssets:  Array<string>,
+	 *   total:               number,
+	 * }}
+	 */
+	inspectAssetPaths(builtInExists) {
+		const all = this.db.prepare(`SELECT path, asset_ref, is_internal, is_folder FROM asset_paths`).all();
+		const customRefs = new Set(
+			this.db.prepare(`SELECT uuid FROM custom_assets`).all().map(r => r.uuid)
+		);
+
+		const missingCustomAsset = [];
+		const missingBuiltin = [];
+		const referencedCustom = new Set();
+
+		for (const r of all) {
+			if (r.is_folder) continue;
+			if (!r.asset_ref) continue;
+			if (r.is_internal) {
+				if (typeof builtInExists === 'function' && !builtInExists(r.asset_ref)) {
+					missingBuiltin.push({ path: r.path, asset_ref: r.asset_ref });
+				}
+			} else {
+				if (!customRefs.has(r.asset_ref)) {
+					missingCustomAsset.push({ path: r.path, asset_ref: r.asset_ref });
+				} else {
+					referencedCustom.add(r.asset_ref);
+				}
+			}
+		}
+
+		const orphanCustomAssets = [];
+		for (const uuid of customRefs) {
+			if (!referencedCustom.has(uuid)) orphanCustomAssets.push(uuid);
+		}
+
+		return {
+			missingCustomAsset,
+			missingBuiltin,
+			orphanCustomAssets,
+			total: all.length,
+		};
+	}
+
+
+	/**
 	 * Re-seed the canonical built-in folder layout + place any built-in
 	 * that's missing from the virtual filesystem. INSERT OR IGNORE
 	 * semantics throughout - never overwrites user reorganizations.
@@ -856,7 +1118,7 @@ class DatabaseManager {
 					SELECT 1 FROM asset_paths WHERE asset_ref = ? AND is_internal = 1
 				`).get(String(asset.id));
 				if (existing) continue;
-				const filePath = `${asset.canonicalPath}/${asset.name}`;
+				const filePath = joinAssetPath(asset.canonicalPath, asset.name);
 				insertFile.run(filePath, asset.canonicalPath, asset.name, String(asset.id), 1, asset.kind);
 			}
 		})();
@@ -880,7 +1142,7 @@ class DatabaseManager {
 	_resolveBasenameCollision(parentPath, basename, ignorePath = null) {
 
 		const inUse = (b) => {
-			const candidate = `${parentPath}/${b}`;
+			const candidate = joinAssetPath(parentPath, b);
 			if (ignorePath && candidate === ignorePath) return false;
 			return !!this.db.prepare(`SELECT 1 FROM asset_paths WHERE path = ?`).get(candidate);
 		};
@@ -906,6 +1168,27 @@ class DatabaseManager {
 
 
 /**
+ * Join a virtual parent path and a basename into a full child path.
+ * Handles the special case where the parent IS the storage prefix
+ * (e.g. `assets://`), which already ends with the authority-separator
+ * slashes - appending another `/` would produce a malformed three-slash
+ * path. Used everywhere we construct a child path inside the DB layer.
+ *
+ *   joinAssetPath('assets://', 'Foo')             -> 'assets://Foo'
+ *   joinAssetPath('assets://Foo', 'Bar')          -> 'assets://Foo/Bar'
+ *   joinAssetPath('assets://Foo/Bar', 'baz.png')  -> 'assets://Foo/Bar/baz.png'
+ *
+ * @param {string} parent
+ * @param {string} basename
+ * @returns {string}
+ */
+function joinAssetPath(parent, basename) {
+	if (parent === ASSET_STORAGE_PREFIX) return `${parent}${basename}`;
+	return `${parent}/${basename}`;
+}
+
+
+/**
  * Insert every ancestor folder for a virtual path. Path is given WITHOUT
  * the storage prefix (e.g. 'Built-in/Fish'). Each intermediate folder
  * is created via INSERT OR IGNORE so this is safe to call repeatedly.
@@ -920,11 +1203,7 @@ function ensureFolderChain(insertFolder, pathWithoutPrefix) {
 	const parts = pathWithoutPrefix.split('/').filter(Boolean);
 	let parent = ASSET_STORAGE_PREFIX; // 'assets://'
 	for (const seg of parts) {
-		// concat with single slash between - the prefix already includes
-		// the '//' authority separator, so we just append `/seg`.
-		const full = parent === ASSET_STORAGE_PREFIX
-			? `${parent}${seg}`        // root child: assets://Built-in
-			: `${parent}/${seg}`;       // deeper: assets://Built-in/Fish
+		const full = joinAssetPath(parent, seg);
 		insertFolder.run(full, parent, seg);
 		parent = full;
 	}
@@ -943,7 +1222,7 @@ function ensureFolderChain(insertFolder, pathWithoutPrefix) {
  * @returns {string}
  */
 function resolveBasenameCollision(db, parentPath, basename) {
-	const inUse = (b) => !!db.prepare(`SELECT 1 FROM asset_paths WHERE path = ?`).get(`${parentPath}/${b}`);
+	const inUse = (b) => !!db.prepare(`SELECT 1 FROM asset_paths WHERE path = ?`).get(joinAssetPath(parentPath, b));
 	if (!inUse(basename)) return basename;
 	const dotIdx = basename.lastIndexOf('.');
 	const hasExt = dotIdx > 0 && dotIdx < basename.length - 1;

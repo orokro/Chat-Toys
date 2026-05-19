@@ -66,7 +66,7 @@
 		</div>
 
 		<div class="browserHost">
-			<AssetBrowser />
+			<AssetBrowser finder-id="assetsPage" />
 		</div>
 
 		<SectionHeader title="Video Help"/>

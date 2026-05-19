@@ -102,7 +102,7 @@ function mountAssetFsAPI(expressApp, ctx) {
 		try {
 			const dir = normalizePath(req.query.path);
 			const rows = db.listAssetPathChildren(dir);
-			res.json(buildEnvelope(dir, rows));
+			res.json(buildEnvelope(dir, rows, req));
 		} catch (err) { sendError(res, err); }
 	});
 
@@ -124,7 +124,7 @@ function mountAssetFsAPI(expressApp, ctx) {
 			const dir = normalizePath(req.query.path);
 			const filter = (req.query.filter || '').toString();
 			const rows = filter ? db.searchAssetPaths(dir, filter) : [];
-			res.json(buildEnvelope(dir, rows));
+			res.json(buildEnvelope(dir, rows, req));
 		} catch (err) { sendError(res, err); }
 	});
 
@@ -152,10 +152,22 @@ function mountAssetFsAPI(expressApp, ctx) {
 				for (const uuid of removedCustomUuids) customUuidsToWipe.push(uuid);
 			}
 
-			// wipe on-disk files + custom_assets rows for any user assets
-			// that were removed. Done outside the per-row transaction so a
-			// missing on-disk file doesn't roll back the whole delete.
-			for (const uuid of customUuidsToWipe) {
+			// Wipe the on-disk file + custom_assets row for a uuid only
+			// when there's NOTHING ELSE pointing at it. Other asset_paths
+			// rows referencing the same uuid (legitimate copies, or
+			// historical dupes that we want to keep functional) would
+			// otherwise be left holding a dangling reference. Deduping
+			// the list first means we hit the refcount check once per
+			// unique uuid, not once per row deleted.
+			const uniqueUuids = Array.from(new Set(customUuidsToWipe));
+			for (const uuid of uniqueUuids) {
+				const remaining = db.countAssetPathsByRef(uuid);
+				if (remaining > 0) {
+					// Other rows still reference this asset - leave the
+					// underlying file alone. They'd render broken if we
+					// wiped it now.
+					continue;
+				}
 				try {
 					const file = path.join(customAssetsDir, uuid);
 					if (fs.existsSync(file)) fs.unlinkSync(file);
@@ -165,7 +177,7 @@ function mountAssetFsAPI(expressApp, ctx) {
 				try { db.removeAsset(uuid); } catch (e) { /* swallow */ }
 			}
 
-			res.json(buildEnvelope(firstParent, db.listAssetPathChildren(firstParent)));
+			res.json(buildEnvelope(firstParent, db.listAssetPathChildren(firstParent), req));
 		} catch (err) { sendError(res, err); }
 	});
 
@@ -179,7 +191,7 @@ function mountAssetFsAPI(expressApp, ctx) {
 			if (!name) throw new Error('New name is required');
 			if (name.includes('/')) throw new Error('Name cannot contain slashes');
 			const renamed = db.renameAssetPath(item, name);
-			res.json(buildEnvelope(renamed.parent_path, db.listAssetPathChildren(renamed.parent_path)));
+			res.json(buildEnvelope(renamed.parent_path, db.listAssetPathChildren(renamed.parent_path), req));
 		} catch (err) { sendError(res, err); }
 	});
 
@@ -195,7 +207,23 @@ function mountAssetFsAPI(expressApp, ctx) {
 				if (!s) continue;
 				db.moveAssetPath(s, destination);
 			}
-			res.json(buildEnvelope(destination, db.listAssetPathChildren(destination)));
+			res.json(buildEnvelope(destination, db.listAssetPathChildren(destination), req));
+		} catch (err) { sendError(res, err); }
+	});
+
+	// ---- POST /copy -------------------------------------------------------
+	expressApp.post(`${MOUNT_PATH}/copy`, jsonParser, (req, res) => {
+		try {
+			const body = req.body || {};
+			const sources = Array.isArray(body.sources) ? body.sources : [];
+			const destination = (body.destination || '').toString();
+			if (sources.length === 0) throw new Error('No sources to copy');
+			if (!destination) throw new Error('Destination is required');
+			for (const s of sources) {
+				if (!s) continue;
+				db.copyAssetPath(s, destination, customAssetsDir);
+			}
+			res.json(buildEnvelope(destination, db.listAssetPathChildren(destination), req));
 		} catch (err) { sendError(res, err); }
 	});
 
@@ -208,7 +236,7 @@ function mountAssetFsAPI(expressApp, ctx) {
 			if (!name) throw new Error('Folder name is required');
 			if (name.includes('/')) throw new Error('Folder name cannot contain slashes');
 			db.createAssetFolder(parent, name);
-			res.json(buildEnvelope(parent, db.listAssetPathChildren(parent)));
+			res.json(buildEnvelope(parent, db.listAssetPathChildren(parent), req));
 		} catch (err) { sendError(res, err); }
 	});
 
@@ -217,7 +245,6 @@ function mountAssetFsAPI(expressApp, ctx) {
 		status: false,
 		message: `'${req.path.replace(MOUNT_PATH, '')}' is not supported by this driver.`,
 	});
-	expressApp.post(`${MOUNT_PATH}/copy`,         notImplemented);
 	expressApp.post(`${MOUNT_PATH}/archive`,      notImplemented);
 	expressApp.post(`${MOUNT_PATH}/unarchive`,    notImplemented);
 	expressApp.post(`${MOUNT_PATH}/create-file`,  notImplemented);
@@ -250,17 +277,43 @@ function normalizePath(raw) {
 /**
  * Build the FsData envelope vuefinder expects for any listing response.
  *
+ * We thread `req` through so `rowToDirEntry` can build absolute preview
+ * URLs (`http://localhost:<port>/...`). Otherwise an `<img src="...">`
+ * would resolve the relative URL against the renderer's origin
+ * (`localhost:8080` under Vite, `file://` in packaged builds), neither
+ * of which match the express widget server.
+ *
  * @param {string} dirname
  * @param {Array<Object>} rows - asset_paths rows
+ * @param {import('express').Request} [req] - the current request (used for base URL)
  * @returns {Object} FsData
  */
-function buildEnvelope(dirname, rows) {
+function buildEnvelope(dirname, rows, req) {
+	const baseUrl = absoluteBaseUrlFromReq(req);
 	return {
 		storages: [STORAGE],
 		dirname,
 		read_only: false,
-		files: rows.map(rowToDirEntry),
+		files: rows.map(r => rowToDirEntry(r, baseUrl)),
 	};
+}
+
+
+/**
+ * Derive the absolute URL prefix for our own routes from a Request.
+ * Falls back to an empty string when no request is available - the
+ * resulting URL is then relative.
+ *
+ * @param {import('express').Request} [req]
+ * @returns {string}
+ */
+function absoluteBaseUrlFromReq(req) {
+	if (!req) return '';
+	const proto = req.protocol || 'http';
+	// req.get('host') honors X-Forwarded-Host if Express trust-proxy is
+	// on; req.headers.host is the literal header. Either is fine here.
+	const host = (req.get && req.get('host')) || (req.headers && req.headers.host) || 'localhost';
+	return `${proto}://${host}`;
 }
 
 
@@ -271,9 +324,10 @@ function buildEnvelope(dirname, rows) {
  * round-trip.
  *
  * @param {Object} row
+ * @param {string} [baseUrl] - absolute origin prefix for the previewUrl
  * @returns {Object} DirEntry
  */
-function rowToDirEntry(row) {
+function rowToDirEntry(row, baseUrl = '') {
 	const isDir = !!row.is_folder;
 	const entry = {
 		dir: row.parent_path,
@@ -293,8 +347,20 @@ function rowToDirEntry(row) {
 	};
 	// previewUrl for images so vuefinder thumbnails work without us
 	// having to do extra work client-side. Audio / 3D get no preview.
-	if (!isDir && row.asset_kind === 'image') {
-		entry.previewUrl = `${MOUNT_PATH}/preview?path=${encodeURIComponent(row.path)}`;
+	// Always absolute: the renderer's origin (localhost:8080 in dev,
+	// file:// in packaged builds) doesn't match the widget server.
+	//
+	// Belt-and-suspenders: trust either `asset_kind === 'image'` OR a
+	// matching file extension. Older asset_paths rows (created before
+	// we started populating asset_kind) can have NULL there and we
+	// still want their thumbnails to render.
+	if (!isDir) {
+		const ext = path.extname(row.basename).toLowerCase();
+		const isImage = row.asset_kind === 'image'
+			|| ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'].includes(ext);
+		if (isImage) {
+			entry.previewUrl = `${baseUrl}${MOUNT_PATH}/preview?path=${encodeURIComponent(row.path)}`;
+		}
 	}
 	return entry;
 }
@@ -356,7 +422,7 @@ async function handleUpload(req, res, db, customAssetsDir) {
 	try { multer = require('multer'); } catch (e) { multer = null; }
 
 	const respond = (targetPath) => {
-		res.json(buildEnvelope(targetPath, db.listAssetPathChildren(targetPath)));
+		res.json(buildEnvelope(targetPath, db.listAssetPathChildren(targetPath), req));
 	};
 
 	if (multer) {

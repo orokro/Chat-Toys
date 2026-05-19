@@ -29,16 +29,18 @@
 		<!-- main: vuefinder file-manager -->
 		<div class="finderHost">
 
-			<!-- preview-toggle button floats over the finder's top-right.
-			     Uses a plain text label rather than a Material Icons
-			     glyph because vuefinder's panel can claim weird stacking
-			     contexts that occasionally suppress the icon font. -->
+			<!-- preview-toggle - bottom-right corner so it never overlaps
+			     vuefinder's own toolbar icons. When the preview pane is
+			     ALREADY open we don't show this button (the pane has its
+			     own close X); when it's hidden, this small floating
+			     "Show preview" affordance reopens it. -->
 			<button
+				v-if="!previewOpen"
 				class="previewToggle"
-				:title="previewOpen ? 'Hide preview' : 'Show preview'"
-				@click="previewOpen = !previewOpen"
+				title="Show preview"
+				@click="previewOpen = true"
 			>
-				{{ previewOpen ? 'Hide preview' : 'Show preview' }}
+				Show preview
 			</button>
 
 			<!-- vuefinder mounts here. v4.x requires a Driver instance
@@ -49,10 +51,13 @@
 				v-if="finderReady"
 				:id="finderId"
 				:driver="finderDriver"
+				:config="finderConfig"
 				:features="enabledFeatures"
-				:locale="'en-GB'"
+				:locale="'en'"
 				:selection-mode="singleSelect ? 'single' : 'multiple'"
 				:on-select="onSelect"
+				:on-upload-complete="onUploadComplete"
+				:on-delete-complete="onDeleteComplete"
 			/>
 
 			<!-- fallback message while vuefinder import is loading or if
@@ -157,11 +162,24 @@ const props = defineProps({
 
 	/**
 	 * When true (picker mode), only a single file selection is meaningful;
-	 * we restrict vuefinder to single-select via its feature flags.
+	 * we restrict vuefinder to single-select via selectionMode="single".
 	 */
 	singleSelect: {
 		type: Boolean,
 		default: false,
+	},
+
+	/**
+	 * Stable identifier for vuefinder's persisted state (current path,
+	 * view mode, etc.) - vuefinder writes to localStorage keyed off
+	 * this id. Should be unique per usage *context* (e.g. 'picker' vs
+	 * 'assetsPage'), not per *instance*. Passing the same id from
+	 * multiple call sites lets them share the same persisted folder
+	 * location across sessions.
+	 */
+	finderId: {
+		type: String,
+		default: 'assetBrowser',
 	},
 
 });
@@ -178,9 +196,12 @@ const emit = defineEmits([
 const ctApp = inject('ctApp');
 
 
-// unique DOM id for the vuefinder mount, in case multiple instances
-// coexist (e.g. picker modal opened while the system page is also mounted).
-const finderId = `vf-${Math.random().toString(36).slice(2, 8)}`;
+// vuefinder uses this id as its localStorage key for persistent state
+// (current path, view mode, sidebar visibility, etc.). We take it from
+// the prop so callers can pin a stable id per usage context (`picker`,
+// `assetsPage`, etc.) - that's what makes "remember where I was" survive
+// closing and re-opening the picker modal.
+const finderId = computed(() => props.finderId);
 
 
 // preview-pane state, persisted across reopens within the same session.
@@ -222,15 +243,76 @@ const previewMeta = computed(() => {
 
 
 /**
- * Vuefinder feature flags. We hand the library a list of feature names
- * (it omits the others). Archive / unarchive / inline text editor are
- * left out - we don't implement them server-side.
+ * Vuefinder feature flags. v4 takes a FeaturesConfig map
+ * (`{ featureName: boolean }`). We turn OFF features we don't support
+ * on the backend OR don't want to expose to users (settings, themes,
+ * archive/zip, inline file editor, pinned-folders sidebar, language
+ * picker, history nav, new-empty-file). Everything else stays on.
  *
- * @returns {Array<string>}
+ * Available features (from FeatureName type): edit, newfile, newfolder,
+ * preview, archive, unarchive, search, rename, upload, delete,
+ * fullscreen, download, language, move, copy, history, theme, pinned.
+ *
+ * @returns {Object}
  */
-const enabledFeatures = computed(() => {
-	return ['upload', 'rename', 'newfolder', 'move', 'delete', 'download', 'search'];
-});
+const enabledFeatures = computed(() => ({
+	// kept on:
+	preview:    true,
+	search:     true,
+	rename:     true,
+	upload:     true,
+	delete:     true,
+	newfolder:  true,
+	move:       true,
+	copy:       true,
+	fullscreen: true,
+	// turned off - either server-side unsupported, or chrome we don't want:
+	edit:       false,
+	newfile:    false,
+	archive:    false,
+	unarchive:  false,
+	language:   false,
+	history:    false,
+	theme:      false,
+	pinned:     false,
+	// download is a Chromium native-flow that triggers a transient
+	// blank window in Electron; we intercept that in setWindowOpenHandler
+	// but the download itself doesn't always survive intact. Disabling
+	// since users have the originals on disk and can find the imported
+	// uuid in %APPDATA% anyway.
+	download:   false,
+}));
+
+
+/**
+ * Vuefinder `config` prop - the per-instance store of UI / behavior
+ * settings (also what its Settings dialog would expose; we hide the
+ * dialog, but the defaults still take effect).
+ *
+ *   showMenuBar:  hidden. The File/Edit/View/Go/Help menubar gives access
+ *                 to features we want disabled (Settings, About, etc.)
+ *                 and shows shortcuts that don't work cleanly inside an
+ *                 Electron-modal-inside-modal context. The toolbar at
+ *                 the top of the explorer is enough.
+ *   showToolbar:  kept on. That's where the icon buttons live.
+ *   persist:      ON - vuefinder writes the current path to localStorage
+ *                 (keyed by our `finderId`) on every nav, so reopening
+ *                 the picker / assets page returns to where the user
+ *                 was last looking.
+ *   path:         the initial path. With persist=on, this only applies
+ *                 if there's no stored path yet for this finderId.
+ *   showThumbnails:  ON - the previewUrl we emit for image rows.
+ *
+ * @returns {Object} ConfigDefaults shape
+ */
+const finderConfig = computed(() => ({
+	showMenuBar:    false,
+	showToolbar:    true,
+	persist:        true,
+	path:           props.initialPath,
+	showThumbnails: true,
+	view:           'grid',
+}));
 
 
 /**
@@ -263,6 +345,32 @@ function onSelect(items) {
 }
 
 
+/**
+ * Vuefinder fires this once the server has accepted each batch of
+ * uploads. We refresh the AssetManager so any subsequent picker save
+ * or FilePreview render finds the new uuid - even if the user never
+ * clicks the row (and so onSelect's refresh wouldn't fire).
+ *
+ * @param {Array<Object>} _files - the newly-uploaded DirEntries
+ */
+function onUploadComplete(_files) {
+	ctApp?.assetsMgr?.refreshAssetsFromDB?.();
+}
+
+
+/**
+ * Vuefinder fires this once delete operations are confirmed by the
+ * server. We refresh too so the AssetManager's cache drops the wiped
+ * uuids - keeps `getFileData` from handing back stale entries to any
+ * toy whose settings still reference them.
+ *
+ * @param {Array<Object>} _deleted - the removed DirEntries
+ */
+function onDeleteComplete(_deleted) {
+	ctApp?.assetsMgr?.refreshAssetsFromDB?.();
+}
+
+
 // Async-import vuefinder and:
 //   1) install its default-export plugin against the current Vue app
 //      so <vue-finder> resolves as a global component.
@@ -290,6 +398,13 @@ onMounted(async () => {
 		// node_modules/vuefinder/dist).
 		await import('vuefinder/dist/vuefinder.css');
 
+		// Pull in the bundled English locale so we can spread it under
+		// our key overrides - vuefinder's i18n option REPLACES the
+		// active locale rather than merging, so we have to provide a
+		// complete dictionary.
+		const enMod = await import('vuefinder/dist/locales/en.js');
+		const enLocale = enMod.default || enMod;
+
 		// default export is the plugin; named exports include the
 		// Driver classes (RemoteDriver, ArrayDriver, IndexedDBDriver).
 		const plugin       = mod.default || mod.VueFinderPlugin || mod;
@@ -297,15 +412,38 @@ onMounted(async () => {
 
 		if (!RemoteDriver) throw new Error('vuefinder module did not export RemoteDriver');
 
-		if (!_vuefinderPluginInstalled) {
+		// Idempotent install. The module-scope flag covers the common
+		// case, but Vite HMR can reset module state mid-session - we
+		// double-check by asking the app whether <VueFinder> is already
+		// registered. Avoids Vue's noisy "Plugin has already been
+		// applied to target app." warning every time the picker opens.
+		const alreadyInstalled = _vuefinderPluginInstalled || !!(app && app.component && app.component('VueFinder'));
+		if (!alreadyInstalled) {
 			if (!app) throw new Error('No Vue app context available at mount time');
 			if (plugin && typeof plugin.install === 'function') {
-				app.use(plugin);
+				// Override the verbiage Chat-Toys users will find more
+				// natural - this is a local app, not a remote storage
+				// service, so "Import"/"Export" reads better than
+				// "Upload"/"Download". Spread the bundled `en` locale so
+				// the keys we don't touch keep their original strings.
+				app.use(plugin, {
+					locale: 'en',
+					i18n: {
+						en: {
+							...enLocale,
+							Upload:             'Import',
+							Download:           'Export',
+							'Upload Files':     'Import Files',
+							'Pending upload':   'Pending import',
+							'Copy Download URL': 'Copy Export URL',
+						},
+					},
+				});
 			} else {
 				throw new Error('vuefinder default export has no install()');
 			}
-			_vuefinderPluginInstalled = true;
 		}
+		_vuefinderPluginInstalled = true;
 
 		// Build the driver. baseURL points at the express routes the
 		// main process added; the per-operation URL paths default to
@@ -365,28 +503,31 @@ defineExpose({ getFocusedFile });
 
 			.previewToggle {
 
-				// floats top-right inside the finder area
+				// floats bottom-right of the finder host - safe space
+				// once we've hidden vuefinder's own status bar (see the
+				// unscoped CSS at the bottom). Sits above vuefinder's
+				// stacking context so it stays clickable.
 				position: absolute;
-				top: 6px;
-				right: 8px;
-				z-index: 10;
+				bottom: 10px;
+				right: 12px;
+				z-index: 20;
 
-				background: rgba(255, 255, 255, 0.92);
+				background: rgba(255, 255, 255, 0.96);
 				border: 1px solid rgba(0, 0, 0, 0.15);
 				border-radius: 5px;
-				padding: 3px 6px;
+				padding: 5px 12px;
 				cursor: pointer;
 
-				color: rgba(0, 0, 0, 0.65);
+				color: rgba(0, 0, 0, 0.7);
+				font-size: 12px;
+				font-weight: 500;
 
-				.material-icons {
-					font-size: 18px;
-					vertical-align: middle;
-				}
+				box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 
 				&:hover {
 					background: white;
 					color: rgba(0, 0, 0, 0.9);
+					border-color: rgba(0, 0, 0, 0.3);
 				}
 			}// .previewToggle
 
@@ -526,5 +667,59 @@ defineExpose({ getFocusedFile });
 		}// .previewPane
 
 	}// .assetBrowser
+
+</style>
+
+<!--
+	UNSCOPED global stylesheet that wins z-index against the host app's
+	modal layer. Vuefinder uses Teleport to render its own modals, drop-
+	downs, and context menus at the body level - that means scoped
+	styles (above) can't reach them. Jenesius-vue-modal places its
+	modal-container at z-index: 1000, but vuefinder's modal layout
+	tops out at z-index: 50, so without this override, vuefinder's
+	rename/search/upload dialogs disappear behind our picker modal.
+
+	We push every vuefinder layer above 10000 (still well below the
+	bundled Sonner toaster at 999999999, so toasts continue to surface
+	correctly). Selectors are taken from vuefinder.css.
+-->
+<style lang="scss">
+
+	.vuefinder__modal-layout         { z-index: 10000 !important; }
+	.vuefinder__modal-layout__container { z-index: 10001 !important; }
+	.vuefinder__modal-drag-overlay   { z-index: 10010 !important; }
+	.vuefinder__external-drop-overlay { z-index: 10010 !important; }
+	.vuefinder__menubar__dropdown,
+	.vuefinder__toolbar__dropdown,
+	.vuefinder__breadcrumb__hidden-dropdown,
+	.vuefinder__upload-actions__menu { z-index: 10000 !important; }
+	.vuefinder__context-menu         { z-index: 10005 !important; }
+	.vuefinder__search-modal__dropdown { z-index: 10006 !important; }
+	.vuefinder__search-modal__item-dropdown { z-index: 10007 !important; }
+
+	// Vuefinder bundles Sonner for toast notifications. Sonner's default
+	// z-index is 999999999 which would normally win, but in some host-
+	// app stacking contexts the host modal still ends up on top. Force
+	// the toaster well above our own modal layer and vuefinder's own.
+	[data-sonner-toaster] {
+		z-index: 1000000 !important;
+	}
+
+	// Hide the bottom status bar (storage dropdown + item count). We only
+	// have a single storage (`assets://`) so the dropdown is noise, and
+	// the item count isn't useful enough to justify keeping a whole bar.
+	.vuefinder__statusbar {
+		display: none !important;
+	}
+
+	// Toolbar polish - the bundled buttons sit too close to each other
+	// and to the edges. Add breathing room without changing button size.
+	.vuefinder__toolbar {
+		padding: 6px 10px !important;
+		gap: 6px !important;
+	}
+	.vuefinder__toolbar > * {
+		margin: 0 !important;
+	}
 
 </style>

@@ -116,7 +116,12 @@ app.whenReady().then(() => {
 	mainWindow = createMainWindow();
 	openedWindows.push(mainWindow);
 
-	// Ensure new windows (like Karaoke Manager) have the correct preload and settings
+	// Ensure new windows (like Karaoke Manager) have the correct preload and settings.
+	// Also: deny any popup pointed at our own widget server / API. The vuefinder
+	// download button triggers an anchor with a target that Electron interprets
+	// as a window.open() - the file DOES download via Electron's native flow,
+	// but a blank popup window appears alongside it. Denying these URLs as
+	// popup targets stops the popup without breaking the download.
 	mainWindow.webContents.setWindowOpenHandler(({ url, frameName }) => {
 		if (frameName === 'KaraokeQueueManager') {
 			const dbPath = join(app.getPath('userData'), 'ytct.db');
@@ -135,7 +140,20 @@ app.whenReady().then(() => {
 				}
 			}
 		}
-		return { action: 'allow' }
+
+		// Deny popups targeting localhost - these are our own widget-server
+		// URLs (asset preview / download endpoints) and should never spawn
+		// a new BrowserWindow.
+		try {
+			const u = new URL(url);
+			if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+				return { action: 'deny' };
+			}
+		} catch (e) {
+			// Non-URL targets (rare): fall through to default allow
+		}
+
+		return { action: 'allow' };
 	});
 
 	// build a chat tester window

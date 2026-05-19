@@ -436,7 +436,18 @@ export default class Toy {
 	 */
 	getAssetPath(assetID) {
 		const fileData = this.chatToysApp.assetsMgr.getFileData(assetID);
-		
+
+		// Defensive: a toy's stored settings can reference an asset that
+		// was later deleted from the assets DB (the user wipes a row from
+		// the asset browser, the toy still has the stale uuid). Returning
+		// an empty string here lets the widget keep rendering with a
+		// broken / placeholder image instead of crashing the whole app
+		// at boot time.
+		if (!fileData) {
+			console.warn(`[Toy.getAssetPath] unknown asset id "${assetID}" referenced by toy ${this.slug || '?'}; returning empty path.`);
+			return '';
+		}
+
 		if(fileData.internal)
 			return `builtin/${fileData.name}`;
 		else

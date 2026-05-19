@@ -72,6 +72,18 @@ contextBridge.exposeInMainWorld("assetDB", {
 	getAssetPathRow: (path) => db.getAssetPathRow(path),
 	listAssetPathChildren: (parent) => db.listAssetPathChildren(parent),
 	restoreAssetDefaultLayout: () => db.restoreAssetDefaultLayout(),
+
+	// Diagnostic for spotting broken references after a data hiccup.
+	// Run from devtools: `await window.assetDB.inspectAssetPaths()`.
+	// The builtInExists check is patched here because the built-in
+	// catalog lives on the renderer side.
+	inspectAssetPaths: () => {
+		// Lazy-require to avoid loading renderer-side modules at preload
+		// boot. The JSON is plain data, safe to require here.
+		const builtInAssets = require(path.join(__dirname, '..', '..', 'shared', 'builtInAssets.json'));
+		const builtInIds = new Set(builtInAssets.map(a => String(a.id)));
+		return db.inspectAssetPaths((id) => builtInIds.has(String(id)));
+	},
 });
 
 

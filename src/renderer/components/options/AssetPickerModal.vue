@@ -29,6 +29,7 @@
 			<div class="browserHost">
 				<AssetBrowser
 					ref="browserRef"
+					finder-id="assetPicker"
 					:kindFilter="kindFilter"
 					:singleSelect="true"
 					@select="onSelect"
