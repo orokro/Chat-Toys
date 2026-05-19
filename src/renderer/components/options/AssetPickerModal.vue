@@ -2,71 +2,49 @@
 	AssetPickerModal.vue
 	--------------------
 
-	We provide a component to use with the "jenesius-vue-modal" library to allow
-	the user to pick an asset from the assets in the extension.
+	Modal-flavored host for the asset picker. Wraps the shared
+	AssetBrowser component (vuefinder + preview sidebar) inside a
+	responsive jenesius-vue-modal frame, plus the picker-specific Save /
+	Cancel buttons along the bottom.
 
-	NOTE: todo - make things like modals resizable and responsive in the future.
+	Save resolves to the focused asset's full data record (looked up
+	via the AssetManager so SettingsAssetRow keeps receiving the same
+	shape it always has: `{ id, name, kind, ... }`).
+
+	The `kindFilter` prop is honored by the AssetBrowser when displaying
+	the file list - non-matching files are visually hidden but folders
+	are always visible so the user can still navigate.
 -->
 <template>
 
 	<ModalWindowFrame
 		:title="title"
-		:height="690 - (allowCustomImports ? 0 : 75)"
-		:width="800"
+		:height="modalHeight"
+		:width="modalWidth"
 	>
-		<!-- main outer wrapper -->
+
 		<div class="modalContent">
 
-			<!-- box with asset list and preview -->
-			<div class="assets">
-
-				<div class="assetList">
-					<CustomDataTable
-						:noHeaders="true"
-						:data="props.assetManager.assets.value"
-						:selected_id="selectedRow"			
-						:ignoreColumns="['id', 'file_path', 'tags', 'internal']"
-						:showDeleteColumn="false"
-						:filter="filterFn"
-						@rowClick="rowClick"
-					/>
-				</div>
-				<div class="assetPreview">
-					<FilePreview
-						:fileId="filteredSelectedRow"
-						:height="500"
-						:width="260"
-						:border="false"
-						:autoPlay="true"
-						:assetManager="props.assetManager"
-					/>
-				</div>
+			<!-- the shared file browser fills the body above the buttons -->
+			<div class="browserHost">
+				<AssetBrowser
+					ref="browserRef"
+					:kindFilter="kindFilter"
+					:singleSelect="true"
+					@select="onSelect"
+				/>
 			</div>
 
-			<!-- along the top, optionally show bar to pick custom files -->
-			<div v-if="allowCustomImports" class="importCustom">
-				Not finding what you're looking for?
-				<button
-					type="button"
-					class="cmdImportCustom"
-					@click="importCustomFiles"
-				>Import Custom Assets</button>
-			</div>
-
-			<!-- the buttons along hte bottom -->
-			<div 
-				class="buttons"				
-				tabindex="0"
-			>
+			<!-- save / cancel along the bottom -->
+			<div class="buttons" tabindex="0">
 				<button
 					class="primary"
+					:disabled="!focusedAssetRef"
 					@click="buttonClicked('save', 0)"
 				>
 					Save
 				</button>
-				<button
-					@click="closeModal"
-				>
+				<button @click="closeModal">
 					Cancel
 				</button>
 			</div>
@@ -79,15 +57,15 @@
 <script setup>
 
 // vue
-import { ref, computed } from 'vue';
+import { ref, inject } from 'vue';
 
 // components
 import ModalWindowFrame from './ModalWindowFrame.vue';
-import CustomDataTable from './page_database/CustomDataTable.vue';
-import FilePreview from './FilePreview.vue';
+import AssetBrowser from './AssetBrowser.vue';
 
 // lib misc
 import { closeModal, Modal } from 'jenesius-vue-modal';
+
 
 // props
 const props = defineProps({
@@ -98,13 +76,16 @@ const props = defineProps({
 		default: 'Asset Picker'
 	},
 
-	// reference to the state of the options page
+	// reference to the asset manager (kept for backward compat with
+	// existing callers — we read ctApp.assetsMgr internally now).
 	assetManager: {
 		type: Object,
 		default: null
 	},
 
-	// true if we allow import of custom files
+	// kept for compat - the new browser supports drag-drop upload natively
+	// (no separate "import custom assets" affordance needed). The prop is
+	// still accepted but ignored.
 	allowCustomImports: {
 		type: Boolean,
 		default: false
@@ -118,188 +99,95 @@ const props = defineProps({
 
 });
 
-// so we can close the modal using the jenesius-vue-modal event and return a value
+
+// jenesius-vue-modal: emit Modal.EVENT_PROMPT to close with a value
 const emit = defineEmits([Modal.EVENT_PROMPT]);
 
-// determine the filter fn
-const filterFn = (item) => {
-	if (!props.kindFilter) return true;
-	return item.kind === props.kindFilter;
-};
 
-// the currently selected row
-const selectedRow = ref(props.assetManager.assets.value[0].id);
+// main app state - needed to translate the focused vuefinder row's
+// asset_ref back into the asset record shape the caller expects.
+const ctApp = inject('ctApp');
 
-// make sure we can have a valid selected row, even if the filter changes
-const filteredSelectedRow = computed(() => {
-	
-	// filter using our filterFn
-	const data = props.assetManager.assets.value;
-	const filtered = data.filter(filterFn);
 
-	// check if the selected row is in the filtered data
-	if (filtered.find(item => item.id === selectedRow.value))
-		return selectedRow.value;
+// the AssetBrowser instance, so we can read its focused-file getter
+// at Save time if needed.
+const browserRef = ref(null);
 
-	// if not, return the first item
-	return filtered[0].id;
-});
 
-// handle when a row is clicked
-function rowClick({ id, data }){
-	selectedRow.value = id;
+// the asset_ref of the currently-focused single file; null when nothing
+// or a folder is selected. Bound to the Save button's disabled state.
+const focusedAssetRef = ref(null);
+
+
+// modal sizing - responsive within sane caps. The ModalWindowFrame
+// component now accepts CSS strings; this works in both dev (wide
+// screens) and packaged builds (which may be more constrained).
+const modalWidth = 'min(95vw, 1400px)';
+const modalHeight = 'min(90vh, 900px)';
+
+
+/**
+ * Receives the AssetBrowser's `select` event. Stores the asset_ref so
+ * Save can hand back the right thing.
+ *
+ * @param {{ row: Object, assetRef: string }|null} payload
+ */
+function onSelect(payload) {
+	focusedAssetRef.value = payload?.assetRef || null;
 }
 
 
-// handle when the import custom files button is clicked
-function importCustomFiles(){
-	props.assetManager.importFiles(props.kindFilter)
-}
+/**
+ * Bottom-bar button click. Save resolves to the asset's full record
+ * (same shape the legacy picker returned, so SettingsAssetRow doesn't
+ * need to change).
+ *
+ * @param {string} button - 'save' | 'cancel'
+ * @param {number} index  - button index (0 = save)
+ */
+function buttonClicked(button, index) {
+	if (button !== 'save') return;
+	if (!focusedAssetRef.value) return;
 
-
-// when user clicks a button
-function buttonClicked(button, index){
-
-	console.log('button clicked', button, index);
-
-	// ignore 'save' if the value is not valid
-	if (button !== 'save')
+	// Translate asset_ref back to the AssetManager record. Built-in
+	// asset_refs are numeric strings; user asset_refs are uuid-with-ext.
+	// AssetManager handles both lookups via getFileData(id).
+	const assetData = ctApp.assetsMgr.getFileData(focusedAssetRef.value);
+	if (!assetData) {
+		console.warn('[AssetPickerModal] asset not in AssetManager:', focusedAssetRef.value);
 		return;
+	}
 
-	// emit the event that closes the prompt-type modal with the value
-	const file = props.assetManager.getFileData(filteredSelectedRow.value);
-	emit(Modal.EVENT_PROMPT, {button, index, value: file});
+	emit(Modal.EVENT_PROMPT, { button, index, value: assetData });
 }
 
 </script>
 <style lang="scss" scoped>
 
-	// fill modal
+	// fill the modal frame
 	.modalContent {
 
-		// fill bottom with a gray box
 		width: 100%;
 		height: 100%;
+		position: relative;
+		display: flex;
+		flex-direction: column;
 
-		// fill modal
-		position: absolute;
-		inset: 0px;
+		.browserHost {
+			// browser stretches to fill above the button strip
+			flex: 1;
+			min-height: 0;
+			overflow: hidden;
+		}
 
-		// optional box with custom import button
-		.importCustom {
-
-			text-align: center;
-
-			margin: 15px;
-			padding: 15px;
-			background: #EEE;
-			border-radius: 10px;
-
-			// make the add button look nice
-			button {
-
-				display: inline-block;
-
-				// box styles
-				background: #EFEFEF;
-				border: none;
-				border-radius: 40px;
-				padding: 5px 10px;
-				cursor: pointer;
-				border: 2px solid black;
-
-				margin-left: 10px;
-
-				// text settings
-				color: black;
-				font-weight: bolder;
-
-				&:hover {
-					background: white;
-					/* border: 2px solid rgba(255, 255, 255, 1); */
-				}
-
-			}// button
-
-		}// .importCustom
-
-		// main asset area
-		.assets {
-
-			// reset stacking context
-			position: relative;
-
-			// box styles
-			width: 765px;
-			height: 500px;
-			border: 2px solid gray;
-			border-radius: 10px;
-			margin: 15px;
-
-			overflow: clip;
-			
-			// list box of assets on the left
-			.assetList {
-
-				// pos and box styles
-				position: absolute;
-				inset: 0px auto 0px 0px;
-				width: 500px;
-
-				overflow-y: scroll;
-
-				border-right: 2px solid gray;
-
-				// mac-style scrollbars
-				&::-webkit-scrollbar {
-					width: 14px;
-				}
-
-				&::-webkit-scrollbar-track {
-					background: transparent;
-					background: #E5E5E5;
-				}
-
-				&::-webkit-scrollbar-thumb {
-					background-color: rgba(120, 120, 120, 0.3);
-					border-radius: 6px;
-					transition: background-color 0.2s ease-in-out;
-				}
-
-				&:hover::-webkit-scrollbar-thumb,
-				&:active::-webkit-scrollbar-thumb {
-					background-color: rgba(120, 120, 120, 0.6);
-				}
-
-			}// .assetList
-
-			// preview box on the right
-			.assetPreview {
-				position: absolute;
-				inset: 0px 0px 0px 500px;
-				width: 265px;
-
-				// for debug
-				/* border-left 2px solid red; */
-
-			}// .assetPreview
-
-		}// .assets
-
-
-		// put buttons bar along the bottom, slightly gray
 		.buttons {
 
-			// disable the default outline
 			outline: none;
 
-			// fill bottom with a gray box
-			position: absolute;
-			inset: auto 0px 0px 0px;
-			background: #EEE;
 			height: 50px;
+			background: #EEE;
+			border-top: 1px solid rgba(0, 0, 0, 0.08);
 
-			// space buttons nicely
 			display: flex;
 			justify-content: flex-start;
 			flex-direction: row-reverse;
@@ -307,33 +195,37 @@ function buttonClicked(button, index){
 			gap: 10px;
 			padding-right: 10px;
 
-			// make buttons look pretty
+			// re-use the button styling from the old modal
 			button {
 
-				// nice padding, rounded corners, and pointer cursor
-				padding: 5px 10px;
+				padding: 5px 14px;
 				border-radius: 5px;
 				cursor: pointer;
+				border: 1px solid rgba(0, 0, 0, 0.15);
 
-				// nice vertical gradient
 				background: linear-gradient(180deg, #FFF, #DDD);
 				text-transform: uppercase;
+				font-size: 12px;
+				font-weight: 600;
 
 				&:disabled {
 					pointer-events: none;
-					opacity: 0.5;
+					opacity: 0.4;
 					cursor: not-allowed;
 				}
 
-				// mm that primary tho
 				&.primary {
 					background: linear-gradient(180deg, #05dee2, #00ABAE);
-					font-weight: bolder;
 					color: white;
+					border-color: transparent;
 				}
 
-				&:hover {
+				&:hover:not(:disabled) {
 					background: linear-gradient(180deg, #f4fbff, #c4d0d6);
+				}
+
+				&.primary:hover:not(:disabled) {
+					background: linear-gradient(180deg, #1be8eb, #00bdc0);
 				}
 
 			}// button
@@ -343,4 +235,3 @@ function buttonClicked(button, index){
 	}// .modalContent
 
 </style>
-

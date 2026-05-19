@@ -18,6 +18,7 @@ import { createAppMenu } from './system/MainAppMenu.js';
 import { chatForward } from './system/chatForward.js';
 import ChatSourceManager from './system/ChatSourceManager.js';
 import { TwitchManager } from './system/TwitchManager.js';
+const { DatabaseManager } = require('./system/database');
 
 // load our window tests
 const { testURL } = require('./system/WindowTests');
@@ -32,6 +33,12 @@ let obsViewServer = null;
 let chatSourceMgr = null;
 let twitchMgr = null;
 let tray = null;
+
+// Main-process SQLite connection used by the asset-filesystem express
+// endpoint (vuefinder backend). better-sqlite3 with WAL mode handles
+// multiple connections to the same file just fine; the renderer's
+// preload also opens its own connection for direct queries.
+let mainDb = null;
 
 // list of our spawned windows
 let openedWindows = [];
@@ -141,8 +148,15 @@ app.whenReady().then(() => {
 	// make system tray icon so our main window can be hidden and shown
 	tray = createSystemTray(mainWindow, destroyAllWindows);
 
-	// Create the OBSViewServer.
-	obsViewServer = new OBSViewServer(mainWindow);
+	// Open a main-process connection to the same SQLite DB the preload uses.
+	// The constructor runs setupSchema() and the asset_paths migration -
+	// idempotent on later boots. Path matches MainWindow.js's dbPath.
+	const dbPath = join(app.getPath('userData'), 'ytct.db');
+	mainDb = new DatabaseManager(dbPath);
+
+	// Create the OBSViewServer with the db so the asset-filesystem API
+	// can be mounted on the widget-server express app.
+	obsViewServer = new OBSViewServer(mainWindow, { db: mainDb });
 
 
 	// After creating your main window and OBSViewServer

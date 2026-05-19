@@ -64,6 +64,14 @@ contextBridge.exposeInMainWorld("assetDB", {
 	getAssetByID: (id) => db.getAssetByID(id),
 	getAssetsByType: (type) => db.getAssetsByType(type),
 	removeAsset: (id) => db.removeAsset(id),
+
+	// asset_paths (virtual filesystem) operations - most of these are
+	// also driven by the express vuefinder endpoint, but the renderer
+	// needs direct DB access for the "Restore Defaults" button and for
+	// resolving an asset_ref from a path in the picker's save handler.
+	getAssetPathRow: (path) => db.getAssetPathRow(path),
+	listAssetPathChildren: (parent) => db.listAssetPathChildren(parent),
+	restoreAssetDefaultLayout: () => db.restoreAssetDefaultLayout(),
 });
 
 

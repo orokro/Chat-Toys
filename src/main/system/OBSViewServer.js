@@ -20,6 +20,7 @@ import { createHttpTerminator } from 'http-terminator';
 const { socketRefServer } = require('socket-ref/server');
 const serveIndex = require('serve-index');
 const Store = require('electron-store');
+const { mountAssetFsAPI } = require('./assetFsAPI');
 
 const store = new Store();
 const fs = require('fs');
@@ -32,13 +33,23 @@ class OBSViewServer {
 
 	/**
 	 * Create a new OBSViewServer.
-	 * 
+	 *
 	 * @param {BrowserWindow} mainWindow - The main window for the app.
+	 * @param {Object} [options]
+	 * @param {Object} [options.db] - Optional DatabaseManager instance used
+	 *   by the asset-filesystem API (vuefinder backend). When supplied, the
+	 *   `/api/files` route is mounted on the widget server. When omitted,
+	 *   asset-FS calls 404 (acceptable for legacy windows that don't need it).
 	 */
-	constructor(mainWindow) {
+	constructor(mainWindow, options = {}) {
 
 		// save ref to our main window
 		this.mainWindow = mainWindow;
+
+		// optional database handle for the asset filesystem endpoint.
+		// Kept on `this` so startServers() (and a future restartServers)
+		// can re-mount on each express app boot.
+		this.db = options.db || null;
 
 		// set up our IPC communication
 		this.initializeIPC();
@@ -219,6 +230,33 @@ class OBSViewServer {
 				next();
 			});
 
+			// CORS must be registered BEFORE any route handlers so the
+			// middleware actually sees those routes' requests. Express
+			// runs middleware/routes in registration order; putting cors
+			// after mountAssetFsAPI was the cause of "No 'Access-Control-
+			// Allow-Origin' header is present" errors from the renderer.
+			// Permissive on origin because the server only binds to
+			// 127.0.0.1, so reflecting the request origin is safe.
+			expressApp.use(cors({
+				origin: true,
+				methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+				credentials: true,
+			}));
+			// Preflight handler for any non-simple request shapes (vuefinder
+			// sends POST + JSON Content-Type, which triggers preflight).
+			expressApp.options('*', cors({ origin: true, credentials: true }));
+
+			// Mount the vuefinder-backed asset filesystem API. The renderer
+			// uses this to drive the new AssetBrowser UI (browse, upload,
+			// rename, move, delete, search across the virtual asset_paths
+			// tree). 404s without a db handle, which is fine in test windows.
+			if (this.db) {
+				mountAssetFsAPI(expressApp, {
+					db: this.db,
+					log: (m) => this.logToFE(m),
+				});
+			}
+
 			this.server = http.createServer(expressApp);
 
 			// using our socket-ref server, that syncs socketRefs
@@ -245,14 +283,9 @@ class OBSViewServer {
 			this.terminatorHTTP = createHttpTerminator({ server: this.server });
 			this.terminatorWS = createHttpTerminator({ server: this.wss });
 
-			// 👇 Allow CORS for Vite dev server ONLY in development
-			if (true || process.env.NODE_ENV === 'development') {
-				expressApp.use(cors({
-					origin: 'http://localhost:8080',
-					methods: ['GET', 'POST'],
-					credentials: true
-				}));
-			}
+			// (CORS middleware moved up - see the block right after the
+			// request-logging middleware, before mountAssetFsAPI. Middleware
+			// has to be registered before the route handlers it covers.)
 
 			// Serve /live.html in production
 			if (true || process.env.NODE_ENV !== 'development') {

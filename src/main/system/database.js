@@ -11,6 +11,21 @@ const { app } = require("electron");
 const Database = require("better-sqlite3");
 const { v4: uuidv4 } = require("uuid");
 
+// Shared catalog of bundled built-in assets. Single source of truth for
+// both the renderer's AssetManager AND this file's asset_paths seeding.
+// `require` works because it's a JSON file - no Vue / Vite involvement.
+const builtInAssets = require(path.join(__dirname, "..", "..", "shared", "builtInAssets.json"));
+
+// Schema version pragma. Increment when adding a new schema migration
+// that needs to run conditionally. Lives in SQLite's PRAGMA user_version.
+//   1 -> initial asset_paths virtualization (this commit)
+const ASSET_PATHS_SCHEMA_VERSION = 1;
+
+// Virtual-storage prefix used by the vuefinder UI. Paths look like
+// `assets:///Built-in/Fish/big.png`. The Express vuefinder endpoint
+// peels this prefix off before doing SQL.
+const ASSET_STORAGE_PREFIX = 'assets://';
+
 /**
  * Class for managing the database connection and schema.
  */
@@ -119,6 +134,152 @@ class DatabaseManager {
 				added_at DATETIME DEFAULT CURRENT_TIMESTAMP
 			);
 		`);
+
+		// ASSET PATHS - virtual filesystem overlay for the vuefinder-powered
+		// asset browser. Side-table that does NOT modify or replace
+		// custom_assets (backwards-compat preserved). Folders are rows with
+		// is_folder=1 and asset_ref=NULL; files are rows with is_folder=0
+		// and asset_ref pointing at either a custom_assets.uuid or a
+		// builtInAssets[].id (numeric, stored as text).
+		//
+		// path:        the full virtual path including the assets:// prefix
+		//              and the basename. Primary key - uniqueness enforced.
+		// parent_path: denormalized; the parent directory for fast `index`
+		//              queries (vuefinder fetches "everything in this folder").
+		// basename:    the leaf-name only (basename of path).
+		// is_folder:   1 = directory row, 0 = file row.
+		// asset_ref:   for files, the underlying asset id - either a uuid
+		//              (custom) or the built-in numeric id stored as text.
+		// is_internal: 1 if asset_ref points at a bundled built-in. Lets the
+		//              preview endpoint decide which on-disk folder to read.
+		// asset_kind:  'image' / 'sound' / '3d' / null (for folders).
+		// display_name:optional override of the basename, for future rename
+		//              without renaming the underlying file. NULL = use basename.
+		// created_at:  audit only.
+		run(`
+			CREATE TABLE IF NOT EXISTS asset_paths (
+				path         TEXT PRIMARY KEY,
+				parent_path  TEXT NOT NULL,
+				basename     TEXT NOT NULL,
+				is_folder    INTEGER NOT NULL,
+				asset_ref    TEXT,
+				is_internal  INTEGER NOT NULL DEFAULT 0,
+				asset_kind   TEXT,
+				display_name TEXT,
+				created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+			);
+		`);
+		run(`CREATE INDEX IF NOT EXISTS idx_asset_paths_parent ON asset_paths(parent_path);`);
+		run(`CREATE INDEX IF NOT EXISTS idx_asset_paths_basename ON asset_paths(basename);`);
+		run(`CREATE INDEX IF NOT EXISTS idx_asset_paths_ref ON asset_paths(asset_ref);`);
+
+		// Run the asset_paths seeding migration after the table is in place.
+		// Idempotent - runs the first time the schema version is below the
+		// current target, then bumps `user_version` so subsequent boots
+		// short-circuit.
+		this.runAssetPathsMigration();
+	}
+
+
+	/**
+	 * Seed the asset_paths virtual filesystem the first time we boot
+	 * against an older database (or a brand-new one). Guarded by SQLite's
+	 * `PRAGMA user_version` so re-runs are cheap no-ops.
+	 *
+	 * On a fresh install (or upgrade from pre-virtualization):
+	 *   1. Create the canonical folder tree under /Built-in/ and /My Assets/.
+	 *   2. Place each bundled built-in at its canonicalPath.
+	 *   3. Walk existing custom_assets rows and stage them under /My Assets/.
+	 *
+	 * After this, the user can rearrange anything freely - we never
+	 * auto-relocate user-moved rows on subsequent boots.
+	 */
+	runAssetPathsMigration() {
+
+		// read current schema version. 0 means "no migration has run yet".
+		const currentVersion = this.db.pragma('user_version', { simple: true });
+		if (currentVersion >= ASSET_PATHS_SCHEMA_VERSION) return;
+
+		console.log(`[asset_paths] running migration: v${currentVersion} -> v${ASSET_PATHS_SCHEMA_VERSION}`);
+
+		// statements we'll use repeatedly inside the migration transaction.
+		// `INSERT OR IGNORE` makes folder creation idempotent (rerun-safe).
+		const insertFolder = this.db.prepare(`
+			INSERT OR IGNORE INTO asset_paths
+				(path, parent_path, basename, is_folder)
+			VALUES (?, ?, ?, 1)
+		`);
+		const insertFile = this.db.prepare(`
+			INSERT OR IGNORE INTO asset_paths
+				(path, parent_path, basename, is_folder, asset_ref, is_internal, asset_kind)
+			VALUES (?, ?, ?, 0, ?, ?, ?)
+		`);
+
+		const tx = this.db.transaction(() => {
+
+			// ensure the root virtual folders exist. Order matters - parents
+			// before children - so the parent_path lookup always resolves.
+			ensureFolderChain(insertFolder, 'Built-in');
+			ensureFolderChain(insertFolder, 'Built-in/Chat Frames');
+			ensureFolderChain(insertFolder, 'Built-in/Points Icons');
+			ensureFolderChain(insertFolder, 'Built-in/Wheel Frames');
+			ensureFolderChain(insertFolder, 'Built-in/Fishing');
+			ensureFolderChain(insertFolder, 'Built-in/Reactions');
+			ensureFolderChain(insertFolder, 'Built-in/Tossables');
+			ensureFolderChain(insertFolder, 'Built-in/Characters');
+			ensureFolderChain(insertFolder, 'Built-in/SFX');
+			ensureFolderChain(insertFolder, 'Built-in/SFX/Pops');
+			ensureFolderChain(insertFolder, 'Built-in/SFX/Wooshes');
+			ensureFolderChain(insertFolder, 'Built-in/SFX/Hits');
+			ensureFolderChain(insertFolder, 'Built-in/SFX/Clicks');
+			ensureFolderChain(insertFolder, 'Built-in/SFX/Reactions');
+			ensureFolderChain(insertFolder, 'My Assets');
+
+			// place each built-in at its canonicalPath. INSERT OR IGNORE so
+			// users who somehow already have a row at the target path don't
+			// get clobbered.
+			for (const asset of builtInAssets) {
+				const folderPath = asset.canonicalPath;
+				const filePath = `${folderPath}/${asset.name}`;
+				// strip the `assets://` prefix to derive the segments
+				ensureFolderChain(insertFolder, folderPath.slice(ASSET_STORAGE_PREFIX.length));
+				insertFile.run(
+					filePath,
+					folderPath,
+					asset.name,
+					String(asset.id),
+					1,
+					asset.kind
+				);
+			}
+
+			// stage existing user-imported assets in /My Assets/. We use the
+			// original_name as the basename, falling back to the uuid if it
+			// somehow isn't set. Basename collisions are resolved with a
+			// numeric suffix `(2)`, `(3)`, …
+			const userAssets = this.db.prepare(`SELECT uuid, original_name, type FROM custom_assets`).all();
+			const myAssetsRoot = `${ASSET_STORAGE_PREFIX}My Assets`;
+			for (const ua of userAssets) {
+				const desiredBase = ua.original_name || ua.uuid;
+				const resolvedBase = resolveBasenameCollision(this.db, myAssetsRoot, desiredBase);
+				insertFile.run(
+					`${myAssetsRoot}/${resolvedBase}`,
+					myAssetsRoot,
+					resolvedBase,
+					ua.uuid,
+					0,
+					ua.type || null
+				);
+			}
+		});
+
+		try {
+			tx();
+			this.db.pragma(`user_version = ${ASSET_PATHS_SCHEMA_VERSION}`);
+			console.log('[asset_paths] migration complete');
+		} catch (err) {
+			console.error('[asset_paths] migration failed; rolled back:', err);
+		}
 	}
 
 
@@ -442,7 +603,357 @@ class DatabaseManager {
 			.run(uuid);
 	}
 
-	  
+
+	// =====================================================================
+	// asset_paths virtual filesystem operations (powering the vuefinder UI)
+	// =====================================================================
+
+	/**
+	 * Get a single asset_paths row by exact path. Returns null if missing.
+	 *
+	 * @param {string} path - full virtual path (with assets:// prefix)
+	 * @returns {Object|null}
+	 */
+	getAssetPathRow(path) {
+		return this.db.prepare(`SELECT * FROM asset_paths WHERE path = ?`).get(path) || null;
+	}
+
+
+	/**
+	 * Direct children of a folder, sorted folders-first then by basename.
+	 * Used by the `?q=index` vuefinder endpoint.
+	 *
+	 * @param {string} parentPath - virtual path of the directory
+	 * @returns {Array<Object>}
+	 */
+	listAssetPathChildren(parentPath) {
+		return this.db.prepare(`
+			SELECT * FROM asset_paths
+			WHERE parent_path = ?
+			ORDER BY is_folder DESC, basename COLLATE NOCASE
+		`).all(parentPath);
+	}
+
+
+	/**
+	 * Recursive search under a folder by case-insensitive substring of
+	 * the basename. Used by the `?q=search` vuefinder endpoint.
+	 *
+	 * @param {string} rootPath - folder to scope the search to
+	 * @param {string} filter   - case-insensitive substring
+	 * @returns {Array<Object>}
+	 */
+	searchAssetPaths(rootPath, filter) {
+		const term = `%${filter}%`;
+		const prefix = `${rootPath}/%`;
+		return this.db.prepare(`
+			SELECT * FROM asset_paths
+			WHERE (path LIKE ? OR path = ?)
+			  AND basename LIKE ? COLLATE NOCASE
+			ORDER BY is_folder DESC, path COLLATE NOCASE
+			LIMIT 500
+		`).all(prefix, rootPath, term);
+	}
+
+
+	/**
+	 * Create a folder. Idempotent. Errors only if the path already exists
+	 * as a file.
+	 *
+	 * @param {string} parentPath - virtual path of the parent folder
+	 * @param {string} basename   - new folder name
+	 * @returns {Object} the new (or existing) folder row
+	 */
+	createAssetFolder(parentPath, basename) {
+		const newPath = `${parentPath}/${basename}`;
+		const existing = this.getAssetPathRow(newPath);
+		if (existing) {
+			if (!existing.is_folder)
+				throw new Error(`A file already exists at ${newPath}`);
+			return existing;
+		}
+		this.db.prepare(`
+			INSERT INTO asset_paths (path, parent_path, basename, is_folder)
+			VALUES (?, ?, ?, 1)
+		`).run(newPath, parentPath, basename);
+		return this.getAssetPathRow(newPath);
+	}
+
+
+	/**
+	 * Insert a file row pointing at an existing custom_asset (or built-in
+	 * by id). Used by the upload handler after the file has been copied
+	 * to userData/custom_assets and a custom_assets row has been inserted.
+	 *
+	 * @param {Object} params
+	 * @param {string} params.parentPath
+	 * @param {string} params.basename
+	 * @param {string} params.assetRef   - uuid (custom) or numeric (built-in as string)
+	 * @param {boolean} params.isInternal
+	 * @param {string|null} params.assetKind
+	 * @returns {Object} the new file row
+	 */
+	insertAssetFile({ parentPath, basename, assetRef, isInternal, assetKind }) {
+		const resolved = this._resolveBasenameCollision(parentPath, basename);
+		const newPath = `${parentPath}/${resolved}`;
+		this.db.prepare(`
+			INSERT INTO asset_paths
+				(path, parent_path, basename, is_folder, asset_ref, is_internal, asset_kind)
+			VALUES (?, ?, ?, 0, ?, ?, ?)
+		`).run(newPath, parentPath, resolved, assetRef, isInternal ? 1 : 0, assetKind || null);
+		return this.getAssetPathRow(newPath);
+	}
+
+
+	/**
+	 * Rename a row in place. For folders, cascades the new path down to
+	 * every descendant row inside a single transaction.
+	 *
+	 * @param {string} oldPath
+	 * @param {string} newBasename
+	 * @returns {Object} the renamed row
+	 */
+	renameAssetPath(oldPath, newBasename) {
+		const row = this.getAssetPathRow(oldPath);
+		if (!row) throw new Error(`No such path: ${oldPath}`);
+
+		const parent = row.parent_path;
+		const desired = this._resolveBasenameCollision(parent, newBasename, oldPath);
+		const newPath = `${parent}/${desired}`;
+		if (newPath === oldPath) return row; // nothing to do
+
+		// Transaction so descendant cascade can't end up partially applied.
+		const tx = this.db.transaction(() => {
+			this.db.prepare(`UPDATE asset_paths SET path = ?, basename = ? WHERE path = ?`)
+				.run(newPath, desired, oldPath);
+			if (row.is_folder) {
+				const oldPrefix = `${oldPath}/`;
+				const newPrefix = `${newPath}/`;
+				this.db.prepare(`
+					UPDATE asset_paths
+					SET path = ? || SUBSTR(path, ?),
+					    parent_path = ? || SUBSTR(parent_path, ?)
+					WHERE path LIKE ? || '%'
+				`).run(newPrefix, oldPrefix.length + 1, newPrefix, oldPrefix.length + 1, oldPrefix);
+			}
+		});
+		tx();
+		return this.getAssetPathRow(newPath);
+	}
+
+
+	/**
+	 * Move a row (or folder subtree) to a new parent. Cascading update
+	 * for folder contents, same as rename.
+	 *
+	 * @param {string} sourcePath
+	 * @param {string} destParent
+	 * @returns {Object} the moved row's new record
+	 */
+	moveAssetPath(sourcePath, destParent) {
+		const row = this.getAssetPathRow(sourcePath);
+		if (!row) throw new Error(`No such path: ${sourcePath}`);
+		const destRow = this.getAssetPathRow(destParent);
+		if (!destRow || !destRow.is_folder)
+			throw new Error(`Destination is not a folder: ${destParent}`);
+
+		const resolved = this._resolveBasenameCollision(destParent, row.basename);
+		const newPath = `${destParent}/${resolved}`;
+		if (newPath === sourcePath) return row;
+
+		const tx = this.db.transaction(() => {
+			this.db.prepare(`
+				UPDATE asset_paths
+				SET path = ?, parent_path = ?, basename = ?
+				WHERE path = ?
+			`).run(newPath, destParent, resolved, sourcePath);
+			if (row.is_folder) {
+				const oldPrefix = `${sourcePath}/`;
+				const newPrefix = `${newPath}/`;
+				this.db.prepare(`
+					UPDATE asset_paths
+					SET path = ? || SUBSTR(path, ?),
+					    parent_path = ? || SUBSTR(parent_path, ?)
+					WHERE path LIKE ? || '%'
+				`).run(newPrefix, oldPrefix.length + 1, newPrefix, oldPrefix.length + 1, oldPrefix);
+			}
+		});
+		tx();
+		return this.getAssetPathRow(newPath);
+	}
+
+
+	/**
+	 * Delete a path row. For folders, deletes every descendant. Returns
+	 * the list of asset_refs for user-imported files that were removed,
+	 * so the caller can also delete those on-disk files + custom_assets
+	 * rows. Built-in file rows are removed virtually only (the bundled
+	 * file is untouched).
+	 *
+	 * @param {string} targetPath
+	 * @returns {{ removedCustomUuids: string[] }}
+	 */
+	deleteAssetPath(targetPath) {
+		const row = this.getAssetPathRow(targetPath);
+		if (!row) return { removedCustomUuids: [] };
+
+		const removedCustomUuids = [];
+
+		const collectAndDelete = () => {
+			if (row.is_folder) {
+				const prefix = `${targetPath}/%`;
+				const descendants = this.db.prepare(`
+					SELECT asset_ref, is_internal FROM asset_paths
+					WHERE path LIKE ? AND is_folder = 0
+				`).all(prefix);
+				for (const d of descendants) {
+					if (!d.is_internal && d.asset_ref) removedCustomUuids.push(d.asset_ref);
+				}
+				this.db.prepare(`DELETE FROM asset_paths WHERE path LIKE ?`).run(prefix);
+				this.db.prepare(`DELETE FROM asset_paths WHERE path = ?`).run(targetPath);
+			} else {
+				if (!row.is_internal && row.asset_ref) removedCustomUuids.push(row.asset_ref);
+				this.db.prepare(`DELETE FROM asset_paths WHERE path = ?`).run(targetPath);
+			}
+		};
+
+		this.db.transaction(collectAndDelete)();
+		return { removedCustomUuids };
+	}
+
+
+	/**
+	 * Re-seed the canonical built-in folder layout + place any built-in
+	 * that's missing from the virtual filesystem. INSERT OR IGNORE
+	 * semantics throughout - never overwrites user reorganizations.
+	 *
+	 * Called by the "Restore Defaults" button on the Assets page.
+	 */
+	restoreAssetDefaultLayout() {
+		const insertFolder = this.db.prepare(`
+			INSERT OR IGNORE INTO asset_paths
+				(path, parent_path, basename, is_folder)
+			VALUES (?, ?, ?, 1)
+		`);
+		const insertFile = this.db.prepare(`
+			INSERT OR IGNORE INTO asset_paths
+				(path, parent_path, basename, is_folder, asset_ref, is_internal, asset_kind)
+			VALUES (?, ?, ?, 0, ?, ?, ?)
+		`);
+
+		this.db.transaction(() => {
+			// canonical folder tree
+			ensureFolderChain(insertFolder, 'Built-in');
+			ensureFolderChain(insertFolder, 'My Assets');
+			for (const asset of builtInAssets) {
+				ensureFolderChain(insertFolder, asset.canonicalPath.slice(ASSET_STORAGE_PREFIX.length));
+			}
+			// any missing built-ins go to their canonical folder. If a row
+			// already exists for the same asset_ref elsewhere, the user
+			// moved it - we don't duplicate.
+			for (const asset of builtInAssets) {
+				const existing = this.db.prepare(`
+					SELECT 1 FROM asset_paths WHERE asset_ref = ? AND is_internal = 1
+				`).get(String(asset.id));
+				if (existing) continue;
+				const filePath = `${asset.canonicalPath}/${asset.name}`;
+				insertFile.run(filePath, asset.canonicalPath, asset.name, String(asset.id), 1, asset.kind);
+			}
+		})();
+	}
+
+
+	/**
+	 * Internal: resolve a basename collision inside a parent by appending
+	 * a numeric suffix. Returns the input unchanged when free.
+	 *
+	 *   foo.png            (free)            -> foo.png
+	 *   foo.png            (taken)           -> foo (2).png
+	 *   foo (2).png        (taken)           -> foo (3).png
+	 *   folder             (folder taken)    -> folder (2)
+	 *
+	 * @param {string} parentPath
+	 * @param {string} basename
+	 * @param {string} [ignorePath] - existing path to ignore (used by rename so renaming to itself is fine)
+	 * @returns {string} a free basename
+	 */
+	_resolveBasenameCollision(parentPath, basename, ignorePath = null) {
+
+		const inUse = (b) => {
+			const candidate = `${parentPath}/${b}`;
+			if (ignorePath && candidate === ignorePath) return false;
+			return !!this.db.prepare(`SELECT 1 FROM asset_paths WHERE path = ?`).get(candidate);
+		};
+
+		if (!inUse(basename)) return basename;
+
+		// split into name + extension (only for files; folders have no ext)
+		const dotIdx = basename.lastIndexOf('.');
+		const hasExt = dotIdx > 0 && dotIdx < basename.length - 1;
+		const stem = hasExt ? basename.slice(0, dotIdx) : basename;
+		const ext = hasExt ? basename.slice(dotIdx) : '';
+
+		for (let n = 2; n < 1000; n++) {
+			const candidate = `${stem} (${n})${ext}`;
+			if (!inUse(candidate)) return candidate;
+		}
+		// fallback - extreme collision; just return original (caller will fail)
+		return basename;
+	}
+
+
+}
+
+
+/**
+ * Insert every ancestor folder for a virtual path. Path is given WITHOUT
+ * the storage prefix (e.g. 'Built-in/Fish'). Each intermediate folder
+ * is created via INSERT OR IGNORE so this is safe to call repeatedly.
+ *
+ * The root of the storage is `assets://` (no trailing slash); the first
+ * folder created has parent_path = `assets://` and path = `assets://Foo`.
+ *
+ * @param {import('better-sqlite3').Statement} insertFolder - prepared INSERT statement
+ * @param {string} pathWithoutPrefix - e.g. 'Built-in/Fish'
+ */
+function ensureFolderChain(insertFolder, pathWithoutPrefix) {
+	const parts = pathWithoutPrefix.split('/').filter(Boolean);
+	let parent = ASSET_STORAGE_PREFIX; // 'assets://'
+	for (const seg of parts) {
+		// concat with single slash between - the prefix already includes
+		// the '//' authority separator, so we just append `/seg`.
+		const full = parent === ASSET_STORAGE_PREFIX
+			? `${parent}${seg}`        // root child: assets://Built-in
+			: `${parent}/${seg}`;       // deeper: assets://Built-in/Fish
+		insertFolder.run(full, parent, seg);
+		parent = full;
+	}
+}
+
+
+/**
+ * Module-level helper used by the initial migration to dodge basename
+ * collisions inside /My Assets/. Same logic as DatabaseManager's
+ * _resolveBasenameCollision but takes a raw `db` handle so we can call
+ * it before `this` is a stable reference inside the migration tx.
+ *
+ * @param {import('better-sqlite3').Database} db
+ * @param {string} parentPath
+ * @param {string} basename
+ * @returns {string}
+ */
+function resolveBasenameCollision(db, parentPath, basename) {
+	const inUse = (b) => !!db.prepare(`SELECT 1 FROM asset_paths WHERE path = ?`).get(`${parentPath}/${b}`);
+	if (!inUse(basename)) return basename;
+	const dotIdx = basename.lastIndexOf('.');
+	const hasExt = dotIdx > 0 && dotIdx < basename.length - 1;
+	const stem = hasExt ? basename.slice(0, dotIdx) : basename;
+	const ext = hasExt ? basename.slice(dotIdx) : '';
+	for (let n = 2; n < 1000; n++) {
+		const candidate = `${stem} (${n})${ext}`;
+		if (!inUse(candidate)) return candidate;
+	}
+	return basename;
 }
 
 // Export the DatabaseManager class

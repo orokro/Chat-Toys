@@ -9,15 +9,15 @@
 -->
 <template>
 
-	<div 
+	<div
 		class="modalWindowFrame"
-		:class="{ 
+		:class="{
 			'hasClose': showClose
 		}"
-		:style="{ 
-			width: `${width}px`,
-			height: `${height}px`
-		}"	
+		:style="{
+			width: sizeToCss(width),
+			height: sizeToCss(height)
+		}"
 	>
 		<!-- the title bar / header -->
 		<div class="titleBar">
@@ -69,19 +69,35 @@ const props = defineProps({
 		default: true
 	},
 
-	// width
+	// width - accepts a number (px, legacy) or a CSS-length string
+	// like "min(90vw, 1400px)" for responsive sizing.
 	width: {
-		type: Number,
+		type: [Number, String],
 		default: 600
 	},
 
-	// height
+	// height - same dual-accept as width.
 	height: {
-		type: Number,
+		type: [Number, String],
 		default: 400
 	},
 
 });
+
+
+/**
+ * Coerce a width/height prop value into a CSS length string.
+ *   600           -> "600px"
+ *   "90vw"        -> "90vw"
+ *   "min(90vw, 1400px)" -> passed through
+ *
+ * @param {number|string} v
+ * @returns {string}
+ */
+function sizeToCss(v) {
+	if (typeof v === 'number') return `${v}px`;
+	return String(v);
+}
 
 </script>
 <style lang="scss" scoped>

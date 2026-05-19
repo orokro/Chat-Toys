@@ -88,6 +88,21 @@ function copy(path) {
     );
 }
 
+/**
+ * Copy `src/shared/` -> `build/shared/` for the dev runtime. The main
+ * process `require()`s JSON catalogs from there (asset_paths seeding,
+ * etc.); the renderer reads the same files via Vite's import-time JSON
+ * inlining, so this only matters for main. Called on dev-server start
+ * and whenever a file under src/shared changes.
+ */
+function copySharedFiles() {
+    const from = Path.join(__dirname, '..', 'src', 'shared');
+    const to   = Path.join(__dirname, '..', 'build', 'shared');
+    if (FileSystem.existsSync(from)) {
+        FileSystem.cpSync(from, to, { recursive: true });
+    }
+}
+
 function stop() {
     viteServer.close();
     process.exit();
@@ -102,6 +117,7 @@ async function start() {
     rendererPort = devServer.config.server.port;
 
     copyStaticFiles();
+    copySharedFiles();
     startElectron();
 
     const path = Path.join(__dirname, '..', 'src', 'main');
@@ -116,6 +132,18 @@ async function start() {
 
         restartElectron();
     });
+
+    // Separate watcher for src/shared - any change to a JSON catalog
+    // (e.g. adding a built-in asset entry) triggers a re-copy + electron
+    // restart so the main-process require()s the fresh contents.
+    const sharedPath = Path.join(__dirname, '..', 'src', 'shared');
+    if (FileSystem.existsSync(sharedPath)) {
+        Chokidar.watch(sharedPath, { cwd: sharedPath }).on('change', (p) => {
+            console.log(Chalk.blueBright(`[electron] `) + `Change in shared/${p}. recopying... 🚀`);
+            copySharedFiles();
+            restartElectron();
+        });
+    }
 }
 
 start();

@@ -30,6 +30,16 @@ import { chromeRef, chromeShallowRef } from "../chromeRef";
 // lib/misc
 import { v4 as uuidv4 } from 'uuid';
 
+// shared catalog of bundled built-in assets. ALSO consumed by the main
+// process's asset_paths seeding migration - if you add a new built-in
+// here, the next app boot will virtualize it into its canonicalPath
+// folder automatically. Source of truth: src/shared/builtInAssets.json.
+//
+// `@shared` is a Vite alias to src/shared/ (see vite.config.js). The
+// fs.allow entry in that config lets Vite serve from sibling folders
+// of the renderer root.
+import builtInAssets from '@shared/builtInAssets.json';
+
 // AssetManager class
 export class AssetManager {
 
@@ -258,8 +268,12 @@ export class AssetManager {
 }
 
 
-// built-in assets for the extension
-const builtInAssets = [
+// Legacy inline built-in catalog moved to src/shared/builtInAssets.json
+// so the main-process seeding migration can read the same list. Kept the
+// reference below as a placeholder block so a diff shows the move; the
+// commented array is dead code and can be deleted on the next pass.
+/*
+const _legacyInline = [
 	{
 		id: 1,
 		name: 'point_icon_1.png',
@@ -459,3 +473,4 @@ const builtInAssets = [
 		tags: ['sfx'],
 	},
 ];
+*/
