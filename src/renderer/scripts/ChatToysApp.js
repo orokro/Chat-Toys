@@ -210,8 +210,95 @@ export default class ChatToysApp {
 
 
 	/**
+	 * Scan every enabled toy's settings refs for a reference to the given
+	 * asset id. Returns the toys that match.
+	 *
+	 * The check is a JSON substring scan for the quoted id string. Asset
+	 * ids are stored as JSON string values (e.g. `"chatBoxImage":"3"`),
+	 * so wrapping the id in quotes prevents false matches against
+	 * numeric settings (`"chatTextSize":30` won't match id `"3"` because
+	 * the 30 isn't wrapped in quotes in JSON).
+	 *
+	 * Only ACTIVE (currently-enabled) toys are scanned - inactive toys
+	 * keep their settings in storage but their reactive refs aren't live,
+	 * and the asset browser's stated UX is "where is this asset CURRENTLY
+	 * being used". Toy reactivation later WILL re-bind to the asset if
+	 * the toy's stored setting still names this id.
+	 *
+	 * @param {string} assetId
+	 * @returns {Array<{ slug:string, name:string, themeColor:string }>}
+	 */
+	findToysUsingAsset(assetId) {
+
+		if (!assetId) return [];
+		const needle = `"${String(assetId)}"`;
+		const out = [];
+
+		const enabled = this.enabledToys?.value || [];
+		const toys = this.toyManager?.toys || {};
+
+		for (const slug of enabled) {
+			const toy = toys[slug];
+			if (!toy || !toy.settings) continue;
+
+			try {
+				// Snapshot the toy's reactive settings into a plain object,
+				// then JSON-stringify and check for the quoted id.
+				const flat = {};
+				for (const key of Object.keys(toy.settings)) {
+					const ref = toy.settings[key];
+					flat[key] = ref ? ref.value : undefined;
+				}
+				const json = JSON.stringify(flat);
+				if (json && json.includes(needle)) {
+					out.push({
+						slug,
+						name: toy.static?.name || slug,
+						themeColor: toy.static?.themeColor || '#888',
+					});
+				}
+			} catch (err) {
+				console.warn(`[findToysUsingAsset] failed to scan ${slug}:`, err);
+			}
+		}
+
+		return out;
+	}
+
+
+	/**
+	 * Jump the main UI to the toy-or-tool settings page for the given
+	 * slug. Used by the asset browser's "Toys using this asset" list so
+	 * a user clicking an entry lands directly in that toy's config.
+	 *
+	 * Picks ToyBox or ToolBox based on the toy's isTool flag, and sets
+	 * the matching `selectedToy` / `selectedTool` so the page opens on
+	 * the right entry. The main window's `activeTab` is also a
+	 * chromeRef under the key `mainTab`, which syncs across separate
+	 * ref instances via localStorage.
+	 *
+	 * @param {string} slug
+	 */
+	navigateToToyByAsset(slug) {
+
+		const constructor = this.toysData?.asObject?.[slug];
+		if (!constructor) {
+			console.warn(`[navigateToToyByAsset] unknown slug: ${slug}`);
+			return;
+		}
+
+		// Index 2 = Toy Box, index 3 = Tool Box (matches MainWindow.vue's tabs array).
+		const isTool = !!constructor.isTool;
+		chromeRef('mainTab', 0).value = isTool ? 3 : 2;
+
+		if (isTool) this.selectedTool.value = slug;
+		else        this.selectedToy.value  = slug;
+	}
+
+
+	/**
 	 * Selects a toy to be the selected toy.
-	 * 
+	 *
 	 * @param {string} toy - OPTIONAL; toy slug to set as selected, or leave undefined to clear the selected toy
 	 */
 	selectToy(toy) {

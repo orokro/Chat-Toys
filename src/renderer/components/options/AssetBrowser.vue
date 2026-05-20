@@ -53,6 +53,7 @@
 				:driver="finderDriver"
 				:config="finderConfig"
 				:features="enabledFeatures"
+				:context-menu-items="finderContextMenuItems"
 				:locale="'en'"
 				:selection-mode="singleSelect ? 'single' : 'multiple'"
 				:on-select="onSelect"
@@ -99,6 +100,30 @@
 					<div v-if="previewMeta.path" class="metaPath">{{ previewMeta.path }}</div>
 					<div v-if="previewMeta.kind" class="metaKind">{{ previewMeta.kind }}</div>
 				</div>
+
+				<!-- "Toys using this asset" - active toys whose settings
+				     reference the focused file's asset_ref. Click an entry
+				     to jump to that toy's settings page (and close the
+				     picker if we're in a picker modal). -->
+				<div v-if="usingToys.length > 0" class="usingToys">
+					<div class="usingToysHeader">Toys using this asset</div>
+					<button
+						v-for="t in usingToys"
+						:key="t.slug"
+						class="usingToyChip"
+						:style="{ '--toyColor': t.themeColor }"
+						:title="`Open ${t.name} settings`"
+						@click="onUsingToyClick(t)"
+					>
+						<img
+							class="usingToyIcon"
+							:src="`assets/icons/${t.slug}.png`"
+							:alt="t.name"
+							onerror="this.style.display='none'"
+						/>
+						<span class="usingToyName">{{ t.name }}</span>
+					</button>
+				</div>
 			</div>
 
 			<div v-else class="previewEmpty">
@@ -136,6 +161,13 @@ const loadError = ref(false);
 // the driver is a class instance, not a reactive object - we don't
 // want Vue to deep-proxy it.
 const finderDriver = shallowRef(null);
+
+// Augmented context-menu list (defaults + Cut). Vuefinder's bundled
+// default list omits Cut from the right-click menu - it's only exposed
+// on the (hidden-by-us) File menubar. We rebuild the list with a Cut
+// item inserted at the correct order so users have a complete
+// cut/copy/paste right-click flow.
+const finderContextMenuItems = shallowRef(null);
 
 
 // props
@@ -188,6 +220,7 @@ const props = defineProps({
 // events
 const emit = defineEmits([
 	'select',           // emitted when the focused single-file selection changes; payload: { row, assetRef } or null
+	'navigate-to-toy',  // emitted when the user clicks a "Toys using this asset" chip; payload: { slug }
 ]);
 
 
@@ -240,6 +273,34 @@ const previewMeta = computed(() => {
 		kind: f.asset_kind || f.mime_type || '',
 	};
 });
+
+
+/**
+ * List of currently-enabled toys whose settings reference the focused
+ * asset. Re-evaluates when the focused file changes. The scan happens
+ * via ChatToysApp.findToysUsingAsset which JSON-stringifies each toy's
+ * reactive settings and substring-matches the quoted id.
+ *
+ * @returns {Array<{ slug:string, name:string, themeColor:string }>}
+ */
+const usingToys = computed(() => {
+	const id = previewableAssetId.value;
+	if (!id) return [];
+	return ctApp?.findToysUsingAsset?.(id) || [];
+});
+
+
+/**
+ * Click handler for a chip in the "Toys using this asset" list. Sets
+ * the appropriate selectedToy / selectedTool + flips activeTab, then
+ * emits an event upward so a host modal (the picker) can close itself.
+ *
+ * @param {{ slug:string, name:string, themeColor:string }} toy
+ */
+function onUsingToyClick(toy) {
+	ctApp?.navigateToToyByAsset?.(toy.slug);
+	emit('navigate-to-toy', { slug: toy.slug });
+}
 
 
 /**
@@ -453,6 +514,44 @@ onMounted(async () => {
 			baseURL: `http://localhost:${port}/api/files`,
 		});
 
+		// Build the augmented context-menu items list. vuefinder's
+		// default `contextMenuItems` array is exposed as a named export;
+		// we shallow-copy it and add a Cut entry. Cut isn't natively in
+		// the right-click menu (only on the menubar we hide); without
+		// this, users have no way to do an in-folder cut+paste move.
+		const baseItems = Array.isArray(mod.contextMenuItems) ? mod.contextMenuItems : [];
+		finderContextMenuItems.value = [
+			...baseItems,
+			{
+				id: 'cut',
+				title: (i18n) => (i18n?.t ? i18n.t('Cut') : 'Cut'),
+				action: (vfApp, items) => {
+					try {
+						vfApp.fs.setClipboard('cut', new Set(items.map((it) => it.path)));
+						const count = items.length;
+						const msg = count === 1
+							? (vfApp.i18n?.t ? vfApp.i18n.t('Item cut to clipboard') : 'Item cut to clipboard')
+							: `${count} items cut to clipboard`;
+						vfApp.notify?.('success', msg);
+					} catch (err) {
+						console.warn('[AssetBrowser] cut failed:', err);
+					}
+				},
+				// Show when something is selected AND the move feature is
+				// enabled. Cut without move is meaningless because paste
+				// after a cut performs a move under the hood.
+				show: (vfApp, ctx) => {
+					const items = ctx?.items || [];
+					const moveOn = vfApp.features?.move !== false;
+					return items.length > 0 && moveOn;
+				},
+				// Slot it just before Copy in the menu order. Copy/Paste
+				// default to ~110/130; 105 keeps Cut visually grouped
+				// with them and above other actions.
+				order: 105,
+			},
+		];
+
 		finderReady.value = true;
 	} catch (err) {
 		console.error('[AssetBrowser] failed to load vuefinder:', err);
@@ -637,6 +736,70 @@ defineExpose({ getFocusedFile });
 						font-weight: 500;
 					}
 				}// .previewMeta
+
+				// "Toys using this asset" — vertical list of clickable
+				// chips with the toy's icon + name. The themeColor CSS
+				// var comes from each chip's inline style; we use it for
+				// a subtle left accent so the list reads at a glance.
+				.usingToys {
+
+					margin-top: 18px;
+					padding-top: 12px;
+					border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+					.usingToysHeader {
+						font-size: 11.5px;
+						font-weight: 600;
+						text-transform: uppercase;
+						letter-spacing: 0.5px;
+						color: rgba(0, 0, 0, 0.55);
+						margin-bottom: 6px;
+					}
+
+					.usingToyChip {
+
+						display: flex;
+						align-items: center;
+						gap: 8px;
+						width: 100%;
+						padding: 6px 8px;
+						margin-bottom: 4px;
+
+						background: white;
+						border: 1px solid rgba(0, 0, 0, 0.12);
+						border-left: 3px solid var(--toyColor, #888);
+						border-radius: 5px;
+
+						font-size: 13px;
+						color: #1f2240;
+						text-align: left;
+						cursor: pointer;
+
+						transition: background 0.12s ease, border-color 0.12s ease;
+
+						.usingToyIcon {
+							width: 22px;
+							height: 22px;
+							object-fit: contain;
+							flex-shrink: 0;
+						}
+
+						.usingToyName {
+							flex: 1;
+							min-width: 0;
+							overflow: hidden;
+							text-overflow: ellipsis;
+							white-space: nowrap;
+						}
+
+						&:hover {
+							background: #f1f8ff;
+							border-color: rgba(0, 0, 0, 0.25);
+						}
+
+					}// .usingToyChip
+
+				}// .usingToys
 
 			}// .previewBody
 

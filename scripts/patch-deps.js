@@ -29,6 +29,27 @@
 const fs   = require('fs');
 const path = require('path');
 
+// Vuefinder is patched at the source level (the move/copy validator's
+// over-eager parent-check clause). The patch is regex-pinned to the
+// minified output of 4.1.2 - other versions could parse differently
+// and the patch may either no-op or do the wrong thing. We pin the
+// package version in package.json (no caret) AND verify at patch time
+// so a surprise upgrade screams instead of silently breaking moves.
+const EXPECTED_VUEFINDER_VERSION = '4.1.2';
+try {
+	const installedVuefinder = require(path.join(__dirname, '..', 'node_modules', 'vuefinder', 'package.json'));
+	if (installedVuefinder.version !== EXPECTED_VUEFINDER_VERSION) {
+		console.warn(`\n[patch-deps] !!! vuefinder version mismatch !!!`);
+		console.warn(`  expected: ${EXPECTED_VUEFINDER_VERSION}`);
+		console.warn(`  found:    ${installedVuefinder.version}`);
+		console.warn(`  The bundled regex patch is tuned to ${EXPECTED_VUEFINDER_VERSION}'s minified output.`);
+		console.warn(`  It may no-op silently against other versions, leaving the validator broken.`);
+		console.warn(`  Either pin back to ${EXPECTED_VUEFINDER_VERSION} or re-derive the patch pattern.\n`);
+	}
+} catch (e) {
+	// vuefinder not installed - npm install hasn't completed yet, skip
+}
+
 // Directories to scan for the offending syntax. We deliberately keep
 // this narrow (not the whole node_modules tree) to keep the postinstall
 // step fast and to make it obvious which deps are being touched.

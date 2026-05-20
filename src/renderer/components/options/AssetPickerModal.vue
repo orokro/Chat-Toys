@@ -33,6 +33,7 @@
 					:kindFilter="kindFilter"
 					:singleSelect="true"
 					@select="onSelect"
+					@navigate-to-toy="onNavigateToToy"
 				/>
 			</div>
 
@@ -135,6 +136,17 @@ const modalHeight = 'min(90vh, 900px)';
  */
 function onSelect(payload) {
 	focusedAssetRef.value = payload?.assetRef || null;
+}
+
+
+/**
+ * The AssetBrowser already updated ChatToysApp's `selectedToy` and
+ * `activeTab` to land the user on the right toy's page. All we have
+ * to do here is close the picker so the user actually sees the
+ * destination.
+ */
+function onNavigateToToy() {
+	closeModal();
 }
 
 
