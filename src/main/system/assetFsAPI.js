@@ -91,8 +91,27 @@ function mountAssetFsAPI(expressApp, ctx) {
 	const customAssetsDir = path.join(app.getPath('userData'), 'custom_assets');
 	if (!fs.existsSync(customAssetsDir)) fs.mkdirSync(customAssetsDir, { recursive: true });
 
-	// renderer/builtin - the on-disk home for bundled built-ins.
-	const builtinDir = path.join(app.getAppPath(), 'renderer', 'builtin');
+	// The bundled built-in assets live at different locations depending
+	// on how the app is being run. Try each in priority order; the
+	// first one that exists wins:
+	//   1. Production / packaged: <appPath>/renderer/builtin/
+	//   2. `npm run build` output:  <projectRoot>/build/renderer/builtin/
+	//   3. Dev (vite serving src): <projectRoot>/src/renderer/public/builtin/
+	// In dev `app.getAppPath()` is `<projectRoot>/build/main`, so the
+	// dev/build fallbacks walk up two levels.
+	const builtinDir = (() => {
+		const candidates = [
+			path.join(app.getAppPath(), 'renderer', 'builtin'),
+			path.join(app.getAppPath(), '..', 'renderer', 'builtin'),
+			path.join(app.getAppPath(), '..', '..', 'build', 'renderer', 'builtin'),
+			path.join(app.getAppPath(), '..', '..', 'src', 'renderer', 'public', 'builtin'),
+		];
+		for (const c of candidates) {
+			if (fs.existsSync(c)) return c;
+		}
+		return candidates[0]; // give up; preview endpoints will 404 with the prod path in error
+	})();
+	if (log) log(`[assetFsAPI] built-in dir resolved to: ${builtinDir}`);
 
 	// JSON parser shared by all mutating routes.
 	const jsonParser = express.json({ limit: '5mb' });
@@ -207,7 +226,11 @@ function mountAssetFsAPI(expressApp, ctx) {
 				if (!s) continue;
 				db.moveAssetPath(s, destination);
 			}
-			res.json(buildEnvelope(destination, db.listAssetPathChildren(destination), req));
+			// Vuefinder sends `path` as the current directory; return its
+			// updated contents so the breadcrumb stays sync'd to where
+			// the user is, not where the file went.
+			const currentDir = normalizePath(body.path || destination);
+			res.json(buildEnvelope(currentDir, db.listAssetPathChildren(currentDir), req));
 		} catch (err) { sendError(res, err); }
 	});
 
@@ -223,7 +246,10 @@ function mountAssetFsAPI(expressApp, ctx) {
 				if (!s) continue;
 				db.copyAssetPath(s, destination, customAssetsDir);
 			}
-			res.json(buildEnvelope(destination, db.listAssetPathChildren(destination), req));
+			// Stay at the user's current directory (the source folder)
+			// so the breadcrumb doesn't surprise-jump to the destination.
+			const currentDir = normalizePath(body.path || destination);
+			res.json(buildEnvelope(currentDir, db.listAssetPathChildren(currentDir), req));
 		} catch (err) { sendError(res, err); }
 	});
 

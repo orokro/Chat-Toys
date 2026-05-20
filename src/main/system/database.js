@@ -834,9 +834,15 @@ class DatabaseManager {
 	moveAssetPath(sourcePath, destParent) {
 		const row = this.getAssetPathRow(sourcePath);
 		if (!row) throw new Error(`No such path: ${sourcePath}`);
-		const destRow = this.getAssetPathRow(destParent);
-		if (!destRow || !destRow.is_folder)
-			throw new Error(`Destination is not a folder: ${destParent}`);
+		// Storage root (`assets://`) is the implicit top-level folder and
+		// has no asset_paths row of its own - treat it as a valid
+		// destination explicitly. Other destinations must resolve to a
+		// real folder row.
+		if (destParent !== ASSET_STORAGE_PREFIX) {
+			const destRow = this.getAssetPathRow(destParent);
+			if (!destRow || !destRow.is_folder)
+				throw new Error(`Destination is not a folder: ${destParent}`);
+		}
 
 		const resolved = this._resolveBasenameCollision(destParent, row.basename);
 		const newPath = joinAssetPath(destParent, resolved);
@@ -880,9 +886,14 @@ class DatabaseManager {
 	copyAssetPath(sourcePath, destParent, customAssetsDir) {
 		const row = this.getAssetPathRow(sourcePath);
 		if (!row) throw new Error(`No such path: ${sourcePath}`);
-		const destRow = this.getAssetPathRow(destParent);
-		if (!destRow || !destRow.is_folder)
-			throw new Error(`Destination is not a folder: ${destParent}`);
+		// Storage root (`assets://`) is the implicit top-level folder and
+		// has no asset_paths row of its own - treat it as a valid
+		// destination explicitly.
+		if (destParent !== ASSET_STORAGE_PREFIX) {
+			const destRow = this.getAssetPathRow(destParent);
+			if (!destRow || !destRow.is_folder)
+				throw new Error(`Destination is not a folder: ${destParent}`);
+		}
 
 		const fs   = require('fs');
 		const path = require('path');

@@ -44,6 +44,31 @@ const ROOTS = [
 const PATTERN = /\bwith\s*\{\s*type\s*:\s*(['"])json\1\s*\}/g;
 const REPLACEMENT = `assert { type: "json" }`;
 
+// vuefinder 4.x ships a Move/Copy modal whose destination validator
+// has an over-eager "parent" check that blocks the perfectly valid
+// case of moving a file UP to its containing directory's parent.
+// The validation appears in two adjacent computeds (g and f) in the
+// modal setup() function, each with a slightly different minified
+// iterator var name (E in one, T in the other), e.g.:
+//
+//   S ? a.value.some((E) => !!(S.path === E.path || E.path.startsWith(S.path + "/") || E.type === "dir" && S.path.startsWith(E.path + "/"))) : !0
+//   S ? a.value.find((T) => T.path === S.path ...)
+//
+// Three clauses inside each:
+//   1. source === destination               (correct - self)
+//   2. source starts with destination + "/" (BROKEN - blocks every "move up")
+//   3. dest descends from source folder     (correct - loop)
+//
+// We strip clause 2 from both. Capture groups:
+//   $1 = the destination variable name (S in the minified code)
+//   $2 = the iterator variable name (E or T depending on the closure)
+// Clause structure (note who's calling .startsWith on what):
+//   1. S.path === E.path                            (self)
+//   2. E.path.startsWith(S.path + "/")              ← BROKEN; remove
+//   3. E.type === "dir" && S.path.startsWith(E.path + "/") (loop)
+const VUEFINDER_GUARD_PATTERN = /(\w+)\.path === (\w+)\.path \|\| \2\.path\.startsWith\(\1\.path \+ "\/"\) \|\| \2\.type === "dir" && \1\.path\.startsWith\(\2\.path \+ "\/"\)/g;
+const VUEFINDER_GUARD_REPLACEMENT = '$1.path === $2.path || $2.type === "dir" && $1.path.startsWith($2.path + "/")';
+
 // File extensions worth scanning. We avoid .json / .ts / .map etc.
 const EXTS = new Set(['.js', '.mjs', '.cjs']);
 
@@ -84,20 +109,36 @@ for (const rootRel of ROOTS) {
 	for (const file of walk(root)) {
 		scanned++;
 
-		// quick rough filter to avoid reading every file in full when
-		// most don't contain anything interesting
 		let src;
 		try {
 			src = fs.readFileSync(file, 'utf8');
 		} catch (e) {
 			continue;
 		}
-		if (!src.includes(`with`)) continue;
-		if (!PATTERN.test(src)) continue;
-		PATTERN.lastIndex = 0;
 
-		const next = src.replace(PATTERN, REPLACEMENT);
-		if (next !== src) {
+		let next = src;
+		let touched = false;
+
+		// 1) @uppy: import-attributes -> assert-attributes
+		if (next.includes('with')) {
+			PATTERN.lastIndex = 0;
+			if (PATTERN.test(next)) {
+				PATTERN.lastIndex = 0;
+				const after = next.replace(PATTERN, REPLACEMENT);
+				if (after !== next) { next = after; touched = true; }
+			}
+		}
+
+		// 2) vuefinder: strip the over-eager "source is child of dest"
+		// clause from the Move/Copy modal validator.
+		VUEFINDER_GUARD_PATTERN.lastIndex = 0;
+		if (VUEFINDER_GUARD_PATTERN.test(next)) {
+			VUEFINDER_GUARD_PATTERN.lastIndex = 0;
+			const after = next.replace(VUEFINDER_GUARD_PATTERN, VUEFINDER_GUARD_REPLACEMENT);
+			if (after !== next) { next = after; touched = true; }
+		}
+
+		if (touched) {
 			fs.writeFileSync(file, next, 'utf8');
 			patched++;
 			const rel = path.relative(path.resolve(__dirname, '..'), file).replace(/\\/g, '/');

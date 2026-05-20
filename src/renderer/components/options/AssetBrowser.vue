@@ -697,18 +697,26 @@ defineExpose({ getFocusedFile });
 	.vuefinder__search-modal__dropdown { z-index: 10006 !important; }
 	.vuefinder__search-modal__item-dropdown { z-index: 10007 !important; }
 
-	// Vuefinder bundles Sonner for toast notifications. Sonner's default
-	// z-index is 999999999 which would normally win, but in some host-
-	// app stacking contexts the host modal still ends up on top. Force
-	// the toaster well above our own modal layer and vuefinder's own.
+	// Vuefinder bundles Sonner for toast notifications. Sonner's own
+	// default is 999999999 - perfectly fine in a normal page context,
+	// but our jenesius-vue-modal's backdrop-filter creates a stacking
+	// context that the toaster ended up rendering *behind*. Set
+	// position:fixed so the toaster is body-relative (escaping any
+	// transform/filter-induced containing block) and bump z-index to
+	// max int so nothing else can outlayer it. !important wins
+	// against inline styles set by Sonner internally.
 	[data-sonner-toaster] {
-		z-index: 1000000 !important;
+		position: fixed !important;
+		z-index: 2147483647 !important;
 	}
 
 	// Hide the bottom status bar (storage dropdown + item count). We only
 	// have a single storage (`assets://`) so the dropdown is noise, and
 	// the item count isn't useful enough to justify keeping a whole bar.
-	.vuefinder__statusbar {
+	// (Real class is `vuefinder__status-bar__wrapper`, with hyphens,
+	// not `vuefinder__statusbar` like the first pass had.)
+	.vuefinder__status-bar__wrapper,
+	.vuefinder__status-bar {
 		display: none !important;
 	}
 
