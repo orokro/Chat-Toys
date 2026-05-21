@@ -199,8 +199,28 @@ export default class Toy {
 
 
 	/**
-	 * Handle when an incoming command is sent to this toy
-	 * 
+	 * Handle when an incoming command is sent to this toy.
+	 *
+	 * Subclasses override this. The handshake object follows a strict
+	 * accept/reject contract (see CommandProcessor._notifyListeners for the
+	 * canonical version):
+	 *
+	 *  - Call `handshake.accept()` ONLY after the requested action has
+	 *    succeeded (item enqueued AND queue accepted it, lobby joined AND
+	 *    has room, asset found AND playable, etc). accept() deducts the
+	 *    user's ChatToys points; calling it prematurely charges the viewer
+	 *    for an action that didn't happen.
+	 *  - Call `handshake.reject(reason)` when the action cannot be
+	 *    fulfilled. No points are deducted. For redeem-sourced messages
+	 *    (msg.source === 'twitch-redeem') this will trigger an automatic
+	 *    Twitch channel-points refund (see TwitchRedeems toy).
+	 *  - Exactly one of accept/reject should be called per invocation.
+	 *  - Fire-and-forget toys whose downstream pipeline cannot fail (e.g.
+	 *    Tosser, HeadPat, EmojiFountain) may accept immediately after
+	 *    enqueueing. Toys whose pipeline can drop the action (StreamBuddies
+	 *    lobby full, Media asset missing) MUST honor the success boolean
+	 *    of the downstream call.
+	 *
 	 * @param {String} commandSlug - the slug of the command
 	 * @param {Object} msg - details about the chat message that invoked the command
 	 * @param {Object} user - details about the user that invoked the command (could be dummy if not in database yet)

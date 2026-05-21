@@ -411,8 +411,32 @@ export class CommandProcessor {
 
 
 	/**
-	 * Notifies all listeners of a command that was run
-	 * 
+	 * Notifies all listeners of a command that was run.
+	 *
+	 * Each listener (Toy.onCommand) receives a `handshake` with `accept`/`reject`.
+	 *
+	 * Contract:
+	 *  - `accept()` MUST be called only AFTER the toy has confirmed the
+	 *    requested action can actually be fulfilled (lobby has room, asset
+	 *    exists, queue accepted the item, etc). Calling accept() triggers
+	 *    side effects: ChatToys point deduction, command-run callbacks, and
+	 *    (when the message originated from a Twitch redeem) marks the
+	 *    redemption fulfilled. Accepting prematurely charges the viewer for
+	 *    an action the toy could not actually perform.
+	 *  - `reject(reason)` MUST be called when the toy cannot fulfill the
+	 *    action. No points are deducted. When the message originated as a
+	 *    Twitch redeem (msg.source === 'twitch-redeem'), reject() triggers
+	 *    an automatic refund of the Twitch channel points via Helix.
+	 *  - Exactly one of accept()/reject() should be called per onCommand
+	 *    invocation. Calling neither leaves the message in an indeterminate
+	 *    state (no charge, no refund, no run-callback).
+	 *  - Fire-and-forget toys (where there is genuinely no failure mode
+	 *    after enqueueing, e.g. Tosser, HeadPat, EmojiFountain) may call
+	 *    accept() immediately after enqueueing. Toys whose downstream
+	 *    pipeline can drop the action (StreamBuddies lobby full, Media
+	 *    asset missing) MUST capture the success boolean and accept/reject
+	 *    accordingly.
+	 *
 	 * @param {String} toySlug - slug for the toy that listeners are hooked to (like "chat" or "tosser")
 	 * @param {String} commandSlug - specifically which command was run
 	 * @param {Object} msg - the original chat message details that triggered the command
@@ -427,15 +451,20 @@ export class CommandProcessor {
 
 		// only allow one listener to accept the command
 		let wasAccepted = false;
-	
+
 		// notify all listeners of this command that was successfully run
 		for (const cb of hooks) {
 
-			// build a method to accept the command
+			/**
+			 * Accept the command. Call this only AFTER the action is
+			 * confirmed to have succeeded. Triggers point deduction +
+			 * commandRun callbacks. Idempotent across listeners; only the
+			 * first call has effect.
+			 */
 			const accept = () => {
 
 				// only allow one listener to accept the command
-				if (wasAccepted) 
+				if (wasAccepted)
 					return;
 				wasAccepted = true;
 
@@ -452,14 +481,20 @@ export class CommandProcessor {
 				// generic listener notification only when a command was successfully run
 				this._notifyRunListeners(commandData.command, msg, commandData);
 			};
-			
-			// build a method to reject the command
+
+			/**
+			 * Reject the command. Call this when the action cannot be
+			 * fulfilled. No point deduction. For redeem-sourced messages,
+			 * this will trigger an automatic Twitch refund (Phase 3).
+			 *
+			 * @param {String} reason - human-readable reason, surfaced to chatters via the log
+			 */
 			const reject = (reason) => {
 				const errMsg = `"!${commandSlug}" rejected by listener: ${reason}`
 				console.log(errMsg);
 				this.chatToysApp.log.err(reason);
 			};
-	
+
 			// call the listener with the command details
 			cb(commandSlug, msg, user, params, { accept, reject });
 		}

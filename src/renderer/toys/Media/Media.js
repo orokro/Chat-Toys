@@ -244,19 +244,28 @@ export default class Media extends Toy {
 	 */
 	onCommand(commandSlug, msg, user, params, handshake) {
 
-		// queue the media item & accept the command
-		this.queueMediaItem(msg, commandSlug);
+		// Try to queue the media item. queueMediaItem returns false if the
+		// configured media asset has gone missing (deleted, race during
+		// config edit, schema drift). Defensive: refuse the command in
+		// that case so the viewer isn't charged for a no-op, and (when
+		// redeem-sourced) gets their Twitch points refunded.
+		const ok = this.queueMediaItem(msg, commandSlug);
+		if (!ok) {
+			handshake.reject(`Media for !${commandSlug} is missing or misconfigured`);
+			return;
+		}
 
 		// accept the command which updates the database
 		handshake.accept();
 	}
-	
+
 
 	/**
-	 * Queues a media item when command is run
-	 * 
+	 * Queues a media item when command is run.
+	 *
 	 * @param {Object} msg - the message object that invoked the command
 	 * @param {String} shortSlug - the command slug suffix (e.g. "1")
+	 * @returns {Boolean} true when the item was queued; false when no matching media asset was found
 	 */
 	queueMediaItem(msg, shortSlug) {
 
@@ -270,7 +279,7 @@ export default class Media extends Toy {
 		// GTFO if we don't have this item
 		if (!mediaItem) {
 			console.error(`Media item not found for slug: ${fullSlug}`);
-			return;
+			return false;
 		}
 
 		// show on system console
@@ -287,6 +296,7 @@ export default class Media extends Toy {
 			scale: mediaItem.scale !== undefined ? mediaItem.scale : 1,
 		}
 		this.stateTickerQueue.addToQueue(queueItem);
+		return true;
 	}
 
 

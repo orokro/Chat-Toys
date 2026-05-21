@@ -216,6 +216,20 @@ export default class StreamBuddies extends Toy {
 		const userID = msg.authorUniqueID;
 		const username = msg.author;
 
+		// Small helper: forward to buddySystem.doCommand and accept/reject
+		// based on its return value. doCommand returns false for: lobby
+		// full on join, leave when not joined, any non-join command from a
+		// user who hasn't joined, missing buddy instance, and hug/attack
+		// without a target. Honoring that boolean is the whole point of
+		// the Phase 0 fix.
+		const run = (...args) => {
+			const ok = this.buddySystem.doCommand(userID, username, ...args);
+			if (ok)
+				handshake.accept();
+			else
+				handshake.reject(`${username}: !${commandSlug} could not run (lobby full, not joined, or invalid target)`);
+		};
+
 		// handle commands based on which params they require
 		switch(commandSlug){
 
@@ -224,8 +238,7 @@ export default class StreamBuddies extends Toy {
 			case 'leave':
 			case 'sit':
 			case 'fart':
-				this.buddySystem.doCommand(userID, username, commandSlug );
-				handshake.accept();
+				run(commandSlug);
 				return;
 
 			// optional amount:
@@ -233,8 +246,7 @@ export default class StreamBuddies extends Toy {
 			case 'right':
 				const amtIsUndefined = params.amount === undefined || isNaN(params.amount);
 				const amt = amtIsUndefined ? null : parseInt(params.amount, 10);
-				this.buddySystem.doCommand(userID, username, commandSlug, amt);
-				handshake.accept();
+				run(commandSlug, amt);
 				return;
 
 			// optional direction
@@ -242,11 +254,10 @@ export default class StreamBuddies extends Toy {
 				const dir = params.direction === undefined ? null : params.direction.toLowerCase();
 				if(dir !== null && dir !== 'left' && dir !== 'right'){
 					this.chatToysApp.log.error(`${username}: Invalid direction for jump command`);
-					handshake.reject();
+					handshake.reject(`${username}: Invalid direction for jump command`);
 					return;
 				}
-				this.buddySystem.doCommand(userID, username, commandSlug, dir);
-				handshake.accept();
+				run(commandSlug, dir);
 				return;
 
 			// optional dance name
@@ -256,9 +267,8 @@ export default class StreamBuddies extends Toy {
 				// 	handshake.reject(`${username}: Invalid dance name for dance command`);
 				// 	return;
 				// }
-				
-				this.buddySystem.doCommand(userID, username, commandSlug, dance);
-				handshake.accept();
+
+				run(commandSlug, dance);
 				return;
 
 			// required user
@@ -266,16 +276,15 @@ export default class StreamBuddies extends Toy {
 			case 'attack':
 				if(params.user === undefined || params.user === null){
 					this.chatToysApp.log.error(`${username}: Missing user parameter for hug/attack command`);
-					handshake.reject();
+					handshake.reject(`${username}: Missing user parameter for !${commandSlug}`);
 					return;
 				}
-				this.buddySystem.doCommand(userID, username, commandSlug, params.user);
-				handshake.accept();
+				run(commandSlug, params.user);
 				return;
-			
+
 		}// switch
 
-		// accept the command which updates the database
+		// unknown sub-command
 		handshake.reject(`${username}: Invalid buddy command`);
 	}
 	
