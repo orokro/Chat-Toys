@@ -144,3 +144,42 @@ contextBridge.exposeInMainWorld('twitchAPI', {
 	onUpdate: (cb) => ipcRenderer.on('twitch-update', (e, data) => cb(data)),
 });
 
+
+// ---------------------------------------------------------------------------
+// Twurple Manager Bridge (the new Twitch integration via Twurple)
+// ---------------------------------------------------------------------------
+
+/**
+ * Exposes the Twurple-specific bridge to the renderer. Lives side-by-side
+ * with the legacy twitchAPI during the Phase 1 migration. The new
+ * Connection Settings sub-tab uses this; the existing Twitch sub-tab
+ * keeps using twitchAPI. After cutover (Phase 4), the legacy bridge can
+ * be hidden but left in place.
+ */
+contextBridge.exposeInMainWorld('twurpleAPI', {
+
+	/**
+	 * Start the Twurple OAuth code-grant flow (opens the popup).
+	 * @returns {Promise<{ok:boolean, error?:string}>}
+	 */
+	connect: () => ipcRenderer.invoke('twurple-connect'),
+
+	/**
+	 * Disconnect Twurple and clear stored credentials.
+	 * @returns {Promise<{ok:boolean, error?:string}>}
+	 */
+	disconnect: () => ipcRenderer.invoke('twurple-disconnect'),
+
+	/**
+	 * Get current Twurple auth/user status.
+	 * @returns {Promise<{authed:boolean, user?:object, scopes?:string[]}>}
+	 */
+	getStatus: () => ipcRenderer.invoke('twurple-get-status'),
+
+	/**
+	 * Listen for Twurple status/notification updates from the main process.
+	 * @param {(data:any)=>void} cb
+	 */
+	onUpdate: (cb) => ipcRenderer.on('twurple-update', (e, data) => cb(data)),
+});
+

@@ -1,0 +1,550 @@
+/*
+	TwurpleManager.js
+	-----------------
+
+	The new Twitch integration manager, built on Twurple.
+
+	Lives side-by-side with the legacy `TwitchManager` (TMI + implicit
+	grant) during the migration. Uses its own:
+	  - electron-store key:  'twurple'   (legacy uses 'twitch')
+	  - IPC channel prefix:  'twurple-*'  (legacy uses 'twitch-*')
+	  - express callback:    '/auth/twurple/callback'
+	  - Twitch app:          "Chat Toys v2" (Confidential client; legacy is Public)
+
+	Scope of THIS file (Phase 1 Task #6): the OAuth code-grant flow only.
+	  - Build the Twitch authorize URL with response_type=code + state
+	  - Open the popup, intercept the callback
+	  - Exchange the code for {access_token, refresh_token, scope, expires_in}
+	  - Resolve the user via Helix /users
+	  - Persist to electron-store under 'twurple'
+	  - IPC handlers + status broadcast to renderer
+
+	Out of scope (covered by later tasks):
+	  - RefreshingAuthProvider wiring             - Task #7
+	  - ChatClient (Twurple chat)                  - Task #9
+	  - EventSubWsListener                          - Task #11
+	  - TwitchEvents bus                            - Task #12
+*/
+
+import { BrowserWindow, ipcMain } from 'electron';
+const Store = require('electron-store');
+const store = new Store();
+import { createTwitchAuthWindow } from '../windows/TwitchAuthWindow.js';
+import express from 'express';
+import crypto from 'crypto';
+
+// Pull the new app's credentials from the gitignored secrets file. See
+// src/main/secrets.example.js for the template / rationale.
+const { TWURPLE_CLIENT_ID, TWURPLE_CLIENT_SECRET } = require('../secrets.js');
+
+// Universal fetch shim - main process is Node, modern Node has it natively
+// but some older Electron-bundled Node versions need a fallback.
+let _fetch = globalThis.fetch;
+if (typeof _fetch !== 'function') {
+	try {
+		_fetch = require('node-fetch');
+	} catch {
+		throw new Error('Fetch API not available and node-fetch not installed.');
+	}
+}
+
+/**
+ * The scopes the TwurpleManager requests on auth. Mirrors the comment
+ * block in secrets.js. Order doesn't matter to Twitch, but kept stable
+ * here so the consent screen always lists them the same way.
+ *
+ * @type {string[]}
+ */
+const TWURPLE_SCOPES = [
+	'chat:read',
+	'chat:edit',
+	'channel:read:redemptions',
+	'channel:manage:redemptions',
+	'bits:read',
+	'channel:read:subscriptions',
+	'moderator:read:followers',
+];
+
+/**
+ * @typedef {Object} TwurpleCreds
+ * @property {string} accessToken
+ * @property {string} refreshToken
+ * @property {string[]} scopes
+ * @property {{id:string, login:string, display_name:string}} user
+ * @property {number} obtainedAt - ms epoch when this token batch was issued
+ * @property {number} expiresIn  - lifetime in seconds (typically ~14400 for code-grant)
+ */
+
+/**
+ * TwurpleManager handles the new Twurple-based Twitch integration:
+ * code-grant OAuth, refreshable tokens, and (later) chat + EventSub.
+ */
+class TwurpleManager {
+
+	/**
+	 * @param {BrowserWindow} mainWindow - the app's main window for IPC
+	 * @param {Object} obsViewServer - the OBSViewServer instance, so we can hook into its express app
+	 */
+	constructor(mainWindow, obsViewServer) {
+
+		this.mainWindow = mainWindow;
+		this.obsViewServer = obsViewServer;
+
+		/** @type {string} */
+		this.clientId = TWURPLE_CLIENT_ID;
+
+		/** @type {string} */
+		this.clientSecret = TWURPLE_CLIENT_SECRET;
+
+		/** @type {string[]} */
+		this.scopes = TWURPLE_SCOPES;
+
+		/** @type {BrowserWindow|null} */
+		this._authWindow = null;
+
+		/** @type {boolean} */
+		this._routesAttached = false;
+
+		/**
+		 * Random nonce sent with the auth request and verified on the
+		 * callback. Prevents CSRF / a malicious tab from completing an
+		 * auth flow we didn't start.
+		 *
+		 * @type {string|null}
+		 */
+		this._pendingState = null;
+
+		console.log('[TwurpleManager] initializing');
+
+		this._registerIPC();
+		this._attachToOBSViewServer(obsViewServer);
+	}
+
+
+	/* ====================================================================== */
+	/*                          Server / Route Wiring                         */
+	/* ====================================================================== */
+
+
+	/**
+	 * Hooks our routes into the shared OBSViewServer express app via the
+	 * same setup-hook pattern TwitchManager uses. The server calls
+	 * setupTwurple(expressApp) before listening.
+	 *
+	 * @param {Object} obsViewServer
+	 */
+	_attachToOBSViewServer(obsViewServer) {
+
+		if (!obsViewServer) {
+			console.warn('[TwurpleManager] OBSViewServer missing; cannot attach setup hook.');
+			return;
+		}
+
+		obsViewServer.setupTwurple = (expressApp) => {
+			if (this._routesAttached) return;
+			this._attachRoutes(expressApp);
+			this._routesAttached = true;
+			console.log('[TwurpleManager] ✅ Twurple routes attached via OBSViewServer setup hook.');
+		};
+	}
+
+
+	/**
+	 * Registers the OAuth callback route on the shared express app.
+	 *
+	 * @param {import('express').Express} expressApp
+	 */
+	_attachRoutes(expressApp) {
+
+		if (!expressApp || typeof expressApp.use !== 'function') {
+			console.warn('[TwurpleManager] Invalid expressApp passed to _attachRoutes.');
+			return;
+		}
+
+		// Single GET endpoint - unlike the implicit flow (which had to
+		// serve HTML + JS to extract the token from the URL hash), code
+		// grant gets the code as a query param directly on the server.
+		expressApp.get('/auth/twurple/callback', (req, res) => {
+			this._handleCallback(req, res);
+		});
+	}
+
+
+	/* ====================================================================== */
+	/*                              OAuth Flow                                */
+	/* ====================================================================== */
+
+
+	/**
+	 * Start the OAuth code-grant flow: open the popup pointed at Twitch's
+	 * authorize endpoint with response_type=code. Twitch will redirect
+	 * back to our /auth/twurple/callback with a `code` query param.
+	 */
+	beginLogin() {
+
+		if (!this.clientId || !this.clientSecret) {
+			throw new Error('TwurpleManager: client ID / secret not configured. See src/main/secrets.example.js.');
+		}
+
+		const port = store.get('port', 3001);
+		const redirectUri = `http://localhost:${port}/auth/twurple/callback`;
+
+		// CSRF nonce - we'll verify this matches in the callback before
+		// trusting the code we receive. Twitch echoes ?state back to us.
+		this._pendingState = crypto.randomBytes(16).toString('hex');
+
+		const scopeParam = encodeURIComponent(this.scopes.join(' '));
+		const authUrl =
+			`https://id.twitch.tv/oauth2/authorize` +
+			`?client_id=${encodeURIComponent(this.clientId)}` +
+			`&redirect_uri=${encodeURIComponent(redirectUri)}` +
+			`&response_type=code` +
+			`&scope=${scopeParam}` +
+			`&state=${encodeURIComponent(this._pendingState)}` +
+			`&force_verify=true`;
+
+		this._ensureAuthWindow();
+		this._authWindow.loadURL(authUrl);
+		this._authWindow.show();
+	}
+
+
+	/**
+	 * Handle the GET /auth/twurple/callback request. Twitch sends one of:
+	 *   ?code=<code>&scope=<scopes>&state=<state>
+	 *   ?error=<error>&error_description=<msg>&state=<state>
+	 *
+	 * On success, we exchange the code at /oauth2/token and persist the
+	 * resulting tokens.
+	 *
+	 * @param {import('express').Request} req
+	 * @param {import('express').Response} res
+	 */
+	async _handleCallback(req, res) {
+
+		console.log('[TwurpleManager] /auth/twurple/callback hit');
+
+		const { code, state, error, error_description } = req.query;
+
+		// Error path - the user denied consent, or Twitch barfed
+		if (error) {
+			console.warn('[TwurpleManager] OAuth error:', error, error_description);
+			this._serveCallbackHTML(res, false, String(error_description || error));
+			this._closeAuthWindow();
+			return;
+		}
+
+		// CSRF check - state must match what we sent
+		if (!this._pendingState || state !== this._pendingState) {
+			console.warn('[TwurpleManager] state mismatch on callback; rejecting.');
+			this._serveCallbackHTML(res, false, 'State mismatch (possible CSRF). Try again.');
+			this._closeAuthWindow();
+			return;
+		}
+		this._pendingState = null;
+
+		if (!code) {
+			this._serveCallbackHTML(res, false, 'Missing authorization code in callback.');
+			this._closeAuthWindow();
+			return;
+		}
+
+		// Exchange the authorization code for tokens. We do this server-
+		// side from the Electron main process, which is fine because the
+		// client_secret never leaves the user's machine.
+		try {
+			const tokens = await this._exchangeCodeForTokens(String(code));
+			const user = await this._fetchUser(tokens.access_token);
+
+			/** @type {TwurpleCreds} */
+			const creds = {
+				accessToken: tokens.access_token,
+				refreshToken: tokens.refresh_token,
+				scopes: Array.isArray(tokens.scope) ? tokens.scope : (tokens.scope || '').split(' '),
+				user: user ? { id: user.id, login: user.login, display_name: user.display_name } : null,
+				obtainedAt: Date.now(),
+				expiresIn: tokens.expires_in,
+			};
+			store.set('twurple', creds);
+
+			console.log('[TwurpleManager] Saved Twurple credentials for', user?.login);
+			this._notifyRenderer(`✅ Twurple connected as @${user?.display_name}`);
+			this._sendStatusToRenderer();
+
+			this._serveCallbackHTML(res, true);
+			this._closeAuthWindow();
+
+		} catch (e) {
+			console.error('[TwurpleManager] Token exchange failed:', e);
+			this._serveCallbackHTML(res, false, e.message || 'Token exchange failed.');
+			this._closeAuthWindow();
+		}
+	}
+
+
+	/**
+	 * POST to Twitch's token endpoint to trade an authorization code for
+	 * access + refresh tokens. This is the step that requires the
+	 * client_secret and cannot be done from a Public client.
+	 *
+	 * @param {string} code - the one-time authorization code from the callback
+	 * @returns {Promise<{access_token:string, refresh_token:string, expires_in:number, scope:string[]|string, token_type:string}>}
+	 */
+	async _exchangeCodeForTokens(code) {
+
+		const port = store.get('port', 3001);
+		const redirectUri = `http://localhost:${port}/auth/twurple/callback`;
+
+		const body = new URLSearchParams({
+			client_id: this.clientId,
+			client_secret: this.clientSecret,
+			code,
+			grant_type: 'authorization_code',
+			redirect_uri: redirectUri,
+		});
+
+		const r = await _fetch('https://id.twitch.tv/oauth2/token', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: body.toString(),
+		});
+
+		const j = await r.json();
+		if (!r.ok)
+			throw new Error(`Twitch token exchange failed (${r.status}): ${JSON.stringify(j)}`);
+
+		return j;
+	}
+
+
+	/**
+	 * Renders the in-popup confirmation HTML. The popup closes itself
+	 * shortly after, but this gives the user a visual breadcrumb.
+	 *
+	 * @param {import('express').Response} res
+	 * @param {boolean} ok
+	 * @param {string} [errorMessage]
+	 */
+	_serveCallbackHTML(res, ok, errorMessage = '') {
+
+		const html = ok
+			? `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Twitch Auth</title>
+<style>body{font-family:system-ui,sans-serif;text-align:center;margin-top:10%;color:white;background:#18181b;}</style>
+</head><body><h2>✅ Twitch authorization complete</h2><p>You can close this window now.</p></body></html>`
+			: `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Twitch Auth Error</title>
+<style>body{font-family:system-ui,sans-serif;text-align:center;margin-top:10%;color:white;background:#18181b;}</style>
+</head><body><h2>⚠️ Twitch authorization failed</h2><p>${escapeHtml(errorMessage)}</p></body></html>`;
+
+		res.writeHead(ok ? 200 : 400, { 'Content-Type': 'text/html; charset=utf-8' });
+		res.end(html);
+	}
+
+
+	/* ====================================================================== */
+	/*                            Auth Lifecycle                              */
+	/* ====================================================================== */
+
+
+	/**
+	 * Disconnect: clear credentials and notify the renderer. Does not
+	 * (yet) tear down any Twurple services - those land in later tasks.
+	 */
+	async logout() {
+
+		store.delete('twurple');
+		this._sendStatusToRenderer();
+		console.log('[TwurpleManager] Logged out (credentials cleared).');
+	}
+
+
+	/**
+	 * Read the current auth/user status from the store. Used by the
+	 * renderer's settings page to show "Connected as @foo" or similar.
+	 *
+	 * @returns {{authed:boolean, user?:object, scopes?:string[]}}
+	 */
+	getStatus() {
+
+		const creds = this._getCreds();
+		if (!creds?.accessToken || !creds?.user)
+			return { authed: false };
+		return { authed: true, user: creds.user, scopes: creds.scopes || [] };
+	}
+
+
+	/* ====================================================================== */
+	/*                                Helix                                   */
+	/* ====================================================================== */
+
+
+	/**
+	 * Fetch the authenticated user's profile from Helix.
+	 *
+	 * @param {string} accessToken
+	 * @returns {Promise<{id:string, login:string, display_name:string}|null>}
+	 */
+	async _fetchUser(accessToken) {
+
+		if (!this.clientId) throw new Error('Client ID not set.');
+
+		const r = await _fetch('https://api.twitch.tv/helix/users', {
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+				'Client-Id': this.clientId,
+			},
+		});
+
+		if (!r.ok) {
+			console.warn('[TwurpleManager] /helix/users non-OK:', r.status);
+			return null;
+		}
+
+		const j = await r.json();
+		return j.data?.[0] || null;
+	}
+
+
+	/* ====================================================================== */
+	/*                          Window / Renderer                             */
+	/* ====================================================================== */
+
+
+	/**
+	 * Make sure we have an auth popup ready. Reuses the existing
+	 * TwitchAuthWindow factory - the popup is generic, just a Twitch-
+	 * styled BrowserWindow that loads whatever URL we give it.
+	 *
+	 * @returns {BrowserWindow}
+	 */
+	_ensureAuthWindow() {
+
+		if (this._authWindow && !this._authWindow.isDestroyed()) return this._authWindow;
+
+		this._authWindow = createTwitchAuthWindow(this.mainWindow, { modal: true });
+		this._authWindow.on('closed', () => (this._authWindow = null));
+		return this._authWindow;
+	}
+
+
+	/**
+	 * Close the auth popup if it's still open. Called from the callback
+	 * handler once we've persisted (or rejected) the auth.
+	 */
+	_closeAuthWindow() {
+
+		if (this._authWindow && !this._authWindow.isDestroyed())
+			this._authWindow.close();
+	}
+
+
+	/**
+	 * Send a transient notification message to the renderer (toast-style
+	 * "Twurple connected" line).
+	 *
+	 * @param {string} msg
+	 */
+	_notifyRenderer(msg) {
+
+		if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
+		this.mainWindow.webContents.send('twurple-update', { message: msg });
+	}
+
+
+	/**
+	 * Send the latest auth status to the renderer so the new
+	 * Connection Settings sub-tab can re-render its banner.
+	 */
+	_sendStatusToRenderer() {
+
+		const creds = store.get('twurple');
+		const status = {
+			authed: !!(creds && creds.accessToken),
+			user: creds?.user || null,
+			scopes: creds?.scopes || [],
+		};
+
+		if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
+		this.mainWindow.webContents.send('twurple-update', { status });
+		console.log('[TwurpleManager] Sent twurple-update to renderer:', status);
+	}
+
+
+	/**
+	 * Helper for reading creds from the store.
+	 *
+	 * @returns {TwurpleCreds|null}
+	 */
+	_getCreds() {
+		return store.get('twurple', null);
+	}
+
+
+	/* ====================================================================== */
+	/*                                 IPC                                    */
+	/* ====================================================================== */
+
+
+	/**
+	 * Register the twurple-* IPC handlers. The renderer's new
+	 * connection-settings sub-tab (Phase 1 Task #8) invokes these.
+	 */
+	_registerIPC() {
+
+		console.log('[TwurpleManager] registering IPC handlers');
+
+		ipcMain.handle('twurple-connect', async () => {
+			try {
+				this.beginLogin();
+				return { ok: true };
+			} catch (e) {
+				return { ok: false, error: e.message };
+			}
+		});
+
+		ipcMain.handle('twurple-disconnect', async () => {
+			try {
+				await this.logout();
+				return { ok: true };
+			} catch (e) {
+				return { ok: false, error: e.message };
+			}
+		});
+
+		ipcMain.handle('twurple-get-status', async () => {
+			try {
+				return this.getStatus();
+			} catch (e) {
+				return { ok: false, error: e.message };
+			}
+		});
+
+		console.log('[TwurpleManager] IPC handlers registered');
+	}
+
+}
+
+
+/* ====================================================================== */
+/*                              Utilities                                 */
+/* ====================================================================== */
+
+
+/**
+ * Minimal HTML-escape for error messages we render in the popup. Avoids
+ * the "user sees <script> in the error message" footgun if Twitch ever
+ * echoes something funky back as error_description.
+ *
+ * @param {string} s
+ * @returns {string}
+ */
+function escapeHtml(s) {
+	return String(s)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+
+module.exports = { TwurpleManager };

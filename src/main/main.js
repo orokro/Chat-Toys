@@ -18,6 +18,7 @@ import { createAppMenu } from './system/MainAppMenu.js';
 import { chatForward } from './system/chatForward.js';
 import ChatSourceManager from './system/ChatSourceManager.js';
 import { TwitchManager } from './system/TwitchManager.js';
+import { TwurpleManager } from './system/TwurpleManager.js';
 const { DatabaseManager } = require('./system/database');
 
 // load our window tests
@@ -32,6 +33,7 @@ let chatTesterWindow = null;
 let obsViewServer = null;
 let chatSourceMgr = null;
 let twitchMgr = null;
+let twurpleMgr = null;
 let tray = null;
 
 // Main-process SQLite connection used by the asset-filesystem express
@@ -185,7 +187,13 @@ app.whenReady().then(() => {
 		clientId: 'x4po2in358dfq7c2jeuek5uh85qhoh',
 		scopes: ['chat:read', 'chat:edit'],
 	});
-	
+
+	// New Twurple-based manager (Phase 1 migration). Lives side-by-side
+	// with the legacy TwitchManager during dev so we can A/B test before
+	// cutting over. Pulls credentials from src/main/secrets.js. Hooks
+	// its own /auth/twurple/callback route + twurple-* IPC channels.
+	twurpleMgr = new TwurpleManager(mainWindow, obsViewServer);
+
 	// start servers after twitch has added it's routes
 	obsViewServer.startServers();
 

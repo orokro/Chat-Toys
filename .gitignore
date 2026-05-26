@@ -15,6 +15,9 @@
 .env
 .env.*.local
 
+# OAuth secrets - tracked template lives at src/main/secrets.example.js
+src/main/secrets.js
+
 # OS generated files
 .DS_Store
 Thumbs.db

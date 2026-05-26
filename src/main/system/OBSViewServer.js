@@ -224,6 +224,12 @@ class OBSViewServer {
 				this.setupTwitch(expressApp);
 			}
 
+			// Same hook for the new TwurpleManager (lives side-by-side with TwitchManager during the Phase 1 migration).
+			if (typeof this.setupTwurple === 'function') {
+				console.log('[OBSViewServer] Calling setupTwurple hook before starting server...');
+				this.setupTwurple(expressApp);
+			}
+
 			// log every request to Frontend
 			expressApp.use((req, res, next) => {
 				this.logToFE(`[HTTP] ${req.method} ${req.url}`);
