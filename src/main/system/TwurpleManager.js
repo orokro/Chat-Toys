@@ -33,6 +33,10 @@ import { createTwitchAuthWindow } from '../windows/TwitchAuthWindow.js';
 import express from 'express';
 import crypto from 'crypto';
 
+// Twurple - handles refresh + Helix API on top of our stored tokens.
+import { RefreshingAuthProvider } from '@twurple/auth';
+import { ApiClient } from '@twurple/api';
+
 // Pull the new app's credentials from the gitignored secrets file. See
 // src/main/secrets.example.js for the template / rationale.
 const { TWURPLE_CLIENT_ID, TWURPLE_CLIENT_SECRET } = require('../secrets.js');
@@ -114,10 +118,52 @@ class TwurpleManager {
 		 */
 		this._pendingState = null;
 
+		/**
+		 * Twurple auth provider - handles silent token refresh. Built
+		 * lazily once we have stored credentials. After app restart it
+		 * gets rebuilt from electron-store; after a fresh OAuth login it
+		 * gets rebuilt from the newly-issued tokens.
+		 *
+		 * @type {RefreshingAuthProvider|null}
+		 */
+		this.authProvider = null;
+
+		/**
+		 * Twurple Helix API client. Built alongside `authProvider`.
+		 * Exposed for downstream consumers (TwitchRedeems toy in Phase 3
+		 * uses it for subscriber lookup + refund calls).
+		 *
+		 * @type {ApiClient|null}
+		 */
+		this.apiClient = null;
+
+		/**
+		 * The Twitch userId that the auth provider is currently bound to.
+		 * Cached so we don't have to dig it out of the auth provider on
+		 * every call. Null until init succeeds.
+		 *
+		 * @type {string|null}
+		 */
+		this.userId = null;
+
 		console.log('[TwurpleManager] initializing');
 
 		this._registerIPC();
 		this._attachToOBSViewServer(obsViewServer);
+
+		// If we already have stored creds from a previous session, rehydrate
+		// the auth provider now so chat / EventSub / Helix can come up
+		// immediately on boot without waiting for the user to re-auth.
+		const existing = this._getCreds();
+		if (existing?.accessToken && existing?.refreshToken) {
+			console.log('[TwurpleManager] Found existing creds, rehydrating clients...');
+			this._initTwurpleClients(existing).catch((err) => {
+				console.error('[TwurpleManager] Failed to rehydrate Twurple clients:', err);
+				// We deliberately do NOT wipe the store here; the user may
+				// just be offline. A failed call later will surface the
+				// real issue (e.g. invalid refresh token => re-auth).
+			});
+		}
 	}
 
 
@@ -268,6 +314,19 @@ class TwurpleManager {
 			store.set('twurple', creds);
 
 			console.log('[TwurpleManager] Saved Twurple credentials for', user?.login);
+
+			// Stand up the Twurple auth provider + Helix client right away
+			// so downstream consumers (chat, EventSub, redeems toy) can
+			// pick them up without waiting for the next app restart.
+			try {
+				await this._initTwurpleClients(creds);
+			} catch (initErr) {
+				console.error('[TwurpleManager] Post-login client init failed:', initErr);
+				// Auth itself succeeded - tokens are stored. Surface the
+				// init failure but don't roll back the login; user can
+				// retry without re-OAuthing.
+			}
+
 			this._notifyRenderer(`✅ Twurple connected as @${user?.display_name}`);
 			this._sendStatusToRenderer();
 
@@ -346,12 +405,84 @@ class TwurpleManager {
 
 
 	/**
-	 * Disconnect: clear credentials and notify the renderer. Does not
-	 * (yet) tear down any Twurple services - those land in later tasks.
+	 * Build (or rebuild) the Twurple auth provider + api client from a
+	 * set of credentials. Idempotent - safe to call after every login or
+	 * on app boot.
+	 *
+	 * The auth provider hooks an onRefresh callback that persists the new
+	 * token batch back to electron-store whenever Twurple silently
+	 * refreshes (which is every ~4 hours by default for code-grant). That
+	 * way the next app start picks up the freshest tokens, not stale ones
+	 * that would force a re-auth.
+	 *
+	 * @param {TwurpleCreds} creds - the credentials to seed the auth provider with
+	 * @returns {Promise<void>}
+	 */
+	async _initTwurpleClients(creds) {
+
+		if (!creds?.accessToken || !creds?.refreshToken) {
+			throw new Error('Cannot init Twurple clients without access+refresh tokens.');
+		}
+
+		// Fresh provider on each call. Cheap to build; avoids carrying
+		// stale internal state across logout / re-login.
+		this.authProvider = new RefreshingAuthProvider({
+			clientId: this.clientId,
+			clientSecret: this.clientSecret,
+		});
+
+		// onRefresh fires whenever Twurple silently rotates the access
+		// token (every ~4 hours). Persist the new batch so we restart
+		// with fresh tokens next boot. The refreshToken itself can also
+		// rotate in this callback - Twitch may issue a new one.
+		this.authProvider.onRefresh((userId, newTokenData) => {
+			try {
+				const existing = this._getCreds() || {};
+				const updated = {
+					...existing,
+					accessToken: newTokenData.accessToken,
+					refreshToken: newTokenData.refreshToken,
+					expiresIn: newTokenData.expiresIn,
+					obtainedAt: newTokenData.obtainmentTimestamp ?? Date.now(),
+					scopes: newTokenData.scope || existing.scopes || [],
+				};
+				store.set('twurple', updated);
+				console.log('[TwurpleManager] 🔄 Token refreshed for user', userId);
+			} catch (e) {
+				console.error('[TwurpleManager] onRefresh persist failed:', e);
+			}
+		});
+
+		// Hand the auth provider the current token batch. Returns the
+		// userId Twurple resolved from the token. Intents are ceremonial
+		// for a single-user app but we tag with both 'chat' and 'eventsub'
+		// so the later ChatClient + EventSubWsListener pick this token up.
+		this.userId = await this.authProvider.addUserForToken(
+			{
+				accessToken: creds.accessToken,
+				refreshToken: creds.refreshToken,
+				expiresIn: creds.expiresIn ?? 0,
+				obtainmentTimestamp: creds.obtainedAt ?? 0,
+				scope: Array.isArray(creds.scopes) ? creds.scopes : [],
+			},
+			['chat', 'eventsub'],
+		);
+
+		this.apiClient = new ApiClient({ authProvider: this.authProvider });
+
+		console.log('[TwurpleManager] ✅ Twurple clients ready for userId', this.userId);
+	}
+
+
+	/**
+	 * Disconnect: clear credentials and tear down Twurple clients.
 	 */
 	async logout() {
 
 		store.delete('twurple');
+		this.authProvider = null;
+		this.apiClient = null;
+		this.userId = null;
 		this._sendStatusToRenderer();
 		console.log('[TwurpleManager] Logged out (credentials cleared).');
 	}
