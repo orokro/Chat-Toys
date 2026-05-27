@@ -37,6 +37,11 @@ import crypto from 'crypto';
 import { RefreshingAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
 
+// Chat reader is its own class so we can mount/dismount it cleanly on
+// login / logout. Same pattern the legacy TwitchManager uses with
+// TwitchChatReader.
+const TwurpleChatReader = require('./TwurpleChatReader.js');
+
 // Pull the new app's credentials from the gitignored secrets file. See
 // src/main/secrets.example.js for the template / rationale.
 const { TWURPLE_CLIENT_ID, TWURPLE_CLIENT_SECRET } = require('../secrets.js');
@@ -145,6 +150,14 @@ class TwurpleManager {
 		 * @type {string|null}
 		 */
 		this.userId = null;
+
+		/**
+		 * The Twurple-backed chat reader. Replaces the legacy TMI reader
+		 * once this manager is connected.
+		 *
+		 * @type {TwurpleChatReader|null}
+		 */
+		this.chatReader = null;
 
 		console.log('[TwurpleManager] initializing');
 
@@ -471,6 +484,44 @@ class TwurpleManager {
 		this.apiClient = new ApiClient({ authProvider: this.authProvider });
 
 		console.log('[TwurpleManager] ✅ Twurple clients ready for userId', this.userId);
+
+		// Bring up the chat reader against the broadcaster's own channel.
+		// During the migration window this runs ALONGSIDE the legacy
+		// TMI reader - any duplicate messages downstream are expected and
+		// are the test signal for Task #10. After cutover (Phase 4), the
+		// legacy reader is disabled and only this one feeds chat.
+		await this._startChatReader(creds);
+	}
+
+
+	/**
+	 * Spin up a fresh TwurpleChatReader and join the broadcaster's
+	 * channel. Tears down any prior reader first so back-to-back logins
+	 * don't leak websockets.
+	 *
+	 * @param {TwurpleCreds} creds
+	 * @returns {Promise<void>}
+	 */
+	async _startChatReader(creds) {
+
+		if (this.chatReader) {
+			try { await this.chatReader.disconnect(); } catch { /* swallow */ }
+			this.chatReader = null;
+		}
+
+		const channelLogin = creds?.user?.login;
+		if (!channelLogin) {
+			console.warn('[TwurpleManager] Cannot start chat reader - no user.login in creds.');
+			return;
+		}
+
+		this.chatReader = new TwurpleChatReader(
+			this.mainWindow,
+			this.authProvider,
+			channelLogin,
+			this.userId,
+		);
+		await this.chatReader.connect();
 	}
 
 
@@ -478,6 +529,14 @@ class TwurpleManager {
 	 * Disconnect: clear credentials and tear down Twurple clients.
 	 */
 	async logout() {
+
+		// Stop the chat reader BEFORE clearing creds - quitting the
+		// ChatClient cleanly avoids a "websocket auth failure" log spam
+		// if Twurple tries to reconnect after we wipe the auth provider.
+		if (this.chatReader) {
+			try { await this.chatReader.disconnect(); } catch { /* swallow */ }
+			this.chatReader = null;
+		}
 
 		store.delete('twurple');
 		this.authProvider = null;
