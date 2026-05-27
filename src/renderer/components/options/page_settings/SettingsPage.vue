@@ -14,6 +14,7 @@
 		<OBSSettingsPage v-if="selectedPage === 'obsSettings'" />
 		<ChatPage v-if="selectedPage === 'chatSettings'" />
 		<TwitchPage v-if="selectedPage === 'twitch'" />
+		<TwurplePage v-if="selectedPage === 'twurple'" />
 		<VTubeStudioPage v-if="selectedPage === 'vtsSettings'" />
 		<PluginPage v-if="selectedPage === 'plugin'" />
 		<BTTVPage v-if="selectedPage === 'bttv'" />
@@ -33,6 +34,7 @@ import OBSSettingsPage from './pages/OBSSettingsPage.vue';
 import VTubeStudioPage from './pages/VTubeStudioPage.vue';
 import ChatPage from './pages/ChatPage.vue';
 import TwitchPage from './pages/TwitchPage.vue';
+import TwurplePage from './pages/TwurplePage.vue';
 import PluginPage from './pages/PluginPage.vue';
 // CommandsDescPage moved to the System -> Commands tab (the copy / paste
 // command-list snippet now lives on the master CommandsPage). Connection
@@ -48,6 +50,10 @@ const pageItems = [
 	{
 		slug: 'twitch',
 		name: 'Twitch Settings',
+	},
+	{
+		slug: 'twurple',
+		name: 'Twitch (Twurple) - new',
 	},
 	{
 		slug: 'obsSettings',
