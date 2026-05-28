@@ -36,6 +36,7 @@ import crypto from 'crypto';
 // Twurple - handles refresh + Helix API on top of our stored tokens.
 import { RefreshingAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
+import { EventSubWsListener } from '@twurple/eventsub-ws';
 
 // Chat reader is its own class so we can mount/dismount it cleanly on
 // login / logout. Same pattern the legacy TwitchManager uses with
@@ -158,6 +159,25 @@ class TwurpleManager {
 		 * @type {TwurpleChatReader|null}
 		 */
 		this.chatReader = null;
+
+		/**
+		 * Twurple EventSub WebSocket listener. Subscribes to channel
+		 * events (redemptions, cheers, subs, follows, raids) over a single
+		 * outbound WebSocket - no public callback URL needed. Started
+		 * alongside the chat reader; stopped on logout.
+		 *
+		 * @type {EventSubWsListener|null}
+		 */
+		this.eventSubListener = null;
+
+		/**
+		 * Unsubscribe functions for the per-event handlers we register on
+		 * the EventSubWsListener. Called in stopEventSub() to detach
+		 * cleanly before stopping the listener.
+		 *
+		 * @type {Function[]}
+		 */
+		this._eventSubUnsubs = [];
 
 		console.log('[TwurpleManager] initializing');
 
@@ -491,6 +511,133 @@ class TwurpleManager {
 		// are the test signal for Task #10. After cutover (Phase 4), the
 		// legacy reader is disabled and only this one feeds chat.
 		await this._startChatReader(creds);
+
+		// Bring up EventSub for non-chat events (redeems, etc). Separate
+		// from chat so a failure in one doesn't take the other down.
+		await this._startEventSub();
+	}
+
+
+	/**
+	 * Stand up the EventSubWsListener and subscribe to the events we
+	 * care about. Phase 2 wires redemption; future phases (5+) add
+	 * cheers / subs / follows / raids on top of the same listener.
+	 *
+	 * @returns {Promise<void>}
+	 */
+	async _startEventSub() {
+
+		if (!this.apiClient || !this.userId) {
+			console.warn('[TwurpleManager] Cannot start EventSub - apiClient or userId missing.');
+			return;
+		}
+
+		// Tear down any prior listener first.
+		await this._stopEventSub();
+
+		console.log('[TwurpleManager] Starting EventSub WebSocket listener...');
+
+		this.eventSubListener = new EventSubWsListener({ apiClient: this.apiClient });
+
+		// Lifecycle observability. These methods exist on the listener in
+		// Twurple 7.x and fire as the underlying WebSocket comes up,
+		// reconnects, or fails. Useful breadcrumbs when debugging "why
+		// did redeems stop firing mid-stream?" reports later.
+		try {
+			this.eventSubListener.onUserSocketConnect?.((userId) => {
+				console.log('[TwurpleManager] EventSub socket connected for', userId);
+			});
+			this.eventSubListener.onUserSocketDisconnect?.((userId, err) => {
+				console.warn('[TwurpleManager] EventSub socket disconnected for', userId, err || '');
+			});
+		} catch (e) {
+			// Lifecycle hooks aren't strictly required; if Twurple ever
+			// renames them between versions, don't take the listener down.
+			console.warn('[TwurpleManager] Could not bind EventSub lifecycle hooks:', e?.message);
+		}
+
+		// Channel point redemption (the headline event for Phase 3).
+		// Forward to renderer with our normalized shape so the future
+		// TwitchEvents bus can dispatch to subscribing toys.
+		try {
+			const unsub = this.eventSubListener.onChannelRedemptionAdd(this.userId, (event) => {
+				this._forwardTwurpleEvent('redemption', {
+					id: event.id,
+					userId: event.userId,
+					userName: event.userName,
+					userDisplayName: event.userDisplayName,
+					rewardId: event.rewardId,
+					rewardTitle: event.rewardTitle,
+					rewardCost: event.rewardCost,
+					rewardPrompt: event.rewardPrompt,
+					input: event.input,
+					status: event.status,
+					redemptionDate: event.redemptionDate?.toISOString?.() || null,
+					broadcasterId: this.userId,
+				});
+			});
+			// Twurple's subscribe methods return a handle with .stop();
+			// we store a small unsubscribe closure for uniform teardown.
+			if (unsub && typeof unsub.stop === 'function') {
+				this._eventSubUnsubs.push(() => unsub.stop());
+			}
+		} catch (e) {
+			console.error('[TwurpleManager] Failed to subscribe to redemption events:', e);
+		}
+
+		// Start the listener (opens the outbound WebSocket).
+		try {
+			this.eventSubListener.start();
+			console.log('[TwurpleManager] ✅ EventSub listener started.');
+		} catch (e) {
+			console.error('[TwurpleManager] EventSub start() failed:', e);
+		}
+	}
+
+
+	/**
+	 * Stop the EventSub listener and detach handlers. Idempotent.
+	 *
+	 * @returns {Promise<void>}
+	 */
+	async _stopEventSub() {
+
+		// Detach all our per-event handlers first.
+		for (const unsub of this._eventSubUnsubs) {
+			try { unsub(); } catch { /* swallow */ }
+		}
+		this._eventSubUnsubs = [];
+
+		if (this.eventSubListener) {
+			try {
+				this.eventSubListener.stop();
+				console.log('[TwurpleManager] EventSub listener stopped.');
+			} catch (e) {
+				console.warn('[TwurpleManager] EventSub stop() warning:', e?.message);
+			}
+			this.eventSubListener = null;
+		}
+	}
+
+
+	/**
+	 * Forward a Twurple event up to the renderer over IPC. The
+	 * renderer-side TwitchEvents bus (Phase 2 Task #12) listens on
+	 * `twurple-event` and dispatches to subscribing toys by `type`.
+	 *
+	 * @param {string} type - 'redemption' (Phase 3), 'cheer'/'subscribe'/etc (future)
+	 * @param {object} payload - normalized event data
+	 */
+	_forwardTwurpleEvent(type, payload) {
+
+		if (!this.mainWindow?.webContents) return;
+
+		try {
+			this.mainWindow.webContents.send('twurple-event', { type, payload });
+			console.log('[TwurpleManager] 📡 twurple-event', type, payload?.rewardTitle || payload?.userName || '');
+		} catch (e) {
+			console.error('[TwurpleManager] Failed to forward twurple-event:', e);
+		}
 	}
 
 
@@ -537,6 +684,9 @@ class TwurpleManager {
 			try { await this.chatReader.disconnect(); } catch { /* swallow */ }
 			this.chatReader = null;
 		}
+
+		// Stop EventSub for the same reason.
+		await this._stopEventSub();
 
 		store.delete('twurple');
 		this.authProvider = null;

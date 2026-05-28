@@ -422,6 +422,15 @@ export default class Toy {
 		this.chatToysApp.commandProcessor.clearHook(this.slug, this.onCommandFn);
 		this.onCommandFn = null;
 
+		// Drop any TwitchEvents subscriptions tagged with this toy's
+		// slug. Safety net so toys that subscribe via
+		// `chatToysApp.twitchEvents.on(type, cb, this.slug)` don't leak
+		// across toy disable/re-enable cycles. No-op for toys that never
+		// subscribed.
+		if (this.chatToysApp.twitchEvents && typeof this.chatToysApp.twitchEvents.removeAllByToy === 'function') {
+			this.chatToysApp.twitchEvents.removeAllByToy(this.slug);
+		}
+
 		// stop watching the settings
 		if (this.stopSettingsSocketWatch)
 			this.stopSettingsSocketWatch();

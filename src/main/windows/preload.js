@@ -181,5 +181,14 @@ contextBridge.exposeInMainWorld('twurpleAPI', {
 	 * @param {(data:any)=>void} cb
 	 */
 	onUpdate: (cb) => ipcRenderer.on('twurple-update', (e, data) => cb(data)),
+
+	/**
+	 * Listen for Twurple EventSub events (redemptions, cheers, subs,
+	 * follows, raids). The renderer-side TwitchEvents bus consumes
+	 * these and dispatches to subscribing toys.
+	 *
+	 * @param {(data:{type:string, payload:object})=>void} cb
+	 */
+	onEvent: (cb) => ipcRenderer.on('twurple-event', (e, data) => cb(data)),
 });
 

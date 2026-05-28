@@ -16,6 +16,7 @@ import { toysData } from '../toys/ToysData';
 import { AssetManager } from './assets_state/AssetManager';
 import { ChatProcessor } from './ChatProcessor';
 import { CommandProcessor } from './CommandProcessor';
+import { TwitchEvents } from './TwitchEvents';
 import { ToyManager } from './ToyManager';
 import { OmniRegistry } from './OmniRegistry';
 import { SysLogger } from './SysLogger';
@@ -113,6 +114,12 @@ export default class ChatToysApp {
 
 		// make a new command processor to handle all incoming commands
 		this.commandProcessor = new CommandProcessor(this, this.chatProcessor);
+
+		// Twitch event bus - dispatches EventSub events (redemptions in
+		// Phase 3; bits / subs / follows / raids later) to subscribing
+		// toys. Created BEFORE ToyManager so toys can subscribe at
+		// construction time.
+		this.twitchEvents = new TwitchEvents(this);
 
 		// in-process registry that coordinates the Omni toy's "gating" of
 		// alert-style toys (Shout, Donations, Help, Media, HeadPat-chatter,
