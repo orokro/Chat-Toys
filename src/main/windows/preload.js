@@ -190,5 +190,15 @@ contextBridge.exposeInMainWorld('twurpleAPI', {
 	 * @param {(data:{type:string, payload:object})=>void} cb
 	 */
 	onEvent: (cb) => ipcRenderer.on('twurple-event', (e, data) => cb(data)),
+
+	/**
+	 * Fetch the broadcaster's custom channel point rewards via Helix.
+	 * Used by the TwitchRedeems toy's mapping UI to populate the reward
+	 * dropdown. Returns { ok, rewards[], error? }. Rewards array is
+	 * empty when the channel doesn't have Channel Points enabled.
+	 *
+	 * @returns {Promise<{ok:boolean, rewards:Array, error?:string}>}
+	 */
+	getCustomRewards: () => ipcRenderer.invoke('twurple-get-custom-rewards'),
 });
 

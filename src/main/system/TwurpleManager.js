@@ -858,6 +858,48 @@ class TwurpleManager {
 			}
 		});
 
+		// Helix passthrough: fetch the broadcaster's custom channel point
+		// rewards. Used by the TwitchRedeems toy's mapping UI to populate
+		// the reward dropdown. Returns an empty list (with no error) when
+		// the channel doesn't have Channel Points enabled, so the UI can
+		// fall back to its manual-entry path cleanly.
+		ipcMain.handle('twurple-get-custom-rewards', async () => {
+			try {
+				if (!this.apiClient || !this.userId)
+					return { ok: false, error: 'Not connected via Twurple.', rewards: [] };
+
+				const rewards = await this.apiClient.channelPoints.getCustomRewards(this.userId);
+				return {
+					ok: true,
+					rewards: (rewards || []).map((r) => ({
+						id: r.id,
+						title: r.title,
+						cost: r.cost,
+						prompt: r.prompt,
+						isEnabled: r.isEnabled,
+						userInputRequired: r.userInputRequired,
+					})),
+				};
+			} catch (e) {
+				// Helix returns 403 "broadcaster must have partner or
+				// affiliate status" for non-Affiliate channels. Don't
+				// treat that as a hard error - the UI falls back to
+				// manual entry. Translate the raw Twurple exception into
+				// a human-readable message; keep the full text in console
+				// logs for debugging.
+				const raw = e?.message || String(e);
+				console.warn('[TwurpleManager] getCustomRewards failed:', raw);
+
+				let friendly = raw;
+				if (/partner or affiliate/i.test(raw) || /403/.test(raw)) {
+					friendly = 'Your channel does not have Channel Points enabled. Channel Points requires Twitch Affiliate or higher (or Monetization for All if rolled out to your account). You can still configure mappings manually below.';
+				} else if (/401/.test(raw)) {
+					friendly = 'Twitch rejected the request (auth issue). Try logging out and back in via the Twurple connection tab.';
+				}
+				return { ok: false, error: friendly, rewards: [] };
+			}
+		});
+
 		console.log('[TwurpleManager] IPC handlers registered');
 	}
 
