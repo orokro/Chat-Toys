@@ -460,6 +460,13 @@ export class CommandProcessor {
 			 * confirmed to have succeeded. Triggers point deduction +
 			 * commandRun callbacks. Idempotent across listeners; only the
 			 * first call has effect.
+			 *
+			 * Redeem-sourced messages (msg.source === 'twitch-redeem')
+			 * bypass ChatToys point deduction - Twitch already charged
+			 * channel points on its side, and most Twitch streamers
+			 * won't have the ChatToys point system in active use anyway.
+			 * Cooldowns, member-only, and super-only still apply normally
+			 * via the existing validate path.
 			 */
 			const accept = () => {
 
@@ -468,12 +475,19 @@ export class CommandProcessor {
 					return;
 				wasAccepted = true;
 
+				const isRedeem = msg.source === 'twitch-redeem';
+
 				// update the user's points and other data
 				window.ytctDB.updateUser(msg.authorUniqueID, {
 					displayName: msg.author,
 					streamID: msg.streamID,
 					command: commandData.command,
-					relativePoints: (this.enableCosts.value === true && commandData.costEnabled && this.isAdmin(msg) === false)
+					relativePoints: (
+						!isRedeem &&
+						this.enableCosts.value === true &&
+						commandData.costEnabled &&
+						this.isAdmin(msg) === false
+					)
 						? -commandData.cost
 						: 0,
 				});

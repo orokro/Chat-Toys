@@ -60,13 +60,119 @@ export default class TwitchRedeems extends Toy {
 		// call the parent constructor
 		super(toyManager);
 
-		// Tasks #15-17 will:
-		//  - subscribe to chatToysApp.twitchEvents 'redemption' here
-		//  - look up the mapping and inject a chat-shaped command
-		//  - on reject, call Helix to refund
-		//
-		// Scaffold stage: nothing wired yet. The empty constructor still
-		// gets us settings persistence and the toy registered in the UI.
+		// Subscribe to the renderer-side TwitchEvents bus for redemption
+		// events forwarded over IPC from TwurpleManager. Tagging with
+		// this.slug means Toy.end() auto-cleans the subscription if this
+		// toy ever gets disabled at runtime.
+		this.handleRedemptionFn = this.handleRedemption.bind(this);
+		this.chatToysApp.twitchEvents.on('redemption', this.handleRedemptionFn, this.slug);
+	}
+
+
+	/**
+	 * Fired whenever a Twitch channel point redemption arrives from
+	 * EventSub. Looks up the rewardId in our mapping, synthesizes a
+	 * chat-shaped message in the same shape ChatProcessor produces for
+	 * regular chat, and injects it into the existing command pipeline.
+	 *
+	 * Behavior matrix:
+	 *   - this.settings.enabled.value === false  -> ignore
+	 *   - no mapping for this rewardId          -> ignore (silent)
+	 *   - mapping disabled                       -> ignore
+	 *   - mapped commandSlug not in commandsRef  -> warn + ignore (config drift)
+	 *   - happy path                             -> inject into CommandProcessor
+	 *
+	 * The synthesized message carries source:'twitch-redeem' so:
+	 *   - CommandProcessor.accept() skips ChatToys point deduction
+	 *     (Twitch already charged channel points on its side)
+	 *   - Task #17's reject handler can identify the message and call
+	 *     Helix to refund the Twitch redemption
+	 *
+	 * Cooldowns, member-only, and super-only are honored normally - the
+	 * standard CommandProcessor.validateCommand path runs unchanged.
+	 *
+	 * @param {Object} event - normalized redemption payload from TwurpleManager
+	 */
+	handleRedemption(event) {
+
+		// Master toggle
+		if (this.settings.enabled.value === false)
+			return;
+
+		// Mapping lookup. By design we ignore unmapped redeems silently
+		// so streamers can have Twitch rewards that ChatToys knows
+		// nothing about coexist with mapped ones.
+		const mappings = this.settings.mappings.value || [];
+		const mapping = mappings.find((m) => m.rewardId === event.rewardId && m.enabled !== false);
+		if (!mapping) {
+			console.log(`[TwitchRedeems] No mapping for rewardId=${event.rewardId} (${event.rewardTitle}); ignoring.`);
+			return;
+		}
+
+		// Resolve the command's current text - users can rename commands
+		// at any time, so we look it up live rather than caching.
+		const cmd = (this.chatToysApp.commands?.value || {})[mapping.commandSlug];
+		if (!cmd || !cmd.command) {
+			console.warn(
+				`[TwitchRedeems] Mapping for "${mapping.rewardTitle}" -> "${mapping.commandSlug}" ` +
+				`points at a missing command. Ignoring redemption.`,
+			);
+			return;
+		}
+
+		// Synthesize a message in the shape ChatProcessor produces for
+		// regular chat. CommandProcessor.handleChats consumes this shape
+		// directly (it's a subscriber to ChatProcessor.onNewChats, but
+		// also accepts direct calls).
+		const userInput = (event.input || '').trim();
+		const messageText = userInput
+			? `!${cmd.command} ${userInput}`
+			: `!${cmd.command}`;
+
+		const synthetic = {
+			id: `twitch-redeem:${event.id}`,
+			authorUniqueID: `twitch:${event.userId}`,
+			author: event.userDisplayName || event.userName || 'Unknown',
+			authorPFPUrl: undefined,
+			messageText,
+			emojis: [],
+			time: Date.now(),
+			// Member-only enforcement requires a Helix subscriber lookup
+			// (no isSubscriber field on EventSub redemption payloads).
+			// Task #16 wires that lookup in; for now defaults to false.
+			isMember: false,
+			streamID: 'twitch',
+			isSuper: false,
+			bits: 0,
+			twitch: true,
+
+			// --- Redeem-specific additions ---
+
+			// Tells CommandProcessor.accept() to skip ChatToys point
+			// deduction (see CommandProcessor._notifyListeners).
+			source: 'twitch-redeem',
+
+			// Metadata Task #17 will use to refund the Twitch redemption
+			// when the command is rejected.
+			_redemption: {
+				id: event.id,
+				rewardId: event.rewardId,
+				broadcasterId: event.broadcasterId,
+			},
+		};
+
+		console.log(
+			`[TwitchRedeems] 🎁 Injecting "${messageText}" for redemption "${mapping.rewardTitle}" by ${synthetic.author}`,
+		);
+
+		// Inject into the command pipeline. Direct call is sufficient -
+		// handleChats walks an array, matches the leading '!', validates,
+		// and dispatches to the appropriate toy via toyHooks.
+		try {
+			this.chatToysApp.commandProcessor.handleChats([synthetic]);
+		} catch (err) {
+			console.error('[TwitchRedeems] handleChats threw on synthetic redeem:', err);
+		}
 	}
 
 
