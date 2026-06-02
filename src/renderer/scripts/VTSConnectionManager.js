@@ -314,6 +314,7 @@ export class VTSConnectionManager {
 		this._connectListeners = new Set();
 		this._disconnectListeners = new Set();
 		this._modelMovedListeners = new Set();
+		this._modelLoadedListeners = new Set();
 
 		// store our model transform data
 		this.modelTransform = {
@@ -325,6 +326,16 @@ export class VTSConnectionManager {
 		};
 		// reactive version
 		this.modelTransformRef = shallowRef(this.modelTransform);
+
+		// Currently-loaded model info, kept fresh via CurrentModelRequest and
+		// ModelLoadedEvent. `modelID`/`modelName` are null until we've heard
+		// from VTS. Consumed by toys (e.g. VTS Commands) to know which model's
+		// sequence to run, and to detect mid-stream model swaps.
+		this.currentModel = shallowRef({
+			modelID: null,
+			modelName: null,
+			loaded: false,
+		});
 
 		// for debug in dev tools
 		if (typeof window !== 'undefined')
@@ -403,11 +414,31 @@ export class VTSConnectionManager {
 
 	/**
 	 * Unsubscribe from ModelMovedEvent.
-	 * 
-	 * @param {Function} cb 
+	 *
+	 * @param {Function} cb
 	 */
 	offModelMoved(cb) {
 		this._modelMovedListeners.delete(cb);
+	}
+
+	/**
+	 * Subscribe to model load/unload changes (driven by ModelLoadedEvent and
+	 * our own CurrentModelRequest polling). The callback receives the new
+	 * current-model payload: { modelID, modelName, loaded }.
+	 *
+	 * @param {(payload: { modelID: string|null, modelName: string|null, loaded: boolean }) => void} cb
+	 */
+	onModelLoaded(cb) {
+		this._modelLoadedListeners.add(cb);
+	}
+
+	/**
+	 * Unsubscribe from model load/unload changes.
+	 *
+	 * @param {Function} cb
+	 */
+	offModelLoaded(cb) {
+		this._modelLoadedListeners.delete(cb);
 	}
 
 	/**
@@ -565,6 +596,135 @@ export class VTSConnectionManager {
 		}
 	}
 
+	/**
+	 * Query VTS for the currently-loaded model and update `currentModel`.
+	 *
+	 * @returns {Promise<{ modelID: string|null, modelName: string|null, loaded: boolean }>}
+	 */
+	async getCurrentModel() {
+
+		if (!this.isReady())
+			return this.currentModel.value;
+
+		try {
+			const res = await this._send('CurrentModelRequest');
+			const next = {
+				modelID: res?.modelID || null,
+				modelName: res?.modelName || null,
+				loaded: !!res?.modelLoaded,
+			};
+			this._setCurrentModel(next);
+			return next;
+
+		} catch (err) {
+			this._log('warn', `getCurrentModel failed: ${err?.message || err}`);
+			return this.currentModel.value;
+		}
+	}
+
+	/**
+	 * Get the list of hotkeys for a model. With no modelID, returns the
+	 * hotkeys for the currently-loaded model.
+	 *
+	 * @param {string} [modelID] - optional model to query; omitted = current model
+	 * @returns {Promise<Array<{ hotkeyID: string, name: string, type: string, file: string }>>}
+	 */
+	async getHotkeys(modelID) {
+
+		if (!this.isReady())
+			return [];
+
+		try {
+			const data = modelID ? { modelID } : {};
+			const res = await this._send('HotkeysInCurrentModelRequest', data);
+			const list = Array.isArray(res?.availableHotkeys) ? res.availableHotkeys : [];
+			return list.map(hk => ({
+				hotkeyID: hk.hotkeyID,
+				name: hk.name,
+				type: hk.type,
+				file: hk.file || '',
+			}));
+
+		} catch (err) {
+			this._log('warn', `getHotkeys failed: ${err?.message || err}`);
+			return [];
+		}
+	}
+
+	/**
+	 * Get the list of expressions for the currently-loaded model.
+	 *
+	 * @returns {Promise<Array<{ file: string, name: string, active: boolean }>>}
+	 */
+	async getExpressions() {
+
+		if (!this.isReady())
+			return [];
+
+		try {
+			const res = await this._send('ExpressionStateRequest', { details: true });
+			const list = Array.isArray(res?.expressions) ? res.expressions : [];
+			return list.map(ex => ({
+				file: ex.file,
+				name: ex.name || ex.file,
+				active: !!ex.active,
+			}));
+
+		} catch (err) {
+			this._log('warn', `getExpressions failed: ${err?.message || err}`);
+			return [];
+		}
+	}
+
+	/**
+	 * Trigger a hotkey by its ID (works for any hotkey type: expression,
+	 * animation, toggle, etc).
+	 *
+	 * @param {string} hotkeyID - the hotkeyID from getHotkeys()
+	 * @returns {Promise<boolean>} - true if VTS accepted the trigger
+	 */
+	async triggerHotkey(hotkeyID) {
+
+		if (!this.isReady() || !hotkeyID)
+			return false;
+
+		try {
+			const res = await this._send('HotkeyTriggerRequest', { hotkeyID });
+			return !!(res && res.hotkeyID);
+
+		} catch (err) {
+			this._log('warn', `triggerHotkey failed: ${err?.message || err}`);
+			return false;
+		}
+	}
+
+	/**
+	 * Activate or deactivate an expression by its file name.
+	 *
+	 * @param {string} expressionFile - the expression .exp3.json file name
+	 * @param {boolean} active - true to activate, false to deactivate
+	 * @param {number} [fadeTime=0.25] - fade time in seconds
+	 * @returns {Promise<boolean>} - true if VTS accepted the request
+	 */
+	async activateExpression(expressionFile, active, fadeTime = 0.25) {
+
+		if (!this.isReady() || !expressionFile)
+			return false;
+
+		try {
+			await this._send('ExpressionActivationRequest', {
+				expressionFile,
+				active: !!active,
+				fadeTime,
+			});
+			return true;
+
+		} catch (err) {
+			this._log('warn', `activateExpression failed: ${err?.message || err}`);
+			return false;
+		}
+	}
+
 	// --------------------------------------------------
 	// Connection + auth internals
 	// --------------------------------------------------
@@ -635,6 +795,10 @@ export class VTSConnectionManager {
 		this._log('info', `Tearing down VTS connection (reason=${reason})`);
 		this.isConnected.value = false;
 		this.isAuthenticated.value = false;
+
+		// Connection's gone, so we no longer know what model is loaded.
+		// Emit the change so consumers (e.g. sequence runner) can abort.
+		this._setCurrentModel({ modelID: null, modelName: null, loaded: false });
 
 		// clear reconnect timer
 		if (this._reconnectTimerId != null) {
@@ -771,6 +935,10 @@ export class VTSConnectionManager {
 				this._handleModelMovedEvent(data);
 				break;
 
+			case 'ModelLoadedEvent':
+				this._handleModelLoadedEvent(data);
+				break;
+
 			// (Optional) other events can be added here as needed.
 			default:
 				// spammy to log every random event, so only debug if needed
@@ -890,6 +1058,27 @@ export class VTSConnectionManager {
 		} catch (err) {
 			this._log('warn', `Failed to subscribe to ModelMovedEvent: ${err?.message || err}`);
 		}
+
+		// Subscribe to ModelLoadedEvent so we hear about mid-stream model
+		// swaps (load AND unload). Toys use this to re-target / abort work.
+		try {
+			await this._send('EventSubscriptionRequest', {
+				eventName: 'ModelLoadedEvent',
+				subscribe: true,
+				config: {}
+			});
+			this._log('info', 'Subscribed to VTS ModelLoadedEvent.');
+		} catch (err) {
+			this._log('warn', `Failed to subscribe to ModelLoadedEvent: ${err?.message || err}`);
+		}
+
+		// Grab the current model immediately so consumers have a value to
+		// work with without waiting for the next load/unload event.
+		try {
+			await this.getCurrentModel();
+		} catch (err) {
+			this._log('warn', `Initial getCurrentModel failed: ${err?.message || err}`);
+		}
 	}
 
 	/**
@@ -999,6 +1188,65 @@ export class VTSConnectionManager {
 				cb(payload);
 			} catch (err) {
 				console.error('[VTSConnectionManager] modelMoved listener error', err);
+			}
+		}
+	}
+
+	/**
+	 * Handle ModelLoadedEvent payload from VTS. Fires on both load and
+	 * unload; `modelLoaded` distinguishes the two.
+	 *
+	 * @param {any} data
+	 */
+	_handleModelLoadedEvent(data) {
+
+		if (!data)
+			return;
+
+		// On unload, VTS still tells us which model unloaded; we report the
+		// resulting state as "no model loaded".
+		const loaded = !!data.modelLoaded;
+		const next = {
+			modelID: loaded ? (data.modelID || null) : null,
+			modelName: loaded ? (data.modelName || null) : null,
+			loaded,
+		};
+
+		this._setCurrentModel(next);
+	}
+
+	/**
+	 * Update `currentModel` and notify listeners if it actually changed.
+	 *
+	 * @param {{ modelID: string|null, modelName: string|null, loaded: boolean }} next
+	 */
+	_setCurrentModel(next) {
+
+		const prev = this.currentModel.value;
+
+		// no-op if nothing meaningful changed
+		if (prev
+			&& prev.modelID === next.modelID
+			&& prev.loaded === next.loaded
+			&& prev.modelName === next.modelName) {
+			return;
+		}
+
+		this.currentModel.value = next;
+		this._emitModelLoaded(next);
+	}
+
+	/**
+	 * Notify all model-loaded listeners.
+	 *
+	 * @param {{ modelID: string|null, modelName: string|null, loaded: boolean }} payload
+	 */
+	_emitModelLoaded(payload) {
+		for (const cb of this._modelLoadedListeners) {
+			try {
+				cb(payload);
+			} catch (err) {
+				console.error('[VTSConnectionManager] modelLoaded listener error', err);
 			}
 		}
 	}
