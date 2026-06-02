@@ -221,13 +221,13 @@ async function rescan() {
 		border: 2px solid black;
 		cursor: pointer;
 
-		background: linear-gradient(180deg, #b98bff, #9B5DE5);
+		background: linear-gradient(180deg, #FBB6C2, #F9A0B0);
 		color: white;
 		font-weight: bolder;
 		text-transform: uppercase;
 
 		&:hover {
-			background: linear-gradient(180deg, #cba8ff, #a96ff0);
+			background: linear-gradient(180deg, #FDD0D8, #F7A7B6);
 		}
 
 		&:disabled {

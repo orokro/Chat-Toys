@@ -34,7 +34,7 @@ export default class VTSInteractions extends Toy {
 	static slug = 'vtsInteractions';
 	static desc = 'Let chatters trigger VTube Studio hotkeys & expressions with custom commands.';
 	static optionsPageComponent = VTSInteractionsPage;
-	static themeColor = '#9B5DE5';
+	static themeColor = '#F9A0B0';
 	static widgetComponents = [];
 
 	// Like Media/VTSTosser: this toy ships with no built-in commands. The

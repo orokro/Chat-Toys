@@ -260,22 +260,22 @@ function cancel() {
 		.interimNote {
 			font-size: 11px;
 			font-style: italic;
-			color: #9B5DE5;
+			color: #D96A80;
 		}
 	}
 
 	.chainPreview {
 		margin: 10px 0;
 		padding: 8px 10px;
-		background: #f3eefe;
-		border: 1px solid #d8c4ff;
+		background: #FDEEF1;
+		border: 1px solid #F6C9D1;
 		border-radius: 6px;
 		min-height: 20px;
 		font-family: 'Courier New', Courier, monospace;
 		font-size: 12px;
 
 		.chainBlock { white-space: nowrap; }
-		.arrow { margin: 0 6px; color: #9B5DE5; font-weight: bold; }
+		.arrow { margin: 0 6px; color: #F9A0B0; font-weight: bold; }
 		.chainEmpty { color: #888; font-style: italic; }
 	}
 
@@ -384,10 +384,10 @@ function cancel() {
 			background: linear-gradient(180deg, #fff, #ddd);
 			text-transform: uppercase;
 			&.primary {
-				background: linear-gradient(180deg, #b98bff, #9B5DE5);
+				background: linear-gradient(180deg, #FBB6C2, #F9A0B0);
 				color: white;
 				font-weight: bold;
-				border-color: #7a3fd0;
+				border-color: #E0788C;
 			}
 			&:hover { filter: brightness(1.05); }
 		}

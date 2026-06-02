@@ -322,7 +322,7 @@ function saveSequence(cfg, modelID, blocks) {
 				min-width: 130px;
 
 				&.active {
-					background: #5a3a8a;
+					background: #C46B7E;
 				}
 
 				.modelColName {
@@ -335,7 +335,7 @@ function saveSequence(cfg, modelID, blocks) {
 					margin-top: 2px;
 
 					.activeDot {
-						color: #b98bff;
+						color: #F9A0B0;
 						margin-left: 4px;
 					}
 				}
@@ -386,7 +386,7 @@ function saveSequence(cfg, modelID, blocks) {
 			&.isConfigured  { background: #cdeccd; }
 			&.isBroken      { background: #f3c9c9; }
 
-			&.activeColCell { box-shadow: inset 0 0 0 2px #9B5DE5; }
+			&.activeColCell { box-shadow: inset 0 0 0 2px #F9A0B0; }
 
 			// hover edit button
 			.editBtn {
