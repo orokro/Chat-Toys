@@ -66,6 +66,14 @@ export default class TwitchRedeems extends Toy {
 		// toy ever gets disabled at runtime.
 		this.handleRedemptionFn = this.handleRedemption.bind(this);
 		this.chatToysApp.twitchEvents.on('redemption', this.handleRedemptionFn, this.slug);
+
+		// Refund channel points when a redeem-triggered command is rejected
+		// by its toy (Task #17). CommandProcessor fires reject callbacks for
+		// every rejected command; we act only on source:'twitch-redeem'
+		// ones. This subscription isn't slug-tagged like the twitchEvents
+		// one, so end() removes it explicitly.
+		this.handleCommandRejectFn = this.handleCommandReject.bind(this);
+		this.chatToysApp.commandProcessor.onCommandReject(this.handleCommandRejectFn);
 	}
 
 
@@ -203,6 +211,52 @@ export default class TwitchRedeems extends Toy {
 
 
 	/**
+	 * Fired by CommandProcessor whenever any command is rejected by its
+	 * toy. We act only on redeem-sourced messages: when a command that was
+	 * triggered by a Twitch channel-point redemption can't be fulfilled
+	 * (member-only failure, cooldown, lobby full, etc.), refund the
+	 * viewer's channel points so they aren't charged for an action that
+	 * never happened.
+	 *
+	 * The refund is best-effort and never throws - it can legitimately
+	 * fail if the redemption was already handled in the Twitch UI, so we
+	 * surface failures to the system log rather than crashing.
+	 *
+	 * @param {String} commandSlug - the rejected command's slug
+	 * @param {Object} msg - the original (synthetic) message that triggered the command
+	 * @param {String} reason - human-readable rejection reason
+	 * @param {Object} commandData - the command's settings record
+	 * @returns {Promise<void>}
+	 */
+	async handleCommandReject(commandSlug, msg, reason, commandData) {
+
+		// Only redeem-sourced rejections carry a refundable redemption.
+		if (!msg || msg.source !== 'twitch-redeem' || !msg._redemption)
+			return;
+
+		const { id, rewardId, broadcasterId } = msg._redemption;
+		if (!id || !rewardId || !broadcasterId) {
+			console.warn('[TwitchRedeems] Reject for a redeem with incomplete _redemption metadata; cannot refund.', msg._redemption);
+			return;
+		}
+
+		console.log(`[TwitchRedeems] ↩️ Refunding redemption ${id} (reward ${rewardId}) after reject: ${reason}`);
+
+		try {
+			const res = await window.twurpleAPI.refundRedemption({ broadcasterId, rewardId, redemptionId: id });
+			if (!res || res.ok !== true) {
+				const err = res?.error || 'unknown error';
+				console.warn('[TwitchRedeems] Refund failed:', err);
+				this.chatToysApp.log.err(`Couldn't refund Twitch channel points for ${msg.author}: ${err}`);
+			}
+		} catch (err) {
+			console.error('[TwitchRedeems] refundRedemption bridge call threw:', err);
+			this.chatToysApp.log.err(`Couldn't refund Twitch channel points for ${msg.author}.`);
+		}
+	}
+
+
+	/**
 	 * Initialize the settings for this toy. Settings live in the standard
 	 * RefAggregator-backed chromeShallowRef + socketShallowRef so they
 	 * sync across windows like every other toy.
@@ -240,9 +294,11 @@ export default class TwitchRedeems extends Toy {
 	/**
 	 * Clean up. Base class handles command-processor hook removal and
 	 * twitchEvents.removeAllByToy(this.slug) for any event subs tagged
-	 * with our slug, so this is just for any future custom teardown.
+	 * with our slug. The command-reject callback isn't slug-tagged, so we
+	 * remove it explicitly here.
 	 */
 	end() {
+		this.chatToysApp.commandProcessor.offCommandReject(this.handleCommandRejectFn);
 		super.end();
 	}
 

@@ -853,7 +853,7 @@ class TwurpleManager {
 	 * Resolve whether a Twitch user is a subscriber of the connected
 	 * broadcaster, used for member-only enforcement on redeem-triggered
 	 * commands (Task #16). Reads from a 5-minute in-memory TTL cache first,
-	 * falling back to a Helix `checkUserSubscription` call on a miss.
+	 * falling back to a Helix `getSubscriptionForUser` call on a miss.
 	 *
 	 * Fails closed: any error (not connected, missing scope, network, or
 	 * the user simply not being a subscriber) resolves to `false`. For a
@@ -883,9 +883,16 @@ class TwurpleManager {
 
 		let isSubbed = false;
 		try {
-			// Returns a UserSubscription object (truthy) when subscribed,
-			// or null when the user isn't a subscriber of this channel.
-			const sub = await this.apiClient.subscriptions.checkUserSubscription(this.userId, userId);
+			// Use the broadcaster-perspective endpoint (Get Broadcaster
+			// Subscriptions, filtered to one user). It authorizes with the
+			// channel:read:subscriptions scope we already hold. The
+			// user-perspective checkUserSubscription instead requires the
+			// viewer's own user:read:subscriptions scope, which a broadcaster
+			// token never carries - that path always errored and fail-closed.
+			//
+			// Returns a HelixSubscription (truthy) when the user subscribes
+			// to this channel, or null when they don't.
+			const sub = await this.apiClient.subscriptions.getSubscriptionForUser(this.userId, userId);
 			isSubbed = sub != null;
 		} catch (e) {
 			// Scope/auth/network problems all land here. Keep the raw text
@@ -999,6 +1006,45 @@ class TwurpleManager {
 				// isSubscriber already swallows its own errors, so reaching
 				// here is unexpected; still fail closed for the caller.
 				return { ok: false, isSubbed: false, error: e?.message || String(e) };
+			}
+		});
+
+		// Helix passthrough: refund (cancel) a channel-point redemption
+		// (Task #17). Fired by the TwitchRedeems toy when a redeem-triggered
+		// command is rejected by its toy, so the viewer's channel points are
+		// returned. Setting a redemption's status to 'CANCELED' is Twitch's
+		// refund mechanism. Requires the channel:manage:redemptions scope.
+		ipcMain.handle('twurple-refund-redemption', async (event, args) => {
+			try {
+				if (!this.apiClient || !this.userId)
+					return { ok: false, error: 'Not connected via Twurple.' };
+
+				const { broadcasterId, rewardId, redemptionId } = args || {};
+				if (!broadcasterId || !rewardId || !redemptionId)
+					return { ok: false, error: 'Missing broadcasterId, rewardId, or redemptionId.' };
+
+				await this.apiClient.channelPoints.updateRedemptionStatusByIds(
+					broadcasterId,
+					rewardId,
+					[redemptionId],
+					'CANCELED',
+				);
+				return { ok: true };
+			} catch (e) {
+				// Refunds can legitimately fail: the redemption may already
+				// be fulfilled/canceled (race with manual handling in the
+				// Twitch UI), the channel may lack Channel Points, or auth
+				// may have lapsed. Surface a friendly message; never throw.
+				const raw = e?.message || String(e);
+				console.warn('[TwurpleManager] refundRedemption failed:', raw);
+
+				let friendly = raw;
+				if (/partner or affiliate/i.test(raw) || /403/.test(raw)) {
+					friendly = 'Could not refund: this channel does not have Channel Points enabled.';
+				} else if (/401/.test(raw)) {
+					friendly = 'Could not refund: Twitch rejected the request (auth issue). Try logging out and back in.';
+				}
+				return { ok: false, error: friendly };
 			}
 		});
 

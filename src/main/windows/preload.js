@@ -212,5 +212,16 @@ contextBridge.exposeInMainWorld('twurpleAPI', {
 	 * @returns {Promise<{ok:boolean, isSubbed:boolean, error?:string}>}
 	 */
 	isSubscriber: (userId) => ipcRenderer.invoke('twurple-is-subscriber', userId),
+
+	/**
+	 * Refund (cancel) a Twitch channel-point redemption. Used by the
+	 * TwitchRedeems toy to return a viewer's channel points when a
+	 * redeem-triggered command is rejected by its toy. Never throws;
+	 * resolves { ok:false, error } on failure (e.g. already fulfilled).
+	 *
+	 * @param {{broadcasterId:string, rewardId:string, redemptionId:string}} args
+	 * @returns {Promise<{ok:boolean, error?:string}>}
+	 */
+	refundRedemption: (args) => ipcRenderer.invoke('twurple-refund-redemption', args),
 });
 

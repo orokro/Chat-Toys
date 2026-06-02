@@ -50,6 +50,11 @@ export class CommandProcessor {
 		this.commandCallbacks = [];
 		this.commandRunCallbacks = [];
 
+		// list of callbacks for when a command is rejected by its toy
+		// (action couldn't be fulfilled). TwitchRedeems uses this to refund
+		// the Twitch channel points for source:'twitch-redeem' messages.
+		this.commandRejectCallbacks = [];
+
 		// set up our listeners / watchers
 		this.subscribeEvents();
 	}
@@ -97,6 +102,73 @@ export class CommandProcessor {
 		// notify all listeners of this command that was successfully run
 		for (const cb of this.commandRunCallbacks)
 			cb(commandSlug, msg, commandData);
+	}
+
+
+	/**
+	 * Add a callback to run when a command is rejected by its toy.
+	 *
+	 * @param {Function} callback - Callback to run when a command is rejected
+	 */
+	onCommandReject(callback) {
+		this.commandRejectCallbacks.push(callback);
+	}
+
+
+	/**
+	 * Clear a callback for when a command is rejected.
+	 *
+	 * @param {Function} callback - Callback to remove
+	 */
+	offCommandReject(callback) {
+		this.commandRejectCallbacks = this.commandRejectCallbacks.filter(cb => cb !== callback);
+	}
+
+
+	/**
+	 * Tell all listeners that a command was rejected (could not be
+	 * fulfilled). For Twitch-redeem-sourced messages this is what drives
+	 * the automatic channel-point refund.
+	 *
+	 * @param {String} commandSlug - slug for the command that was rejected
+	 * @param {Object} msg - the original chat message details that triggered the command
+	 * @param {String} reason - human-readable reason the command was rejected
+	 * @param {Object} commandData - details about the command from our settings
+	 */
+	_notifyRejectListeners(commandSlug, msg, reason, commandData) {
+
+		// notify all listeners of this command that was rejected
+		for (const cb of this.commandRejectCallbacks)
+			cb(commandSlug, msg, reason, commandData);
+	}
+
+
+	/**
+	 * Refund a Twitch redeem that was dropped before it ever reached its
+	 * toy - i.e. blocked by a pre-dispatch gate in handleChats (disabled,
+	 * failed validation/cooldown, member-only, super-only, or no toy
+	 * listening). Those gates short-circuit with `continue` and never run
+	 * the accept/reject handshake, so without this the viewer's channel
+	 * points would be taken with nothing to show for it. Routes through the
+	 * same reject listeners as a toy-raised reject. No-op for ordinary chat
+	 * messages (only source:'twitch-redeem' messages are refundable).
+	 *
+	 * @param {Object} msg - the message whose command was dropped
+	 * @param {String} reason - human-readable reason it was dropped
+	 * @param {Object} [commandData] - the command's settings record, if known
+	 */
+	_refundDroppedRedeem(msg, reason, commandData) {
+
+		// only redeem-sourced messages carry a refundable redemption
+		if (!msg || msg.source !== 'twitch-redeem')
+			return;
+
+		// commandData may be absent (unknown command); fall back to ''
+		const commandSlug = commandData?.slug
+			? (commandData.slug.split(/__/, 2)[1] || commandData.slug)
+			: '';
+
+		this._notifyRejectListeners(commandSlug, msg, reason, commandData);
 	}
 
 
@@ -185,8 +257,12 @@ export class CommandProcessor {
 			// or if the command is not enabled GTFO
 			const commandKey = parts[0];
 			const commandData = commandMap[commandKey];
-			if (!commandData || !commandData.enabled)
+			if (!commandData)
 				continue;
+			if (!commandData.enabled) {
+				this._refundDroppedRedeem(msg, 'command is disabled', commandData);
+				continue;
+			}
 
 			// get potential params (not all commands have params)
 			const params = this.parseParams(commandData, messageText);
@@ -195,16 +271,20 @@ export class CommandProcessor {
 			const user = this.getUser(authorUniqueID);
 
 			// make sure this command is able to be run
-			if (this.validateCommand(commandData, user, params, msg) == false)
+			if (this.validateCommand(commandData, user, params, msg) == false) {
+				this._refundDroppedRedeem(msg, 'command could not be run (cooldown / cost / validation)', commandData);
 				continue;
+			}
 
 			// lastly we need to check super chat and member status, if required
 			if(commandData.memberOnly==true && isMember==false){
 				this.chatToysApp.log.err(`${msg.author}: "${commandData.command}" is a member-only command`);
+				this._refundDroppedRedeem(msg, 'member-only command', commandData);
 				continue;
 			}
 			if(commandData.superOnly==true && isSuper==false){
 				this.chatToysApp.log.err(`${msg.author}: "${commandData.command}" is a Super-Chat-only command`);
+				this._refundDroppedRedeem(msg, 'Super-Chat-only command', commandData);
 				continue;
 			}
 
@@ -216,8 +296,10 @@ export class CommandProcessor {
 				cb(commandSlug, msg, user, params);
 
 			// if we don't have any listeners for this command, skip further processing
-			if (this.toyHooks.has(toySlug) == false)
+			if (this.toyHooks.has(toySlug) == false) {
+				this._refundDroppedRedeem(msg, 'no toy is handling this command', commandData);
 				continue;
+			}
 
 			// notify all listeners of this command that was successfully run
 			this._notifyListeners(toySlug, commandSlug, msg, user, params, commandData);
@@ -452,6 +534,10 @@ export class CommandProcessor {
 		// only allow one listener to accept the command
 		let wasAccepted = false;
 
+		// only fire reject side-effects (e.g. the Twitch refund) once, and
+		// never if a listener already accepted the command
+		let wasRejected = false;
+
 		// notify all listeners of this command that was successfully run
 		for (const cb of hooks) {
 
@@ -504,9 +590,19 @@ export class CommandProcessor {
 			 * @param {String} reason - human-readable reason, surfaced to chatters via the log
 			 */
 			const reject = (reason) => {
-				const errMsg = `"!${commandSlug}" rejected by listener: ${reason}`
+				const errMsg = `"!${commandSlug}" rejected by listener: ${reason}`;
 				console.log(errMsg);
 				this.chatToysApp.log.err(reason);
+
+				// Fire reject side-effects at most once, and never if a
+				// listener already accepted. For source:'twitch-redeem'
+				// messages this is what triggers the channel-point refund
+				// over in the TwitchRedeems toy.
+				if (wasAccepted || wasRejected)
+					return;
+				wasRejected = true;
+
+				this._notifyRejectListeners(commandSlug, msg, reason, commandData);
 			};
 
 			// call the listener with the command details
