@@ -2,16 +2,17 @@
 	TwurplePage.vue
 	---------------
 
-	Connection Settings sub-tab for the new Twurple-based Twitch
-	integration. Mirrors TwitchPage.vue's structure / styling so the
-	user sees a familiar layout, with copy that makes clear this is the
-	new system (alongside the legacy "Twitch Settings" tab during the
-	Phase 1 migration).
+	Connection Settings sub-tab for the app's Twitch integration: connecting
+	the user's Twitch account for chat, channel point redeems, bits, follows,
+	subs, and raids through a single auth session.
+
+	Note: "Twurple" is kept as the internal component / file name; all
+	user-facing copy refers to this simply as Twitch.
 -->
 <template>
 
 	<PageBox
-		title="Twitch (Twurple) Settings"
+		title="Twitch Settings"
 		themeColor="indigo"
 		themeImage="assets/bg_tiles/chatSettings.png"
 		bgSize="120px"
@@ -19,29 +20,24 @@
 	>
 		<br><br>
 		<p>
-			This is the <strong>new</strong> Twitch connection, powered by Twurple.
-			It supports chat, channel point redeems, bits, follows, subs, and raids
-			through a single auth session - replacing the legacy TMI tab above.
-		</p>
-		<p>
-			While this is in beta, the legacy "Twitch Settings" tab also still
-			works. To test the new system side-by-side, log out of the legacy tab,
-			then connect here and confirm everything keeps working.
+			Connect your Twitch account to power chat commands, channel point
+			redeems, bits, follows, subs, and raids - all through a single
+			sign-in.
 		</p>
 
-		<SectionHeader title="Connect via Twurple" />
+		<SectionHeader title="Connect Twitch" />
 		<p>
-			Click <strong>Connect via Twurple</strong> below. A Twitch
-			authorization popup will appear; approve the requested scopes and
-			you'll be returned here.
+			Click <strong>Connect Twitch</strong> below. A Twitch authorization
+			popup will appear; approve the requested permissions and you'll be
+			returned here. Your connection stays signed in and refreshes
+			automatically, so you shouldn't need to reconnect.
 		</p>
 		<TwurpleConnectionManager />
 
 		<SectionHeader title="Live Raw Chat (All Sources)" />
 		<p>
-			Below you can see the live data that comes in from chatters across
-			all configured sources (YouTube, the legacy Twitch tab, and - once
-			Phase 1 task #9 lands - this Twurple connection too).
+			Below you can see the live chat coming in from every connected
+			source (Twitch and YouTube).
 		</p>
 
 		<RawLogPreview

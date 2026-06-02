@@ -47,13 +47,17 @@ const pageItems = [
 		slug: 'chatSettings',
 		name: 'Chat Settings',
 	},
-	{
-		slug: 'twitch',
-		name: 'Twitch Settings',
-	},
+	// Legacy TMI Twitch tab - hidden at cutover (Phase 4). The Twurple tab
+	// below is now the sole Twitch connection tab. Kept here (commented),
+	// along with the <TwitchPage> v-if in the template, so re-enabling is a
+	// one-liner.
+	// {
+	// 	slug: 'twitch',
+	// 	name: 'Twitch Settings',
+	// },
 	{
 		slug: 'twurple',
-		name: 'Twitch (Twurple) - new',
+		name: 'Twitch Settings',
 	},
 	{
 		slug: 'obsSettings',
@@ -81,6 +85,12 @@ const selectedPage = chromeRef('settingsPageTab', 'chatSettings');
 // settings so they don't land on a blank page.
 if (selectedPage.value === 'copy_details')
 	selectedPage.value = 'chatSettings';
+
+// Cutover migration: the legacy 'twitch' (TMI) tab is hidden; send anyone
+// whose last-viewed tab was the legacy Twitch tab to the current Twitch
+// (Twurple) tab so they don't land on an orphaned page.
+if (selectedPage.value === 'twitch')
+	selectedPage.value = 'twurple';
 
 </script>
 <style lang="scss" scoped>

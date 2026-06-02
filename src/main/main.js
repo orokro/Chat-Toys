@@ -179,19 +179,26 @@ app.whenReady().then(() => {
 	obsViewServer = new OBSViewServer(mainWindow, { db: mainDb });
 
 
-	// After creating your main window and OBSViewServer
-	twitchMgr = new TwitchManager(mainWindow, obsViewServer);
+	// --- Legacy TMI Twitch path: DISABLED at cutover (Phase 4 / Task #20) ---
+	// The Twurple manager below is now the sole Twitch integration. We
+	// deliberately do NOT instantiate TwitchManager here: its TwitchChatReader
+	// auto-connects from stored 'twitch' creds in its own constructor, so
+	// simply not constructing the manager is what stops a previously
+	// TMI-authenticated user from double-posting every chat message once they
+	// connect via Twurple. The legacy files stay in the tree as a fallback -
+	// to roll back, uncomment the block below and re-show the legacy tab in
+	// SettingsPage.vue.
+	//
+	// twitchMgr = new TwitchManager(mainWindow, obsViewServer);
+	// twitchMgr.setClientConfig({
+	// 	clientId: 'x4po2in358dfq7c2jeuek5uh85qhoh',
+	// 	scopes: ['chat:read', 'chat:edit'],
+	// });
 
-	// Configure with your client ID and desired scopes
-	twitchMgr.setClientConfig({
-		clientId: 'x4po2in358dfq7c2jeuek5uh85qhoh',
-		scopes: ['chat:read', 'chat:edit'],
-	});
-
-	// New Twurple-based manager (Phase 1 migration). Lives side-by-side
-	// with the legacy TwitchManager during dev so we can A/B test before
-	// cutting over. Pulls credentials from src/main/secrets.js. Hooks
-	// its own /auth/twurple/callback route + twurple-* IPC channels.
+	// Twurple-based manager - the app's Twitch integration (chat + EventSub
+	// for redeems/bits/subs/follows/raids) over a single auth session.
+	// Pulls credentials from src/main/secrets.js. Hooks its own
+	// /auth/twurple/callback route + twurple-* IPC channels.
 	twurpleMgr = new TwurpleManager(mainWindow, obsViewServer);
 
 	// start servers after twitch has added it's routes

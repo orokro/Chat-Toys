@@ -2,27 +2,26 @@
 	TwurpleConnectionManager.vue
 	----------------------------
 
-	UI for the new Twurple-based Twitch auth. Mirrors
-	TwitchConnectionManager.vue's behavior but talks to window.twurpleAPI
-	(twurple-* IPC channels) instead of window.twitchAPI.
+	UI for the app's Twitch auth, talking to window.twurpleAPI (twurple-*
+	IPC channels). This is the sole Twitch connection manager.
 
-	Lives side-by-side with the legacy connection manager during the
-	Phase 1 migration. After cutover (Phase 4) this becomes the primary.
+	Note: "Twurple" is kept as the internal component / file name; all
+	user-facing copy refers to this simply as Twitch.
 -->
 <template>
 
 	<div class="twurple-connection">
 
-		<h2>Twurple Connection (new system)</h2>
+		<h2>Twitch Connection</h2>
 
 		<!-- Status display -->
 		<div class="status">
-			<p v-if="loading">Checking Twurple connection...</p>
+			<p v-if="loading">Checking Twitch connection...</p>
 			<p v-else-if="error" class="error">⚠️ {{ error }}</p>
 			<p v-else-if="status.authed">
 				✅ Connected as <strong>@{{ status.user.display_name }}</strong>
 			</p>
-			<p v-else>❌ Not connected via Twurple</p>
+			<p v-else>❌ Not connected</p>
 		</div>
 
 		<!-- Scope summary - only useful when connected -->
@@ -40,7 +39,7 @@
 				@click="connect"
 				class="btn connect"
 			>
-				Connect via Twurple
+				Connect Twitch
 			</button>
 
 			<button
@@ -63,13 +62,9 @@
 		<!-- Info / instructions -->
 		<div class="info" v-if="!status.authed && !loading">
 			<p>
-				This is the <strong>new</strong> Twitch integration, built on Twurple.
-				It supports chat, channel point redeems, bits, follows, subs, and raids
-				through a single auth session.
-			</p>
-			<p>
-				While this is in beta, the legacy Twitch tab above also still works.
-				Once verified, the legacy tab will be hidden.
+				Connect your Twitch account to power chat commands, channel
+				point redeems, bits, follows, subs, and raids - all through a
+				single sign-in.
 			</p>
 		</div>
 
