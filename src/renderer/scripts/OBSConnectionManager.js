@@ -720,5 +720,78 @@ export class OBSConnectionManager {
 			);
 		}
 	}
-	
+
+
+	/**
+	 * List the source names present in the current program scene. Used by the
+	 * Tosser's collider-tracking picker so the user can choose which source is
+	 * their avatar / VTS capture.
+	 *
+	 * @returns {Promise<Array<string>>} unique source names (empty if not connected)
+	 */
+	async getSceneSourceNames() {
+
+		if (!this.isConnected.value)
+			return [];
+
+		try {
+
+			const sceneRes = await this._obs.call('GetCurrentProgramScene');
+			const sceneName = sceneRes.currentProgramSceneName || sceneRes.sceneName;
+			if (!sceneName)
+				return [];
+
+			const { sceneItems } = await this._obs.call('GetSceneItemList', { sceneName });
+			const names = (Array.isArray(sceneItems) ? sceneItems : [])
+				.map((it) => it.sourceName)
+				.filter(Boolean);
+
+			return Array.from(new Set(names));
+
+		} catch (err) {
+			console.error('[OBSConnectionManager] getSceneSourceNames failed', err);
+			return [];
+		}
+	}
+
+
+	/**
+	 * Get the transform (position/scale/crop/rotation/bounds + source size) of
+	 * a named source in the current program scene. Returns null if not found.
+	 * This is the per-frame read the collider tracker will use.
+	 *
+	 * @param {string} sourceName
+	 * @returns {Promise<Object|null>}
+	 */
+	async getSceneItemTransform(sourceName) {
+
+		if (!this.isConnected.value || !sourceName)
+			return null;
+
+		try {
+
+			const sceneRes = await this._obs.call('GetCurrentProgramScene');
+			const sceneName = sceneRes.currentProgramSceneName || sceneRes.sceneName;
+			if (!sceneName)
+				return null;
+
+			const { sceneItems } = await this._obs.call('GetSceneItemList', { sceneName });
+			const item = (Array.isArray(sceneItems) ? sceneItems : [])
+				.find((it) => it.sourceName === sourceName);
+			if (!item)
+				return null;
+
+			const { sceneItemTransform } = await this._obs.call('GetSceneItemTransform', {
+				sceneName,
+				sceneItemId: item.sceneItemId,
+			});
+
+			return sceneItemTransform || null;
+
+		} catch (err) {
+			console.error('[OBSConnectionManager] getSceneItemTransform failed', err);
+			return null;
+		}
+	}
+
 }

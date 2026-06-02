@@ -89,7 +89,7 @@
 			</SettingsInputRow>
 			<SettingsInputRow
 				type="password"
-				v-model="ctApp.obsConnMgr.password"
+				v-model="ctApp.obsConnMgr.password.value"
 			>
 				<template #title>OBS WS Password</template>
 				<p>The password text from your OBS Websockets setup.</p>

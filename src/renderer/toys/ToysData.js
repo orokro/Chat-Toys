@@ -10,7 +10,10 @@ import ChannelPoints from "./ChannelPoints/ChannelPoints";
 import Chat from "./Chat/Chat";
 import Media from "./Media/Media";
 import Tosser from "./Tosser/Tosser";
-import VTSTosser from "./VTSTosser/VTSTosser";
+// VTSTosser is being merged into the original Tosser (VTS/OBS-aware tracking).
+// Hidden from the registry for now (folder kept for reference). See
+// misc/vts-tosser-overhaul-plan.md.
+// import VTSTosser from "./VTSTosser/VTSTosser";
 import VTSInteractions from "./VTSInteractions/VTSInteractions";
 import PrizeWheel from "./PrizeWheel/PrizeWheel";
 import Gamba from "./Gamba/Gamba";
@@ -47,7 +50,7 @@ export const toysData = [
 	Shout,
 	Media,
 	Tosser,
-	VTSTosser,
+	// VTSTosser,  // hidden — merging into Tosser (see misc/vts-tosser-overhaul-plan.md)
 	VTSInteractions,
 	PrizeWheel,
 	Gamba,

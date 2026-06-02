@@ -112,6 +112,14 @@ export default class Tosser extends Toy {
 			tossSpeed: ref(1),
 			allEmojisToBeTossed: ref(true),
 			soundVolume: ref(1),
+
+			// Collider tracking (VTS/OBS-aware). 'manual' = today's behavior
+			// (drag the silhouette in OBS). 'obs' = follow a chosen OBS source's
+			// rectangle. 'obsVts' = OBS source rect composed with the live VTS
+			// model transform. The OBS source name the avatar/VTS capture lives in.
+			trackingMode: ref('manual'),
+			trackingObsSource: ref(''),
+
 			widgetBox: shallowRef({
 				x: 20,
 				y: 20,

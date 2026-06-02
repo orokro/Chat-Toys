@@ -59,7 +59,59 @@
 		/>
 
 		<WidgetSection :toy="toy" />
-		
+
+		<SectionHeader title="Collider Tracking"/>
+		<p>
+			By default you place the collider by hand on the Tosser browser source in OBS.
+			Connect OBS and/or VTubeStudio and the collider can follow your avatar automatically.
+		</p>
+
+		<div class="settingsBlock">
+
+			<!-- nothing available -->
+			<InfoBox v-if="!obsConnected && !vtsReady" icon="info">
+				Auto-tracking is unavailable until you connect OBS and/or VTubeStudio.
+				It's optional — the manual collider still works without it.
+			</InfoBox>
+
+			<template v-else>
+
+				<SettingsInputRow
+					type="options"
+					:options="trackingModeOptions"
+					v-model="trackingMode"
+				>
+					<template #title>Tracking Mode</template>
+					<p>How the collider locates your avatar. Auto modes need the matching connection.</p>
+				</SettingsInputRow>
+
+				<!-- per-connection availability notes -->
+				<InfoBox v-if="!obsConnected" icon="info">
+					OBS isn't connected, so OBS-based tracking is unavailable. <strong>Not required</strong> — manual still works.
+				</InfoBox>
+				<InfoBox v-if="!vtsReady" icon="info">
+					VTubeStudio isn't connected, so VTS tracking is unavailable. <strong>Optional</strong> — OBS-only or manual still work.
+				</InfoBox>
+
+				<!-- OBS source picker for the auto modes -->
+				<template v-if="trackingMode !== 'manual' && obsConnected">
+					<SettingsInputRow
+						type="options"
+						:options="obsSourceOptions"
+						v-model="trackingObsSource"
+					>
+						<template #title>Avatar OBS Source</template>
+						<p>Which OBS source is your avatar / VTubeStudio capture. The collider follows this source's position &amp; size.</p>
+					</SettingsInputRow>
+					<SettingsRow>
+						<button class="refreshBtn" @click="refreshObsSources">Refresh source list</button>
+						<span v-if="obsSourceOptions.length === 0" class="hint">No sources found in the current scene yet — click refresh.</span>
+					</SettingsRow>
+				</template>
+
+			</template>
+		</div>
+
 		<SectionHeader title="Settings"/>
 		<div class="settingsBlock">
 			<SettingsInputRow
@@ -142,7 +194,7 @@
 <script setup>
 
 // vue
-import { ref, computed, inject } from 'vue';
+import { ref, computed, inject, onMounted } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 
 // components
@@ -166,13 +218,49 @@ const ctApp = inject('ctApp');
 const toy = ctApp.toyManager.toys[Tosser.slug];
 
 // get our local refs to use in template
-const { 
-	tosserAssets, 
+const {
+	tosserAssets,
 	randomTossMode,
 	tossSpeed,
 	soundVolume,
 	allEmojisToBeTossed,
+	trackingMode,
+	trackingObsSource,
 } = toy.settings;
+
+// ---- collider tracking config ----
+
+// live connection availability
+const obsConnected = computed(() => !!ctApp.obsConnMgr?.isConnected?.value);
+const vtsReady = computed(() => !!ctApp.vtsConnMgr?.readyToUse?.value);
+
+// tracking modes offered, gated by what's connected
+const trackingModeOptions = computed(() => {
+	const opts = [{ value: 'manual', label: 'Manual collider (default)' }];
+	if (obsConnected.value)
+		opts.push({ value: 'obs', label: 'OBS auto-track' });
+	if (obsConnected.value && vtsReady.value)
+		opts.push({ value: 'obsVts', label: 'OBS + VTubeStudio auto-track' });
+	return opts;
+});
+
+// OBS source list for the picker
+const obsSources = ref([]);
+const obsSourceOptions = computed(() => obsSources.value.map((n) => ({ value: n, label: n })));
+
+/**
+ * Pull the current scene's source names from OBS into the picker.
+ */
+async function refreshObsSources() {
+	obsSources.value = obsConnected.value
+		? await ctApp.obsConnMgr.getSceneSourceNames()
+		: [];
+}
+
+onMounted(() => {
+	if (obsConnected.value)
+		refreshObsSources();
+});
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
@@ -183,7 +271,24 @@ const toss_command = computed(() => {
 });
 
 </script>
-<style lang="scss" scoped>	
+<style lang="scss" scoped>
 
+	.refreshBtn {
+		padding: 5px 12px;
+		border-radius: 40px;
+		border: 2px solid black;
+		background: #EFEFEF;
+		font-weight: bolder;
+		cursor: pointer;
+
+		&:hover { background: #fff; }
+	}
+
+	.hint {
+		margin-left: 10px;
+		font-size: 12px;
+		font-style: italic;
+		color: #555;
+	}
 
 </style>
