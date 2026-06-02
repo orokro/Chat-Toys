@@ -153,6 +153,21 @@ class TwurpleManager {
 		this.userId = null;
 
 		/**
+		 * In-memory subscriber-status cache for member-only enforcement on
+		 * redeem-triggered commands (Task #16). EventSub redemption events
+		 * don't carry subscriber status, so we look it up via Helix on
+		 * demand and cache the result with a short TTL.
+		 *
+		 * Deliberately ephemeral: a Map, not SQLite/electron-store. Stale
+		 * "is subscribed" data is worse than no data, so it never persists
+		 * across restarts. Entries auto-expire after TTL; rapid-fire redeems
+		 * from the same user hit the cache instead of thrashing Helix.
+		 *
+		 * @type {Map<string, {isSubbed:boolean, expiresAt:number}>}
+		 */
+		this._subscriberCache = new Map();
+
+		/**
 		 * The Twurple-backed chat reader. Replaces the legacy TMI reader
 		 * once this manager is connected.
 		 *
@@ -820,6 +835,77 @@ class TwurpleManager {
 
 
 	/* ====================================================================== */
+	/*                                 Helix                                  */
+	/* ====================================================================== */
+
+
+	/**
+	 * Time-to-live for cached subscriber-status lookups, in milliseconds.
+	 * Five minutes: long enough to absorb rapid-fire redeems, short enough
+	 * that a viewer who just subscribed isn't gated for a meaningful window.
+	 *
+	 * @type {number}
+	 */
+	static SUBSCRIBER_TTL_MS = 5 * 60 * 1000;
+
+
+	/**
+	 * Resolve whether a Twitch user is a subscriber of the connected
+	 * broadcaster, used for member-only enforcement on redeem-triggered
+	 * commands (Task #16). Reads from a 5-minute in-memory TTL cache first,
+	 * falling back to a Helix `checkUserSubscription` call on a miss.
+	 *
+	 * Fails closed: any error (not connected, missing scope, network, or
+	 * the user simply not being a subscriber) resolves to `false`. For a
+	 * member-only gate, denying on uncertainty is the safe default - the
+	 * worst case is a sub being asked to redeem again, never a non-sub
+	 * sneaking past the gate.
+	 *
+	 * @param {string} userId - the redeemer's Twitch userId
+	 * @returns {Promise<boolean>} true only if confirmed subscribed
+	 */
+	async isSubscriber(userId) {
+
+		// No user id means nothing to look up - fail closed.
+		if (!userId)
+			return false;
+
+		// Serve from cache while the entry is still fresh.
+		const cached = this._subscriberCache.get(userId);
+		if (cached && cached.expiresAt > Date.now())
+			return cached.isSubbed;
+
+		// Can't reach Helix without a live client + broadcaster id.
+		if (!this.apiClient || !this.userId) {
+			console.warn('[TwurpleManager] isSubscriber: no apiClient/userId; treating as non-subscriber.');
+			return false;
+		}
+
+		let isSubbed = false;
+		try {
+			// Returns a UserSubscription object (truthy) when subscribed,
+			// or null when the user isn't a subscriber of this channel.
+			const sub = await this.apiClient.subscriptions.checkUserSubscription(this.userId, userId);
+			isSubbed = sub != null;
+		} catch (e) {
+			// Scope/auth/network problems all land here. Keep the raw text
+			// in the console for debugging but fail closed for the gate.
+			console.warn('[TwurpleManager] isSubscriber lookup failed:', e?.message || String(e));
+			isSubbed = false;
+		}
+
+		// Cache the result (including a confirmed "false") so we don't
+		// re-hit Helix for every redeem in the TTL window.
+		this._subscriberCache.set(userId, {
+			isSubbed,
+			expiresAt: Date.now() + TwurpleManager.SUBSCRIBER_TTL_MS,
+		});
+
+		return isSubbed;
+	}
+
+
+	/* ====================================================================== */
 	/*                                 IPC                                    */
 	/* ====================================================================== */
 
@@ -897,6 +983,22 @@ class TwurpleManager {
 					friendly = 'Twitch rejected the request (auth issue). Try logging out and back in via the Twurple connection tab.';
 				}
 				return { ok: false, error: friendly, rewards: [] };
+			}
+		});
+
+		// Helix passthrough: subscriber-status lookup for member-only
+		// enforcement on redeem-triggered commands (Task #16). The
+		// TwitchRedeems toy calls this before injecting a redeem when the
+		// mapped command is member-only. Fails closed (isSubbed:false) on
+		// any error - see TwurpleManager.isSubscriber.
+		ipcMain.handle('twurple-is-subscriber', async (event, userId) => {
+			try {
+				const isSubbed = await this.isSubscriber(userId);
+				return { ok: true, isSubbed };
+			} catch (e) {
+				// isSubscriber already swallows its own errors, so reaching
+				// here is unexpected; still fail closed for the caller.
+				return { ok: false, isSubbed: false, error: e?.message || String(e) };
 			}
 		});
 

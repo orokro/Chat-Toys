@@ -91,9 +91,17 @@ export default class TwitchRedeems extends Toy {
 	 * Cooldowns, member-only, and super-only are honored normally - the
 	 * standard CommandProcessor.validateCommand path runs unchanged.
 	 *
+	 * Async because member-only commands require a Helix subscriber
+	 * lookup (Task #16) before injection. The TwitchEvents bus fires this
+	 * handler fire-and-forget, so the returned promise is intentionally
+	 * not awaited by the caller. Concurrent redeems from the same user are
+	 * safe: this method holds no shared mutable state, and the underlying
+	 * subscriber cache lives in the main process.
+	 *
 	 * @param {Object} event - normalized redemption payload from TwurpleManager
+	 * @returns {Promise<void>}
 	 */
-	handleRedemption(event) {
+	async handleRedemption(event) {
 
 		// Master toggle
 		if (this.settings.enabled.value === false)
@@ -120,6 +128,25 @@ export default class TwitchRedeems extends Toy {
 			return;
 		}
 
+		// Member-only enforcement. EventSub redemption payloads carry no
+		// subscriber status, so for member-only commands we resolve it via
+		// a Helix lookup (cached 5 min in the main process). Only pay the
+		// round-trip when the command actually gates on membership; plain
+		// commands stay synchronous-fast with isMember:false (unused).
+		// Fails closed - if the bridge is unavailable or the lookup errors,
+		// isMember stays false and CommandProcessor rejects the redeem,
+		// which Task #17 will turn into an automatic refund.
+		let isMember = false;
+		if (cmd.memberOnly === true) {
+			try {
+				const res = await window.twurpleAPI.isSubscriber(event.userId);
+				isMember = res?.isSubbed === true;
+			} catch (err) {
+				console.warn('[TwitchRedeems] isSubscriber bridge call failed; treating as non-member:', err);
+				isMember = false;
+			}
+		}
+
 		// Synthesize a message in the shape ChatProcessor produces for
 		// regular chat. CommandProcessor.handleChats consumes this shape
 		// directly (it's a subscriber to ChatProcessor.onNewChats, but
@@ -137,10 +164,9 @@ export default class TwitchRedeems extends Toy {
 			messageText,
 			emojis: [],
 			time: Date.now(),
-			// Member-only enforcement requires a Helix subscriber lookup
-			// (no isSubscriber field on EventSub redemption payloads).
-			// Task #16 wires that lookup in; for now defaults to false.
-			isMember: false,
+			// Resolved above via Helix subscriber lookup when the mapped
+			// command is member-only; false (and unused) otherwise.
+			isMember,
 			streamID: 'twitch',
 			isSuper: false,
 			bits: 0,

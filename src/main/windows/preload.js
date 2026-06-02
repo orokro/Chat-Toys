@@ -200,5 +200,17 @@ contextBridge.exposeInMainWorld('twurpleAPI', {
 	 * @returns {Promise<{ok:boolean, rewards:Array, error?:string}>}
 	 */
 	getCustomRewards: () => ipcRenderer.invoke('twurple-get-custom-rewards'),
+
+	/**
+	 * Resolve whether a Twitch user is a subscriber of the connected
+	 * broadcaster. Used by the TwitchRedeems toy to enforce member-only
+	 * commands on redeem-triggered injections (EventSub redemption events
+	 * don't carry subscriber status). Backed by a 5-minute TTL cache in
+	 * the main process and fails closed (isSubbed:false) on any error.
+	 *
+	 * @param {string} userId - the redeemer's Twitch userId
+	 * @returns {Promise<{ok:boolean, isSubbed:boolean, error?:string}>}
+	 */
+	isSubscriber: (userId) => ipcRenderer.invoke('twurple-is-subscriber', userId),
 });
 
