@@ -31,5 +31,11 @@
 	{ "id": 30, "name": "woosh_2.mp3",        "kind": "sound", "tags": ["sfx"],            "canonicalPath": "assets://Built-in/SFX/Wooshes" },
 	{ "id": 31, "name": "woosh_3.mp3",        "kind": "sound", "tags": ["sfx"],            "canonicalPath": "assets://Built-in/SFX/Wooshes" },
 	{ "id": 32, "name": "bonk.mp3",           "kind": "sound", "tags": ["sfx"],            "canonicalPath": "assets://Built-in/SFX/Hits" },
-	{ "id": 33, "name": "slap.mp3",           "kind": "sound", "tags": ["sfx"],            "canonicalPath": "assets://Built-in/SFX/Hits" }
+	{ "id": 33, "name": "slap.mp3",           "kind": "sound", "tags": ["sfx"],            "canonicalPath": "assets://Built-in/SFX/Hits" },
+	{ "id": 34, "name": "bear.png",           "kind": "image", "tags": ["claw", "prize"],  "canonicalPath": "assets://Built-in/Claw Game" },
+	{ "id": 35, "name": "bunny.png",          "kind": "image", "tags": ["claw", "prize"],  "canonicalPath": "assets://Built-in/Claw Game" },
+	{ "id": 36, "name": "cat.png",            "kind": "image", "tags": ["claw", "prize"],  "canonicalPath": "assets://Built-in/Claw Game" },
+	{ "id": 37, "name": "doggo.png",          "kind": "image", "tags": ["claw", "prize"],  "canonicalPath": "assets://Built-in/Claw Game" },
+	{ "id": 38, "name": "pengy.png",          "kind": "image", "tags": ["claw", "prize"],  "canonicalPath": "assets://Built-in/Claw Game" },
+	{ "id": 39, "name": "sheep.png",          "kind": "image", "tags": ["claw", "prize"],  "canonicalPath": "assets://Built-in/Claw Game" }
 ]

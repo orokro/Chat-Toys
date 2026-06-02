@@ -234,53 +234,23 @@ class DatabaseManager {
 
 			if (!shouldRunV1Seed) return; // v2/v3 bumps run only the targeted fix-ups below
 
-			// ensure the root virtual folders exist. Order matters - parents
-			// before children - so the parent_path lookup always resolves.
-			ensureFolderChain(insertFolder, 'Built-in');
-			ensureFolderChain(insertFolder, 'Built-in/Chat Frames');
-			ensureFolderChain(insertFolder, 'Built-in/Points Icons');
-			ensureFolderChain(insertFolder, 'Built-in/Wheel Frames');
-			ensureFolderChain(insertFolder, 'Built-in/Fishing');
-			ensureFolderChain(insertFolder, 'Built-in/Reactions');
-			ensureFolderChain(insertFolder, 'Built-in/Tossables');
-			ensureFolderChain(insertFolder, 'Built-in/Characters');
-			ensureFolderChain(insertFolder, 'Built-in/SFX');
-			ensureFolderChain(insertFolder, 'Built-in/SFX/Pops');
-			ensureFolderChain(insertFolder, 'Built-in/SFX/Wooshes');
-			ensureFolderChain(insertFolder, 'Built-in/SFX/Hits');
-			ensureFolderChain(insertFolder, 'Built-in/SFX/Clicks');
-			ensureFolderChain(insertFolder, 'Built-in/SFX/Reactions');
+			// Built-ins are NO LONGER seeded into the database. They are mixed
+			// into the vuefinder listings on the fly from builtInAssets.json
+			// (see assetFsAPI.js), so a new built-in ships in a release and
+			// shows up with no migration. Built-in rows written by older
+			// versions of this seed are ignored by the list/search handlers,
+			// so there are no duplicates. We only need the user-facing
+			// /My Assets root here.
 			ensureFolderChain(insertFolder, 'My Assets');
 
-			// place each built-in at its canonicalPath. INSERT OR IGNORE so
-			// users who somehow already have a row at the target path don't
-			// get clobbered.
-			// helper: only insert a row for this asset_ref if no row
-			// already references it. Prevents duplicate path rows when
-			// the seeding re-runs for any reason (and defends against
-			// future migrations that may also touch this area).
+			// helper: only insert a /My Assets row for this asset_ref if no
+			// row already references it. Prevents duplicate rows on re-run.
 			const alreadySeeded = (assetRef, isInternal) => {
 				return !!this.db.prepare(`
 					SELECT 1 FROM asset_paths
 					WHERE asset_ref = ? AND is_internal = ?
 				`).get(assetRef, isInternal ? 1 : 0);
 			};
-
-			for (const asset of builtInAssets) {
-				if (alreadySeeded(String(asset.id), true)) continue;
-				const folderPath = asset.canonicalPath;
-				const filePath = joinAssetPath(folderPath, asset.name);
-				// strip the `assets://` prefix to derive the segments
-				ensureFolderChain(insertFolder, folderPath.slice(ASSET_STORAGE_PREFIX.length));
-				insertFile.run(
-					filePath,
-					folderPath,
-					asset.name,
-					String(asset.id),
-					1,
-					asset.kind
-				);
-			}
 
 			// stage existing user-imported assets in /My Assets/. We use the
 			// original_name as the basename, falling back to the uuid if it

@@ -66,8 +66,160 @@ const builtInAssets = require(path.join(__dirname, '..', '..', 'shared', 'builtI
 const builtInById = new Map(builtInAssets.map(a => [String(a.id), a]));
 
 // Single storage prefix - matches what the database.js seeder uses.
+// Declared here (above the built-in virtual FS) because the module-load
+// tree build below references STORAGE_PREFIX.
 const STORAGE = 'assets';
 const STORAGE_PREFIX = `${STORAGE}://`;
+
+// ---------------------------------------------------------------------------
+// Built-in virtual filesystem (derived entirely from builtInAssets.json).
+//
+// Built-ins are NEVER stored in the database. They're mixed into directory
+// listings / search / preview on the fly from the JSON catalog, so a new
+// built-in can ship in a release and appear immediately with no DB migration.
+// Built-in rows that an OLDER version seeded into asset_paths are ignored by
+// the list/search handlers (we drop is_internal file rows), so there are no
+// duplicates and the JSON stays the single source of truth.
+// ---------------------------------------------------------------------------
+
+const BUILTIN_FILE_BY_PATH   = new Map();   // full file path -> built-in asset
+const BUILTIN_FILES_BY_PARENT = new Map();  // folder path    -> [built-in asset, ...]
+const BUILTIN_CHILD_FOLDERS  = new Map();   // folder path    -> Set(child folder path)
+
+/**
+ * Parent folder of a virtual path (one segment up). The storage root for
+ * top-level entries.
+ *
+ * @param {string} p - e.g. 'assets://Built-in/Claw Game'
+ * @returns {string}
+ */
+function builtinParentOf(p) {
+	const rest = p.slice(STORAGE_PREFIX.length);
+	const idx = rest.lastIndexOf('/');
+	return idx < 0 ? STORAGE_PREFIX : STORAGE_PREFIX + rest.slice(0, idx);
+}
+
+/**
+ * Leaf name of a virtual path.
+ *
+ * @param {string} p
+ * @returns {string}
+ */
+function builtinBasenameOf(p) {
+	const rest = p.slice(STORAGE_PREFIX.length);
+	const idx = rest.lastIndexOf('/');
+	return idx < 0 ? rest : rest.slice(idx + 1);
+}
+
+// Build the virtual tree once at module load.
+for (const a of builtInAssets) {
+	const folder = a.canonicalPath;            // 'assets://Built-in/Claw Game'
+	const filePath = `${folder}/${a.name}`;
+
+	BUILTIN_FILE_BY_PATH.set(filePath, a);
+	if (!BUILTIN_FILES_BY_PARENT.has(folder)) BUILTIN_FILES_BY_PARENT.set(folder, []);
+	BUILTIN_FILES_BY_PARENT.get(folder).push(a);
+
+	// register every ancestor folder -> child-folder relationship up to root
+	let cur = folder;
+	while (cur && cur !== STORAGE_PREFIX) {
+		const parent = builtinParentOf(cur);
+		if (!BUILTIN_CHILD_FOLDERS.has(parent)) BUILTIN_CHILD_FOLDERS.set(parent, new Set());
+		BUILTIN_CHILD_FOLDERS.get(parent).add(cur);
+		cur = parent;
+	}
+}
+
+/**
+ * Synthesize an asset_paths-shaped folder row for a virtual built-in folder.
+ *
+ * @param {string} folderPath
+ * @returns {Object}
+ */
+function builtinFolderRow(folderPath) {
+	return {
+		path: folderPath,
+		parent_path: builtinParentOf(folderPath),
+		basename: builtinBasenameOf(folderPath),
+		is_folder: 1,
+		asset_ref: null,
+		is_internal: 0,
+		asset_kind: null,
+		created_at: null,
+	};
+}
+
+/**
+ * Synthesize an asset_paths-shaped file row for a built-in asset.
+ *
+ * @param {Object} asset - a builtInAssets entry
+ * @returns {Object}
+ */
+function builtinFileRow(asset) {
+	const folder = asset.canonicalPath;
+	return {
+		path: `${folder}/${asset.name}`,
+		parent_path: folder,
+		basename: asset.name,
+		is_folder: 0,
+		asset_ref: String(asset.id),
+		is_internal: 1,
+		asset_kind: asset.kind || null,
+		created_at: null,
+	};
+}
+
+/**
+ * Resolve a virtual path to a built-in file row, or null.
+ *
+ * @param {string} p
+ * @returns {Object|null}
+ */
+function builtinRowForPath(p) {
+	const a = BUILTIN_FILE_BY_PATH.get(p);
+	return a ? builtinFileRow(a) : null;
+}
+
+/**
+ * Merge DB rows with the built-in virtual FS for a directory listing. Drops
+ * DB built-in FILE rows (JSON is the single source of truth) and dedupes
+ * virtual folders against DB folder rows by path.
+ *
+ * @param {string} dir
+ * @param {Array<Object>} dbRows
+ * @returns {Array<Object>}
+ */
+function mergeBuiltinChildren(dir, dbRows) {
+
+	// keep folders + custom files; drop any previously-seeded built-in files
+	const kept = dbRows.filter(r => !(r.is_internal && !r.is_folder));
+	const dbFolderPaths = new Set(kept.filter(r => r.is_folder).map(r => r.path));
+
+	const folders = [...(BUILTIN_CHILD_FOLDERS.get(dir) || [])]
+		.filter(fp => !dbFolderPaths.has(fp))
+		.map(builtinFolderRow);
+	const files = (BUILTIN_FILES_BY_PARENT.get(dir) || []).map(builtinFileRow);
+
+	return [...kept, ...folders, ...files];
+}
+
+/**
+ * Built-in file rows under `dir` (recursive) whose basename matches `filter`.
+ *
+ * @param {string} dir
+ * @param {string} filter - case-insensitive substring
+ * @returns {Array<Object>}
+ */
+function searchBuiltinRows(dir, filter) {
+	const needle = filter.toLowerCase();
+	const under = (p) => (dir === STORAGE_PREFIX ? p.startsWith(STORAGE_PREFIX) : p.startsWith(`${dir}/`));
+	const out = [];
+	for (const [filePath, asset] of BUILTIN_FILE_BY_PATH) {
+		if (under(filePath) && asset.name.toLowerCase().includes(needle))
+			out.push(builtinFileRow(asset));
+	}
+	return out;
+}
 
 // Public mount path. Both the AssetBrowser's `baseURL` and these routes
 // have to agree on this string.
@@ -120,7 +272,7 @@ function mountAssetFsAPI(expressApp, ctx) {
 	expressApp.get(MOUNT_PATH, (req, res) => {
 		try {
 			const dir = normalizePath(req.query.path);
-			const rows = db.listAssetPathChildren(dir);
+			const rows = mergeBuiltinChildren(dir, db.listAssetPathChildren(dir));
 			res.json(buildEnvelope(dir, rows, req));
 		} catch (err) { sendError(res, err); }
 	});
@@ -142,7 +294,11 @@ function mountAssetFsAPI(expressApp, ctx) {
 		try {
 			const dir = normalizePath(req.query.path);
 			const filter = (req.query.filter || '').toString();
-			const rows = filter ? db.searchAssetPaths(dir, filter) : [];
+			let rows = [];
+			if (filter) {
+				const dbRows = db.searchAssetPaths(dir, filter).filter(r => !(r.is_internal && !r.is_folder));
+				rows = [...dbRows, ...searchBuiltinRows(dir, filter)];
+			}
 			res.json(buildEnvelope(dir, rows, req));
 		} catch (err) { sendError(res, err); }
 	});
@@ -418,7 +574,9 @@ function resolveOnDiskPath(row, customAssetsDir, builtinDir) {
  */
 function streamFile(req, res, db, customAssetsDir, builtinDir, asDownload) {
 	const p = normalizePath(req.query.path);
-	const row = db.getAssetPathRow(p);
+	// Built-ins may have no DB row (they're virtual) - fall back to the
+	// JSON-derived row so previews/downloads still resolve.
+	const row = db.getAssetPathRow(p) || builtinRowForPath(p);
 	if (!row) return res.status(404).json({ status: false, message: 'Not found' });
 	if (row.is_folder) return res.status(400).json({ status: false, message: 'Cannot preview a folder' });
 	const onDisk = resolveOnDiskPath(row, customAssetsDir, builtinDir);
