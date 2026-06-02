@@ -221,6 +221,19 @@ function searchBuiltinRows(dir, filter) {
 	return out;
 }
 
+/**
+ * True when a directory path is the Built-in tree (or inside it). Used to
+ * mark those listings read-only in the vuefinder UI, since built-ins are
+ * shipped defaults that can't be renamed / moved / deleted.
+ *
+ * @param {string} dir
+ * @returns {boolean}
+ */
+function isBuiltinDir(dir) {
+	const root = `${STORAGE_PREFIX}Built-in`;
+	return dir === root || dir.startsWith(`${root}/`);
+}
+
 // Public mount path. Both the AssetBrowser's `baseURL` and these routes
 // have to agree on this string.
 const MOUNT_PATH = '/api/files';
@@ -475,7 +488,10 @@ function buildEnvelope(dirname, rows, req) {
 	return {
 		storages: [STORAGE],
 		dirname,
-		read_only: false,
+		// Built-in folders are shipped defaults - present them read-only so
+		// the UI suppresses rename/move/delete/upload there. Custom assets
+		// (under My Assets) stay fully editable.
+		read_only: isBuiltinDir(dirname),
 		files: rows.map(r => rowToDirEntry(r, baseUrl)),
 	};
 }
