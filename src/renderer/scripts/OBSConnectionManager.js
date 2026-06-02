@@ -492,12 +492,15 @@ export class OBSConnectionManager {
 		try {
 
 			// Use RPC v1 and subscribe to general + streaming events.
+			// NOTE: SceneItemTransformChanged is a HIGH-VOLUME event and is NOT
+			// part of EventSubscription.All - it must be OR'd in explicitly, or
+			// the Tosser collider won't follow when a source is moved/scaled.
 			await this._obs.connect(
 				url,
 				password,
 				{
 					rpcVersion: 1,
-					eventSubscriptions: EventSubscription.All
+					eventSubscriptions: EventSubscription.All | EventSubscription.SceneItemTransformChanged
 				}
 			);
 
