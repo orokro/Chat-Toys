@@ -203,80 +203,176 @@ export default class Tosser extends Toy {
 			return;
 		}
 
-		// Use the FIRST tracked source that's present in the current scene.
-		// (Top-level lookup for now; nested-group/scene composition lands with
-		// the runtime resolver phase.)
-		let transform = null;
-		let foundName = null;
-		for (const name of sources) {
-			const t = await this.obs.getSceneItemTransform(name);
-			if (t) {
-				transform = t;
-				foundName = name;
-				break;
+		// Find (in tracked-list priority order) the first source present in the
+		// current scene's hierarchy, even if nested in a group / nested scene.
+		const sceneName = await this.obs.getCurrentSceneName();
+		if (!sceneName) {
+			this._obsRect = null;
+			this.activeTrackedSource.value = null;
+			this.publishCollider();
+			return;
+		}
+
+		let tree = this.obs.sourceCache.value?.trees?.[sceneName];
+		if (!tree) {
+			await this.obs.buildSourceCache();
+			tree = this.obs.sourceCache.value?.trees?.[sceneName] || [];
+		}
+
+		const path = this._findTrackedPath(tree, sceneName, sources);
+		if (!path) {
+			this._obsRect = null;
+			this.activeTrackedSource.value = null;
+			this.publishCollider();
+			return;
+		}
+
+		// fetch each path item's transform (leaf last)
+		const transforms = [];
+		for (const step of path) {
+			const t = await this.obs.getSceneItemTransformById(step.container, step.id);
+			if (!t) {
+				this._obsRect = null;
+				this.activeTrackedSource.value = null;
+				this.publishCollider();
+				return;
 			}
+			transforms.push(t);
 		}
 
 		const canvas = await this.obs.getVideoSettings();
-		this.activeTrackedSource.value = foundName;
-
-		if (!transform || !canvas || !canvas.baseWidth || !canvas.baseHeight) {
+		if (!canvas || !canvas.baseWidth || !canvas.baseHeight) {
 			this._obsRect = null;
 			this.publishCollider();
 			return;
 		}
 
-		this._obsRect = this.computeNormalizedSourceRect(transform, canvas);
+		// compose the path into an absolute canvas rect, then normalize
+		const px = this._composePath(transforms);
+		this._obsRect = {
+			x: px.x / canvas.baseWidth,
+			y: px.y / canvas.baseHeight,
+			width: px.width / canvas.baseWidth,
+			height: px.height / canvas.baseHeight,
+		};
+		this.activeTrackedSource.value = path[path.length - 1].name;
 		this.publishCollider();
 	}
 
 
 	/**
-	 * Convert an OBS scene-item transform into a normalized (0..1) canvas rect,
-	 * honoring the item's alignment.
+	 * Find a path (tracked-list priority order) to the first tracked source
+	 * present anywhere in the scene tree. Returns the root..leaf path or null.
+	 *
+	 * @param {Array<Object>} tree - cached scene tree nodes
+	 * @param {string} sceneName - the root container (scene) name
+	 * @param {Array<string>} sourcesInOrder - tracked names, priority order
+	 * @returns {Array<{container:string, id:number, name:string}>|null}
+	 */
+	_findTrackedPath(tree, sceneName, sourcesInOrder) {
+		for (const name of sourcesInOrder) {
+			const p = this._findPathToName(tree, sceneName, name);
+			if (p) return p;
+		}
+		return null;
+	}
+
+
+	/**
+	 * DFS for a named source, recording the container path from scene root.
+	 *
+	 * @param {Array<Object>} nodes
+	 * @param {string} container - the container these nodes live in
+	 * @param {string} targetName
+	 * @returns {Array<{container:string, id:number, name:string}>|null}
+	 */
+	_findPathToName(nodes, container, targetName) {
+		for (const node of nodes) {
+			if (node.name === targetName)
+				return [{ container, id: node.id, name: node.name }];
+			if (Array.isArray(node.children) && node.children.length) {
+				const sub = this._findPathToName(node.children, node.name, targetName);
+				if (sub)
+					return [{ container, id: node.id, name: node.name }, ...sub];
+			}
+		}
+		return null;
+	}
+
+
+	/**
+	 * Visible (crop-aware) rect of an item in ITS PARENT's coordinate space,
+	 * in pixels. OBS `width`/`height` ignore crop, so derive the size from
+	 * sourceWidth/Height minus crop, times scale. Rotation ignored (v1).
 	 *
 	 * @param {Object} t - sceneItemTransform
-	 * @param {{baseWidth:number, baseHeight:number}} canvas
 	 * @returns {{x:number, y:number, width:number, height:number}}
 	 */
-	computeNormalizedSourceRect(t, canvas) {
-
-		// OBS `width`/`height` are the scaled UNCROPPED size, so for a cropped
-		// source they don't reflect what's actually visible. Derive the visible
-		// rect from sourceWidth/Height minus crop, times scale.
+	_visibleRectPx(t) {
 		const sx = (typeof t.scaleX === 'number') ? t.scaleX : 1;
 		const sy = (typeof t.scaleY === 'number') ? t.scaleY : 1;
 		const sw = (typeof t.sourceWidth === 'number' && t.sourceWidth > 0) ? t.sourceWidth : (sx ? (t.width || 0) / sx : 0);
 		const sh = (typeof t.sourceHeight === 'number' && t.sourceHeight > 0) ? t.sourceHeight : (sy ? (t.height || 0) / sy : 0);
 
-		const cl = t.cropLeft || 0;
-		const cr = t.cropRight || 0;
-		const ct = t.cropTop || 0;
-		const cb = t.cropBottom || 0;
-
-		// visible (cropped) size in canvas pixels
+		const cl = t.cropLeft || 0, cr = t.cropRight || 0, ct = t.cropTop || 0, cb = t.cropBottom || 0;
 		const visW = Math.max(0, (sw - cl - cr) * sx);
 		const visH = Math.max(0, (sh - ct - cb) * sy);
 
-		// positionX/Y is the alignment anchor of the cropped item.
 		// OBS alignment bits: LEFT=1, RIGHT=2, TOP=4, BOTTOM=8 (CENTER=0)
 		const a = t.alignment || 0;
 		let left;
 		if (a & 1) left = t.positionX;
 		else if (a & 2) left = t.positionX - visW;
 		else left = t.positionX - visW / 2;
-
 		let top;
 		if (a & 4) top = t.positionY;
 		else if (a & 8) top = t.positionY - visH;
 		else top = t.positionY - visH / 2;
 
+		return { x: left, y: top, width: visW, height: visH };
+	}
+
+
+	/**
+	 * Map a rect expressed in a CONTAINER's local content space up into the
+	 * container's parent space, using the container's own transform.
+	 *
+	 * @param {{x:number,y:number,width:number,height:number}} rect
+	 * @param {Object} t - the container item's transform (in its parent)
+	 * @returns {{x:number,y:number,width:number,height:number}}
+	 */
+	_mapThroughContainer(rect, t) {
+		const sx = (typeof t.scaleX === 'number') ? t.scaleX : 1;
+		const sy = (typeof t.scaleY === 'number') ? t.scaleY : 1;
+		const cl = t.cropLeft || 0, ct = t.cropTop || 0;
+		const cont = this._visibleRectPx(t);
 		return {
-			x: left / canvas.baseWidth,
-			y: top / canvas.baseHeight,
-			width: visW / canvas.baseWidth,
-			height: visH / canvas.baseHeight,
+			x: cont.x + (rect.x - cl) * sx,
+			y: cont.y + (rect.y - ct) * sy,
+			width: rect.width * sx,
+			height: rect.height * sy,
 		};
+	}
+
+
+	/**
+	 * Compose a path of transforms (root..leaf) into an absolute canvas rect.
+	 *
+	 * @param {Array<Object>} transforms - one per path step, leaf last
+	 * @returns {{x:number,y:number,width:number,height:number}}
+	 */
+	_composePath(transforms) {
+		if (!transforms.length)
+			return { x: 0, y: 0, width: 0, height: 0 };
+
+		// leaf's visible rect, expressed in its immediate container's space
+		let rect = this._visibleRectPx(transforms[transforms.length - 1]);
+
+		// map up through each container (leaf-1 .. root)
+		for (let k = transforms.length - 2; k >= 0; k--)
+			rect = this._mapThroughContainer(rect, transforms[k]);
+
+		return rect;
 	}
 
 

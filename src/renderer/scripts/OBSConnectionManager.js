@@ -359,6 +359,8 @@ export class OBSConnectionManager {
 		});
 		this._obs.on('CurrentProgramSceneChanged', (data) => {
 			this._emit('obs-scene-changed', data);
+			// the new scene may have a different hierarchy - refresh the cache
+			this.buildSourceCache().catch(() => {});
 		});
 	}
 
@@ -769,6 +771,51 @@ export class OBSConnectionManager {
 			};
 		} catch (err) {
 			console.error('[OBSConnectionManager] getVideoSettings failed', err);
+			return null;
+		}
+	}
+
+
+	/**
+	 * Get the current program scene name.
+	 *
+	 * @returns {Promise<string|null>}
+	 */
+	async getCurrentSceneName() {
+
+		if (!this.isConnected.value)
+			return null;
+
+		try {
+			const r = await this._obs.call('GetCurrentProgramScene');
+			return r.currentProgramSceneName || r.sceneName || null;
+		} catch (err) {
+			return null;
+		}
+	}
+
+
+	/**
+	 * Get a scene item's transform directly by its container (scene OR group
+	 * OR nested scene name) and sceneItemId. Used by the Tosser's nested
+	 * collider resolver to fetch each item along a source's path.
+	 *
+	 * @param {string} containerName
+	 * @param {number} sceneItemId
+	 * @returns {Promise<Object|null>}
+	 */
+	async getSceneItemTransformById(containerName, sceneItemId) {
+
+		if (!this.isConnected.value)
+			return null;
+
+		try {
+			const { sceneItemTransform } = await this._obs.call('GetSceneItemTransform', {
+				sceneName: containerName,
+				sceneItemId,
+			});
+			return sceneItemTransform || null;
+		} catch (err) {
 			return null;
 		}
 	}
