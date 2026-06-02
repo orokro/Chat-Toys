@@ -147,10 +147,10 @@ export default class VTSInteractions extends Toy {
 			//   }
 			commandConfigs: shallowRef([]),
 
-			// Grace window (ms) used later by the runner: how long an
-			// unsupported queued sequence waits for a compatible model to
-			// become active after a mid-stream model swap before it's dropped.
-			graceMs: ref(10000),
+			// Grace window (ms) used by the runner: how long an unsupported
+			// queued sequence waits for a compatible model to become active
+			// after a mid-stream model swap before it's dropped.
+			graceMs: ref(60000),
 		});
 	}
 
