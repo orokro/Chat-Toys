@@ -9,18 +9,17 @@
 	  - expression: { id, type:'expression', file, action:'activate'|'deactivate'|'toggle', label }
 	  - wait:       { id, type:'wait', seconds }
 
-	Scratch-style editor: drag a block from the palette into the chain, drag a
-	block's grip to reorder, and drop it on one of the gaps between blocks.
-	Blocks are chevron (>) shaped so they read as flowing left-to-right and
-	fitting together. Click-to-add and the small reorder arrows are kept as
-	no-drag fallbacks.
+	Scratch-style VERTICAL editor: blocks stack top-to-bottom (execution order),
+	connected under a "hat" cap. Drag a block from the palette into the stack,
+	drag a block's grip to reorder (drop on a gap), or use the up/down buttons.
+	Each block carries its own controls and a trash button.
 -->
 <template>
 
 	<ModalWindowFrame
 		:title="`Edit Sequence: !${commandName}`"
-		:width="760"
-		:height="560"
+		:width="700"
+		:height="660"
 	>
 		<div class="editorContent">
 
@@ -30,7 +29,7 @@
 					Model: <strong>{{ model.modelName }}</strong>
 					<span class="meta">({{ model.hotkeys.length }} hotkeys, {{ model.expressions.length }} expressions)</span>
 				</div>
-				<div class="hint">Drag blocks into the chain · drag a grip to reorder</div>
+				<div class="hint">Drag a block into the stack · drag a grip to reorder</div>
 			</div>
 
 			<!-- palette: draggable source blocks -->
@@ -44,7 +43,7 @@
 					@dragstart="onPaletteDragStart('hotkey', $event)"
 					@dragend="endDrag"
 					@click="appendBlock('hotkey')"
-				>Hotkey</div>
+				>+ Hotkey</div>
 				<div
 					class="srcBlock expression"
 					:class="{ disabled: model.expressions.length === 0 }"
@@ -53,7 +52,7 @@
 					@dragstart="onPaletteDragStart('expression', $event)"
 					@dragend="endDrag"
 					@click="appendBlock('expression')"
-				>Expression</div>
+				>+ Expression</div>
 				<div
 					class="srcBlock wait"
 					draggable="true"
@@ -61,17 +60,17 @@
 					@dragstart="onPaletteDragStart('wait', $event)"
 					@dragend="endDrag"
 					@click="appendBlock('wait')"
-				>Wait</div>
+				>+ Wait</div>
 			</div>
 
-			<!-- the sequence chain canvas -->
+			<!-- the vertical stack canvas -->
 			<div
 				class="canvas"
 				@dragover.prevent
 				@drop.prevent="dropAt(blocks.length)"
 			>
-				<!-- start cap -->
-				<div class="startCap" title="Sequence start">▶</div>
+				<!-- hat cap = sequence start -->
+				<div class="hatCap">▶ When <span class="cmd">!{{ commandName }}</span> runs</div>
 
 				<!-- empty hint -->
 				<div v-if="blocks.length === 0" class="emptyHint">
@@ -93,7 +92,7 @@
 					<!-- the block -->
 					<div class="block" :class="b.type">
 
-						<!-- drag grip (the draggable part) -->
+						<!-- drag grip -->
 						<div
 							class="grip"
 							draggable="true"
@@ -104,7 +103,7 @@
 
 						<!-- hotkey -->
 						<template v-if="b.type === 'hotkey'">
-							<span class="tag">HK</span>
+							<span class="tag">HOTKEY</span>
 							<select v-model="b.hotkeyID" @change="syncLabel(b)">
 								<option v-for="hk in model.hotkeys" :key="hk.hotkeyID" :value="hk.hotkeyID">{{ hk.name }}</option>
 							</select>
@@ -112,7 +111,7 @@
 
 						<!-- expression -->
 						<template v-else-if="b.type === 'expression'">
-							<span class="tag">EX</span>
+							<span class="tag">EXPRESSION</span>
 							<select v-model="b.file" @change="syncLabel(b)">
 								<option v-for="ex in model.expressions" :key="ex.file" :value="ex.file">{{ ex.name }}</option>
 							</select>
@@ -127,14 +126,14 @@
 						<template v-else>
 							<span class="tag">WAIT</span>
 							<input type="number" v-model.number="b.seconds" min="0" max="60" step="0.1" class="waitInput" />
-							<span class="unit">s</span>
+							<span class="unit">seconds</span>
 						</template>
 
-						<!-- per-block controls -->
+						<!-- control cluster -->
 						<div class="blockCtl">
-							<button :disabled="i === 0" title="Move left" @click="move(i, -1)">‹</button>
-							<button :disabled="i === blocks.length - 1" title="Move right" @click="move(i, 1)">›</button>
-							<button class="del" title="Remove" @click="remove(i)">✕</button>
+							<button :disabled="i === 0" title="Move up" @click="move(i, -1)">▲</button>
+							<button :disabled="i === blocks.length - 1" title="Move down" @click="move(i, 1)">▼</button>
+							<button class="del" title="Remove" @click="remove(i)">🗑</button>
 						</div>
 					</div>
 				</template>
@@ -230,7 +229,7 @@ function createBlock(type) {
 
 
 /**
- * Click fallback: append a block of the given type to the end of the chain.
+ * Click fallback: append a block of the given type to the end of the stack.
  *
  * @param {'hotkey'|'expression'|'wait'} type
  */
@@ -328,7 +327,7 @@ function dropAt(targetIndex) {
 		const from = d.fromIndex;
 		let to = targetIndex;
 		const [moved] = blocks.value.splice(from, 1);
-		// removing an earlier element shifts the target left by one
+		// removing an earlier element shifts the target up by one
 		if (from < to)
 			to -= 1;
 		blocks.value.splice(to, 0, moved);
@@ -357,7 +356,7 @@ function syncLabel(b) {
 
 
 /**
- * Reorder fallback: move a block left (-1) or right (+1).
+ * Reorder fallback: move a block up (-1) or down (+1).
  *
  * @param {Number} index
  * @param {Number} dir
@@ -427,15 +426,13 @@ function cancel() {
 		.paletteLbl { font-size: 12px; font-weight: bold; }
 
 		.srcBlock {
-			padding: 7px 18px;
+			padding: 6px 16px;
+			border-radius: 16px;
 			color: white;
 			font-weight: bold;
 			font-size: 12px;
 			cursor: grab;
 			user-select: none;
-			// chevron banner shape (notch on left, point on right)
-			clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%, 12px 50%);
-			padding-left: 22px;
 
 			&:active { cursor: grabbing; }
 			&.disabled {
@@ -450,25 +447,35 @@ function cancel() {
 		}
 	}
 
-	// the chain canvas
+	// the vertical stack canvas
 	.canvas {
 		flex: 1;
 		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 2px;
-		padding: 14px 12px;
+		flex-direction: column;
+		align-items: stretch;
+		padding: 10px 12px;
 		overflow-y: auto;
 
-		border: 2px dashed #c98;
+		border: 2px dashed #d9a7b1;
 		border-radius: 10px;
 		background: rgba(255, 245, 247, 0.6);
 
-		.startCap {
-			color: #F9A0B0;
-			font-size: 18px;
+		// hat cap (sequence start)
+		.hatCap {
+			align-self: flex-start;
+			padding: 6px 16px 8px 12px;
+			background: #555;
+			color: white;
+			font-size: 12px;
 			font-weight: bold;
-			margin-right: 2px;
+			border-radius: 12px 12px 4px 4px;
+
+			.cmd {
+				font-family: 'Courier New', Courier, monospace;
+				background: rgba(0,0,0,0.3);
+				padding: 1px 6px;
+				border-radius: 4px;
+			}
 		}
 
 		.emptyHint {
@@ -476,39 +483,47 @@ function cancel() {
 			opacity: 0.6;
 			font-style: italic;
 			font-size: 13px;
-			padding: 6px 10px;
+			padding: 8px 6px;
 		}
 
-		// gap drop targets between/around blocks
+		// horizontal gap drop targets between/around blocks
 		.dropZone {
-			align-self: stretch;
-			width: 5px;
-			min-height: 44px;
+			height: 4px;
+			width: 100%;
 			border-radius: 3px;
-			transition: width 0.12s, background 0.12s;
+			transition: height 0.12s, background 0.12s;
 
 			&.over {
-				width: 28px;
+				height: 28px;
 				background: rgba(249, 160, 176, 0.7);
 			}
 		}
 
-		// a placed block
+		// a stacked block
 		.block {
 
 			position: relative;
-			display: inline-flex;
+			display: flex;
 			align-items: center;
-			gap: 6px;
-
-			// room for the left notch + right point built into the shape
-			padding: 8px 24px 8px 26px;
-			margin: 3px 0;
+			gap: 8px;
+			width: 100%;
+			padding: 10px 12px;
 
 			color: white;
 			font-size: 12px;
+			border-radius: 6px;
 
-			clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+			// little scratch-style nub plugging into the block below
+			&::after {
+				content: '';
+				position: absolute;
+				left: 18px;
+				bottom: -5px;
+				width: 18px;
+				height: 6px;
+				background: inherit;
+				border-radius: 0 0 4px 4px;
+			}
 
 			&.hotkey { background: #3a6ea5; }
 			&.expression { background: #2f8a5b; }
@@ -516,7 +531,7 @@ function cancel() {
 
 			.grip {
 				cursor: grab;
-				font-size: 14px;
+				font-size: 15px;
 				line-height: 1;
 				opacity: 0.85;
 				&:active { cursor: grabbing; }
@@ -526,31 +541,32 @@ function cancel() {
 				font-weight: bold;
 				font-size: 10px;
 				letter-spacing: 0.5px;
+				min-width: 74px;
 			}
 
 			select, .waitInput {
-				padding: 3px 5px;
+				padding: 4px 6px;
 				border: 1px solid #0003;
 				border-radius: 4px;
 				background: white;
 				color: #111;
 				font-size: 12px;
-				max-width: 150px;
 			}
-			.waitInput { width: 58px; }
-			.unit { font-size: 11px; }
+			select { max-width: 240px; }
+			.waitInput { width: 70px; }
+			.unit { font-size: 11px; opacity: 0.9; }
 
 			.blockCtl {
 				display: flex;
-				gap: 2px;
-				margin-left: 2px;
+				gap: 3px;
+				margin-left: auto;
 
 				button {
-					width: 20px;
-					height: 20px;
+					width: 24px;
+					height: 24px;
 					padding: 0;
 					border: none;
-					border-radius: 3px;
+					border-radius: 4px;
 					background: rgba(255,255,255,0.25);
 					color: white;
 					cursor: pointer;
