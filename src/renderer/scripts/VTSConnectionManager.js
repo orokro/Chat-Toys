@@ -337,6 +337,15 @@ export class VTSConnectionManager {
 			loaded: false,
 		});
 
+		// Persisted cache of every model we've ever scanned, keyed by VTS
+		// modelID. Shape per entry:
+		//   { modelID, modelName, lastSeen, hotkeys:[], expressions:[] }
+		// Lives here (not in a toy) so it's populated whenever VTS is
+		// connected, and ANY toy (VTS Interactions, VTS Tosser, ...) can read
+		// it without depending on another toy being enabled. Storage key is
+		// kept as 'vts_model_cache' so existing user data carries over.
+		this.modelCache = chromeShallowRef('vts_model_cache', {});
+
 		// for debug in dev tools
 		if (typeof window !== 'undefined')
 			window.vtsConnMgr = this;
@@ -725,6 +734,68 @@ export class VTSConnectionManager {
 		}
 	}
 
+	/**
+	 * Scan the currently-loaded model for its hotkeys + expressions and upsert
+	 * the result into the persisted model cache. Safe to call any time; no-ops
+	 * when VTS isn't ready or no model is loaded. Called automatically on auth
+	 * and on every model load, so consumers usually just read `modelCache`.
+	 *
+	 * @returns {Promise<boolean>} - true when a model was scanned and cached
+	 */
+	async scanCurrentModel() {
+
+		if (!this.isReady())
+			return false;
+
+		const cur = await this.getCurrentModel();
+		if (!cur || !cur.loaded || !cur.modelID)
+			return false;
+
+		// hotkeys scoped to this model; expressions are always for the current model
+		const [hotkeys, expressions] = await Promise.all([
+			this.getHotkeys(cur.modelID),
+			this.getExpressions(),
+		]);
+
+		this.upsertModel(cur.modelID, cur.modelName, hotkeys, expressions);
+		return true;
+	}
+
+	/**
+	 * Insert or update a model's entry in the cache.
+	 *
+	 * @param {string} modelID
+	 * @param {string} modelName
+	 * @param {Array<Object>} hotkeys
+	 * @param {Array<Object>} expressions
+	 */
+	upsertModel(modelID, modelName, hotkeys, expressions) {
+
+		// shallowRef-backed: replace the object so the ref notifies
+		const cache = { ...this.modelCache.value };
+		cache[modelID] = {
+			modelID,
+			modelName: modelName || cache[modelID]?.modelName || modelID,
+			lastSeen: Date.now(),
+			hotkeys: Array.isArray(hotkeys) ? hotkeys : [],
+			expressions: Array.isArray(expressions) ? expressions : [],
+		};
+		this.modelCache.value = cache;
+
+		this._log('info', `Cached model "${cache[modelID].modelName}" `
+			+ `(${cache[modelID].hotkeys.length} hotkeys, ${cache[modelID].expressions.length} expressions)`);
+	}
+
+	/**
+	 * Get a cached model entry by ID (or null).
+	 *
+	 * @param {string} modelID
+	 * @returns {Object|null}
+	 */
+	getCachedModel(modelID) {
+		return this.modelCache.value?.[modelID] || null;
+	}
+
 	// --------------------------------------------------
 	// Connection + auth internals
 	// --------------------------------------------------
@@ -1072,12 +1143,13 @@ export class VTSConnectionManager {
 			this._log('warn', `Failed to subscribe to ModelLoadedEvent: ${err?.message || err}`);
 		}
 
-		// Grab the current model immediately so consumers have a value to
-		// work with without waiting for the next load/unload event.
+		// Grab the current model immediately AND scan its features so
+		// consumers have a value + populated cache without waiting for the
+		// next load/unload event.
 		try {
-			await this.getCurrentModel();
+			await this.scanCurrentModel();
 		} catch (err) {
-			this._log('warn', `Initial getCurrentModel failed: ${err?.message || err}`);
+			this._log('warn', `Initial model scan failed: ${err?.message || err}`);
 		}
 	}
 
@@ -1213,6 +1285,11 @@ export class VTSConnectionManager {
 		};
 
 		this._setCurrentModel(next);
+
+		// Refresh the feature cache for the newly-loaded model (fire-and-forget;
+		// scanCurrentModel guards its own errors).
+		if (loaded)
+			this.scanCurrentModel();
 	}
 
 	/**

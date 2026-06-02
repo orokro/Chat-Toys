@@ -21,7 +21,6 @@ import { ref, shallowRef, watch } from 'vue';
 
 // our app
 import Toy from "../Toy";
-import { chromeShallowRef } from '@scripts/chromeRef';
 
 // lib/misc
 import { v4 as uuidv4 } from 'uuid';
@@ -60,12 +59,11 @@ export default class VTSInteractions extends Toy {
 		// shortcut to the shared VTS connection manager
 		this.vts = this.chatToysApp.vtsConnMgr;
 
-		// Persisted cache of every model we've ever scanned, keyed by VTS
-		// modelID. Shape per entry:
-		//   { modelID, modelName, lastSeen, hotkeys:[], expressions:[] }
-		// Lets the user configure commands for a model even when it isn't
-		// currently loaded, and drives broken-reference detection later.
-		this.modelCache = chromeShallowRef('vts_model_cache', {});
+		// Shared model-feature cache, OWNED by VTSConnectionManager (populated
+		// whenever VTS is connected, regardless of which toys are enabled). We
+		// just reference it so the matrix / runner can read scanned hotkeys &
+		// expressions. Same storage key as before, so existing data carries over.
+		this.modelCache = this.vts.modelCache;
 
 		// ---- sequence runner state ----
 		// FIFO of pending jobs. Each job resolves its sequence against the
@@ -85,11 +83,6 @@ export default class VTSInteractions extends Toy {
 		// (via its initial CurrentModelRequest). This keeps teardown clean.
 		this._onModelLoaded = this.handleModelLoaded.bind(this);
 		this.vts.onModelLoaded(this._onModelLoaded);
-
-		// If the toy is enabled while VTS is already connected with a model
-		// loaded, no fresh ModelLoadedEvent will fire - scan once now.
-		if (this.vts.isReady() && this.vts.currentModel.value?.loaded)
-			this.scanCurrentModel();
 
 		// Keep our per-command config rows in sync with the custom commands
 		// (same approach as Media.reconcileMediaAssets).
@@ -222,80 +215,21 @@ export default class VTSInteractions extends Toy {
 		if (this._activeWaitCancel)
 			this._activeWaitCancel();
 
-		// (re)scan features when a real model became active
-		if (payload && payload.loaded && payload.modelID)
-			this.scanCurrentModel();
-
 		// re-evaluate the queue against the new model right away
+		// (the feature cache is refreshed by VTSConnectionManager itself)
 		this.cleanupExpired();
 	}
 
 
 	/**
-	 * Scan the currently-loaded VTS model for its hotkeys and expressions and
-	 * upsert the result into the model cache. Safe to call any time; no-ops
-	 * when VTS isn't ready or no model is loaded.
+	 * Re-scan the current model. Thin passthrough to the connection manager,
+	 * which owns the shared model cache. Kept so the settings page's manual
+	 * "Re-scan" button keeps working unchanged.
 	 *
-	 * @returns {Promise<boolean>} - true when a model was scanned and cached
+	 * @returns {Promise<boolean>}
 	 */
-	async scanCurrentModel() {
-
-		if (!this.vts || !this.vts.isReady())
-			return false;
-
-		// confirm which model is loaded right now
-		const cur = await this.vts.getCurrentModel();
-		if (!cur || !cur.loaded || !cur.modelID)
-			return false;
-
-		// fetch features (hotkeys scoped to this model; expressions are
-		// always for the current model in the VTS API)
-		const [hotkeys, expressions] = await Promise.all([
-			this.vts.getHotkeys(cur.modelID),
-			this.vts.getExpressions(),
-		]);
-
-		this.upsertModel(cur.modelID, cur.modelName, hotkeys, expressions);
-		return true;
-	}
-
-
-	/**
-	 * Insert or update a model's entry in the cache.
-	 *
-	 * @param {string} modelID - VTS model ID
-	 * @param {string} modelName - human-readable model name
-	 * @param {Array<Object>} hotkeys - hotkeys from VTSConnectionManager.getHotkeys
-	 * @param {Array<Object>} expressions - expressions from VTSConnectionManager.getExpressions
-	 */
-	upsertModel(modelID, modelName, hotkeys, expressions) {
-
-		// shallowRef-backed: replace the object so the ref notifies
-		const cache = { ...this.modelCache.value };
-		cache[modelID] = {
-			modelID,
-			modelName: modelName || cache[modelID]?.modelName || modelID,
-			lastSeen: Date.now(),
-			hotkeys: Array.isArray(hotkeys) ? hotkeys : [],
-			expressions: Array.isArray(expressions) ? expressions : [],
-		};
-		this.modelCache.value = cache;
-
-		this.chatToysApp.log.msg(
-			`[VTS Interactions] Cached model "${cache[modelID].modelName}" `
-			+ `(${cache[modelID].hotkeys.length} hotkeys, ${cache[modelID].expressions.length} expressions)`
-		);
-	}
-
-
-	/**
-	 * Get a cached model entry by ID (or null).
-	 *
-	 * @param {string} modelID
-	 * @returns {Object|null}
-	 */
-	getCachedModel(modelID) {
-		return this.modelCache.value?.[modelID] || null;
+	scanCurrentModel() {
+		return this.vts.scanCurrentModel();
 	}
 
 
