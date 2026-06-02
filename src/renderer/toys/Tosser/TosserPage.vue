@@ -93,19 +93,29 @@
 					VTubeStudio isn't connected, so VTS tracking is unavailable. <strong>Optional</strong> — OBS-only or manual still work.
 				</InfoBox>
 
-				<!-- OBS source picker for the auto modes -->
+				<!-- tracked sources: the collider follows the first present in the current scene -->
 				<template v-if="trackingMode !== 'manual' && obsConnected">
-					<SettingsInputRow
-						type="options"
-						:options="obsSourceOptions"
-						v-model="trackingObsSource"
-					>
-						<template #title>Avatar OBS Source</template>
-						<p>Which OBS source is your avatar / VTubeStudio capture. The collider follows this source's position &amp; size.</p>
-					</SettingsInputRow>
 					<SettingsRow>
-						<button class="refreshBtn" @click="refreshObsSources">Refresh source list</button>
-						<span v-if="obsSourceOptions.length === 0" class="hint">No sources found in the current scene yet — click refresh.</span>
+						<h3>Tracked Avatar Source(s)</h3>
+						<p>The collider follows the <strong>first</strong> of these that's present in the current scene — so switching scenes (or differently-named avatar sources) just works. Add the source(s) your avatar lives in.</p>
+
+						<div class="trackedList">
+							<div v-if="trackingObsSources.length === 0" class="emptyRow">No sources added yet — click &ldquo;Add Source&rdquo;.</div>
+							<div
+								v-for="name in trackingObsSources"
+								:key="name"
+								class="trackedRow"
+								:class="{ active: name === activeTrackedSource, missing: isMissing(name) }"
+							>
+								<span v-if="isMissing(name)" class="badge warn" title="This source isn't in OBS anymore (renamed or removed)">⚠️</span>
+								<span v-else-if="name === activeTrackedSource" class="badge dot" title="Currently tracking this source">●</span>
+								<span v-else class="badge"></span>
+								<span class="trackedName">{{ name }}</span>
+								<button class="del" title="Remove" @click="removeSource(name)">✕</button>
+							</div>
+						</div>
+
+						<button class="refreshBtn" @click="openAddModal">+ Add Source</button>
 					</SettingsRow>
 				</template>
 
@@ -204,8 +214,11 @@
 <script setup>
 
 // vue
-import { ref, computed, inject, onMounted } from 'vue';
+import { computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
+
+// lib/misc
+import { promptModal } from 'jenesius-vue-modal';
 
 // components
 import PageBox from '@components/options/PageBox.vue';
@@ -219,6 +232,7 @@ import ArrayEdit from '@components/options/ArrayEdit.vue';
 import ArrayTosserEdit from './ArrayTosserEdit.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import YTVideoBox from '@components/YTVideoBox.vue';
+import ObsSourcePickerModal from './ObsSourcePickerModal.vue';
 
 // our app
 import Tosser from './Tosser';
@@ -235,9 +249,12 @@ const {
 	soundVolume,
 	allEmojisToBeTossed,
 	trackingMode,
-	trackingObsSource,
+	trackingObsSources,
 	showColliderDebug,
 } = toy.settings;
+
+// which tracked source is currently driving the collider (for highlighting)
+const activeTrackedSource = toy.activeTrackedSource;
 
 // ---- collider tracking config ----
 
@@ -255,23 +272,42 @@ const trackingModeOptions = computed(() => {
 	return opts;
 });
 
-// OBS source list for the picker
-const obsSources = ref([]);
-const obsSourceOptions = computed(() => obsSources.value.map((n) => ({ value: n, name: n })));
-
 /**
- * Pull the current scene's source names from OBS into the picker.
+ * True when a tracked source name is no longer present anywhere in OBS
+ * (renamed or removed). Only flagged when we actually have a cache.
+ *
+ * @param {string} name
+ * @returns {boolean}
  */
-async function refreshObsSources() {
-	obsSources.value = obsConnected.value
-		? await ctApp.obsConnMgr.getSceneSourceNames()
-		: [];
+function isMissing(name) {
+	const all = ctApp.obsConnMgr?.sourceCache?.value?.allNames || [];
+	return obsConnected.value && all.length > 0 && !all.includes(name);
 }
 
-onMounted(() => {
-	if (obsConnected.value)
-		refreshObsSources();
-});
+/**
+ * Remove a source from the tracked list.
+ * @param {string} name
+ */
+function removeSource(name) {
+	trackingObsSources.value = (trackingObsSources.value || []).filter((n) => n !== name);
+}
+
+/**
+ * Open the scene/source picker and merge the chosen names into the list.
+ */
+async function openAddModal() {
+	const result = await promptModal(ObsSourcePickerModal, {
+		existing: [...(trackingObsSources.value || [])],
+	});
+	if (!result || !Array.isArray(result.names))
+		return;
+
+	const merged = [...(trackingObsSources.value || [])];
+	for (const n of result.names)
+		if (!merged.includes(n))
+			merged.push(n);
+	trackingObsSources.value = merged;
+}
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
@@ -300,6 +336,59 @@ const toss_command = computed(() => {
 		font-size: 12px;
 		font-style: italic;
 		color: #555;
+	}
+
+	// tracked OBS sources list
+	.trackedList {
+		max-width: 700px;
+		margin: 10px 0;
+		border: 2px solid black;
+		border-radius: 8px;
+		background: rgb(172, 172, 172);
+		overflow: hidden;
+
+		.emptyRow {
+			padding: 12px;
+			text-align: center;
+			font-style: italic;
+			color: #444;
+		}
+
+		.trackedRow {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 8px 12px;
+			border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+
+			&:last-child { border-bottom: none; }
+			&.active  { background: #d4f5d4; }
+			&.missing { background: #f6d0d0; }
+
+			.badge {
+				width: 16px;
+				text-align: center;
+
+				&.dot { color: #1f9d3a; }
+			}
+
+			.trackedName {
+				flex: 1;
+				font-family: 'Courier New', Courier, monospace;
+				font-size: 13px;
+			}
+
+			.del {
+				width: 24px;
+				height: 24px;
+				border: none;
+				border-radius: 4px;
+				background: rgba(0, 0, 0, 0.15);
+				cursor: pointer;
+
+				&:hover { background: #e3556a; color: white; }
+			}
+		}
 	}
 
 </style>

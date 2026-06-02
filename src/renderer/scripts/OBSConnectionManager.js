@@ -106,6 +106,16 @@ export class OBSConnectionManager {
 		 */
 		this.statusMessage = ref('');
 
+		/**
+		 * Cache of the OBS scene/source hierarchy, rebuilt on every connect.
+		 * Shape: { scenes: string[], trees: { [sceneName]: TreeNode[] }, allNames: string[] }
+		 * where TreeNode = { name, id, isGroup, isScene, kind, children: TreeNode[]|null }.
+		 * Powers the Tosser's source picker, "missing source" warnings, and the
+		 * runtime collider resolver.
+		 * @type {import('vue').ShallowRef<Object>}
+		 */
+		this.sourceCache = shallowRef({ scenes: [], trees: {}, allNames: [] });
+
 		/*
 			Internal state
 		*/
@@ -326,6 +336,11 @@ export class OBSConnectionManager {
 					);
 				});
 			}
+
+			// Cache the scene/source hierarchy for the Tosser source picker etc.
+			this.buildSourceCache().catch((err) => {
+				console.error('[OBSConnectionManager] buildSourceCache failed:', err);
+			});
 		});
 
 		this._obs.on('ConnectionClosed', (error) => {
@@ -756,6 +771,116 @@ export class OBSConnectionManager {
 			console.error('[OBSConnectionManager] getVideoSettings failed', err);
 			return null;
 		}
+	}
+
+
+	/**
+	 * List all scene names (top-level scenes, not groups).
+	 *
+	 * @returns {Promise<Array<string>>}
+	 */
+	async getSceneList() {
+
+		if (!this.isConnected.value)
+			return [];
+
+		try {
+			const r = await this._obs.call('GetSceneList');
+			return (r.scenes || []).map((s) => s.sceneName).filter(Boolean);
+		} catch (err) {
+			console.error('[OBSConnectionManager] getSceneList failed', err);
+			return [];
+		}
+	}
+
+
+	/**
+	 * Recursively build a tree of a scene's (or group's) items, expanding
+	 * groups (one level, OBS doesn't nest groups) and nested scenes
+	 * (arbitrary depth, cycle-guarded).
+	 *
+	 * @param {string} name - scene or group name
+	 * @param {boolean} isGroup - true if `name` is a group
+	 * @param {Set<string>} sceneSet - set of all scene names (to detect nested scenes)
+	 * @param {Set<string>} seen - path guard against scene cycles
+	 * @returns {Promise<Array<Object>>} array of tree nodes
+	 */
+	async _buildItemTree(name, isGroup, sceneSet, seen) {
+
+		const key = (isGroup ? 'g:' : 's:') + name;
+		if (seen.has(key))
+			return [];
+		const nextSeen = new Set(seen);
+		nextSeen.add(key);
+
+		let items = [];
+		try {
+			const call = isGroup ? 'GetGroupSceneItemList' : 'GetSceneItemList';
+			const r = await this._obs.call(call, { sceneName: name });
+			items = r.sceneItems || [];
+		} catch (err) {
+			return [];
+		}
+
+		const nodes = [];
+		for (const it of items) {
+
+			const childIsGroup = !!it.isGroup;
+			const childIsScene = !childIsGroup && sceneSet.has(it.sourceName);
+
+			const node = {
+				name: it.sourceName,
+				id: it.sceneItemId,
+				isGroup: childIsGroup,
+				isScene: childIsScene,
+				kind: it.inputKind || it.sourceType || null,
+				children: null,
+			};
+
+			if (childIsGroup)
+				node.children = await this._buildItemTree(it.sourceName, true, sceneSet, nextSeen);
+			else if (childIsScene)
+				node.children = await this._buildItemTree(it.sourceName, false, sceneSet, nextSeen);
+
+			nodes.push(node);
+		}
+
+		return nodes;
+	}
+
+
+	/**
+	 * Rebuild `sourceCache` from OBS: every scene's full item hierarchy plus a
+	 * flat set of all source names (used to flag tracked sources that have
+	 * been removed/renamed). Called automatically on connect.
+	 *
+	 * @returns {Promise<void>}
+	 */
+	async buildSourceCache() {
+
+		if (!this.isConnected.value)
+			return;
+
+		const scenes = await this.getSceneList();
+		const sceneSet = new Set(scenes);
+		const trees = {};
+		const allNames = new Set();
+
+		const walk = (nodes) => {
+			for (const n of nodes) {
+				allNames.add(n.name);
+				if (n.children)
+					walk(n.children);
+			}
+		};
+
+		for (const s of scenes) {
+			const tree = await this._buildItemTree(s, false, sceneSet, new Set());
+			trees[s] = tree;
+			walk(tree);
+		}
+
+		this.sourceCache.value = { scenes, trees, allNames: Array.from(allNames) };
 	}
 
 

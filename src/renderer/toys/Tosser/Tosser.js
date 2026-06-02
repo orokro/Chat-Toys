@@ -87,11 +87,16 @@ export default class Tosser extends Toy {
 		this._heartbeat = null;
 		this._onModelMoved = () => this.scheduleColliderPublish();
 
-		// (re)wire tracking now and whenever the mode / chosen source changes
+		// Which tracked source is currently driving the collider (the first
+		// one found in the live scene), so the settings list can highlight it.
+		this.activeTrackedSource = ref(null);
+
+		// (re)wire tracking now and whenever the mode / tracked sources change
 		this.setupTracking();
 		this.stopTrackWatch = watch(
-			[this.settings.trackingMode, this.settings.trackingObsSource],
-			() => this.setupTracking()
+			[this.settings.trackingMode, this.settings.trackingObsSources],
+			() => this.setupTracking(),
+			{ deep: true }
 		);
 	}
 
@@ -190,17 +195,30 @@ export default class Tosser extends Toy {
 		if (mode === 'manual')
 			return;
 
-		const sourceName = this.settings.trackingObsSource.value;
-		if (!this.obs || !this.obs.isConnected.value || !sourceName) {
+		const sources = this.settings.trackingObsSources.value || [];
+		if (!this.obs || !this.obs.isConnected.value || sources.length === 0) {
 			this._obsRect = null;
+			this.activeTrackedSource.value = null;
 			this.publishCollider();
 			return;
 		}
 
-		const [transform, canvas] = await Promise.all([
-			this.obs.getSceneItemTransform(sourceName),
-			this.obs.getVideoSettings(),
-		]);
+		// Use the FIRST tracked source that's present in the current scene.
+		// (Top-level lookup for now; nested-group/scene composition lands with
+		// the runtime resolver phase.)
+		let transform = null;
+		let foundName = null;
+		for (const name of sources) {
+			const t = await this.obs.getSceneItemTransform(name);
+			if (t) {
+				transform = t;
+				foundName = name;
+				break;
+			}
+		}
+
+		const canvas = await this.obs.getVideoSettings();
+		this.activeTrackedSource.value = foundName;
 
 		if (!transform || !canvas || !canvas.baseWidth || !canvas.baseHeight) {
 			this._obsRect = null;
@@ -349,7 +367,12 @@ export default class Tosser extends Toy {
 			// rectangle. 'obsVts' = OBS source rect composed with the live VTS
 			// model transform. The OBS source name the avatar/VTS capture lives in.
 			trackingMode: ref('manual'),
-			trackingObsSource: ref(''),
+
+			// List of OBS source names to track. At runtime the FIRST one
+			// present in the current program scene wins, so switching scenes
+			// (with differently-placed / differently-named avatar sources)
+			// just works. Replaces the old single `trackingObsSource`.
+			trackingObsSources: ref([]),
 
 			// When an auto mode is active, overlay the tracked collider on the
 			// widget so the user can see where hits register (testing aid).
