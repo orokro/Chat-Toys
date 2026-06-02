@@ -20,7 +20,7 @@
 
 	<PageBox
 		title="Twitch Redeems"
-		themeColor="darkviolet"
+		themeColor="indigo"
 		themeImage="assets/bg_tiles/channelPoints.png"
 	>
 		<br><br>
@@ -30,7 +30,7 @@
 			the mapped command as if they had typed it in chat.
 		</p>
 		<p class="hint">
-			Requires the new <strong>Twitch (Twurple)</strong> connection from the
+			Requires a connected <strong>Twitch</strong> account from the
 			Connection Settings tab. Channel Points must also be enabled on your
 			Twitch channel (Affiliate or higher, or Monetization for All if rolled out
 			to your account).
@@ -291,7 +291,7 @@ const canAddMapping = computed(() => {
 async function refreshRewards() {
 
 	if (!window.twurpleAPI?.getCustomRewards) {
-		rewardsErrorMsg.value = 'Twurple bridge not available (preload mismatch).';
+		rewardsErrorMsg.value = 'Twitch connection unavailable (preload mismatch - try fully restarting the app).';
 		return;
 	}
 

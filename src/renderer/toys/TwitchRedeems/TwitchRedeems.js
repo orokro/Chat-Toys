@@ -42,7 +42,7 @@ export default class TwitchRedeems extends Toy {
 	static slug = 'twitchRedeems';
 	static desc = 'Route Twitch channel point redemptions to your ChatToys commands. Map a redeem to any command and chat will fire that command on redemption.';
 	static optionsPageComponent = TwitchRedeemsPage;
-	static themeColor = 'darkviolet';
+	static themeColor = 'indigo';
 	static widgetComponents = [];
 
 	// This toy is a tool, not a traditional toy - same flag SCConversion
