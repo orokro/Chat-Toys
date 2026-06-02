@@ -93,10 +93,12 @@
 				:enable-custom-commands="true"
 			/>
 
-			<SectionHeader title="Detected Models"/>
+			<SectionHeader title="Sequence Configuration"/>
 			<p>
-				Models ChatToys has scanned. Re-scan after you change hotkeys or
-				expressions in VTubeStudio so the lists stay current.
+				Each cell is the sequence that runs for a command on a given
+				model. Hover a cell and click the pencil to edit it. Re-scan
+				after changing hotkeys or expressions in VTubeStudio so the
+				model columns stay current.
 			</p>
 
 			<div class="scanRow">
@@ -111,28 +113,7 @@
 				<span v-else-if="lastScanMsg" class="scanHint">{{ lastScanMsg }}</span>
 			</div>
 
-			<div class="modelList">
-				<div
-					v-for="m in cachedModels"
-					:key="m.modelID"
-					class="modelCard"
-					:class="{ active: m.modelID === currentModelID }"
-				>
-					<div class="modelName">
-						{{ m.modelName }}
-						<span v-if="m.modelID === currentModelID" class="activeTag">ACTIVE</span>
-					</div>
-					<div class="modelStats">
-						{{ m.hotkeys.length }} hotkeys &middot; {{ m.expressions.length }} expressions
-					</div>
-				</div>
-			</div>
-
-			<InfoBox icon="lightbulb">
-				The command &times; model configuration matrix and sequence editor
-				are coming next. For now this confirms scanning works and your
-				models are being remembered.
-			</InfoBox>
+			<VTSCommandMatrix :toy="toy" />
 
 		</template>
 
@@ -150,6 +131,7 @@ import PageBox from '@components/options/PageBox.vue';
 import SectionHeader from '@components/options/SectionHeader.vue';
 import InfoBox from '@components/options/InfoBox.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
+import VTSCommandMatrix from './VTSCommandMatrix.vue';
 
 // our app
 import VTSInteractions from './VTSInteractions';
@@ -177,15 +159,6 @@ const state = computed(() => {
 		return 'onboarding';
 	return 'notSetup';
 });
-
-// cached models as a sorted array (most recently seen first)
-const cachedModels = computed(() => {
-	const cache = toy.modelCache.value || {};
-	return Object.values(cache).sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
-});
-
-// id of the model currently loaded in VTS (if any)
-const currentModelID = computed(() => ctApp.vtsConnMgr.currentModel.value?.modelID || null);
 
 // live status banner text + style
 const bannerText = computed(() => {
@@ -294,49 +267,5 @@ async function rescan() {
 			color: #444;
 		}
 	}// .scanRow
-
-	// detected models list
-	.modelList {
-
-		display: flex;
-		flex-wrap: wrap;
-		gap: 12px;
-		margin-top: 15px;
-
-		.modelCard {
-
-			min-width: 200px;
-			padding: 12px 15px;
-			border: 2px solid black;
-			border-radius: 10px;
-			background: rgb(172, 172, 172);
-
-			&.active {
-				background: #d8c4ff;
-				border-color: #9B5DE5;
-			}
-
-			.modelName {
-				font-weight: bold;
-				font-size: 15px;
-
-				.activeTag {
-					margin-left: 8px;
-					padding: 1px 8px;
-					border-radius: 10px;
-					background: #9B5DE5;
-					color: white;
-					font-size: 10px;
-					vertical-align: middle;
-				}
-			}// .modelName
-
-			.modelStats {
-				margin-top: 4px;
-				font-size: 12px;
-				color: #222;
-			}
-		}// .modelCard
-	}// .modelList
 
 </style>
