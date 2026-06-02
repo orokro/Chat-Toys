@@ -20,7 +20,9 @@
 				class="canvasContainer"
 		></div>
 
-		<div 
+		<!-- manual collider (draggable) — only when not auto-tracking -->
+		<div
+			v-if="trackingMode === 'manual'"
 			class="colliderImage"
 			:style="{
 				width: colliderBox.width + 'px',
@@ -30,11 +32,30 @@
 			}"
 			@mousedown="handleStartColliderDrag"
 		>
-			
-			<div 
+
+			<div
 				class="resizeHandle"
 				@mousedown="handleStartColliderResize"
 			></div>
+		</div>
+
+		<!-- auto-tracking debug box (testing aid) -->
+		<div
+			v-if="trackingMode !== 'manual' && showColliderDebug && autoCollider.valid"
+			class="debugCollider"
+			:style="{
+				width: effectiveCollider.width + 'px',
+				height: effectiveCollider.height + 'px',
+				left: effectiveCollider.x + 'px',
+				top: effectiveCollider.y + 'px',
+			}"
+		></div>
+
+		<!-- TEMP: widget tracking-state readout (remove after debugging) -->
+		<div class="trackDebugText">
+			mode: {{ trackingMode }} · dbg: {{ showColliderDebug }} · valid: {{ autoCollider.valid }}<br>
+			norm: {{ (autoCollider.x||0).toFixed(3) }}, {{ (autoCollider.y||0).toFixed(3) }}, {{ (autoCollider.width||0).toFixed(3) }}, {{ (autoCollider.height||0).toFixed(3) }}<br>
+			win: {{ winW }} x {{ winH }}
 		</div>
 
 	</div>
@@ -114,6 +135,36 @@ watch(socketSettingsRef, (newVal) => {
 });
 
 
+// ---- auto-tracking collider (published by the toy, normalized 0..1) ----
+const autoCollider = socketShallowRefReadOnly(slugify('autoCollider'), {
+	valid: false, x: 0, y: 0, width: 0, height: 0,
+});
+
+// tracking mode + debug toggle come over the settings socket
+const trackingMode = computed(() => socketSettingsRef.value?.trackingMode || 'manual');
+const showColliderDebug = computed(() => !!socketSettingsRef.value?.showColliderDebug);
+
+// The collider actually used by the ThreeJS system, in WIDGET pixels. In an
+// auto mode (and when we have a valid published box) we scale the normalized
+// box by the widget's own size; otherwise we use the manually-dragged box.
+const effectiveCollider = computed(() => {
+	const a = autoCollider.value;
+	if (trackingMode.value !== 'manual' && a && a.valid) {
+		return {
+			x: a.x * window.innerWidth,
+			y: a.y * window.innerHeight,
+			width: a.width * window.innerWidth,
+			height: a.height * window.innerHeight,
+		};
+	}
+	return colliderBox.value;
+});
+
+// TEMP debug: widget pixel size (remove after debugging)
+const winW = ref(window.innerWidth);
+const winH = ref(window.innerHeight);
+
+
 // wait for our ref to exist & then make the tosser system
 let tosserSystem = null;
 watch(canvasContainerRef, (newVal)=>{
@@ -125,7 +176,7 @@ watch(canvasContainerRef, (newVal)=>{
 		tosserSystem = new ThreeJSTosserSystem(
 			canvasContainerRef,
 			modelsAvailable,
-			colliderBox,
+			effectiveCollider,
 			socketSettingsRef
 		);
 
@@ -308,6 +359,33 @@ function doDrag(keys){
 			}// .resizeHandle
 
 		}// .colliderImage
+
+		// auto-tracking debug overlay — always visible so the user can see
+		// where the tracked collider lands without tossing anything.
+		.debugCollider {
+			position: absolute;
+			box-sizing: border-box;
+			border: 3px solid #00ff66;
+			background: rgba(0, 255, 102, 0.12);
+			pointer-events: none;
+			border-radius: 4px;
+		}// .debugCollider
+
+		// TEMP widget state readout (remove after debugging)
+		.trackDebugText {
+			position: absolute;
+			top: 6px;
+			left: 6px;
+			z-index: 9999;
+			background: rgba(0, 0, 0, 0.6);
+			color: #00ff66;
+			font: 12px monospace;
+			line-height: 1.4;
+			padding: 4px 6px;
+			border-radius: 4px;
+			pointer-events: none;
+			white-space: nowrap;
+		}// .trackDebugText
 
 	}// .tosserWidget
 	

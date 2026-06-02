@@ -109,6 +109,16 @@
 					</SettingsRow>
 				</template>
 
+				<!-- testing aid: overlay the tracked collider on the widget -->
+				<SettingsInputRow
+					v-if="trackingMode !== 'manual'"
+					type="boolean"
+					v-model="showColliderDebug"
+				>
+					<template #title>Show Collider Debug Box</template>
+					<p>Overlays the tracked collider on the Tosser widget so you can see where hits will register — no need to toss items. Turn off before going live.</p>
+				</SettingsInputRow>
+
 			</template>
 		</div>
 
@@ -226,6 +236,7 @@ const {
 	allEmojisToBeTossed,
 	trackingMode,
 	trackingObsSource,
+	showColliderDebug,
 } = toy.settings;
 
 // ---- collider tracking config ----
@@ -236,17 +247,17 @@ const vtsReady = computed(() => !!ctApp.vtsConnMgr?.readyToUse?.value);
 
 // tracking modes offered, gated by what's connected
 const trackingModeOptions = computed(() => {
-	const opts = [{ value: 'manual', label: 'Manual collider (default)' }];
+	const opts = [{ value: 'manual', name: 'Manual collider (default)' }];
 	if (obsConnected.value)
-		opts.push({ value: 'obs', label: 'OBS auto-track' });
+		opts.push({ value: 'obs', name: 'OBS auto-track' });
 	if (obsConnected.value && vtsReady.value)
-		opts.push({ value: 'obsVts', label: 'OBS + VTubeStudio auto-track' });
+		opts.push({ value: 'obsVts', name: 'OBS + VTubeStudio auto-track' });
 	return opts;
 });
 
 // OBS source list for the picker
 const obsSources = ref([]);
-const obsSourceOptions = computed(() => obsSources.value.map((n) => ({ value: n, label: n })));
+const obsSourceOptions = computed(() => obsSources.value.map((n) => ({ value: n, name: n })));
 
 /**
  * Pull the current scene's source names from OBS into the picker.

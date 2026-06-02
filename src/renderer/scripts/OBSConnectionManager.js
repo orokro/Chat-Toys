@@ -335,6 +335,16 @@ export class OBSConnectionManager {
 		this._obs.on('ConnectionError', (error) => {
 			this._handleConnectionError(error);
 		});
+
+		// Scene-item transform changes (a source moved/scaled/cropped) and
+		// program-scene switches. The Tosser's collider tracker listens to
+		// these to keep the auto-collider on the avatar source.
+		this._obs.on('SceneItemTransformChanged', (data) => {
+			this._emit('obs-scene-item-transform', data);
+		});
+		this._obs.on('CurrentProgramSceneChanged', (data) => {
+			this._emit('obs-scene-changed', data);
+		});
 	}
 
 
@@ -718,6 +728,30 @@ export class OBSConnectionManager {
 				'[OBSConnectionManager] Failed to enumerate inputs for browser refresh',
 				err
 			);
+		}
+	}
+
+
+	/**
+	 * Get the OBS canvas (base) resolution. Used to normalize source
+	 * rectangles to 0..1 for the Tosser collider tracker.
+	 *
+	 * @returns {Promise<{baseWidth:number, baseHeight:number}|null>}
+	 */
+	async getVideoSettings() {
+
+		if (!this.isConnected.value)
+			return null;
+
+		try {
+			const v = await this._obs.call('GetVideoSettings');
+			return {
+				baseWidth: v.baseWidth,
+				baseHeight: v.baseHeight,
+			};
+		} catch (err) {
+			console.error('[OBSConnectionManager] getVideoSettings failed', err);
+			return null;
 		}
 	}
 

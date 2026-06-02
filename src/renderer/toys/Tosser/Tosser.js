@@ -8,7 +8,7 @@
 */
 
 // vue
-import { ref, shallowRef } from 'vue';
+import { ref, shallowRef, watch } from 'vue';
 import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
 
 // lib/misc
@@ -67,6 +67,32 @@ export default class Tosser extends Toy {
 		this.resetTimeout = window.setElectronTimeout(() => {
 			this.tossQueue.value = [];
 		}, 2000);
+
+		// ---- collider auto-tracking ----
+		this.obs = this.chatToysApp.obsConnMgr;
+		this.vts = this.chatToysApp.vtsConnMgr;
+
+		// Normalized (0..1 of the OBS canvas) collider box published to the
+		// widget when an auto-tracking mode is active. valid=false means the
+		// widget should fall back to its manual collider.
+		this.autoCollider = socketShallowRef(this.static.slugify('autoCollider'), {
+			valid: false, x: 0, y: 0, width: 0, height: 0,
+		});
+
+		// cached normalized OBS source rect (recomputed on OBS events only)
+		this._obsRect = null;
+		this._obsRefreshPending = false;
+		this._publishPending = false;
+		this._trackUnsubs = [];
+		this._heartbeat = null;
+		this._onModelMoved = () => this.scheduleColliderPublish();
+
+		// (re)wire tracking now and whenever the mode / chosen source changes
+		this.setupTracking();
+		this.stopTrackWatch = watch(
+			[this.settings.trackingMode, this.settings.trackingObsSource],
+			() => this.setupTracking()
+		);
 	}
 
 
@@ -76,6 +102,215 @@ export default class Tosser extends Toy {
 	end(){
 		super.end();
 		window.clearElectronTimeout(this.resetTimeout);
+		this.teardownTracking();
+		if (this.stopTrackWatch)
+			this.stopTrackWatch();
+	}
+
+
+	// =====================================================================
+	// Collider auto-tracking (OBS source rect [+ VTS model] -> normalized box)
+	// =====================================================================
+
+	/**
+	 * Wire up the tracking listeners for the current mode. Idempotent.
+	 */
+	setupTracking() {
+
+		this.teardownTracking();
+
+		const mode = this.settings.trackingMode.value;
+		console.log('[TosserTrack] setupTracking mode=', mode, 'obs?', !!this.obs, 'obsConnected=', this.obs?.isConnected?.value);
+		if (mode === 'manual') {
+			// tell the widget to use its manual collider
+			this.autoCollider.value = { valid: false, x: 0, y: 0, width: 0, height: 0 };
+			return;
+		}
+
+		// OBS source rect changes: re-read on transform / scene / (re)connect
+		if (this.obs) {
+			this._trackUnsubs.push(this.obs.on('obs-scene-item-transform', () => this.scheduleObsRefresh()));
+			this._trackUnsubs.push(this.obs.on('obs-scene-changed', () => this.scheduleObsRefresh()));
+			this._trackUnsubs.push(this.obs.on('obs-connected', () => this.scheduleObsRefresh()));
+		}
+
+		// VTS model movement only matters when composing with VTS
+		if (mode === 'obsVts' && this.vts) {
+			this.vts.onModelMoved(this._onModelMoved);
+			this._trackUnsubs.push(() => this.vts.offModelMoved(this._onModelMoved));
+		}
+
+		// initial read
+		this.refreshObsRect();
+
+		// Heartbeat re-publish (~1Hz) so a late-joining / reloaded widget
+		// always converges on the current box — socket-ref doesn't replay the
+		// last value to subscribers that connect after the write. Cheap: uses
+		// the cached OBS rect, no OBS calls.
+		this._heartbeat = window.setElectronInterval(() => this.publishCollider(), 1000);
+	}
+
+
+	/**
+	 * Drop all tracking listeners + cached state.
+	 */
+	teardownTracking() {
+		if (this._heartbeat) {
+			window.clearElectronInterval(this._heartbeat);
+			this._heartbeat = null;
+		}
+		for (const u of this._trackUnsubs || []) {
+			try { u(); } catch { /* ignore */ }
+		}
+		this._trackUnsubs = [];
+		this._obsRect = null;
+	}
+
+
+	/**
+	 * Coalesce rapid OBS transform events into one rect refresh (~80ms).
+	 */
+	scheduleObsRefresh() {
+		if (this._obsRefreshPending)
+			return;
+		this._obsRefreshPending = true;
+		window.setElectronTimeout(() => {
+			this._obsRefreshPending = false;
+			this.refreshObsRect();
+		}, 80);
+	}
+
+
+	/**
+	 * Read the chosen OBS source's on-canvas rectangle, normalize it to the
+	 * canvas size, cache it, and publish the resulting collider.
+	 */
+	async refreshObsRect() {
+
+		const mode = this.settings.trackingMode.value;
+		if (mode === 'manual')
+			return;
+
+		const sourceName = this.settings.trackingObsSource.value;
+		console.log('[TosserTrack] refreshObsRect mode=', mode, 'source=', sourceName, 'obsConnected=', this.obs?.isConnected?.value);
+		if (!this.obs || !this.obs.isConnected.value || !sourceName) {
+			this._obsRect = null;
+			this.publishCollider();
+			return;
+		}
+
+		const [transform, canvas] = await Promise.all([
+			this.obs.getSceneItemTransform(sourceName),
+			this.obs.getVideoSettings(),
+		]);
+		console.log('[TosserTrack] transform=', transform, 'canvas=', canvas);
+
+		if (!transform || !canvas || !canvas.baseWidth || !canvas.baseHeight) {
+			this._obsRect = null;
+			this.publishCollider();
+			return;
+		}
+
+		this._obsRect = this.computeNormalizedSourceRect(transform, canvas);
+		this.publishCollider();
+	}
+
+
+	/**
+	 * Convert an OBS scene-item transform into a normalized (0..1) canvas rect,
+	 * honoring the item's alignment.
+	 *
+	 * @param {Object} t - sceneItemTransform
+	 * @param {{baseWidth:number, baseHeight:number}} canvas
+	 * @returns {{x:number, y:number, width:number, height:number}}
+	 */
+	computeNormalizedSourceRect(t, canvas) {
+
+		// OBS `width`/`height` are the scaled UNCROPPED size, so for a cropped
+		// source they don't reflect what's actually visible. Derive the visible
+		// rect from sourceWidth/Height minus crop, times scale.
+		const sx = (typeof t.scaleX === 'number') ? t.scaleX : 1;
+		const sy = (typeof t.scaleY === 'number') ? t.scaleY : 1;
+		const sw = (typeof t.sourceWidth === 'number' && t.sourceWidth > 0) ? t.sourceWidth : (sx ? (t.width || 0) / sx : 0);
+		const sh = (typeof t.sourceHeight === 'number' && t.sourceHeight > 0) ? t.sourceHeight : (sy ? (t.height || 0) / sy : 0);
+
+		const cl = t.cropLeft || 0;
+		const cr = t.cropRight || 0;
+		const ct = t.cropTop || 0;
+		const cb = t.cropBottom || 0;
+
+		// visible (cropped) size in canvas pixels
+		const visW = Math.max(0, (sw - cl - cr) * sx);
+		const visH = Math.max(0, (sh - ct - cb) * sy);
+
+		// positionX/Y is the alignment anchor of the cropped item.
+		// OBS alignment bits: LEFT=1, RIGHT=2, TOP=4, BOTTOM=8 (CENTER=0)
+		const a = t.alignment || 0;
+		let left;
+		if (a & 1) left = t.positionX;
+		else if (a & 2) left = t.positionX - visW;
+		else left = t.positionX - visW / 2;
+
+		let top;
+		if (a & 4) top = t.positionY;
+		else if (a & 8) top = t.positionY - visH;
+		else top = t.positionY - visH / 2;
+
+		return {
+			x: left / canvas.baseWidth,
+			y: top / canvas.baseHeight,
+			width: visW / canvas.baseWidth,
+			height: visH / canvas.baseHeight,
+		};
+	}
+
+
+	/**
+	 * Coalesce rapid VTS model-moved events into one publish (~40ms).
+	 */
+	scheduleColliderPublish() {
+		if (this._publishPending)
+			return;
+		this._publishPending = true;
+		window.setElectronTimeout(() => {
+			this._publishPending = false;
+			this.publishCollider();
+		}, 40);
+	}
+
+
+	/**
+	 * Compose the cached OBS rect (and, in obsVts mode, the live VTS model
+	 * transform) into the final normalized collider and publish it.
+	 *
+	 * NOTE: the VTS mapping here is a first cut and will need on-device tuning
+	 * (normalized range, y-axis, and hitbox size are approximate).
+	 */
+	publishCollider() {
+
+		const mode = this.settings.trackingMode.value;
+
+		if (mode === 'manual' || !this._obsRect) {
+			this.autoCollider.value = { valid: false, x: 0, y: 0, width: 0, height: 0 };
+			return;
+		}
+
+		let box = { ...this._obsRect };
+
+		if (mode === 'obsVts' && this.vts) {
+			const m = this.vts.modelTransform;
+			if (m && m.written) {
+				// map VTS model position (-1..1, y up) into the source rect
+				const cx = box.x + ((m.positionX + 1) / 2) * box.width;
+				const cy = box.y + (1 - (m.positionY + 1) / 2) * box.height;
+				const cw = box.width * 0.4 * (m.scale || 1);
+				const ch = box.height * 0.5 * (m.scale || 1);
+				box = { x: cx - cw / 2, y: cy - ch / 2, width: cw, height: ch };
+			}
+		}
+
+		this.autoCollider.value = { valid: true, ...box };
+		console.log('[TosserTrack] publish autoCollider=', this.autoCollider.value);
 	}
 
 
@@ -119,6 +354,10 @@ export default class Tosser extends Toy {
 			// model transform. The OBS source name the avatar/VTS capture lives in.
 			trackingMode: ref('manual'),
 			trackingObsSource: ref(''),
+
+			// When an auto mode is active, overlay the tracked collider on the
+			// widget so the user can see where hits register (testing aid).
+			showColliderDebug: ref(false),
 
 			widgetBox: shallowRef({
 				x: 20,
