@@ -51,13 +51,6 @@
 			}"
 		></div>
 
-		<!-- TEMP: widget tracking-state readout (remove after debugging) -->
-		<div class="trackDebugText">
-			mode: {{ trackingMode }} · dbg: {{ showColliderDebug }} · valid: {{ autoCollider.valid }}<br>
-			norm: {{ (autoCollider.x||0).toFixed(3) }}, {{ (autoCollider.y||0).toFixed(3) }}, {{ (autoCollider.width||0).toFixed(3) }}, {{ (autoCollider.height||0).toFixed(3) }}<br>
-			win: {{ winW }} x {{ winH }}
-		</div>
-
 	</div>
 
 </template>
@@ -159,10 +152,6 @@ const effectiveCollider = computed(() => {
 	}
 	return colliderBox.value;
 });
-
-// TEMP debug: widget pixel size (remove after debugging)
-const winW = ref(window.innerWidth);
-const winH = ref(window.innerHeight);
 
 
 // wait for our ref to exist & then make the tosser system
@@ -370,22 +359,6 @@ function doDrag(keys){
 			pointer-events: none;
 			border-radius: 4px;
 		}// .debugCollider
-
-		// TEMP widget state readout (remove after debugging)
-		.trackDebugText {
-			position: absolute;
-			top: 6px;
-			left: 6px;
-			z-index: 9999;
-			background: rgba(0, 0, 0, 0.6);
-			color: #00ff66;
-			font: 12px monospace;
-			line-height: 1.4;
-			padding: 4px 6px;
-			border-radius: 4px;
-			pointer-events: none;
-			white-space: nowrap;
-		}// .trackDebugText
 
 	}// .tosserWidget
 	

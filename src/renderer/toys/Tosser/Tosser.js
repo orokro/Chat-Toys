@@ -120,7 +120,6 @@ export default class Tosser extends Toy {
 		this.teardownTracking();
 
 		const mode = this.settings.trackingMode.value;
-		console.log('[TosserTrack] setupTracking mode=', mode, 'obs?', !!this.obs, 'obsConnected=', this.obs?.isConnected?.value);
 		if (mode === 'manual') {
 			// tell the widget to use its manual collider
 			this.autoCollider.value = { valid: false, x: 0, y: 0, width: 0, height: 0 };
@@ -192,7 +191,6 @@ export default class Tosser extends Toy {
 			return;
 
 		const sourceName = this.settings.trackingObsSource.value;
-		console.log('[TosserTrack] refreshObsRect mode=', mode, 'source=', sourceName, 'obsConnected=', this.obs?.isConnected?.value);
 		if (!this.obs || !this.obs.isConnected.value || !sourceName) {
 			this._obsRect = null;
 			this.publishCollider();
@@ -203,7 +201,6 @@ export default class Tosser extends Toy {
 			this.obs.getSceneItemTransform(sourceName),
 			this.obs.getVideoSettings(),
 		]);
-		console.log('[TosserTrack] transform=', transform, 'canvas=', canvas);
 
 		if (!transform || !canvas || !canvas.baseWidth || !canvas.baseHeight) {
 			this._obsRect = null;
@@ -310,7 +307,6 @@ export default class Tosser extends Toy {
 		}
 
 		this.autoCollider.value = { valid: true, ...box };
-		console.log('[TosserTrack] publish autoCollider=', this.autoCollider.value);
 	}
 
 
