@@ -126,9 +126,32 @@
 
 		</div>
 
+		<SectionHeader title="Chatter Name"/>
+		<div class="settingsBlock">
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="showChatterName"
+			>
+				<template #title>Show Chatter Name</template>
+				<p>Show the chatter's name in front of their comment, styled with the "Chatter Name" text style below.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="showChatterPoints"
+				v-if="showChatterName"
+			>
+				<template #title>Show Channel Points</template>
+				<p>Also show the chatter's channel-points balance after their name.</p>
+			</SettingsInputRow>
+
+		</div>
+
 		<SectionHeader title="Text Style"/>
 		<div class="settingsBlock">
-			<!-- Consolidated text-style settings (font, size, color, outline). -->
+			<!-- Consolidated text-style settings. One row per group: the comment
+			     body style, and the chatter-name style. -->
 			<SettingsTextRow
 				v-for="group in toy.static.textSettings"
 				:key="group.groupKey"
@@ -170,6 +193,8 @@ const {
 	overflowMode,
 	maxOnScreen,
 	filterCommands,
+	showChatterName,
+	showChatterPoints,
 } = toy.settings;
 
 </script>

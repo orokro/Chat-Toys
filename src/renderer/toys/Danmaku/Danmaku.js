@@ -26,6 +26,7 @@ import { socketShallowRef } from 'socket-ref';
 
 // our app
 import Toy from '../Toy';
+import { ChatPointsHelper } from '../Chat/ChatPointsHelper';
 
 // components
 import DanmakuPage from './DanmakuPage.vue';
@@ -97,6 +98,19 @@ export default class Danmaku extends Toy {
 				fontOutline: true,
 			},
 		},
+		{
+			groupKey: 'name',
+			groupLabel: 'Chatter Name',
+			groupDescription: 'Style for the chatter name (and points) shown in front of each comment, when those toggles are enabled below. Uses the same font and size as the comment text.',
+			fields: [
+				{ key: 'nameColor',   label: 'Name color', type: 'color' },
+				{ key: 'nameOutline', label: 'Outline',    type: 'boolean' },
+			],
+			defaults: {
+				nameColor:   '#00ABAE',
+				nameOutline: true,
+			},
+		},
 	];
 
 
@@ -115,9 +129,20 @@ export default class Danmaku extends Toy {
 		this.nextId = 1;
 
 		// The single socket ref this toy publishes to. A rolling, append-only
-		// list of recent comments - shape: { id, text, createdAt }. We trim it
-		// to MAX_LIST so a freshly-loaded widget doesn't replay ancient chat.
+		// list of recent comments - shape:
+		//   { id, text, emojis, author, authorUniqueID, createdAt }
+		// We trim it to MAX_LIST so a freshly-loaded widget doesn't replay
+		// ancient chat.
 		this.comments = socketShallowRef(this.static.slugify('comments'), []);
+
+		// Channel-points balances for recently-seen chatters, published for the
+		// widget to read when "show points" is enabled. Same batched/debounced
+		// DB pipeline the Chat box uses (ChatPointsHelper), so we don't hammer
+		// the database. Shape: [{ id, points }].
+		this.pointsData = socketShallowRef(this.static.slugify('pointsData'), []);
+		this.chatPointsHelper = new ChatPointsHelper(this, (pointsData) => {
+			this.pointsData.value = pointsData;
+		});
 
 		// listen for incoming chat messages from the chat processor
 		this.handleChatMessage = this.handleChatMessage.bind(this);
@@ -132,6 +157,8 @@ export default class Danmaku extends Toy {
 		super.end();
 		if (this.handleChatMessage)
 			this.chatToysApp.chatProcessor.removeNewChatsListener(this.handleChatMessage);
+		if (this.chatPointsHelper)
+			this.chatPointsHelper.destroy();
 	}
 
 
@@ -181,6 +208,16 @@ export default class Danmaku extends Toy {
 			//  'overwrite' - print over the oldest track anyway (NicoNico hype)
 			overflowMode: ref('despawn'),
 
+			// --- chatter name / points ---
+
+			// Show the chatter's name in front of their comment (styled with
+			// the separate "Chatter Name" text group).
+			showChatterName: ref(false),
+
+			// Also show the chatter's channel-points balance after their name.
+			// Only meaningful when showChatterName is on.
+			showChatterPoints: ref(false),
+
 			// --- input ---
 
 			// Filter out command messages (those starting with "!"), exactly
@@ -196,6 +233,10 @@ export default class Danmaku extends Toy {
 			fontSize: ref(32),
 			fontColor: ref('#FFFFFF'),
 			fontOutline: ref(true),
+
+			// chatter-name text style (mirrors the 'name' textSettings group)
+			nameColor: ref('#00ABAE'),
+			nameOutline: ref(true),
 
 			// --- widget placement (full screen by default) ---
 			danmakuBox: shallowRef({
@@ -250,17 +291,25 @@ export default class Danmaku extends Toy {
 			if (chat.syslogger === true)
 				continue;
 
-			// append the minimal comment payload. We forward the message's
-			// custom-emoji table (YouTube / Twitch / BTTV etc.) alongside the
-			// raw text - the codes are embedded in `text` as "&code;" and the
-			// widget swaps them for <img> tags using this lookup. Unicode
-			// emojis need no table; they're already glyphs in the text.
-			list.push({
+			// append the comment payload. We forward the message's custom-emoji
+			// table (YouTube / Twitch / BTTV etc.) alongside the raw text - the
+			// codes are embedded in `text` as "&code;" and the widget swaps them
+			// for <img> tags using this lookup. Unicode emojis need no table;
+			// they're already glyphs in the text. `author` / `authorUniqueID`
+			// drive the optional name + points prefix on the widget side.
+			const comment = {
 				id: this.nextId++,
 				text,
 				emojis: Array.isArray(chat.emojis) ? chat.emojis : [],
+				author: chat.author,
+				authorUniqueID: chat.authorUniqueID,
 				createdAt: Date.now(),
-			});
+			};
+			list.push(comment);
+
+			// track this chatter so their points balance gets fetched (batched
+			// + debounced by the helper, so this is cheap to call always)
+			this.chatPointsHelper.addMessage(comment);
 
 		}// next chat
 

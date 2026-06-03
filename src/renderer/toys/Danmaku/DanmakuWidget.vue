@@ -72,11 +72,33 @@ const socketSettingsRef = useToySettings('danmaku', 'danmakuBox', emit, () => {
 	ready.value = true;
 });
 
-// the rolling list of comments published by the toy ({ id, text, createdAt })
+// the rolling list of comments published by the toy
+// ({ id, text, emojis, author, authorUniqueID, createdAt })
 const comments = socketShallowRefReadOnly(slugify('comments'), []);
+
+// channel-points balances for recent chatters ([{ id, points }])
+const pointsData = socketShallowRefReadOnly(slugify('pointsData'), []);
 
 // demo flag (true when previewing inside the dashboard layout page)
 const demoMode = socketShallowRefReadOnly('demoMode', false);
+
+/**
+ * Live id -> points lookup, rebuilt whenever the points socket updates.
+ * Read at comment spawn time (comments are transient, so a snapshot is fine).
+ *
+ * @type {Map<string, number>}
+ */
+let pointsMap = new Map();
+watch(pointsData, (list) => {
+	const m = new Map();
+	if (Array.isArray(list)) {
+		for (const entry of list) {
+			if (entry && entry.id != null)
+				m.set(entry.id, entry.points);
+		}
+	}
+	pointsMap = m;
+}, { immediate: true });
 
 // whole-layer opacity, derived from the 0-100 setting
 const layerOpacity = computed(() => {
@@ -150,6 +172,10 @@ function readConfig() {
 		fontSize: typeof s.fontSize === 'number' ? s.fontSize : 32,
 		fontColor: s.fontColor || '#FFFFFF',
 		fontOutline: s.fontOutline !== false,
+		showChatterName: s.showChatterName === true,
+		showChatterPoints: s.showChatterPoints === true,
+		nameColor: s.nameColor || '#00ABAE',
+		nameOutline: s.nameOutline !== false,
 	};
 }
 
@@ -174,18 +200,55 @@ function outlineShadow(size) {
 }
 
 /**
- * Fill a comment node with its content, swapping custom-emoji codes ("&code;")
- * for <img> tags. Emoji images are sized to a fixed square (~font size) so the
- * node's measured width is deterministic immediately, without waiting on image
- * loads - important because the collision math keys off that width. Plain text
- * (including unicode emoji glyphs) is appended as text nodes.
+ * Fill a comment node with its content.
+ *
+ * Optionally prefixes the chatter's name (and channel-points balance) in the
+ * separate name style, then renders the message text - swapping custom-emoji
+ * codes ("&code;") for <img> tags. Emoji images are sized to a fixed square
+ * (~font size) so the node's measured width is deterministic immediately,
+ * without waiting on image loads - important because the collision math keys
+ * off that width. Plain text (including unicode emoji glyphs) is appended as
+ * text nodes.
  *
  * @param {HTMLElement} node - the comment node to fill
- * @param {string} text - raw message text with embedded "&code;" emoji codes
- * @param {Array<{code: string, url: string}>} emojis - custom-emoji lookup
+ * @param {{ text: string, emojis?: Array, author?: string, authorUniqueID?: string }} comment
  * @param {Object} cfg - config snapshot from readConfig()
  */
-function fillNodeContent(node, text, emojis, cfg) {
+function fillNodeContent(node, comment, cfg) {
+
+	const text = comment.text || '';
+	const emojis = comment.emojis;
+
+	// optional "Name: " (and points) prefix in the name style
+	if (cfg.showChatterName && comment.author) {
+
+		const nameSpan = document.createElement('span');
+		nameSpan.className = 'danmakuName';
+		nameSpan.style.color = cfg.nameColor;
+		nameSpan.style.textShadow = cfg.nameOutline ? outlineShadow(cfg.fontSize) : 'none';
+		nameSpan.textContent = comment.author;
+		node.appendChild(nameSpan);
+
+		// optional channel-points balance after the name
+		if (cfg.showChatterPoints && comment.authorUniqueID != null) {
+			const pts = pointsMap.get(comment.authorUniqueID);
+			if (pts !== undefined) {
+				const ptsSpan = document.createElement('span');
+				ptsSpan.className = 'danmakuPoints';
+				ptsSpan.style.color = cfg.nameColor;
+				ptsSpan.textContent = ` ₱${pts}`;
+				node.appendChild(ptsSpan);
+			}
+		}
+
+		// separator between the name and the message body
+		const sep = document.createElement('span');
+		sep.className = 'danmakuName';
+		sep.style.color = cfg.nameColor;
+		sep.style.textShadow = cfg.nameOutline ? outlineShadow(cfg.fontSize) : 'none';
+		sep.textContent = ': ';
+		node.appendChild(sep);
+	}
 
 	// O(1) code -> url lookup
 	const map = new Map();
@@ -233,12 +296,11 @@ function fillNodeContent(node, text, emojis, cfg) {
  * Create a comment node, style it, mount it off-screen, and measure its
  * width. The node is left parked off-screen until place() animates it.
  *
- * @param {string} text - comment text
- * @param {Array<{code: string, url: string}>} emojis - custom-emoji lookup
+ * @param {{ text: string, emojis?: Array, author?: string, authorUniqueID?: string }} comment
  * @param {Object} cfg - config snapshot from readConfig()
  * @returns {{ node: HTMLElement, width: number } | null}
  */
-function buildNode(text, emojis, cfg) {
+function buildNode(comment, cfg) {
 
 	const layer = layerEl.value;
 	if (!layer)
@@ -246,7 +308,7 @@ function buildNode(text, emojis, cfg) {
 
 	const node = document.createElement('div');
 	node.className = 'danmakuComment';
-	fillNodeContent(node, text, emojis, cfg);
+	fillNodeContent(node, comment, cfg);
 
 	// text styling from settings
 	node.style.position = 'absolute';
@@ -415,16 +477,15 @@ function removeNode(node) {
 /**
  * Build + measure a comment node and add it to the internal pending queue.
  *
- * @param {string} text
- * @param {Array<{code: string, url: string}>} [emojis] - custom-emoji lookup
+ * @param {{ text: string, emojis?: Array, author?: string, authorUniqueID?: string }} comment
  */
-function enqueueComment(text, emojis) {
+function enqueueComment(comment) {
 
-	if (!text || !layerEl.value)
+	if (!comment || !comment.text || !layerEl.value)
 		return;
 
 	const cfg = readConfig();
-	const built = buildNode(text, emojis, cfg);
+	const built = buildNode(comment, cfg);
 	if (!built)
 		return;
 
@@ -526,7 +587,7 @@ watch(comments, (list) => {
 	for (const c of list) {
 		if (c && c.id > lastSeenId) {
 			lastSeenId = c.id;
-			enqueueComment(c.text, c.emojis);
+			enqueueComment(c);
 		}
 	}
 
@@ -539,11 +600,17 @@ const DEMO_LINES = [
 	'first!', 'cute model :3', 'where is this from?', 'banger song',
 	'agree 100%', 'no wayyy', 'haha nice', 'GG', 'hello from chat',
 ];
+const DEMO_NAMES = ['Dude', 'DemoGirl', 'Buddy4Real', 'gOOber', 'sn@rk', 'ViewerOne'];
 watch(demoMode, (on) => {
 	if (on) {
 		demoTimer = window.setInterval(() => {
 			const line = DEMO_LINES[Math.floor(Math.random() * DEMO_LINES.length)];
-			enqueueComment(line);
+			const name = DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)];
+			const uid = 'demo_' + name;
+			// seed a fake points balance so the preview can show points too
+			if (!pointsMap.has(uid))
+				pointsMap.set(uid, Math.floor(Math.random() * 9000) + 100);
+			enqueueComment({ text: line, author: name, authorUniqueID: uid });
 		}, 600);
 	} else {
 		if (demoTimer)
