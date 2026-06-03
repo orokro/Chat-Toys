@@ -10,7 +10,7 @@
 	<PageBox
 		title="Danmaku Comments Settings"
 		:themeColor="toy.static.themeColor"
-		themeImage="assets/bg_tiles/chat.png"
+		themeImage="assets/bg_tiles/danmaku.png"
 		bgThemePos="32px"
 	>
 
