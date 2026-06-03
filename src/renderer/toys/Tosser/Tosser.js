@@ -147,11 +147,11 @@ export default class Tosser extends Toy {
 		// initial read
 		this.refreshObsRect();
 
-		// Heartbeat re-publish (~1Hz) so a late-joining / reloaded widget
-		// always converges on the current box — socket-ref doesn't replay the
-		// last value to subscribers that connect after the write. Cheap: uses
-		// the cached OBS rect, no OBS calls.
-		this._heartbeat = window.setElectronInterval(() => this.publishCollider(), 1000);
+		// Heartbeat (~1Hz): RE-READ the OBS transforms and republish. This both
+		// keeps a late-joining / reloaded widget in sync (socket-ref doesn't
+		// replay the last value to new subscribers) AND self-heals if a move
+		// didn't fire a transform event (so the box can't get stuck stale).
+		this._heartbeat = window.setElectronInterval(() => this.refreshObsRect(), 1000);
 	}
 
 
@@ -315,19 +315,67 @@ export default class Tosser extends Toy {
 		const sh = (typeof t.sourceHeight === 'number' && t.sourceHeight > 0) ? t.sourceHeight : (sy ? (t.height || 0) / sy : 0);
 
 		const cl = t.cropLeft || 0, cr = t.cropRight || 0, ct = t.cropTop || 0, cb = t.cropBottom || 0;
-		const visW = Math.max(0, (sw - cl - cr) * sx);
-		const visH = Math.max(0, (sh - ct - cb) * sy);
+		const croppedW = Math.max(0, sw - cl - cr);
+		const croppedH = Math.max(0, sh - ct - cb);
 
 		// OBS alignment bits: LEFT=1, RIGHT=2, TOP=4, BOTTOM=8 (CENTER=0)
 		const a = t.alignment || 0;
+
+		const bt = t.boundsType;
+		const hasBounds = bt && bt !== 'OBS_BOUNDS_NONE' && t.boundsWidth > 0 && t.boundsHeight > 0;
+
+		// --- no bounds: size = cropped source * scale, anchored by alignment ---
+		if (!hasBounds) {
+			const visW = croppedW * sx;
+			const visH = croppedH * sy;
+			let left;
+			if (a & 1) left = t.positionX;
+			else if (a & 2) left = t.positionX - visW;
+			else left = t.positionX - visW / 2;
+			let top;
+			if (a & 4) top = t.positionY;
+			else if (a & 8) top = t.positionY - visH;
+			else top = t.positionY - visH / 2;
+			return { x: left, y: top, width: visW, height: visH };
+		}
+
+		// --- bounds: the item is fit into a boundsWidth x boundsHeight box ---
+		const bw = t.boundsWidth, bh = t.boundsHeight;
+		const fitX = bw / (croppedW || 1);
+		const fitY = bh / (croppedH || 1);
+		let scale = null; // null = stretch (fill box, no aspect preserve)
+		switch (bt) {
+			case 'OBS_BOUNDS_STRETCH':         scale = null; break;
+			case 'OBS_BOUNDS_SCALE_INNER':     scale = Math.min(fitX, fitY); break;
+			case 'OBS_BOUNDS_SCALE_OUTER':     scale = Math.max(fitX, fitY); break;
+			case 'OBS_BOUNDS_SCALE_TO_WIDTH':  scale = fitX; break;
+			case 'OBS_BOUNDS_SCALE_TO_HEIGHT': scale = fitY; break;
+			case 'OBS_BOUNDS_MAX_ONLY':        scale = Math.min(1, Math.min(fitX, fitY)); break;
+			default:                           scale = Math.min(fitX, fitY); break;
+		}
+		const visW = (scale === null) ? bw : croppedW * scale;
+		const visH = (scale === null) ? bh : croppedH * scale;
+
+		// bounds box top-left (anchored by alignment)
+		let boxLeft;
+		if (a & 1) boxLeft = t.positionX;
+		else if (a & 2) boxLeft = t.positionX - bw;
+		else boxLeft = t.positionX - bw / 2;
+		let boxTop;
+		if (a & 4) boxTop = t.positionY;
+		else if (a & 8) boxTop = t.positionY - bh;
+		else boxTop = t.positionY - bh / 2;
+
+		// content placement within the bounds box (boundsAlignment; default center)
+		const ba = (typeof t.boundsAlignment === 'number') ? t.boundsAlignment : 0;
 		let left;
-		if (a & 1) left = t.positionX;
-		else if (a & 2) left = t.positionX - visW;
-		else left = t.positionX - visW / 2;
+		if (ba & 1) left = boxLeft;
+		else if (ba & 2) left = boxLeft + (bw - visW);
+		else left = boxLeft + (bw - visW) / 2;
 		let top;
-		if (a & 4) top = t.positionY;
-		else if (a & 8) top = t.positionY - visH;
-		else top = t.positionY - visH / 2;
+		if (ba & 4) top = boxTop;
+		else if (ba & 8) top = boxTop + (bh - visH);
+		else top = boxTop + (bh - visH) / 2;
 
 		return { x: left, y: top, width: visW, height: visH };
 	}
@@ -335,22 +383,41 @@ export default class Tosser extends Toy {
 
 	/**
 	 * Map a rect expressed in a CONTAINER's local content space up into the
-	 * container's parent space, using the container's own transform.
+	 * container's parent space. Uses the container's EFFECTIVE scale (visible
+	 * size / cropped source size) so it's correct whether the container uses
+	 * plain scaling or bounds.
 	 *
 	 * @param {{x:number,y:number,width:number,height:number}} rect
 	 * @param {Object} t - the container item's transform (in its parent)
 	 * @returns {{x:number,y:number,width:number,height:number}}
 	 */
 	_mapThroughContainer(rect, t) {
-		const sx = (typeof t.scaleX === 'number') ? t.scaleX : 1;
-		const sy = (typeof t.scaleY === 'number') ? t.scaleY : 1;
-		const cl = t.cropLeft || 0, ct = t.cropTop || 0;
+		const sw = (typeof t.sourceWidth === 'number' && t.sourceWidth > 0) ? t.sourceWidth : 0;
+		const sh = (typeof t.sourceHeight === 'number' && t.sourceHeight > 0) ? t.sourceHeight : 0;
+		const cl = t.cropLeft || 0, cr = t.cropRight || 0, ct = t.cropTop || 0, cb = t.cropBottom || 0;
+
+		// The container only renders its content region [cl..sw-cr] x [ct..sh-cb]
+		// and hides anything outside it (e.g. a nested scene clips to its canvas).
+		// Clip the child rect (in container content space) to that region.
+		const visLeft = cl, visRight = sw - cr, visTop = ct, visBottom = sh - cb;
+		const x0 = Math.max(rect.x, visLeft);
+		const y0 = Math.max(rect.y, visTop);
+		const x1 = Math.min(rect.x + rect.width, visRight);
+		const y1 = Math.min(rect.y + rect.height, visBottom);
+		const clipW = Math.max(0, x1 - x0);
+		const clipH = Math.max(0, y1 - y0);
+
+		const croppedW = Math.max(1, visRight - visLeft);
+		const croppedH = Math.max(1, visBottom - visTop);
 		const cont = this._visibleRectPx(t);
+		const esx = cont.width / croppedW;
+		const esy = cont.height / croppedH;
+
 		return {
-			x: cont.x + (rect.x - cl) * sx,
-			y: cont.y + (rect.y - ct) * sy,
-			width: rect.width * sx,
-			height: rect.height * sy,
+			x: cont.x + (x0 - cl) * esx,
+			y: cont.y + (y0 - ct) * esy,
+			width: clipW * esx,
+			height: clipH * esy,
 		};
 	}
 
