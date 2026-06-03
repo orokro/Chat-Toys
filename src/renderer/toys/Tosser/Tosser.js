@@ -91,6 +91,15 @@ export default class Tosser extends Toy {
 		// one found in the live scene), so the settings list can highlight it.
 		this.activeTrackedSource = ref(null);
 
+		// ---- recoil on hit ----
+		// The widget publishes a bumped counter here every time a tossed item
+		// lands. We watch it and, when enabled, recoil the VTS model. Throttled
+		// so a burst of items doesn't spam MoveModelRequest.
+		this.hitPing = socketShallowRef(this.static.slugify('hitPing'), { n: 0, x: 0, t: 0 });
+		this._lastRecoilAt = 0;
+		this._recoilMinIntervalMs = 220;
+		this.stopHitWatch = watch(this.hitPing, (v) => this._onHitPing(v));
+
 		// (re)wire tracking now and whenever the mode / tracked sources change
 		this.setupTracking();
 		this.stopTrackWatch = watch(
@@ -110,6 +119,42 @@ export default class Tosser extends Toy {
 		this.teardownTracking();
 		if (this.stopTrackWatch)
 			this.stopTrackWatch();
+		if (this.stopHitWatch)
+			this.stopHitWatch();
+	}
+
+
+	/**
+	 * React to a hit published by the widget. When recoil is enabled and VTS is
+	 * ready, give the model a quick tilt away from the impact side. Throttled to
+	 * avoid spamming MoveModelRequest during a burst of tosses.
+	 *
+	 * @param {Object} ping - { n, x, t } published by TosserWidget
+	 * @returns {void}
+	 */
+	_onHitPing(ping) {
+
+		if (!this.settings.recoilOnHit.value)
+			return;
+		if (!this.vts || !this.vts.isReady())
+			return;
+		if (!ping || !ping.n)
+			return;
+
+		// throttle
+		const now = Date.now();
+		if (now - this._lastRecoilAt < this._recoilMinIntervalMs)
+			return;
+		this._lastRecoilAt = now;
+
+		// tilt away from the side the item came from: a hit on the right (x > 0)
+		// knocks the model's top to the left (negative rotation), and vice versa.
+		const angle = Math.abs(this.settings.recoilAngle.value || 0);
+		if (angle <= 0)
+			return;
+		const dir = (ping.x || 0) >= 0 ? -1 : 1;
+
+		this.vts.recoilModel({ angle: dir * angle });
 	}
 
 
@@ -585,6 +630,11 @@ export default class Tosser extends Toy {
 			vtsBoxHeight: ref(0.5),
 			vtsBoxAnchorY: ref(0.32),
 			vtsFollowStrength: ref(1),
+
+			// recoil "bonk": when a tossed item lands, nudge the VTS model with
+			// a quick tilt. recoilAngle is the peak tilt in degrees.
+			recoilOnHit: ref(false),
+			recoilAngle: ref(15),
 
 			widgetBox: shallowRef({
 				x: 20,

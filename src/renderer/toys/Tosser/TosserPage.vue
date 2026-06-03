@@ -152,6 +152,38 @@
 			</template>
 		</div>
 
+		<SectionHeader title="VTubeStudio Reaction"/>
+		<p>
+			When a tossed item lands on your avatar, give your VTubeStudio model a quick
+			recoil &mdash; a little &ldquo;bonk&rdquo; tilt that springs back.
+		</p>
+
+		<div class="settingsBlock">
+
+			<InfoBox v-if="!vtsReady" icon="info">
+				Connect VTubeStudio to enable the recoil reaction. It's optional &mdash; the Tosser works without it.
+			</InfoBox>
+
+			<template v-else>
+				<SettingsInputRow type="boolean" v-model="recoilOnHit">
+					<template #title>Recoil on Hit</template>
+					<p>Tilt your model when an item connects. Rapid hits are throttled so your model isn't spammed.</p>
+				</SettingsInputRow>
+
+				<SettingsInputRow
+					v-if="recoilOnHit"
+					type="float"
+					:min="1"
+					:max="45"
+					:step="1"
+					v-model="recoilAngle"
+				>
+					<template #title>Recoil Strength</template>
+					<p>Peak tilt of the bonk, in degrees. The model is knocked away from the side the item came from, then springs back.</p>
+				</SettingsInputRow>
+			</template>
+		</div>
+
 		<SectionHeader title="Settings"/>
 		<div class="settingsBlock">
 			<SettingsInputRow
@@ -275,6 +307,8 @@ const {
 	vtsBoxHeight,
 	vtsBoxAnchorY,
 	vtsFollowStrength,
+	recoilOnHit,
+	recoilAngle,
 } = toy.settings;
 
 // which tracked source is currently driving the collider (for highlighting)

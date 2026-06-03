@@ -71,7 +71,7 @@
 // vue
 import { ref, shallowRef, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -145,6 +145,15 @@ const autoCollider = socketShallowRefReadOnly(slugify('autoCollider'), {
 	valid: false, x: 0, y: 0, width: 0, height: 0,
 });
 
+// ---- hit ping (widget -> main app) ----
+// This widget lives in the OBS browser source and can't talk to VTS directly,
+// so when a tossed item lands we bump this socket ref. The Tosser toy (main app)
+// watches it and, if enabled, recoils the VTS model. `n` is a monotonic counter
+// so every hit triggers a change even if x repeats; `x` is the impact side in
+// widget px (negative = left, positive = right).
+const hitPing = socketShallowRef(slugify('hitPing'), { n: 0, x: 0, t: 0 });
+let hitCount = 0;
+
 // tracking mode + debug toggle come over the settings socket
 const trackingMode = computed(() => socketSettingsRef.value?.trackingMode || 'manual');
 const showColliderDebug = computed(() => !!socketSettingsRef.value?.showColliderDebug);
@@ -195,6 +204,16 @@ watch(canvasContainerRef, (newVal)=>{
 			effectiveCollider,
 			socketSettingsRef
 		);
+
+		// signal the main app on every hit so it can recoil the VTS model
+		tosserSystem.onHit = (info) => {
+			hitCount++;
+			hitPing.value = {
+				n: hitCount,
+				x: info?.x ?? 0,
+				t: Date.now(),
+			};
+		};
 
 		// expose on window for debug
 		window.ts = tosserSystem;

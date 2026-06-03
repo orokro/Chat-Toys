@@ -67,6 +67,12 @@ export class ThreeJSTosserSystem {
 		// we'll store our spawned (tossed) items here
 		this.tossedItems = [];
 
+		// optional callback fired once each time a tossed item registers a hit
+		// on the collider. Set by the host widget so it can signal the main app
+		// (e.g. to recoil the VTS model). Receives { x } in scene coords, where
+		// x's sign tells us which side the impact came from.
+		this.onHit = null;
+
 		// map of all the loaded modals and unique audio sources
 		this.allModels = new Map();
 		this.audioSources = new Map();
@@ -377,8 +383,17 @@ export class ThreeJSTosserSystem {
 		const baseSound = this.audioSources.get(def.soundPath);
 		const sound = this.makeSoundInstance(baseSound);
 
-		// spawn the object
-		const tossed = new TossedObject(def.object, startPos, targetPos, this.settingsRef, this.scene, sound);
+		// spawn the object. The hit callback is wrapped so the host can swap
+		// this.onHit at any time (it's read lazily, not captured here).
+		const tossed = new TossedObject(
+			def.object,
+			startPos,
+			targetPos,
+			this.settingsRef,
+			this.scene,
+			sound,
+			(info) => { if (this.onHit) this.onHit(info); }
+		);
 		this.tossedItems.push(tossed);
 	}
 
@@ -545,11 +560,13 @@ class TossedObject {
 	 * @param {Ref} settingsRef - the settingsRef to toss the object at
 	 * @param {Scene} scene - the Three.js scene to add the object to
 	 * @param {sound} sound - the sound to play when the object is tossed
+	 * @param {Function} [onHit] - called once when this object hits the collider, with { x }
 	 */
-	constructor(model, startPos, target, settingsRef, scene, sound) {
+	constructor(model, startPos, target, settingsRef, scene, sound, onHit = null) {
 
 		// save our scene
 		this.scene = scene;
+		this.onHit = onHit;
 		this.mesh = model.clone();
 		this.mesh.traverse(child => {
 			if (child.isMesh) {
@@ -664,6 +681,13 @@ class TossedObject {
 			}
 			// we hit
 			this.hit = true;
+
+			// notify the host (fires exactly once, since `hit` short-circuits
+			// the next update). Pass the impact x so listeners can tell which
+			// side it came from.
+			if (this.onHit) {
+				try { this.onHit({ x: pos.x }); } catch (e) { /* ignore */ }
+			}
 
 			// spawn particles
 			this.particles = new ParticleBurst(this.scene, this.mesh, pos.clone());

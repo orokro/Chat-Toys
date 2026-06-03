@@ -735,6 +735,81 @@ export class VTSConnectionManager {
 	}
 
 	/**
+	 * Move/animate the currently-loaded model via MoveModelRequest.
+	 *
+	 * Only the fields you pass are sent (so an absolute move won't accidentally
+	 * snap an unspecified axis to 0). When `relative` is true the values are
+	 * deltas applied on top of the model's live transform, which is what the
+	 * recoil "bonk" uses so it composes cleanly with the user's own movement.
+	 *
+	 * @param {Object} [opts]
+	 * @param {number} [opts.timeInSeconds=0] - tween duration; 0 = instant
+	 * @param {boolean} [opts.relative=false] - treat values as deltas from current transform
+	 * @param {number} [opts.positionX]
+	 * @param {number} [opts.positionY]
+	 * @param {number} [opts.rotation] - degrees
+	 * @param {number} [opts.size]
+	 * @returns {Promise<boolean>} - true if VTS accepted the request
+	 */
+	async moveModel(opts = {}) {
+
+		if (!this.isReady())
+			return false;
+
+		const payload = {
+			timeInSeconds: typeof opts.timeInSeconds === 'number' ? opts.timeInSeconds : 0,
+			valuesAreRelativeToModel: !!opts.relative,
+		};
+		if (typeof opts.positionX === 'number')
+			payload.positionX = opts.positionX;
+		if (typeof opts.positionY === 'number')
+			payload.positionY = opts.positionY;
+		if (typeof opts.rotation === 'number')
+			payload.rotation = opts.rotation;
+		if (typeof opts.size === 'number')
+			payload.size = opts.size;
+
+		try {
+			await this._send('MoveModelRequest', payload);
+			return true;
+
+		} catch (err) {
+			this._log('warn', `moveModel failed: ${err?.message || err}`);
+			return false;
+		}
+	}
+
+	/**
+	 * Quick "bonk" recoil: tilt the model by `angle` degrees, then spring it
+	 * back. Uses relative MoveModelRequests so it nets to zero and rides on top
+	 * of whatever the model is already doing. Fire-and-forget; safe to call when
+	 * VTS isn't ready (it just no-ops).
+	 *
+	 * @param {Object} [opts]
+	 * @param {number} [opts.angle=15] - peak tilt in degrees (sign sets direction)
+	 * @param {number} [opts.outMs=90] - time to reach the tilt
+	 * @param {number} [opts.backMs=260] - time to spring back
+	 * @returns {Promise<void>}
+	 */
+	async recoilModel(opts = {}) {
+
+		if (!this.isReady())
+			return;
+
+		const angle = typeof opts.angle === 'number' ? opts.angle : 15;
+		const outMs = typeof opts.outMs === 'number' ? opts.outMs : 90;
+		const backMs = typeof opts.backMs === 'number' ? opts.backMs : 260;
+
+		// tilt out…
+		await this.moveModel({ relative: true, rotation: angle, timeInSeconds: outMs / 1000 });
+
+		// …then spring back once the out-tween has finished
+		window.setTimeout(() => {
+			this.moveModel({ relative: true, rotation: -angle, timeInSeconds: backMs / 1000 });
+		}, outMs);
+	}
+
+	/**
 	 * Scan the currently-loaded model for its hotkeys + expressions and upsert
 	 * the result into the persisted model cache. Safe to call any time; no-ops
 	 * when VTS isn't ready or no model is loaded. Called automatically on auth
