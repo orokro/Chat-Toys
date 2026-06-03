@@ -34,6 +34,7 @@ import Help from "./Help/Help";
 import Donations from "./Donations/Donations";
 import Omni from "./Omni/Omni";
 import TwitchRedeems from "./TwitchRedeems/TwitchRedeems";
+import Danmaku from "./Danmaku/Danmaku";
 
 // We'll export a list of all the constructors for the various toys
 // Their classes will have the static data they need, including:
@@ -49,6 +50,7 @@ export const toysData = [
 	WidgetGroup,
 	Shout,
 	Media,
+	Danmaku,
 	Tosser,
 	// VTSTosser,  // hidden — merging into Tosser (see misc/vts-tosser-overhaul-plan.md)
 	VTSInteractions,

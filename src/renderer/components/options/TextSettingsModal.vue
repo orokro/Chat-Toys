@@ -11,6 +11,11 @@
 	live - same plumbing as the inline rows that used to live on the Page.
 
 	Reset button writes the group's `defaults` map back into the refs.
+
+	Field types follow SettingsInputRow (color / number / boolean / options /
+	...). For an `options` field, put an `options: [{ name, value }, ...]` array
+	on the descriptor field and it's forwarded to the underlying select (used
+	by e.g. the Danmaku toy's font-family picker).
 -->
 <template>
 
@@ -35,6 +40,7 @@
 					:min="field.min"
 					:max="field.max"
 					:step="field.step"
+					:options="field.options"
 					v-model="fieldProxy[field.key]"
 				>
 					<template #title>{{ field.label }}</template>
