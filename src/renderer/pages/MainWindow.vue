@@ -62,7 +62,7 @@ let ctApp = null;
 
 // we'll define our tabs here
 const tabs = [
-	{ title: 'Help', icon: 'help', slug: 'help' },
+	{ title: 'Help', icon: 'menu_book', slug: 'helpDocs' },
 	{ title: 'Connection Settings', icon: 'settings_ethernet', slug: 'settings' },	
 	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
 	{ title: 'Tool Box', icon: 'build', slug: 'toolbox' },

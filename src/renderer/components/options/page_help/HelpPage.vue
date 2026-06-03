@@ -12,7 +12,7 @@
 		@changeTab="(tab)=>selectedPage = tab"
 	>
 		<WelcomePage v-if="selectedPage === 'help_welcome'" />
-		<HelpPage v-if="selectedPage === 'help'" />
+		<HelpPage v-if="selectedPage === 'helpDocs'" />
 		<VideoHelpPage v-if="selectedPage === 'help_videos'" />
 		<ContactPage v-if="selectedPage === 'help_contact'" />
 		<CreditsPage v-if="selectedPage === 'credits'" />
@@ -40,7 +40,7 @@ const pageItems = [
 		name: 'Welcome',
 	},
 	{
-		slug: 'help',
+		slug: 'helpDocs',
 		name: 'Help',
 	},
 	{

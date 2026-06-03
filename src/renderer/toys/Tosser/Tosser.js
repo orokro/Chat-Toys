@@ -148,11 +148,13 @@ export default class Tosser extends Toy {
 		this._lastRecoilAt = now;
 
 		// tilt away from the side the item came from: a hit on the right (x > 0)
-		// knocks the model's top to the left (negative rotation), and vice versa.
+		// knocks the model's top to the right (positive rotation), and a hit on
+		// the left knocks it to the left — i.e. the model recoils in the
+		// direction the projectile was travelling.
 		const angle = Math.abs(this.settings.recoilAngle.value || 0);
 		if (angle <= 0)
 			return;
-		const dir = (ping.x || 0) >= 0 ? -1 : 1;
+		const dir = (ping.x || 0) >= 0 ? 1 : -1;
 
 		this.vts.recoilModel({ angle: dir * angle });
 	}

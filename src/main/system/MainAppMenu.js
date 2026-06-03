@@ -85,7 +85,7 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 				{
 					label: 'View Help',
 					click: () => {
-						mainWindow.webContents.send('show-help', 'help');
+						mainWindow.webContents.send('show-help', 'helpDocs');
 					}
 				},
 				{
