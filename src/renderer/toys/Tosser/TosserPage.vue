@@ -126,8 +126,28 @@
 					v-model="showColliderDebug"
 				>
 					<template #title>Show Collider Debug Box</template>
-					<p>Overlays the tracked collider on the Tosser widget so you can see where hits will register — no need to toss items. Turn off before going live.</p>
+					<p>Overlays the tracked collider on the Tosser widget so you can see where hits will register — no need to toss items. Turn off before going live. Solid box = source rect; dotted box = the VTS hit area.</p>
 				</SettingsInputRow>
+
+				<!-- obsVts: tune the hit sub-box within the source -->
+				<template v-if="trackingMode === 'obsVts'">
+					<SettingsInputRow type="float" :min="0.05" :max="1" :step="0.05" v-model="vtsBoxWidth">
+						<template #title>Hit Box Width</template>
+						<p>Width of the avatar hit area within the source (fraction of the source).</p>
+					</SettingsInputRow>
+					<SettingsInputRow type="float" :min="0.05" :max="1" :step="0.05" v-model="vtsBoxHeight">
+						<template #title>Hit Box Height</template>
+						<p>Height of the avatar hit area within the source (fraction of the source).</p>
+					</SettingsInputRow>
+					<SettingsInputRow type="float" :min="0" :max="1" :step="0.02" v-model="vtsBoxAnchorY">
+						<template #title>Hit Box Vertical Position</template>
+						<p>0 = top, 0.5 = middle, 1 = bottom. Default is the upper area (head / chest), since VTubeStudio has no head-position API.</p>
+					</SettingsInputRow>
+					<SettingsInputRow type="float" :min="0" :max="4" :step="0.05" v-model="vtsFollowStrength">
+						<template #title>Follow VTS Model</template>
+						<p>How much the hit box shifts with your VTubeStudio model's position (0 = fixed in place). Crank this up until the dotted box tracks your model 1:1 horizontally — VTubeStudio's coordinate units don't map to OBS pixels by any fixed amount, so this needs calibrating by eye.</p>
+					</SettingsInputRow>
+				</template>
 
 			</template>
 		</div>
@@ -251,6 +271,10 @@ const {
 	trackingMode,
 	trackingObsSources,
 	showColliderDebug,
+	vtsBoxWidth,
+	vtsBoxHeight,
+	vtsBoxAnchorY,
+	vtsFollowStrength,
 } = toy.settings;
 
 // which tracked source is currently driving the collider (for highlighting)

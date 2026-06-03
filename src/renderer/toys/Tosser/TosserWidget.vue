@@ -39,17 +39,29 @@
 			></div>
 		</div>
 
-		<!-- auto-tracking debug box (testing aid) -->
-		<div
-			v-if="trackingMode !== 'manual' && showColliderDebug && autoCollider.valid"
-			class="debugCollider"
-			:style="{
-				width: effectiveCollider.width + 'px',
-				height: effectiveCollider.height + 'px',
-				left: effectiveCollider.x + 'px',
-				top: effectiveCollider.y + 'px',
-			}"
-		></div>
+		<!-- auto-tracking debug: solid = source rect, dotted = obsVts sub-box -->
+		<template v-if="trackingMode !== 'manual' && showColliderDebug && autoCollider.valid">
+			<div
+				v-if="sourceBoxPx"
+				class="debugCollider"
+				:style="{
+					width: sourceBoxPx.width + 'px',
+					height: sourceBoxPx.height + 'px',
+					left: sourceBoxPx.x + 'px',
+					top: sourceBoxPx.y + 'px',
+				}"
+			></div>
+			<div
+				v-if="trackingMode === 'obsVts'"
+				class="debugSubCollider"
+				:style="{
+					width: effectiveCollider.width + 'px',
+					height: effectiveCollider.height + 'px',
+					left: effectiveCollider.x + 'px',
+					top: effectiveCollider.y + 'px',
+				}"
+			></div>
+		</template>
 
 	</div>
 
@@ -151,6 +163,21 @@ const effectiveCollider = computed(() => {
 		};
 	}
 	return colliderBox.value;
+});
+
+// the full source rect in widget px (solid reference debug box). Only in auto
+// modes; null otherwise.
+const sourceBoxPx = computed(() => {
+	const a = autoCollider.value;
+	if (trackingMode.value !== 'manual' && a && a.valid && a.source) {
+		return {
+			x: a.source.x * window.innerWidth,
+			y: a.source.y * window.innerHeight,
+			width: a.source.width * window.innerWidth,
+			height: a.source.height * window.innerHeight,
+		};
+	}
+	return null;
 });
 
 
@@ -359,6 +386,16 @@ function doDrag(keys){
 			pointer-events: none;
 			border-radius: 4px;
 		}// .debugCollider
+
+		// obsVts sub-box: dotted, drawn inside the solid source box
+		.debugSubCollider {
+			position: absolute;
+			box-sizing: border-box;
+			border: 3px dashed #00ff66;
+			background: rgba(0, 255, 102, 0.18);
+			pointer-events: none;
+			border-radius: 4px;
+		}// .debugSubCollider
 
 	}// .tosserWidget
 	

@@ -473,21 +473,57 @@ export default class Tosser extends Toy {
 			return;
 		}
 
-		let box = { ...this._obsRect };
+		const src = this._obsRect;
 
-		if (mode === 'obsVts' && this.vts) {
-			const m = this.vts.modelTransform;
-			if (m && m.written) {
-				// map VTS model position (-1..1, y up) into the source rect
-				const cx = box.x + ((m.positionX + 1) / 2) * box.width;
-				const cy = box.y + (1 - (m.positionY + 1) / 2) * box.height;
-				const cw = box.width * 0.4 * (m.scale || 1);
-				const ch = box.height * 0.5 * (m.scale || 1);
-				box = { x: cx - cw / 2, y: cy - ch / 2, width: cw, height: ch };
-			}
+		// In obsVts mode the actual collider is a sub-box within the source;
+		// in obs mode it's the whole source rect.
+		const collider = (mode === 'obsVts') ? this._computeVtsSubBox(src) : src;
+
+		this.autoCollider.value = {
+			valid: true,
+			// the actual collider used for collisions
+			x: collider.x,
+			y: collider.y,
+			width: collider.width,
+			height: collider.height,
+			// the full source rect (for the solid reference debug box)
+			source: { x: src.x, y: src.y, width: src.width, height: src.height },
+			mode,
+		};
+	}
+
+
+	/**
+	 * Compute the obsVts sub-box: an upper-center region of the source (since
+	 * VTS has no head-position API), optionally offset by the live VTS model
+	 * position. All inputs/outputs are normalized (0..1) canvas coordinates.
+	 *
+	 * @param {{x:number,y:number,width:number,height:number}} src
+	 * @returns {{x:number,y:number,width:number,height:number}}
+	 */
+	_computeVtsSubBox(src) {
+
+		const s = this.settings;
+		const bw = src.width * (s.vtsBoxWidth.value ?? 0.5);
+		const bh = src.height * (s.vtsBoxHeight.value ?? 0.5);
+
+		// base center: horizontally centered, vertically in the upper area
+		let cx = src.x + src.width * 0.5;
+		let cy = src.y + src.height * (s.vtsBoxAnchorY.value ?? 0.32);
+
+		// optional follow: shift by the live VTS model position. VTS's
+		// position units don't map to OBS pixels by any knowable constant
+		// (depends on VTS's internal render size + window-capture cropping),
+		// so `follow` is a user-calibrated sensitivity: box shift = position *
+		// source dimension * follow. Dial it against the dotted debug box.
+		const follow = s.vtsFollowStrength.value ?? 0;
+		const m = this.vts && this.vts.modelTransform;
+		if (m && m.written && follow > 0) {
+			cx += (m.positionX || 0) * src.width * follow;
+			cy += -(m.positionY || 0) * src.height * follow;
 		}
 
-		this.autoCollider.value = { valid: true, ...box };
+		return { x: cx - bw / 2, y: cy - bh / 2, width: bw, height: bh };
 	}
 
 
@@ -540,6 +576,15 @@ export default class Tosser extends Toy {
 			// When an auto mode is active, overlay the tracked collider on the
 			// widget so the user can see where hits register (testing aid).
 			showColliderDebug: ref(false),
+
+			// obsVts sub-box: where the avatar's hittable area sits WITHIN the
+			// tracked source. All fractions of the source rect. Default = an
+			// upper-center box (humanoid head/chest), since VTS has no head
+			// API. vtsFollowStrength offsets it by the live VTS model position.
+			vtsBoxWidth: ref(0.5),
+			vtsBoxHeight: ref(0.5),
+			vtsBoxAnchorY: ref(0.32),
+			vtsFollowStrength: ref(1),
 
 			widgetBox: shallowRef({
 				x: 20,
