@@ -250,10 +250,15 @@ export default class Danmaku extends Toy {
 			if (chat.syslogger === true)
 				continue;
 
-			// append the minimal comment payload
+			// append the minimal comment payload. We forward the message's
+			// custom-emoji table (YouTube / Twitch / BTTV etc.) alongside the
+			// raw text - the codes are embedded in `text` as "&code;" and the
+			// widget swaps them for <img> tags using this lookup. Unicode
+			// emojis need no table; they're already glyphs in the text.
 			list.push({
 				id: this.nextId++,
 				text,
+				emojis: Array.isArray(chat.emojis) ? chat.emojis : [],
 				createdAt: Date.now(),
 			});
 

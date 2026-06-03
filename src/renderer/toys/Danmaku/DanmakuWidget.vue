@@ -112,9 +112,6 @@ let tracks = [];
  */
 let queue = [];
 
-/** Set of timeout ids for scheduled node removal, cleared on unmount. */
-const removalTimers = new Set();
-
 /** rAF handle for the pump loop. */
 let rafHandle = 0;
 
@@ -177,14 +174,71 @@ function outlineShadow(size) {
 }
 
 /**
+ * Fill a comment node with its content, swapping custom-emoji codes ("&code;")
+ * for <img> tags. Emoji images are sized to a fixed square (~font size) so the
+ * node's measured width is deterministic immediately, without waiting on image
+ * loads - important because the collision math keys off that width. Plain text
+ * (including unicode emoji glyphs) is appended as text nodes.
+ *
+ * @param {HTMLElement} node - the comment node to fill
+ * @param {string} text - raw message text with embedded "&code;" emoji codes
+ * @param {Array<{code: string, url: string}>} emojis - custom-emoji lookup
+ * @param {Object} cfg - config snapshot from readConfig()
+ */
+function fillNodeContent(node, text, emojis, cfg) {
+
+	// O(1) code -> url lookup
+	const map = new Map();
+	if (Array.isArray(emojis)) {
+		for (const e of emojis) {
+			if (e && e.code)
+				map.set(e.code, e.url);
+		}
+	}
+
+	// split on "&code;" tokens (same pattern the Chat widget's ParsedMessage uses)
+	const parts = text.split(/(&[a-zA-Z0-9_\-:]+;)/g);
+
+	for (const part of parts) {
+
+		if (part === '')
+			continue;
+
+		// custom emoji?
+		if (part.length > 2 && part.startsWith('&') && part.endsWith(';')) {
+			const code = part.slice(1, -1);
+			const url = map.get(code);
+			if (url) {
+				const img = document.createElement('img');
+				img.className = 'danmakuEmoji';
+				img.src = url;
+				img.alt = code;
+				img.style.height = cfg.fontSize + 'px';
+				img.style.width = cfg.fontSize + 'px';
+				img.style.objectFit = 'contain';
+				img.style.verticalAlign = 'middle';
+				img.style.margin = '0 2px';
+				node.appendChild(img);
+				continue;
+			}
+			// unknown code: fall through and render it as literal text
+		}
+
+		// plain text (danmaku is single-line, so collapse any newlines)
+		node.appendChild(document.createTextNode(part.replace(/\n/g, ' ')));
+	}
+}
+
+/**
  * Create a comment node, style it, mount it off-screen, and measure its
  * width. The node is left parked off-screen until place() animates it.
  *
  * @param {string} text - comment text
+ * @param {Array<{code: string, url: string}>} emojis - custom-emoji lookup
  * @param {Object} cfg - config snapshot from readConfig()
  * @returns {{ node: HTMLElement, width: number } | null}
  */
-function buildNode(text, cfg) {
+function buildNode(text, emojis, cfg) {
 
 	const layer = layerEl.value;
 	if (!layer)
@@ -192,7 +246,7 @@ function buildNode(text, cfg) {
 
 	const node = document.createElement('div');
 	node.className = 'danmakuComment';
-	node.textContent = text;
+	fillNodeContent(node, text, emojis, cfg);
 
 	// text styling from settings
 	node.style.position = 'absolute';
@@ -315,21 +369,31 @@ function place(item, trackIdx, vB, now, cfg, W, H) {
 	const startX = cfg.direction === 'ltr' ? -item.width : W;
 	const endX = cfg.direction === 'ltr' ? W : -item.width;
 
-	// prime at start, force reflow, then transition to end
-	node.style.transition = 'none';
-	node.style.transform = `translateX(${startX}px)`;
-	void node.offsetWidth; // reflow so the next change animates
-	node.style.transition = `transform ${cfg.duration}s linear`;
-	node.style.transform = `translateX(${endX}px)`;
+	// Park at the start position first (translate3d -> own GPU layer) so the
+	// node never flashes at x=0 on the frame before the animation begins.
+	node.style.transform = `translate3d(${startX}px, 0, 0)`;
+
+	// Drive the scroll with the Web Animations API rather than a CSS
+	// transition. WAA runs on the compositor and - crucially - needs no
+	// forced-reflow "reset" hack (the old `void node.offsetWidth`), which was
+	// the main source of jank: every spawn forced a synchronous layout of all
+	// on-screen comments. `fill: 'forwards'` leaves the node resting off-screen
+	// if teardown is ever delayed.
+	const anim = node.animate(
+		[
+			{ transform: `translate3d(${startX}px, 0, 0)` },
+			{ transform: `translate3d(${endX}px, 0, 0)` },
+		],
+		{ duration: cfg.duration * 1000, easing: 'linear', fill: 'forwards' }
+	);
 
 	onScreenCount++;
 
-	// tear down a little after it has fully exited
-	const timer = window.setTimeout(() => {
-		removalTimers.delete(timer);
-		removeNode(node);
-	}, cfg.duration * 1000 + 250);
-	removalTimers.add(timer);
+	// tear the node down the instant it has finished crossing
+	anim.onfinish = () => removeNode(node);
+
+	// keep a handle so unmount can cancel cleanly
+	node.__danAnim = anim;
 }
 
 /**
@@ -352,14 +416,15 @@ function removeNode(node) {
  * Build + measure a comment node and add it to the internal pending queue.
  *
  * @param {string} text
+ * @param {Array<{code: string, url: string}>} [emojis] - custom-emoji lookup
  */
-function enqueueComment(text) {
+function enqueueComment(text, emojis) {
 
 	if (!text || !layerEl.value)
 		return;
 
 	const cfg = readConfig();
-	const built = buildNode(text, cfg);
+	const built = buildNode(text, emojis, cfg);
 	if (!built)
 		return;
 
@@ -461,7 +526,7 @@ watch(comments, (list) => {
 	for (const c of list) {
 		if (c && c.id > lastSeenId) {
 			lastSeenId = c.id;
-			enqueueComment(c.text);
+			enqueueComment(c.text, c.emojis);
 		}
 	}
 
@@ -505,11 +570,16 @@ onBeforeUnmount(() => {
 	if (demoTimer)
 		window.clearInterval(demoTimer);
 
-	// clear pending removals + drop nodes
-	for (const t of removalTimers)
-		window.clearTimeout(t);
-	removalTimers.clear();
+	// cancel any in-flight scroll animations + drop their nodes
+	if (layerEl.value) {
+		const nodes = layerEl.value.querySelectorAll('.danmakuComment');
+		for (const n of nodes) {
+			if (n.__danAnim)
+				n.__danAnim.cancel();
+		}
+	}
 
+	// drop any still-queued (un-placed) nodes
 	for (const item of queue)
 		removeNode(item.node);
 	queue = [];
