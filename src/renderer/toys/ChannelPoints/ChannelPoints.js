@@ -86,6 +86,33 @@ export default class ChannelPoints extends Toy {
 		this.clearAbleTimeouts.push(window.setElectronTimeout(()=>{
 			this.start();
 		}, 1000));
+
+		// --- passive points + first-time bonus ---
+		// Unique chatters seen since the last passive payout. Keyed by
+		// authorUniqueID -> { displayName, streamID }.
+		this.seenChatters = new Map();
+
+		// handle to the passive-payout interval (null when disabled)
+		this.passiveInterval = null;
+
+		// These award points to the shared database, so they must run in
+		// exactly ONE window. Toys are also instantiated in popout windows
+		// (e.g. the Karaoke manager), so gate this to the primary dashboard
+		// window to avoid double-awarding. (Widget/OBS windows never construct
+		// toys at all.)
+		if (window.isPrimaryWindow) {
+
+			// collect chatters + hand out first-time bonuses
+			this.handleChatMessage = this.handleChatMessage.bind(this);
+			this.chatToysApp.chatProcessor.onNewChats(this.handleChatMessage);
+
+			// (re)configure the passive timer now and whenever its settings change
+			this.setupPassiveTimer();
+			this.stopPassiveWatch = watch(
+				[this.settings.passivePointsEnabled, this.settings.passiveFrequency],
+				() => this.setupPassiveTimer()
+			);
+		}
 	}
 
 
@@ -100,6 +127,15 @@ export default class ChannelPoints extends Toy {
 		this.clearAbleTimeouts.forEach((timeout) => {
 			window.clearElectronTimeout(timeout);
 		});
+
+		// tear down the passive-points machinery (only set up in the primary
+		// window, but these guards make this safe to call regardless)
+		if (this.handleChatMessage)
+			this.chatToysApp.chatProcessor.removeNewChatsListener(this.handleChatMessage);
+		if (this.passiveInterval)
+			window.clearElectronInterval(this.passiveInterval);
+		if (this.stopPassiveWatch)
+			this.stopPassiveWatch();
 	}
 
 
@@ -133,6 +169,21 @@ export default class ChannelPoints extends Toy {
 
 		// channel points settings
 		this.buildSettingsBlock({
+
+			// --- passive participation points ---
+			// Award points to everyone who chatted in the last interval, just
+			// for being present. Runs independently of the claim widget, so the
+			// two systems can be used together (e.g. a small passive trickle
+			// plus larger, less-frequent widget claims).
+			passivePointsEnabled: ref(true),	// on by default
+			passiveFrequency: ref(60),			// seconds between payouts
+			passivePointsAmount: ref(50),		// points per chatter per payout
+
+			// --- first-time chatter welcome bonus ---
+			// One-time payout the first time we ever see a chatter (i.e. they
+			// aren't yet in the database).
+			firstTimeBonusEnabled: ref(true),	// on by default
+			firstTimeBonusAmount: ref(500),		// one-time welcome points
 
 			claimInterval: ref(300),
 			claimRandomness: ref(0),
@@ -429,6 +480,124 @@ export default class ChannelPoints extends Toy {
 		// log success!
 		this.chatToysApp.log.msg(`${msg.author} gave ${params.amount} points to ${params.user}`);
 		handshake.accept();
+	}
+
+
+	/**
+	 * Handle a batch of incoming chat messages (primary window only).
+	 *
+	 * Two jobs:
+	 *  1. First-time bonus: if a chatter isn't in the database yet, award them
+	 *     a one-time welcome payout (which also creates their record).
+	 *  2. Passive collection: remember every chatter seen so the next passive
+	 *     payout can award them for being present.
+	 *
+	 * @param {Array<Object>} chats - list of new chat messages
+	 */
+	handleChatMessage(chats){
+
+		for(const chat of chats){
+
+			// need a stable user id; skip system/logger lines
+			const id = chat.authorUniqueID;
+			if(!id)
+				continue;
+			if(chat.syslogger === true)
+				continue;
+
+			// 1. first-time chatter welcome bonus
+			if(this.settings.firstTimeBonusEnabled.value){
+
+				// getUser returns undefined when we've never seen this id
+				const existing = window.ytctDB.getUser(id);
+				if(!existing){
+
+					const amount = this.settings.firstTimeBonusAmount.value;
+
+					// updateUser creates the record AND applies the points
+					window.ytctDB.updateUser(id, {
+						displayName: chat.author,
+						streamID: chat.streamID,
+						relativePoints: amount,
+					});
+
+					this.chatToysApp.log.msg(`${chat.author} is a new chatter — awarded ${amount} welcome points!`);
+				}
+			}
+
+			// 2. remember them for the next passive payout
+			if(this.settings.passivePointsEnabled.value){
+				this.seenChatters.set(id, {
+					displayName: chat.author,
+					streamID: chat.streamID,
+				});
+			}
+
+		}// next chat
+	}
+
+
+	/**
+	 * (Re)start the passive-payout interval based on current settings. Safe to
+	 * call repeatedly - it always clears any existing timer first. No-op (timer
+	 * left cleared) when passive points are disabled.
+	 */
+	setupPassiveTimer(){
+
+		// clear any existing timer
+		if(this.passiveInterval){
+			window.clearElectronInterval(this.passiveInterval);
+			this.passiveInterval = null;
+		}
+
+		// bail if the feature is off
+		if(!this.settings.passivePointsEnabled.value)
+			return;
+
+		// guard against a 0/negative frequency
+		const freqSeconds = Math.max(1, this.settings.passiveFrequency.value || 60);
+
+		// schedule the recurring payout
+		this.passiveInterval = window.setElectronInterval(()=>{
+			this.awardPassivePoints();
+		}, freqSeconds * 1000);
+	}
+
+
+	/**
+	 * Award the passive participation payout to every chatter seen since the
+	 * last payout, then flush the set to begin a fresh collection window.
+	 */
+	awardPassivePoints(){
+
+		// nothing collected this window
+		if(this.seenChatters.size === 0)
+			return;
+
+		const amount = this.settings.passivePointsAmount.value;
+
+		// if the payout is zero, just flush and move on
+		if(!amount){
+			this.seenChatters.clear();
+			return;
+		}
+
+		// award everyone we saw
+		let count = 0;
+		for(const [id, info] of this.seenChatters){
+			window.ytctDB.updateUser(id, {
+				displayName: info.displayName,
+				streamID: info.streamID,
+				relativePoints: amount,
+			});
+			count++;
+		}
+
+		// log a quick summary
+		this.chatToysApp.log.msg(`Awarded ${amount} participation points to ${count} chatter${count === 1 ? '' : 's'}.`);
+
+		// flush for the next collection window
+		this.seenChatters.clear();
 	}
 
 

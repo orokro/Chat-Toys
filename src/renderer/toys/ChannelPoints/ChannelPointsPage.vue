@@ -47,6 +47,75 @@
 		
 		<WidgetSection :toy="toy" />
 
+		<SectionHeader title="Passive Participation Points"/>
+		<p>
+			Instead of (or in addition to) the claim widget, you can passively reward
+			everyone who chats. On a set interval, every chatter seen since the last
+			payout gets points just for being present &mdash; no command needed. This
+			rewards participation naturally and works great alongside the widget
+			(for example, a small passive trickle plus larger, less-frequent widget claims).
+		</p>
+		<div class="settingsBlock">
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="passivePointsEnabled"
+			>
+				<template #title>Enable Passive Points</template>
+				<p>Award points to everyone who chatted during each interval. On by default.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				:min="1"
+				v-model="passiveFrequency"
+				v-if="passivePointsEnabled"
+			>
+				<template #title>Payout Frequency</template>
+				<p>How often (in seconds) to award passive points. Default is 60 (once a minute).</p>
+				<p>Each payout awards everyone seen since the previous payout, then resets.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				:min="0"
+				v-model="passivePointsAmount"
+				v-if="passivePointsEnabled"
+			>
+				<template #title>Points Per Payout</template>
+				<p>How many points each present chatter receives per payout. Default is 50.</p>
+			</SettingsInputRow>
+
+		</div>
+
+		<SectionHeader title="New Chatter Bonus"/>
+		<p>
+			Give first-time chatters a one-time welcome bonus the very first time they
+			appear (when they aren't yet in your points database). A nice way to kickstart
+			newcomers so they have points to spend right away.
+		</p>
+		<div class="settingsBlock">
+
+			<SettingsInputRow
+				type="boolean"
+				v-model="firstTimeBonusEnabled"
+			>
+				<template #title>Enable New Chatter Bonus</template>
+				<p>Award a one-time bonus the first time a chatter is seen. On by default.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				:min="0"
+				v-model="firstTimeBonusAmount"
+				v-if="firstTimeBonusEnabled"
+			>
+				<template #title>Welcome Bonus Amount</template>
+				<p>How many points a brand-new chatter receives, one time only. Default is 500.</p>
+			</SettingsInputRow>
+
+		</div>
+
 		<SectionHeader title="Settings"/>
 		<div class="settingsBlock">
 			<SettingsInputRow
@@ -219,6 +288,11 @@ const toy = ctApp.toyManager.toys[ChannelPoints.slug];
 
 // our local ref settings for this system
 const {
+	passivePointsEnabled,
+	passiveFrequency,
+	passivePointsAmount,
+	firstTimeBonusEnabled,
+	firstTimeBonusAmount,
 	claimInterval,
 	claimRandomness,
 	claimDuration,
