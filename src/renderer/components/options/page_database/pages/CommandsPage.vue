@@ -29,7 +29,7 @@
 		title="Commands"
 		themeColor="#262262"
 		:limitWidth="true"
-		themeImage="assets/bg_tiles/copy_details.png"
+		themeImage="assets/bg_tiles/commands.png"
 	>
 		<div class="picBox" :style="{ height: '350px' }">
 			<img src="/assets/icons/copy_details.png" height="300px" style="float:right" onerror="this.style.display='none'"/>

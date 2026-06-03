@@ -19,7 +19,7 @@
 	<PageBox
 		title="Debug Tools"
 		themeColor="darkgrey"
-		themeImage="assets/bg_tiles/connection.png"
+		themeImage="assets/bg_tiles/debug.png"
 	>
 		<br><br>
 		<p class="devOnlyBanner">

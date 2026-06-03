@@ -21,7 +21,7 @@
 	<PageBox
 		title="VTS Interactions Settings"
 		:themeColor="toy.static.themeColor"
-		themeImage="assets/bg_tiles/vts.png"
+		themeImage="assets/bg_tiles/vtsInteractions.png"
 		bgThemePos="-20px"
 	>
 		<br>

@@ -21,7 +21,7 @@
 	<PageBox
 		title="Twitch Redeems"
 		themeColor="indigo"
-		themeImage="assets/bg_tiles/channelPoints.png"
+		themeImage="assets/bg_tiles/twitchRedeems.png"
 	>
 		<br><br>
 		<p>
