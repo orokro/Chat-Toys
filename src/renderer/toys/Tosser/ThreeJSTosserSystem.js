@@ -44,6 +44,38 @@ const EMOJI_REGEX = /\p{Extended_Pictographic}/u;
 
 
 /**
+ * Emote-image hosts whose CDN doesn't send CORS headers. A plain <img> (chat)
+ * can show them, but uploading one into a WebGL texture taints it and throws.
+ * For these we route the load through the app's own /emote-proxy (same-origin,
+ * CORS-clean). BetterTTV is the known offender; the list is easy to extend.
+ *
+ * @type {Array<string>}
+ */
+const PROXY_EMOTE_HOSTS = ['betterttv.net'];
+
+
+/**
+ * Rewrite an emote image URL to load through the local /emote-proxy when its
+ * host is known to lack CORS headers; otherwise return it unchanged.
+ *
+ * @param {string} url - the original emote image URL
+ * @returns {string}
+ */
+function emoteLoadUrl(url) {
+	try {
+		const u = new URL(url, window.location.href);
+		const needsProxy = (u.protocol === 'http:' || u.protocol === 'https:') &&
+			PROXY_EMOTE_HOSTS.some((h) => u.hostname === h || u.hostname.endsWith('.' + h));
+		if (needsProxy)
+			return '/emote-proxy?url=' + encodeURIComponent(url);
+	} catch (e) {
+		/* not a parseable URL — fall through and use as-is */
+	}
+	return url;
+}
+
+
+/**
  * Main class to manager the tosser system state for the Tosser toy.
  */
 export class ThreeJSTosserSystem {
@@ -318,6 +350,15 @@ export class ThreeJSTosserSystem {
 		// create a sprite from the emoji char
 		this.createEmojiSpriteFromString(emoji, 50, this.camera).then(sprite => {
 
+			// If the texture/sprite couldn't be built (e.g. an emote image that
+			// failed to load), bail cleanly. Without this guard the next line
+			// (sprite.position.set on null) throws inside the promise, silently
+			// killing the toss — no object, no collision, no recoil, no sound.
+			if (!sprite) {
+				console.warn('[Tosser] tossEmoji: no sprite produced for', emoji);
+				return;
+			}
+
 			// make a temporary object3d to hold the sprite
 			const obj = new Object3D();
 			obj.add(sprite);
@@ -330,6 +371,8 @@ export class ThreeJSTosserSystem {
 				soundPath: 'assets/sounds/emoji_toss_hit.wav',
 			};
 			this._tossObject(def);
+		}).catch(err => {
+			console.error('[Tosser] tossEmoji failed for', emoji, err);
 		});
 	}
 
@@ -443,7 +486,12 @@ export class ThreeJSTosserSystem {
 	// Helper: create a texture from a cached emoji URL (YouTube/Twitch/etc).
 	// Uses getEmojiSource() so we avoid refetching when possible.
 	async _createTextureFromUrl(url) {
-		const { src } = await getEmojiSource(url); // may be blob URL or original URL
+		// Route CORS-less emote CDNs (e.g. BetterTTV) through our same-origin
+		// proxy so the resulting texture isn't tainted.
+		const loadUrl = emoteLoadUrl(url);
+		if (loadUrl !== url)
+			console.log('[Tosser] emote routed through proxy:', url, '→', loadUrl);
+		const { src } = await getEmojiSource(loadUrl); // may be blob URL or original URL
 		const loader = new THREE.TextureLoader();
 
 		return await new Promise((resolve, reject) => {

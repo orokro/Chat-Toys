@@ -70,6 +70,14 @@ async function fetchAndStore(url) {
 		}
 
 		const blob = await res.blob();
+
+		// Guard against caching non-image responses (e.g. an HTML error page or
+		// SPA fallback served with a 200). Storing those would poison the cache
+		// and make later texture loads fail to decode.
+		if (!blob.type || !blob.type.startsWith('image/')) {
+			throw new Error(`Emoji fetch returned non-image (${blob.type || 'unknown type'})`);
+		}
+
 		await putBlob(url, blob);
 
 		const blobUrl = URL.createObjectURL(blob);
@@ -92,10 +100,12 @@ export async function getEmojiSource(url) {
 		};
 	}
 
-	// 2. Try IndexedDB (persisted cache)
+	// 2. Try IndexedDB (persisted cache). Ignore (and let it be overwritten)
+	//    any cached blob that isn't an image — this self-heals entries poisoned
+	//    by an earlier non-image response (e.g. an HTML fallback).
 	try {
 		const blob = await getBlob(url);
-		if (blob) {
+		if (blob && typeof blob.type === 'string' && blob.type.startsWith('image/')) {
 			const blobUrl = URL.createObjectURL(blob);
 			memory.set(url, {
 				status: 'ready',
