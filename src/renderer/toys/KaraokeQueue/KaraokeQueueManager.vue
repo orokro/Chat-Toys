@@ -1,5 +1,5 @@
 <template>
-	<div class="karaokeQueueManager" v-if="toy">
+	<div class="karaokeQueueManager" v-if="toyEnabled === true">
 		<header class="managerHeader">
 			<div class="headerLeft">
 				<span class="material-icons">mic_external_on</span>
@@ -122,39 +122,112 @@
 			</div>
 		</footer>
 	</div>
-	<div v-else class="notEnabled">
+	<div v-else-if="toyEnabled === false" class="notEnabled">
 		<span class="material-icons">warning</span>
-		<p>Karaoke Queue toy is not enabled. Please enable it in the Toy Box.</p>
-		<button @click="enableToy">Enable Now</button>
+		<p>The Karaoke Queue toy is currently disabled. Enable it from the Toy Box in the main window.</p>
+	</div>
+	<div v-else class="notEnabled">
+		<span class="material-icons">sync</span>
+		<p>Connecting&hellip;</p>
 	</div>
 </template>
 
 <script setup>
-import { ref, computed, inject, watch } from 'vue';
+
+/*
+	KaraokeQueueManager.vue
+	-----------------------
+
+	Pop-out management UI for the Karaoke Queue toy.
+
+	This window deliberately does NOT instantiate the whole app. The toy's
+	queue state lives in cross-window socket refs (the same WebSocket bus the
+	OBS widgets use), so this manager binds directly to those keys and reads /
+	writes them as a peer of the main-window toy instance. The main window
+	remains the sole owner that processes !request chat commands; this is just
+	another client of the shared state.
+
+	It also watches the shared `general-settings` socket (which carries the
+	enabledToys list): if the streamer disables the Karaoke Queue toy in the
+	main window, this pop-out auto-closes.
+*/
+
+// vue
+import { ref, computed, watch } from 'vue';
+import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
+
+// our app
 import KaraokeQueue from './KaraokeQueue';
 
-const ctApp = inject('ctApp');
-const toy = computed(() => ctApp.toyManager.getToyBySlug(KaraokeQueue.slug));
+// helper to build this toy's socket-ref keys. MUST match Toy.slugify(), which
+// lowercases the suffix: `slug + '__' + text.toLowerCase()`. The OBS widgets
+// build their keys the same way - without the .toLowerCase() the manager binds
+// to non-existent keys and silently fails to sync (no reads, no writes reach
+// OBS).
+const slug = KaraokeQueue.slug;
+const key = (name) => `${slug}__${name.toLowerCase()}`;
 
-const pendingRequests = ref([]);
-const approvedRequests = ref([]);
-const currentVideo = ref({ videoId: null, title: '', state: 'idle', timestamp: 0 });
+// -----------------------------------------------------------------------
+// Shared cross-window state (read-write; same keys the toy owns)
+// -----------------------------------------------------------------------
+const pendingRequests = socketShallowRef(key('pendingRequests'), []);
+const approvedRequests = socketShallowRef(key('approvedRequests'), []);
+const playedSongs = socketShallowRef(key('playedSongs'), []);
+const currentVideo = socketShallowRef(key('currentVideo'), {
+	videoId: null,
+	title: '',
+	state: 'idle',
+	timestamp: 0,
+});
+
+// local-only input field for the manual-add box
 const manualUrl = ref('');
 
-// Sync from socket refs to local refs
-watch(() => toy.value?.pendingRequests.value, (newVal) => {
-	if (newVal) pendingRequests.value = [...newVal];
+// -----------------------------------------------------------------------
+// Enabled-state tracking + auto-close
+// -----------------------------------------------------------------------
+
+// The main window broadcasts general app settings (including the enabledToys
+// list) over the 'general-settings' socket; we read it to know whether the
+// Karaoke Queue toy is still enabled.
+const generalSettings = socketShallowRefReadOnly('general-settings', 'uninitialized');
+
+/**
+ * Whether the Karaoke Queue toy is enabled in the main window.
+ *  - true / false once we've received a real settings payload
+ *  - null while still waiting for the first payload
+ *
+ * @type {import('vue').ComputedRef<boolean|null>}
+ */
+const toyEnabled = computed(() => {
+	const s = generalSettings.value;
+	if (s === 'uninitialized' || !s || typeof s !== 'object')
+		return null;
+	return Array.isArray(s.enabledToys) ? s.enabledToys.includes(slug) : false;
+});
+
+// Auto-close when the toy is disabled in the main window. We only close on a
+// real enabled -> disabled transition: `sawEnabled` guards against closing
+// during the brief 'uninitialized' window at startup (toyEnabled === null) and
+// against the edge case of the pop-out opening while the toy is already off
+// (we show a passive notice for that instead).
+let sawEnabled = false;
+watch(toyEnabled, (enabled) => {
+	if (enabled === true)
+		sawEnabled = true;
+	else if (enabled === false && sawEnabled)
+		window.close();
 }, { immediate: true });
 
-watch(() => toy.value?.approvedRequests.value, (newVal) => {
-	if (newVal) approvedRequests.value = [...newVal];
-}, { immediate: true });
 
-watch(() => toy.value?.currentVideo.value, (newVal) => {
-	if (newVal) currentVideo.value = { ...newVal };
-}, { immediate: true });
-
-
+/**
+ * Move an item up/down within one of the queue lists.
+ *
+ * @param {Array<Object>} list - the current list (pending or approved)
+ * @param {number} index - index of the item to move
+ * @param {number} direction - -1 to move up, +1 to move down
+ * @param {string} listName - 'pending' or 'approved'
+ */
 function moveItem(list, index, direction, listName) {
 	const newIndex = index + direction;
 	if (newIndex < 0 || newIndex >= list.length) return;
@@ -164,101 +237,141 @@ function moveItem(list, index, direction, listName) {
 	newList.splice(index, 1);
 	newList.splice(newIndex, 0, item);
 
-	if (listName === 'pending') {
-		toy.value.pendingRequests.value = newList;
-	} else {
-		toy.value.approvedRequests.value = newList;
-	}
+	if (listName === 'pending')
+		pendingRequests.value = newList;
+	else
+		approvedRequests.value = newList;
 }
 
-function enableToy() {
-	ctApp.addToy(KaraokeQueue.slug);
-}
 
+/**
+ * Approve a pending request, moving it into the approved queue.
+ *
+ * @param {Object} song - the pending song request
+ */
 function approveRequest(song) {
-	const nextPending = pendingRequests.value.filter(s => s.id !== song.id);
-	const nextApproved = [...approvedRequests.value, { ...song, status: 'approved' }];
-	
-	toy.value.pendingRequests.value = nextPending;
-	toy.value.approvedRequests.value = nextApproved;
+	pendingRequests.value = pendingRequests.value.filter(s => s.id !== song.id);
+	approvedRequests.value = [...approvedRequests.value, { ...song, status: 'approved' }];
 }
 
+
+/**
+ * Remove a request from a list (and from played history if it was approved).
+ *
+ * @param {Object} song - the song to remove
+ * @param {string} list - 'pending' or 'approved'
+ */
 function removeRequest(song, list) {
 	if (list === 'pending') {
-		toy.value.pendingRequests.value = pendingRequests.value.filter(s => s.id !== song.id);
+		pendingRequests.value = pendingRequests.value.filter(s => s.id !== song.id);
 	} else {
-		toy.value.approvedRequests.value = approvedRequests.value.filter(s => s.id !== song.id);
-		// Also remove from played if it was there
-		toy.value.playedSongs.value = toy.value.playedSongs.value.filter(s => s.videoId !== song.videoId);
+		approvedRequests.value = approvedRequests.value.filter(s => s.id !== song.id);
+		// also remove from played history if it was there
+		playedSongs.value = playedSongs.value.filter(s => s.videoId !== song.videoId);
 	}
 }
 
+
+/**
+ * Preview a song in the embed without changing global play state.
+ *
+ * @param {Object} song
+ */
 function selectVideo(song) {
-	// Previews the video in the top box but doesn't change global play state
-	currentVideo.value = { 
-		...currentVideo.value, 
-		videoId: song.videoId, 
-		title: song.title 
+	currentVideo.value = {
+		...currentVideo.value,
+		videoId: song.videoId,
+		title: song.title,
 	};
 }
 
+
+/**
+ * Start playing a song and mark it as played.
+ *
+ * @param {Object} song
+ */
 function playSong(song) {
-	const newState = {
+	currentVideo.value = {
 		videoId: song.videoId,
 		title: song.title,
 		state: 'playing',
-		timestamp: Date.now()
+		timestamp: Date.now(),
 	};
-	toy.value.currentVideo.value = newState;
-	
 	markAsPlayed(song);
 }
 
+
+/**
+ * Add a song to the top of the played history (if not already there).
+ *
+ * @param {Object} song
+ */
 function markAsPlayed(song) {
 	if (!song || !song.videoId) return;
-	
-	// Mark as played and move to top of history if not already there
-	if (!isPlayed(song)) {
-		toy.value.playedSongs.value = [song, ...toy.value.playedSongs.value];
-	}
+	if (!isPlayed(song))
+		playedSongs.value = [song, ...playedSongs.value];
 }
 
+
+/**
+ * Whether a song is already in the played history.
+ *
+ * @param {Object} song
+ * @returns {boolean}
+ */
 function isPlayed(song) {
-	if (!toy.value || !song) return false;
-	return toy.value.playedSongs.value.some(s => s.videoId === song.videoId);
+	if (!song) return false;
+	return playedSongs.value.some(s => s.videoId === song.videoId);
 }
 
+
+/**
+ * Resume / start playback of the current video.
+ */
 function playVideo() {
-	const newState = { ...currentVideo.value, state: 'playing', timestamp: Date.now() };
-	toy.value.currentVideo.value = newState;
+	currentVideo.value = { ...currentVideo.value, state: 'playing', timestamp: Date.now() };
 
-	// Also mark the current video as played if it's in our approved list
-	const song = approvedRequests.value.find(s => s.videoId === newState.videoId);
-	if (song) {
+	// mark the current video as played if it's in the approved list
+	const song = approvedRequests.value.find(s => s.videoId === currentVideo.value.videoId);
+	if (song)
 		markAsPlayed(song);
-	}
 }
 
+
+/**
+ * Pause the current video.
+ */
 function pauseVideo() {
-	toy.value.currentVideo.value = { ...currentVideo.value, state: 'paused' };
+	currentVideo.value = { ...currentVideo.value, state: 'paused' };
 }
 
+
+/**
+ * Toggle between play and pause.
+ */
 function togglePlay() {
 	const newState = currentVideo.value.state === 'playing' ? 'paused' : 'playing';
-	toy.value.currentVideo.value = { ...currentVideo.value, state: newState };
+	currentVideo.value = { ...currentVideo.value, state: newState };
 }
 
+
+/**
+ * Restart the current video from the beginning.
+ */
 function restartVideo() {
-	const newState = { ...currentVideo.value, state: 'playing', timestamp: Date.now() };
-	toy.value.currentVideo.value = newState;
+	currentVideo.value = { ...currentVideo.value, state: 'playing', timestamp: Date.now() };
 
-	// Ensure it's marked as played
-	const song = approvedRequests.value.find(s => s.videoId === newState.videoId);
-	if (song) {
+	const song = approvedRequests.value.find(s => s.videoId === currentVideo.value.videoId);
+	if (song)
 		markAsPlayed(song);
-	}
 }
 
+
+/**
+ * Manually add a song by YouTube URL or 11-char video id. Fetches the title
+ * and thumbnail via YouTube's public oEmbed endpoint.
+ */
 async function addManualSong() {
 	let videoId = manualUrl.value.trim();
 	const urlMatch = videoId.match(/(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w-]{11})/);
@@ -275,12 +388,12 @@ async function addManualSong() {
 			title: data.title,
 			thumbnail: data.thumbnail_url,
 			requestedBy: 'Streamer',
-			status: 'approved'
+			status: 'approved',
 		};
-		toy.value.approvedRequests.value = [...approvedRequests.value, newSong];
+		approvedRequests.value = [...approvedRequests.value, newSong];
 		manualUrl.value = '';
 	} catch (e) {
-		console.error("Manual add failed", e);
+		console.error('Manual add failed', e);
 	}
 }
 </script>

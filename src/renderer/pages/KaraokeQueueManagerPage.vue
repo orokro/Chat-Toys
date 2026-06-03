@@ -1,29 +1,25 @@
+<!--
+	KaraokeQueueManagerPage.vue
+	---------------------------
+
+	Thin wrapper window for the Karaoke Queue manager pop-out.
+
+	This window intentionally does NOT construct a ChatToysApp. The manager
+	component talks to the toy entirely through cross-window socket refs, so
+	there's no need to spin up the full toy runtime (ToyManager, chat/command
+	processors, connection managers) just to render this UI. See
+	KaraokeQueueManager.vue for the details.
+-->
 <template>
 	<div class="managerPage">
 		<widget-container-modal/>
-		<KaraokeQueueManager v-if="ready" />
-		<div v-else class="loading">Loading Karaoke Manager...</div>
+		<KaraokeQueueManager />
 	</div>
 </template>
 
 <script setup>
-import { ref, provide, onBeforeMount, onBeforeUnmount } from 'vue'
-import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
-import ChatToysApp from '../scripts/ChatToysApp';
+import { container as WidgetContainerModal } from "jenesius-vue-modal";
 import KaraokeQueueManager from '../toys/KaraokeQueue/KaraokeQueueManager.vue';
-
-const ready = ref(false);
-let ctApp = null;
-
-onBeforeMount(() => {
-	ctApp = new ChatToysApp();
-	provide('ctApp', ctApp);
-	ready.value = true;
-});
-
-onBeforeUnmount(() => {
-	if (ctApp) ctApp.end();
-});
 </script>
 
 <style lang="scss">
