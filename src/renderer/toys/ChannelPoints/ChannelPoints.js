@@ -112,6 +112,23 @@ export default class ChannelPoints extends Toy {
 				[this.settings.passivePointsEnabled, this.settings.passiveFrequency],
 				() => this.setupPassiveTimer()
 			);
+
+			// Tell the DB layer what to repair a corrupted (negative) balance
+			// up to when a user is read. Use the welcome bonus so drained users
+			// are restored to a sensible starting amount; fall back to 0 when
+			// the welcome bonus is disabled. Re-applied if the settings change.
+			if (typeof window.ytctDB?.setNegativePointsFloor === 'function') {
+				const applyFloor = () => window.ytctDB.setNegativePointsFloor(
+					this.settings.firstTimeBonusEnabled.value
+						? this.settings.firstTimeBonusAmount.value
+						: 0
+				);
+				applyFloor();
+				this.stopFloorWatch = watch(
+					[this.settings.firstTimeBonusEnabled, this.settings.firstTimeBonusAmount],
+					applyFloor
+				);
+			}
 		}
 	}
 
@@ -136,6 +153,8 @@ export default class ChannelPoints extends Toy {
 			window.clearElectronInterval(this.passiveInterval);
 		if (this.stopPassiveWatch)
 			this.stopPassiveWatch();
+		if (this.stopFloorWatch)
+			this.stopFloorWatch();
 	}
 
 
@@ -416,6 +435,16 @@ export default class ChannelPoints extends Toy {
 
 		// admin users can give points for free
 		const isAdmin = this.chatToysApp.commandProcessor.isAdmin(msg);
+
+		// amount must be a positive whole number. Without this, a negative
+		// amount flips the signs below: the giver is CREDITED and the named
+		// user is DEBITED into the negative ("!give victim -500"). Reject it.
+		const amount = Math.floor(Number(params.amount));
+		if (!Number.isFinite(amount) || amount <= 0) {
+			handshake.reject(`${msg.author}: amount to give must be a positive number`);
+			return;
+		}
+		params.amount = amount;
 
 		// first we have to see if the user has enough points to give
 		const giveUserData = window.ytctDB.getUser(msg.authorUniqueID);

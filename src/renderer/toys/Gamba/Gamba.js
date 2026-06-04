@@ -259,6 +259,16 @@ export default class Gamba extends Toy {
 			return;
 		}
 
+		// bet amount must be a positive whole number. Without this, a negative
+		// amount passes the balance check below and deducts -(-amount), paying
+		// the bettor points instead of charging them ("!gamba -500 a").
+		const betAmount = Math.floor(Number(params.amount));
+		if(!Number.isFinite(betAmount) || betAmount <= 0) {
+			handshake.reject(`${msg.author}: bet amount must be a positive number`);
+			return;
+		}
+		params.amount = betAmount;
+
 		// check if the user has enough points
 		// first we have to see if the user has enough points to give
 		const betUserData = window.ytctDB.getUser(msg.authorUniqueID);

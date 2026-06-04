@@ -50,6 +50,13 @@ class DatabaseManager {
 		this.dbPath = dbPath;
 		this.db = new Database(dbPath);
 
+		// Floor a negative balance is repaired to whenever a user is read.
+		// Negative balances should never happen; if one slips through (bad
+		// data, a bug, a malicious command), reads clamp it up to this value
+		// and persist the fix so it self-heals. 0 by default; the renderer can
+		// raise it to the welcome/free-bie amount via setNegativePointsFloor().
+		this.negativePointsFloor = 0;
+
 		// set journal mode to WAL for better performance
 		this.db.pragma('journal_mode = WAL');
 
@@ -327,15 +334,67 @@ class DatabaseManager {
 
 
 	/**
+	 * Sets the floor that a negative balance is repaired to when a user is read.
+	 *
+	 * Pass 0 to clamp corrupt balances back to zero, or the welcome/free-bie
+	 * amount to restore drained users to their starting points. Non-positive
+	 * or non-finite values fall back to 0.
+	 *
+	 * @param {Number} amount - the non-negative floor value
+	 */
+	setNegativePointsFloor(amount) {
+		const n = Math.floor(Number(amount));
+		this.negativePointsFloor = (Number.isFinite(n) && n > 0) ? n : 0;
+	}
+
+
+	/**
+	 * Repairs a corrupted (negative) points balance on a single user row.
+	 *
+	 * If the row's points are negative, clamps them up to negativePointsFloor
+	 * and persists the correction so the bad value never resurfaces. Mutates
+	 * and returns the same row for convenience. No-op for null / non-negative.
+	 *
+	 * @param {Object|undefined|null} row - a user row containing youtube_id + points
+	 * @returns {Object|undefined|null} the same row, with points clamped if needed
+	 */
+	_healNegativePoints(row) {
+		if (row && typeof row.points === 'number' && row.points < 0) {
+			const floor = this.negativePointsFloor || 0;
+			if (row.youtube_id)
+				this.setUserPoints(row.youtube_id, floor);
+			row.points = floor;
+		}
+		return row;
+	}
+
+
+	/**
+	 * Applies _healNegativePoints across a list of user rows.
+	 *
+	 * @param {Array<Object>} rows - user rows
+	 * @returns {Array<Object>} the same array, each row clamped if needed
+	 */
+	_healNegativePointsList(rows) {
+		if (Array.isArray(rows)) {
+			for (const row of rows)
+				this._healNegativePoints(row);
+		}
+		return rows;
+	}
+
+
+	/**
 	 * Get's a chat user's basic info from the database
-	 * 
+	 *
 	 * @param {String} youtube_id - the channel id for a YouTuber user
 	 * @returns {Object} - the user object from the database
 	 */
 	getUser(youtube_id) {
-		return this.db
+		const row = this.db
 			.prepare(`SELECT youtube_id, display_name, points, banned FROM users WHERE youtube_id = ?`)
 			.get(youtube_id);
+		return this._healNegativePoints(row);
 	}
 
 
@@ -347,9 +406,10 @@ class DatabaseManager {
 	 */
 	getUsers(youtube_ids) {
 		const placeholders = youtube_ids.map(() => "?").join(",");
-		return this.db
+		const rows = this.db
 			.prepare(`SELECT youtube_id, display_name, points, banned FROM users WHERE youtube_id IN (${placeholders})`)
 			.all(...youtube_ids);
+		return this._healNegativePointsList(rows);
 	}
 
 
@@ -362,6 +422,7 @@ class DatabaseManager {
 	getUserFull(youtube_id) {
 		const user = this.db.prepare(`SELECT * FROM users WHERE youtube_id = ?`).get(youtube_id);
 		if (!user) return null;
+		this._healNegativePoints(user);
 
 		const streams = this.db
 			.prepare(`SELECT stream_id FROM user_streams WHERE youtube_id = ?`)
@@ -391,6 +452,10 @@ class DatabaseManager {
 		if (!users) return null;
 
 		const allUsers = users.map((user) => {
+
+			// repair any corrupted negative balance before returning
+			this._healNegativePoints(user);
+
 			const streams = this.db
 				.prepare(`SELECT stream_id FROM user_streams WHERE youtube_id = ?`)
 				.all(user.youtube_id)
@@ -419,9 +484,10 @@ class DatabaseManager {
 	 * @returns {Object|null}
 	 */
 	getUserByDisplayName(display_name) {
-		return this.db
+		const row = this.db
 			.prepare(`SELECT youtube_id, display_name, points, banned FROM users WHERE display_name = ? COLLATE NOCASE`)
 			.get(display_name);
+		return this._healNegativePoints(row);
 	}
 	
 
@@ -436,7 +502,8 @@ class DatabaseManager {
 			.prepare(`SELECT * FROM users WHERE display_name = ? COLLATE NOCASE`)
 			.get(display_name);
 		if (!user) return null;
-	
+		this._healNegativePoints(user);
+
 		const streams = this.db
 			.prepare(`SELECT stream_id FROM user_streams WHERE youtube_id = ?`)
 			.all(user.youtube_id)
