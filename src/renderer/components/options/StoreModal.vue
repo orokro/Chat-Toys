@@ -22,6 +22,16 @@
 			<template v-if="view === 'grid'">
 
 				<div class="toolbar">
+					<!-- status radio on the left; the search box splits the two groups -->
+					<div class="chipRow">
+						<button
+							v-for="s in statusChips"
+							:key="s.value"
+							class="chip"
+							:class="{ active: statusFilter === s.value }"
+							@click="statusFilter = s.value"
+						>{{ s.label }}</button>
+					</div>
 					<input
 						class="searchBox"
 						v-model="search"
@@ -36,15 +46,6 @@
 							:class="{ active: classFilter === c.value }"
 							@click="classFilter = c.value"
 						>{{ c.label }}</button>
-					</div>
-					<div class="chipRow">
-						<button
-							v-for="s in statusChips"
-							:key="s.value"
-							class="chip"
-							:class="{ active: statusFilter === s.value }"
-							@click="statusFilter = s.value"
-						>{{ s.label }}</button>
 					</div>
 				</div>
 
@@ -145,7 +146,7 @@ const selected = ref(null);
 // filters (off by default = 'all')
 const search = ref('');
 const classFilter = ref('all');
-const statusFilter = ref('all');
+const statusFilter = ref('not-added');
 
 const classChips = [
 	{ value: 'all', label: 'All' },
