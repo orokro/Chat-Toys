@@ -54,7 +54,7 @@ export default class Omni extends Toy {
 	];
 
 	// Tools tab: no chat commands. Reacts only by orchestrating other toys.
-	static isTool = true;
+	static toyClass = 'tool';
 
 
 	/**

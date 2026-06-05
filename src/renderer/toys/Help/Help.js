@@ -60,7 +60,7 @@ export default class Help extends Toy {
 	];
 
 	// Tools tab in the UI (alongside OutputLog, SCConversion, Donations).
-	static isTool = true;
+	static toyClass = 'tool';
 
 	// Marks this toy as omni-includable + names its alert-eligible widget.
 	static isAlertToy = true;

@@ -73,7 +73,7 @@ export default class Donations extends Toy {
 	];
 
 	// Tools tab: no chat commands, only reacts to chat events.
-	static isTool = true;
+	static toyClass = 'tool';
 
 	// Marks this toy as omni-includable + names its alert-eligible widget.
 	static isAlertToy = true;

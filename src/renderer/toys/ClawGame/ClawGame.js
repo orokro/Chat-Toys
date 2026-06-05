@@ -42,6 +42,7 @@ export default class ClawGame extends Toy {
 
 	static name = 'Claw Game';
 	static slug = 'clawGame';
+	static toyClass = 'game';
 	static desc = 'A claw machine your viewers can drop. The chatter who calls !drop rides the claw.';
 	static optionsPageComponent = ClawGamePage;
 	static themeColor = '#22d3ee';

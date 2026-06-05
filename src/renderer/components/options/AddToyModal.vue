@@ -81,9 +81,10 @@ import { closeModal, Modal } from 'jenesius-vue-modal';
 
 // props
 const props = defineProps({
-	isTool: {
-		type: Boolean,
-		default: false
+	// which box this modal is adding to: 'toy' | 'game' | 'tool'
+	toyClass: {
+		type: String,
+		default: 'toy'
 	},
 	title: {
 		type: String,
@@ -110,9 +111,9 @@ const includedToys = computed(() => {
 	return data;
 });
 
-// filter toys based on isTool
+// filter toys for this box's class
 const filteredToys = computed(() => {
-	return ctApp.toysData.filter(toy => !!toy.isTool === props.isTool);
+	return ctApp.toysData.filter(toy => (toy.toyClass || 'toy') === props.toyClass);
 });
 
 // cache description text

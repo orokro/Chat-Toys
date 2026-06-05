@@ -34,8 +34,21 @@ import { chromeShallowRef } from "../scripts/chromeRef";
 // main export
 export default class Toy {
 
-	// some toys will be classified as a "tool", but most are not
-	static isTool = false;
+	// Classification controls which top-level tab a toy lands in:
+	// 'toy' (default) | 'game' | 'tool'. This is the source of truth; the
+	// server index.json and the shop both key off it.
+	static toyClass = 'toy';
+
+	/**
+	 * Back-compat shim. Plenty of existing call sites read
+	 * `Constructor.isTool`; derive it from toyClass so they keep working
+	 * while `toyClass` is the real classifier.
+	 *
+	 * @returns {boolean} true when this toy belongs in the Tool Box
+	 */
+	static get isTool() {
+		return this.toyClass === 'tool';
+	}
 
 	/**
 	 * Constructs the Toy object

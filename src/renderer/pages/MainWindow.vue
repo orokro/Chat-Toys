@@ -30,11 +30,11 @@
 		<div class="tabPagesWrapper">
 
 			<HelpPage v-if="activeTab === 0" />
-			<SettingsPage v-if="activeTab === 1" />			
-			<ToyBoxPage v-if="activeTab === 2" />
-			<ToolBoxPage v-if="activeTab === 3" />
-			<!-- <LayoutPage v-if="activeTab === 4" />	 -->
-			<DatabasePage v-if="activeTab === 4" />
+			<SettingsPage v-if="activeTab === 1" />
+			<ToyClassPage v-if="activeTab === 2" toyClass="toy" addLabel="Toy" emptyImage="assets/click_to_add_first_toy.png" />
+			<ToyClassPage v-if="activeTab === 3" toyClass="game" addLabel="Game" emptyImage="assets/click_to_add_first_toy.png" />
+			<ToyClassPage v-if="activeTab === 4" toyClass="tool" addLabel="Tool" emptyImage="assets/click_to_add_first_tool.png" />
+			<DatabasePage v-if="activeTab === 5" />
 
 		</div>
 
@@ -50,8 +50,7 @@ import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 import TopTabBar from '../components/options/TopTabBar.vue'
 import HelpPage from '../components/options/page_help/HelpPage.vue'
 import SettingsPage from '../components/options/page_settings/SettingsPage.vue'
-import ToyBoxPage from '../components/options/page_toy_box/ToyBoxPage.vue'
-import ToolBoxPage from '../components/options/page_tool_box/ToolBoxPage.vue'
+import ToyClassPage from '../components/options/ToyClassPage.vue'
 import LayoutPage from '../components/options/page_layout/LayoutPage.vue'
 import DatabasePage from '../components/options/page_database/DatabasePage.vue'
 import { container as WidgetContainerModal } from "jenesius-vue-modal"; 
@@ -65,6 +64,7 @@ const tabs = [
 	{ title: 'Help', icon: 'menu_book', slug: 'helpDocs' },
 	{ title: 'Connection Settings', icon: 'settings_ethernet', slug: 'settings' },	
 	{ title: 'Toy Box', icon: 'toys', slug: 'toybox' },
+	{ title: 'Games', icon: 'sports_esports', slug: 'games' },
 	{ title: 'Tool Box', icon: 'build', slug: 'toolbox' },
 	// { title: 'Layout', icon: 'monitor', slug: 'layout' },
 	{ title: 'System', icon: 'storage', slug: 'system' },

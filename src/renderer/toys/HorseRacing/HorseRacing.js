@@ -18,6 +18,7 @@ export default class HorseRacing extends Toy {
 
 	static name = 'Horse Racing';
 	static slug = 'horseRacing';
+	static toyClass = 'game';
 	static desc = 'A competitive horse racing game for chatters.';
 	static optionsPageComponent = HorseRacingPage;
 	static themeColor = '#5D4037';

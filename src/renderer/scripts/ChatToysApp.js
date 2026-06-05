@@ -86,22 +86,25 @@ export default class ChatToysApp {
 			this.obsServerMessages.value = messages;
 		});
 
-		// but a regular ref for the active toy (if any), since
-		// this doesn't need to persist across tabs or even refreshes
+		// The currently-selected item in each top-level box. One ref per
+		// toyClass; kept in a map so add/remove/select logic is class-generic.
 		this.selectedToy = chromeRef('selectedToy', null);
-
-		// similar to selectedToy, we'll also have a selectedTool for the tool box
+		this.selectedGame = chromeRef('selectedGame', null);
 		this.selectedTool = chromeRef('selectedTool', null);
+		this.selectionRefs = {
+			toy: this.selectedToy,
+			game: this.selectedGame,
+			tool: this.selectedTool,
+		};
 
-		// if we have at least one enabled toy, set the first one as the active toy
-		const enabledToySlugs = this.enabledToys.value.filter(slug => !this.toysData.asObject[slug].isTool);
-		if (this.selectedToy.value==null && enabledToySlugs.length > 0)
-			this.selectedToy.value = enabledToySlugs[0];
-
-		// and the same for tools
-		const enabledToolSlugs = this.enabledToys.value.filter(slug => !!this.toysData.asObject[slug].isTool);
-		if (this.selectedTool.value==null && enabledToolSlugs.length > 0)
-			this.selectedTool.value = enabledToolSlugs[0];
+		// for each class, if nothing is selected yet, select its first enabled item
+		for (const cls of Object.keys(this.selectionRefs)) {
+			const ref = this.selectionRefs[cls];
+			if (ref.value == null) {
+				const first = this.enabledToys.value.find(slug => this.classOf(slug) === cls);
+				if (first) ref.value = first;
+			}
+		}
 
 		// we'll load our assets from the AssetManager here in the Options class
 		// the popup will also have it's own assets manager ref
@@ -280,15 +283,44 @@ export default class ChatToysApp {
 
 
 	/**
-	 * Jump the main UI to the toy-or-tool settings page for the given
-	 * slug. Used by the asset browser's "Toys using this asset" list so
-	 * a user clicking an entry lands directly in that toy's config.
+	 * The toyClass ('toy' | 'game' | 'tool') for a given slug, defaulting to
+	 * 'toy' for anything unknown/legacy.
 	 *
-	 * Picks ToyBox or ToolBox based on the toy's isTool flag, and sets
-	 * the matching `selectedToy` / `selectedTool` so the page opens on
-	 * the right entry. The main window's `activeTab` is also a
-	 * chromeRef under the key `mainTab`, which syncs across separate
-	 * ref instances via localStorage.
+	 * @param {string} slug
+	 * @returns {string}
+	 */
+	classOf(slug) {
+		const c = this.toysData.asObject[slug];
+		return (c && c.toyClass) || 'toy';
+	}
+
+
+	/**
+	 * The selection ref for a toyClass.
+	 *
+	 * @param {string} cls
+	 * @returns {import('vue').Ref}
+	 */
+	getSelectionRef(cls) {
+		return this.selectionRefs[cls] || this.selectedToy;
+	}
+
+
+	/**
+	 * Set (or clear, if undefined) the selected item for a class.
+	 *
+	 * @param {string} cls
+	 * @param {string} [slug] - leave undefined to clear
+	 */
+	selectForClass(cls, slug) {
+		this.getSelectionRef(cls).value = (slug === undefined) ? null : slug;
+	}
+
+
+	/**
+	 * Jump the main UI to the settings page for the given slug. Used by the
+	 * asset browser's "Toys using this asset" list. Picks the right tab + box
+	 * by the toy's class.
 	 *
 	 * @param {string} slug
 	 */
@@ -300,54 +332,38 @@ export default class ChatToysApp {
 			return;
 		}
 
-		// Index 2 = Toy Box, index 3 = Tool Box (matches MainWindow.vue's tabs array).
-		const isTool = !!constructor.isTool;
-		chromeRef('mainTab', 0).value = isTool ? 3 : 2;
+		// tab indices match MainWindow.vue's tabs array.
+		const cls = this.classOf(slug);
+		const tabIndex = { toy: 2, game: 3, tool: 4 }[cls] ?? 2;
+		chromeRef('mainTab', 0).value = tabIndex;
 
-		if (isTool) this.selectedTool.value = slug;
-		else        this.selectedToy.value  = slug;
+		this.selectForClass(cls, slug);
 	}
 
 
 	/**
-	 * Selects a toy to be the selected toy.
+	 * Selects a toy. (Kept for back-compat; prefer selectForClass.)
 	 *
-	 * @param {string} toy - OPTIONAL; toy slug to set as selected, or leave undefined to clear the selected toy
+	 * @param {string} [toy] - slug, or undefined to clear
 	 */
 	selectToy(toy) {
-
-		// if toy is undefined, set selected toy to null
-		if (toy === undefined) {
-			this.selectedToy.value = null;
-			return;
-		}
-
-		// set the selected toy
-		this.selectedToy.value = toy;
+		this.selectForClass('toy', toy);
 	}
 
 
 	/**
-	 * Selects a tool to be the selected tool.
-	 * 
-	 * @param {string} tool - OPTIONAL; tool slug to set as selected, or leave undefined to clear the selected tool
+	 * Selects a tool. (Kept for back-compat; prefer selectForClass.)
+	 *
+	 * @param {string} [tool] - slug, or undefined to clear
 	 */
 	selectTool(tool) {
-
-		// if tool is undefined, set selected tool to null
-		if (tool === undefined) {
-			this.selectedTool.value = null;
-			return;
-		}
-
-		// set the selected tool
-		this.selectedTool.value = tool;
+		this.selectForClass('tool', tool);
 	}
 
 
 	/**
-	 * Adds a toy to the user's enabled toys.
-	 * 
+	 * Adds a toy to the user's enabled toys, selecting it if its box is empty.
+	 *
 	 * @param {string} slug - toy slug to add to our list of enabled toys
 	 */
 	addToy(slug) {
@@ -355,70 +371,51 @@ export default class ChatToysApp {
 		// if the toy is already enabled, don't add it again
 		if (this.enabledToys.value.includes(slug) === true)
 			return;
-		
+
 		// add the toy to the list of enabled toys
 		this.enabledToys.value = [...this.enabledToys.value, slug];
 
-		// get the toy constructor to see if it's a tool
-		const toyConstructor = this.toysData.asObject[slug];
-		const isTool = !!toyConstructor.isTool;
-
-		// if this is the first toy/tool added, set it as the active one
-		if (isTool) {
-			if (this.selectedTool.value === null)
-				this.selectedTool.value = slug;
-		} else {
-			if (this.selectedToy.value === null)
-				this.selectedToy.value = slug;
-		}
+		// if this is the first item in its box, make it the active one
+		const ref = this.getSelectionRef(this.classOf(slug));
+		if (ref.value === null)
+			ref.value = slug;
 	}
 
 
 	/**
-	 * Removes a toy from users list of toys
-	 * 
+	 * Removes a toy from the user's enabled toys, advancing the selection
+	 * within the same class if the removed item was selected.
+	 *
 	 * @param {string} slug - toy slug to remove from our list of enabled toys
 	 */
 	removeToy(slug) {
 
-		// get the toy constructor to see if it's a tool
-		const toyConstructor = this.toysData.asObject[slug];
-		const isTool = !!toyConstructor.isTool;
+		const cls = this.classOf(slug);
 
-		// filter for the corresponding list (toys or tools)
-		const currentList = this.enabledToys.value.filter(s => {
-			const constructor = this.toysData.asObject[s];
-			return isTool ? !!constructor.isTool : !constructor.isTool;
-		});
-
-		// find where it was in the sub-list index wise
+		// the enabled items in the same box, in order
+		const currentList = this.enabledToys.value.filter(s => this.classOf(s) === cls);
 		const index = currentList.indexOf(slug);
 
 		// remove the toy from the global list of enabled toys
 		this.enabledToys.value = this.enabledToys.value.filter(s => s !== slug);
 
-		// use the appropriate selection ref
-		const selectionRef = isTool ? this.selectedTool : this.selectedToy;
+		const selectionRef = this.getSelectionRef(cls);
 
-		// if the toy was the active toy, we should select the next closest index
-		// that is still valid in the array
+		// if it was the active item, select the next closest valid one
 		if (selectionRef.value === slug) {
 
-			// updated list after removal
 			const updatedList = currentList.filter(s => s !== slug);
 
-			// if there are no toys left, set active toy to null
 			if (updatedList.length === 0) {
 				selectionRef.value = null;
 				return;
 			}
 
-			// if the toy was the last in the list, select the previous toy
 			if (index >= updatedList.length)
 				selectionRef.value = updatedList[updatedList.length - 1];
 			else
 				selectionRef.value = updatedList[index];
-		}		
+		}
 	}
 
 	

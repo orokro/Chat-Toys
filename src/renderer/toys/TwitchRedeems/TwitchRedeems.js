@@ -47,7 +47,7 @@ export default class TwitchRedeems extends Toy {
 
 	// This toy is a tool, not a traditional toy - same flag SCConversion
 	// uses to land in the Tool Box instead of the Toy Box.
-	static isTool = true;
+	static toyClass = 'tool';
 
 
 	/**

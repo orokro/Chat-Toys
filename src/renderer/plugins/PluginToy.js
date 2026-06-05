@@ -451,9 +451,9 @@ export function makePluginToyClass(manifest, options = {}) {
 	MintedPluginToy.desc = manifest.description || '';
 	MintedPluginToy.themeColor = manifest.themeColor || '#888888';
 
-	// classification → tab routing (tool vs toy/game). Mirrors built-in isTool.
-	MintedPluginToy.pluginClass = manifest.class || 'toy';
-	MintedPluginToy.isTool = (manifest.class === 'tool');
+	// classification → which tab (toy/game/tool). `isTool` is derived from this
+	// by the base Toy getter, so we must NOT assign it here (it's read-only).
+	MintedPluginToy.toyClass = manifest.class || 'toy';
 
 	// Served icon URL (if the manifest declares one). Built-in toys resolve
 	// their icon from assets/icons/<slug>.png; plugins have no such bundled

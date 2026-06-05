@@ -99,7 +99,10 @@ const ctApp = inject('ctApp');
 function resolveToy() {
 	const tm = ctApp?.toyManager;
 	if (!tm) return null;
-	for (const slug of [ctApp.selectedToy?.value, ctApp.selectedTool?.value]) {
+	// check every class's selection (toy/game/tool) - a plugin can be any class
+	const refs = ctApp.selectionRefs || { toy: ctApp.selectedToy, tool: ctApp.selectedTool };
+	for (const r of Object.values(refs)) {
+		const slug = r && r.value;
 		if (!slug) continue;
 		const t = tm.getToyBySlug(slug);
 		if (t && t.manifest) return t;
