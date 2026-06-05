@@ -97,6 +97,11 @@ export default class ChatToysApp {
 			tool: this.selectedTool,
 		};
 
+		// Top-level tab indices (mirror MainWindow.vue's `tabs` array). The
+		// single source of truth for "which tab is what" so navigation +
+		// search don't hardcode magic numbers all over.
+		this.TAB = { help: 0, settings: 1, toy: 2, game: 3, tool: 4, system: 5 };
+
 		// for each class, if nothing is selected yet, select its first enabled item
 		for (const cls of Object.keys(this.selectionRefs)) {
 			const ref = this.selectionRefs[cls];
@@ -318,26 +323,99 @@ export default class ChatToysApp {
 
 
 	/**
-	 * Jump the main UI to the settings page for the given slug. Used by the
-	 * asset browser's "Toys using this asset" list. Picks the right tab + box
-	 * by the toy's class.
+	 * Tab index for a toyClass.
+	 *
+	 * @param {string} cls
+	 * @returns {number}
+	 */
+	tabIndexForClass(cls) {
+		return this.TAB[cls] ?? this.TAB.toy;
+	}
+
+
+	/**
+	 * Switch the main window to a top-level tab by index. `mainTab` is a
+	 * chromeRef, so writing it here syncs to MainWindow's `activeTab`.
+	 *
+	 * @param {number} tabIndex
+	 */
+	navigateToTab(tabIndex) {
+		chromeRef('mainTab', 0).value = tabIndex;
+	}
+
+
+	/**
+	 * Open a toy/tool/game's settings page: switch to its class tab and select
+	 * it in that box's strip.
+	 *
+	 * @param {string} slug
+	 */
+	navigateToToy(slug) {
+		if (!this.toysData.asObject[slug]) {
+			console.warn(`[navigateToToy] unknown slug: ${slug}`);
+			return;
+		}
+		const cls = this.classOf(slug);
+		this.navigateToTab(this.tabIndexForClass(cls));
+		this.selectForClass(cls, slug);
+	}
+
+
+	/**
+	 * Unified navigation entry point. Destinations come from
+	 * getNavDestinations() (and the store / spotlight search).
+	 *
+	 * @param {Object} dest - { slug } to open a toy, or { tab } for a top-level tab
+	 */
+	navigateTo(dest) {
+		if (!dest) return;
+		if (dest.slug) { this.navigateToToy(dest.slug); return; }
+		if (typeof dest.tab === 'number') { this.navigateToTab(dest.tab); return; }
+	}
+
+
+	/**
+	 * Back-compat alias used by the asset browser.
 	 *
 	 * @param {string} slug
 	 */
 	navigateToToyByAsset(slug) {
+		this.navigateToToy(slug);
+	}
 
-		const constructor = this.toysData?.asObject?.[slug];
-		if (!constructor) {
-			console.warn(`[navigateToToyByAsset] unknown slug: ${slug}`);
-			return;
+
+	/**
+	 * The list of navigable destinations for search / quick-jump UIs: the
+	 * permanent app pages plus every currently-enabled toy/tool/game (dynamic
+	 * pages only exist when added). Each entry carries keywords for matching.
+	 *
+	 * @returns {Array<Object>} { id, label, tab?, slug?, toyClass?, keywords[] }
+	 */
+	getNavDestinations() {
+
+		const out = [
+			{ id: 'tab:help',     label: 'Help',                tab: this.TAB.help,     keywords: ['help', 'docs', 'guide', 'how to'] },
+			{ id: 'tab:settings', label: 'Connection Settings', tab: this.TAB.settings, keywords: ['connection', 'settings', 'twitch', 'youtube', 'obs', 'vts', 'auth'] },
+			{ id: 'tab:toy',      label: 'Toy Box',             tab: this.TAB.toy,      keywords: ['toys', 'toy box', 'add'] },
+			{ id: 'tab:game',     label: 'Games',               tab: this.TAB.game,     keywords: ['games'] },
+			{ id: 'tab:tool',     label: 'Tool Box',            tab: this.TAB.tool,     keywords: ['tools', 'tool box'] },
+			{ id: 'tab:system',   label: 'System',              tab: this.TAB.system,   keywords: ['system', 'database', 'users', 'assets', 'logs'] },
+		];
+
+		// dynamic: each enabled toy/tool/game is its own page
+		for (const slug of this.enabledToys.value) {
+			const c = this.toysData.asObject[slug];
+			if (!c) continue;
+			out.push({
+				id: `toy:${slug}`,
+				label: c.name,
+				slug,
+				toyClass: c.toyClass || 'toy',
+				keywords: [c.name, c.desc || ''].filter(Boolean),
+			});
 		}
 
-		// tab indices match MainWindow.vue's tabs array.
-		const cls = this.classOf(slug);
-		const tabIndex = { toy: 2, game: 3, tool: 4 }[cls] ?? 2;
-		chromeRef('mainTab', 0).value = tabIndex;
-
-		this.selectForClass(cls, slug);
+		return out;
 	}
 
 

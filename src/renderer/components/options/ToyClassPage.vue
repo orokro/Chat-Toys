@@ -40,11 +40,11 @@ import { ref, computed, watch, inject } from 'vue';
 
 // components
 import VerticalItemsPage from './VerticalItemsPage.vue';
-import AddToyModal from './AddToyModal.vue';
+import StoreModal from './StoreModal.vue';
 import ConfirmModal from './ConfirmModal.vue';
 
 // lib
-import { promptModal } from 'jenesius-vue-modal';
+import { openModal, promptModal } from 'jenesius-vue-modal';
 
 const props = defineProps({
 	// which class this page is for
@@ -109,19 +109,12 @@ async function handleRemove(slug) {
 
 
 /**
- * Open the add modal scoped to this class.
+ * Open the unified store. It's class-agnostic (one storefront for everything)
+ * and handles add + routing to the new item itself, so there's no return value
+ * to act on here.
  */
-async function handleAdd() {
-
-	const result = await promptModal(AddToyModal, {
-		toyClass: props.toyClass,
-		title: `Add a ${props.addLabel}`,
-	});
-
-	if (result == null)
-		return;
-
-	ctApp.addToy(result.slug);
+function handleAdd() {
+	openModal(StoreModal);
 }
 
 
