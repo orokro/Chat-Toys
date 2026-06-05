@@ -62,24 +62,6 @@
 
 		</div>
 
-		<!--
-			Live in-app preview. Mounts the real widget host against the LOCAL
-			broker (this PluginToy), so the full loop works without OBS: fire a
-			command in the Chat Tester and watch it here. (In OBS the same host
-			will talk to this broker over the WS transport - next slice.)
-		-->
-		<template v-if="hasWidgets">
-			<SectionHeader title="Live Preview" />
-			<div
-				v-for="w in toy.static.widgetComponents"
-				:key="w.slug"
-				class="widgetPreview"
-				:style="previewStyle(w)"
-			>
-				<PluginWidgetHost :widgetInfo="w" />
-			</div>
-		</template>
-
 	</PageBox>
 
 	<div v-else class="missingToy">
@@ -99,7 +81,6 @@ import WidgetSection from '@components/options/WidgetSection.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
-import PluginWidgetHost from './PluginWidgetHost.vue';
 
 // the input types SettingsInputRow can render
 const INPUT_TYPES = new Set(['number', 'float', 'string', 'text', 'boolean', 'options', 'radio', 'color']);
@@ -148,30 +129,6 @@ const pageTitle = computed(() => `${toy?.manifest?.name || 'Plugin'} Settings`);
 function rowType(t) {
 	if (t === 'string' || t === 'text') return 'text';
 	return t;
-}
-
-
-/**
- * Sized, positioned wrapper for a widget preview (the host's iframe fills it).
- *
- * @param {Object} w - a widgetComponents entry
- * @returns {Object} style object
- */
-function previewStyle(w) {
-	const box = w.defaultBox || { width: 320, height: 240 };
-	// cap the preview so a 1280x720 default box doesn't blow out the page
-	const width = Math.min(box.width || 320, 480);
-	const height = Math.min(box.height || 240, 360);
-	return {
-		position: 'relative',
-		width: `${width}px`,
-		height: `${height}px`,
-		border: '1px dashed rgba(0,0,0,0.25)',
-		borderRadius: '6px',
-		overflow: 'hidden',
-		margin: '8px 0 20px',
-		background: 'rgba(0,0,0,0.04)',
-	};
 }
 
 
