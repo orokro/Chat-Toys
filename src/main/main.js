@@ -191,9 +191,9 @@ app.whenReady().then(() => {
 		return pluginMgr.getManifests();
 	});
 	// remote shop: fetch catalog + download/install a remote plugin
-	ipcMain.handle('get-remote-plugins', async () => {
+	ipcMain.handle('get-remote-plugins', async (event, args) => {
 		await pluginMgr.ready();
-		return pluginMgr.getRemoteIndex();
+		return pluginMgr.getRemoteIndex(!!(args && args.force));
 	});
 	ipcMain.handle('install-remote-plugin', async (event, args) => {
 		const { url, filename } = args || {};

@@ -20,8 +20,10 @@
 		:themeColor="toy.static.themeColor"
 	>
 
-		<!-- intro description at the top, like the built-in toy pages -->
-		<p v-if="description" class="pluginDesc">{{ description }}</p>
+		<!-- intro description at the top, like the built-in toy pages: prefer the
+			rich markdown longDescription, fall back to the one-line description -->
+		<MarkdownBlock v-if="longDescription" :source="longDescription" class="pluginDesc" />
+		<p v-else-if="description" class="pluginDesc">{{ description }}</p>
 
 		<SectionHeader v-if="hasCommands" title="Command Triggers" />
 		<CommandsConfigBox v-if="hasCommands" :toy="toy" />
@@ -84,6 +86,7 @@ import WidgetSection from '@components/options/WidgetSection.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
+import MarkdownBlock from '@components/MarkdownBlock.vue';
 
 // the input types SettingsInputRow can render
 const INPUT_TYPES = new Set(['number', 'float', 'string', 'text', 'boolean', 'options', 'radio', 'color']);
@@ -125,6 +128,7 @@ const hasWidgets = computed(() => !!(toy?.static?.widgetComponents?.length));
 const hasCommands = computed(() => !!(toy?.manifest?.commands?.length));
 const pageTitle = computed(() => `${toy?.manifest?.name || 'Plugin'} Settings`);
 const description = computed(() => toy?.manifest?.description || '');
+const longDescription = computed(() => toy?.manifest?.longDescription || '');
 
 
 /**

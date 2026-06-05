@@ -150,7 +150,9 @@ const busy = reactive({});
 
 onMounted(async () => {
 	try {
-		remoteItems.value = (await window.electronAPI.invoke('get-remote-plugins')) || [];
+		// force a fresh fetch each time the store opens so newly-published
+		// versions show up without an app restart
+		remoteItems.value = (await window.electronAPI.invoke('get-remote-plugins', { force: true })) || [];
 	} catch (e) {
 		remoteItems.value = [];
 	}
