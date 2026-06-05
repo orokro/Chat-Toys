@@ -90,8 +90,10 @@ const props = defineProps({
 const emits = defineEmits(['click', 'remove']);
 
 // the path to the icon
+// Plugins carry a served `iconURL` static (see makePluginToyClass); built-in
+// toys resolve from the bundled assets/icons/<slug>.png path.
 const itemIconPath = computed(() => {
-	return `${props.iconPath}/${props.item.slug}.png`;
+	return props.item.iconURL || `${props.iconPath}/${props.item.slug}.png`;
 });
 
 </script>

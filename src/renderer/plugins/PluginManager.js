@@ -163,6 +163,33 @@ function purgeOrphans(installedSlugs) {
 
 
 /**
+ * Mint a per-plugin Toy class from a manifest and register it into the shared
+ * `toysData` so the rest of the app (ToyManager, ToyBox, LiveLayout, Live.vue)
+ * treats it like a built-in. Guards against colliding with a built-in slug.
+ *
+ * @param {Object} manifest
+ * @returns {?string} the registered slug, or null if skipped
+ */
+function mintAndRegister(manifest) {
+
+	if (!manifest || typeof manifest.slug !== 'string')
+		return null;
+
+	const existing = toysData.asObject[manifest.slug];
+	if (existing && !existing.manifest) {
+		console.warn(`[PluginManager] plugin slug "${manifest.slug}" collides with a built-in; skipping`);
+		return null;
+	}
+
+	const cls = makePluginToyClass(manifest, { optionsPageComponent: PluginSettingsPage });
+	if (!toysData.asObject[manifest.slug])
+		toysData.push(cls);
+	toysData.asObject[manifest.slug] = cls;
+	return manifest.slug;
+}
+
+
+/**
  * Fetch installed plugin manifests, register them as toys, and reconcile
  * renderer-owned storage. Resolves when registration is complete.
  *
@@ -187,13 +214,6 @@ export async function registerInstalledPlugins() {
 		if (!manifest || typeof manifest.slug !== 'string')
 			continue;
 
-		// guard against colliding with a built-in toy slug
-		const existing = toysData.asObject[manifest.slug];
-		if (existing && !existing.manifest) {
-			console.warn(`[PluginManager] plugin slug "${manifest.slug}" collides with a built-in; skipping`);
-			continue;
-		}
-
 		// resolve command-name collisions, stably (persist the choice)
 		for (const cmd of (manifest.commands || [])) {
 			const id = `${manifest.slug}__${cmd.key}`;
@@ -211,17 +231,47 @@ export async function registerInstalledPlugins() {
 		}
 
 		// mint + register the per-plugin Toy class
-		const cls = makePluginToyClass(manifest, { optionsPageComponent: PluginSettingsPage });
-		if (!toysData.asObject[manifest.slug])
-			toysData.push(cls);
-		toysData.asObject[manifest.slug] = cls;
-
-		installedSlugs.add(manifest.slug);
+		const slug = mintAndRegister(manifest);
+		if (slug)
+			installedSlugs.add(slug);
 	}
 
 	writeLS(LS_RESOLVED_CMD_NAMES, resolvedNames);
 	purgeOrphans(installedSlugs);
 
 	console.log(`[PluginManager] registered ${installedSlugs.size} plugin(s):`, Array.from(installedSlugs));
+	return manifests;
+}
+
+
+/**
+ * Register installed plugins on the LIVE page (OBS / browser), where there is
+ * no Electron IPC. Fetches the manifest list over HTTP from the widget server
+ * and mints the same per-plugin classes so LiveLayout / Live.vue can resolve
+ * plugin widgets. Read-only: no command-collision persistence, no orphan GC
+ * (those are the dashboard's job).
+ *
+ * @param {number} port - the widget server port
+ * @returns {Promise<Array<Object>>} the registered manifests
+ */
+export async function registerInstalledPluginsFromHTTP(port) {
+
+	let manifests = [];
+	try {
+		const res = await fetch(`http://localhost:${port}/plugins/installed.json`);
+		const data = await res.json();
+		manifests = (data && data.plugins) || [];
+	} catch (e) {
+		console.warn('[PluginManager] live-page plugin fetch failed:', e);
+		return [];
+	}
+
+	let count = 0;
+	for (const manifest of manifests) {
+		if (mintAndRegister(manifest))
+			count++;
+	}
+
+	console.log(`[PluginManager] (live) registered ${count} plugin(s)`);
 	return manifests;
 }

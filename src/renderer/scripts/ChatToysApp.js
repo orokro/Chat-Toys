@@ -21,6 +21,7 @@ import { ToyManager } from './ToyManager';
 import { OmniRegistry } from './OmniRegistry';
 import { SysLogger } from './SysLogger';
 import { OBSConnectionManager } from './OBSConnectionManager.js';
+import { PluginBridge } from '../plugins/PluginBridge.js';
 import { YouTubeConnectionManager } from './YouTubeConnectionManager.js';
 import { VTSConnectionManager } from './VTSConnectionManager.js';
 import { BTTVManager } from './BTTVManager.js';
@@ -131,6 +132,11 @@ export default class ChatToysApp {
 
 		// this will actually instantiate the toys and manage their state
 		this.toyManager = new ToyManager(this);
+
+		// bridge for OBS/live-page plugin widgets to reach their PluginToy
+		// brokers over the WS transport. Created after toyManager so it can
+		// resolve toys by slug. No-op in non-primary windows.
+		this.pluginBridge = new PluginBridge(this);
 
 		// reusable drag helper
 		this.dragHelper = new DragHelper();

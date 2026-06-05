@@ -27,10 +27,10 @@
 				@mouseover="hoveredToySlug = toy.slug"
 				@mouseleave="hoveredToySlug = null"
 			>
-				<!-- the icon for the toy -->
+				<!-- the icon for the toy (plugins carry a served iconURL) -->
 				<img
 					class="toyIconImage"
-					:src="`assets/icons/${toy.slug}.png`"
+					:src="toy.iconURL || `assets/icons/${toy.slug}.png`"
 					alt="toy.name"
 					height="80"
 				/>

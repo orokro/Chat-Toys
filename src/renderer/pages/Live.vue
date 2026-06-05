@@ -21,7 +21,7 @@
 
 		<!-- otherwise, load just the single widget -->
 		<template v-else>
-			<component :is="widgetComponent" />
+			<component :is="widgetComponent" :widgetInfo="singleWidgetInfo" />
 		</template>
 	</div>
 </template>
@@ -62,6 +62,8 @@ const isSingle = ref(false);
 const singleToy = ref('');
 const singleWidget = ref('');
 let widgetComponent = null;
+// for plugin widgets, the descriptor PluginWidgetHost needs; null for built-ins
+let singleWidgetInfo = null;
 
 
 /**
@@ -126,6 +128,10 @@ onBeforeMount(()=>{
 
 		// save just the widget component
 		widgetComponent = widgetData.component;
+
+		// plugin widgets need their descriptor passed as widgetInfo; built-in
+		// widgets don't define the prop, so leave it null for them.
+		singleWidgetInfo = widgetData.pluginSlug ? widgetData : null;
 
 	} else {
 		isSingle.value = false;

@@ -428,8 +428,11 @@ export function makePluginToyClass(manifest, options = {}) {
 		allowResize: w.allowResize !== false,
 		lockAspectRatio: !!w.lockAspectRatio,
 
-		// plugin-specific extras PluginWidgetHost reads off `widgetInfo`
+		// plugin-specific extras PluginWidgetHost reads off `widgetInfo`.
+		// `widgetSlug` is a stable copy of the widget slug because LiveLayout
+		// overwrites `slug` with the TOY slug when it builds its widget list.
 		pluginSlug: manifest.slug,
+		widgetSlug: w.slug,
 		entry: w.entry,
 		permissions: manifest.permissions || [],
 		defaultBox: w.defaultBox || null,
@@ -451,6 +454,15 @@ export function makePluginToyClass(manifest, options = {}) {
 	// classification → tab routing (tool vs toy/game). Mirrors built-in isTool.
 	MintedPluginToy.pluginClass = manifest.class || 'toy';
 	MintedPluginToy.isTool = (manifest.class === 'tool');
+
+	// Served icon URL (if the manifest declares one). Built-in toys resolve
+	// their icon from assets/icons/<slug>.png; plugins have no such bundled
+	// asset, so we point at the plugin's own served icon. Icon render sites
+	// (the add modal, the vertical strip) fall back to `iconURL` when present.
+	const iconPort = (typeof window !== 'undefined' && window.initPort) || 3001;
+	MintedPluginToy.iconURL = manifest.icon
+		? `http://localhost:${iconPort}/plugins/${manifest.slug}/${String(manifest.icon).replace(/^\/+/, '')}`
+		: null;
 
 	// surfaces consumed by Toy machinery / live page
 	MintedPluginToy.widgetComponents = widgetComponents;

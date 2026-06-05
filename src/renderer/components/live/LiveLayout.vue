@@ -143,6 +143,10 @@ function buildWidgetsList(){
 				}
 
 				return {
+					// spread the raw widget descriptor first so plugin extras
+					// (pluginSlug, widgetSlug, entry, permissions, defaultBox)
+					// reach PluginWidgetHost; built-in widgets are unaffected.
+					...widget,
 					slug,
 					key: widget.key,
 					boxKey,

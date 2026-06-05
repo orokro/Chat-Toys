@@ -52,6 +52,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	tick: (callback) => ipcRenderer.on('tick', callback),
 	clearTick: (callback) => ipcRenderer.off('tick', callback),
 	invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+	// plugin RPC bridge (dashboard side): receive messages relayed from live
+	// pages, and send responses/events back out to them.
+	onPluginRpc: (callback) => ipcRenderer.on('plugin-rpc-from-live', (event, msg) => callback(msg)),
+	sendPluginRpc: (msg) => ipcRenderer.send('plugin-rpc-to-live', msg),
 	openExternal: (url) => shell.openExternal(url),
 	writeToClipboard: (text) => clipboard.writeText(text),
 	toggleDevTools: () => ipcRenderer.send('toggle-devtools'),

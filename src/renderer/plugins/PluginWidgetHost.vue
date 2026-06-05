@@ -42,6 +42,7 @@ import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
 
 // our app
 import { keepAliveSocket } from '../toys/keepAliveSocket.js';
+import { RemoteBrokerProxy } from './RemoteBrokerProxy';
 import {
 	PORT_HANDSHAKE,
 	KIND,
@@ -55,9 +56,10 @@ const props = defineProps({
 	widgetInfo: { type: Object, required: true },
 });
 
-// pull the plugin coordinates out of the descriptor
+// pull the plugin coordinates out of the descriptor. `widgetSlug` prefers the
+// dedicated field because LiveLayout overwrites `slug` with the toy slug.
 const pluginSlug = props.widgetInfo.pluginSlug;
-const widgetSlug = props.widgetInfo.slug;
+const widgetSlug = props.widgetInfo.widgetSlug || props.widgetInfo.slug;
 const entry = props.widgetInfo.entry;
 
 // dashboard provides the app; live page does not (-> remote broker)
@@ -106,14 +108,9 @@ function resolveBroker() {
 	if (local)
 		return local;
 
-	// TODO(next slice): RemoteBrokerProxy over the socket/WS bridge so the OBS
-	// live page can reach the dashboard PluginToy. Until then, capabilities are
-	// unavailable in the live page (state + settings still work locally).
-	return {
-		request: (type) => Promise.reject(new Error(`[PluginWidgetHost] remote broker not yet wired (req "${type}")`)),
-		onBroker: () => (() => {}),
-		resolveCommandAck: () => {},
-	};
+	// live page (OBS / browser): no local PluginToy - talk to the dashboard
+	// broker over the WS bridge (main relay -> PluginBridge).
+	return new RemoteBrokerProxy(pluginSlug);
 }
 
 
@@ -289,6 +286,12 @@ onBeforeUnmount(() => {
 
 	if (port) { try { port.close(); } catch (e) { /* noop */ } }
 	port = null;
+
+	// tear down a remote proxy's socket (local PluginToy brokers are shared and
+	// must NOT be destroyed here).
+	if (broker && typeof broker.destroy === 'function') {
+		try { broker.destroy(); } catch (e) { /* noop */ }
+	}
 });
 
 </script>

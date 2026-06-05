@@ -16,6 +16,7 @@ import { OBSViewServer } from './system/OBSViewServer.js';
 import { createSystemTray } from './system/SystemTray.js';
 import { createAppMenu } from './system/MainAppMenu.js';
 import { chatForward } from './system/chatForward.js';
+import { pluginForward } from './system/pluginForward.js';
 import ChatSourceManager from './system/ChatSourceManager.js';
 import { TwitchManager } from './system/TwitchManager.js';
 import { TwurpleManager } from './system/TwurpleManager.js';
@@ -223,7 +224,11 @@ app.whenReady().then(() => {
 
 	// set up system to forward chat messages from websocket to the main window
 	chatForward(obsViewServer.wss, mainWindow);
-	
+
+	// set up the plugin RPC relay so OBS/live-page widgets can reach the
+	// dashboard PluginToy broker (capabilities + command acks).
+	pluginForward(obsViewServer.wss, mainWindow);
+
 	// set up the chat source manager to manage list of chats to read
 	chatSourceMgr = new ChatSourceManager(mainWindow, testURL);
 

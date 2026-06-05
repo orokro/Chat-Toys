@@ -20,6 +20,9 @@
 		:themeColor="toy.static.themeColor"
 	>
 
+		<SectionHeader v-if="hasCommands" title="Command Triggers" />
+		<CommandsConfigBox v-if="hasCommands" :toy="toy" />
+
 		<WidgetSection v-if="hasWidgets" :toy="toy" />
 
 		<SectionHeader title="Settings" />
@@ -58,9 +61,6 @@
 			</p>
 
 		</div>
-
-		<SectionHeader v-if="hasCommands" title="Commands" />
-		<CommandsConfigBox v-if="hasCommands" :toy="toy" />
 
 		<!--
 			Live in-app preview. Mounts the real widget host against the LOCAL
