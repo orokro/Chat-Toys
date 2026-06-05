@@ -30,6 +30,21 @@ function copyShared() {
     }
 }
 
+/**
+ * Copy the plugin SDK (ct-api.js) into build/renderer/plugins/ so the main
+ * process can read + serve it at /plugins/_sdk/ct-api.js in production. Vite
+ * never bundles it (it's served raw to sandboxed iframes, not imported), so
+ * it has to be ferried over manually like the shared catalogs.
+ */
+function copyPluginSdk() {
+    const from = Path.join(__dirname, '..', 'src', 'renderer', 'plugins', 'ct-api.js');
+    const toDir = Path.join(__dirname, '..', 'build', 'renderer', 'plugins');
+    if (FileSystem.existsSync(from)) {
+        FileSystem.mkdirSync(toDir, { recursive: true });
+        FileSystem.copyFileSync(from, Path.join(toDir, 'ct-api.js'));
+    }
+}
+
 FileSystem.rmSync(Path.join(__dirname, '..', 'build'), { recursive: true, force: true });
 FileSystem.rmSync(Path.join(__dirname, '..', 'dist'), { recursive: true, force: true });
 
@@ -43,5 +58,6 @@ Promise.allSettled([
     // freshly-copied JSON. Renderer side handles this through Vite's
     // build-time JSON inlining (no on-disk file needed at runtime).
     copyShared();
+    copyPluginSdk();
     console.log(Chalk.greenBright('Renderer & main successfully transpiled! (ready to be built with electron-builder)'));
 });

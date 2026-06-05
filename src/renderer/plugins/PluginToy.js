@@ -174,10 +174,18 @@ export default class PluginToy extends Toy {
 			? commandSlug.slice(this.manifest.slug.length + 2)
 			: commandSlug;
 
+		// Build the user object the plugin sees. The DB-usable id is the
+		// message's authorUniqueID (what window.ytctDB keys on), NOT the `user`
+		// param (which may be a not-yet-persisted dummy). points.* calls from
+		// the plugin pass user.id straight back to the broker.
 		this._emitBroker('command', {
 			token,
 			command,
-			user: this._sanitizeUser(user),
+			user: {
+				id: msg.authorUniqueID ?? null,
+				displayName: msg.author ?? (user && (user.display_name ?? user.displayName)) ?? null,
+				points: (user && (user.points ?? 0)) || 0,
+			},
 			params,
 		});
 	}
@@ -432,7 +440,11 @@ export function makePluginToyClass(manifest, options = {}) {
 	// identity + presentation
 	MintedPluginToy.manifest = manifest;
 	MintedPluginToy.slug = manifest.slug;
-	MintedPluginToy.name = manifest.name;
+	// NOTE: a function's `.name` is non-writable, so a plain assignment throws
+	// a TypeError in strict mode (ES modules). Built-in toys get away with
+	// `static name = '...'` (define-property semantics); we must do the same
+	// explicitly or registration blows up and the plugin silently never loads.
+	Object.defineProperty(MintedPluginToy, 'name', { value: manifest.name, configurable: true });
 	MintedPluginToy.desc = manifest.description || '';
 	MintedPluginToy.themeColor = manifest.themeColor || '#888888';
 

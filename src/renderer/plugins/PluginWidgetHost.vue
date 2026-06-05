@@ -88,9 +88,9 @@ let keepAlive = null;
  */
 const entryUrl = computed(() => {
 	const q = new URLSearchParams(window.location.search);
-	const port = parseInt(q.get('port') || window.initPort || location.port || '3001', 10) || 3001;
+	const serverPort = parseInt(q.get('port') || window.initPort || location.port || '3001', 10) || 3001;
 	const path = String(entry || '').replace(/^\/+/, '');
-	return `http://localhost:${port}/plugins/${pluginSlug}/${path}`;
+	return `http://localhost:${serverPort}/plugins/${pluginSlug}/${path}`;
 });
 
 

@@ -9,6 +9,7 @@ import MainWindow from './pages/MainWindow.vue'
 import 'material-icons/iconfont/material-icons.css';
 import { setGlobalSocketRefPort, enableConnectionLogs } from 'socket-ref';
 import { installHelpPrimitives } from './components/options/page_help/help_system/helpPrimitivesPlugin';
+import { registerInstalledPlugins } from './plugins/PluginManager';
 
 // wrap async logic in helper function
 async function startMain(){
@@ -25,6 +26,16 @@ async function startMain(){
 
 	// enable connection logs
 	// enableConnectionLogs(true);
+
+	// Register installed plugins as toys BEFORE ChatToysApp is constructed
+	// (MainWindow mount). ChatToysApp + ToyManager read toysData.asObject for
+	// every enabled slug, so plugin classes must exist first. Non-fatal on
+	// failure - the app still boots with just the built-in toys.
+	try {
+		await registerInstalledPlugins();
+	} catch (e) {
+		console.warn('Plugin registration failed; continuing with built-ins only:', e);
+	}
 
 	// now we'll create the main window, so the socketRefs use the correct port
 	const app = createApp(MainWindow);

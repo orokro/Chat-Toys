@@ -133,6 +133,11 @@ class OBSViewServer {
 		// can re-mount on each express app boot.
 		this.db = options.db || null;
 
+		// optional PluginManager whose /plugins/* routes (installed.json, the
+		// SDK, and per-plugin file serving with SDK injection) get mounted on
+		// each express app boot. Omitted in legacy/test windows.
+		this.pluginManager = options.pluginManager || null;
+
 		// set up our IPC communication
 		this.initializeIPC();
 
@@ -403,6 +408,13 @@ class OBSViewServer {
 					log: (m) => this.logToFE(m),
 				});
 			}
+
+			// Mount the plugin routes (/plugins/installed.json, /plugins/_sdk/
+			// ct-api.js, and /plugins/<slug>/<file> with SDK injection). Before
+			// the /live block so plugin paths resolve first.
+			if (this.pluginManager) {
+					this.pluginManager.mountRoutes(expressApp);
+				}
 
 			this.server = http.createServer(expressApp);
 

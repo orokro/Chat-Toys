@@ -20,6 +20,7 @@ import ChatSourceManager from './system/ChatSourceManager.js';
 import { TwitchManager } from './system/TwitchManager.js';
 import { TwurpleManager } from './system/TwurpleManager.js';
 const { DatabaseManager } = require('./system/database');
+const { PluginManager } = require('./system/PluginManager');
 
 // load our window tests
 const { testURL } = require('./system/WindowTests');
@@ -35,6 +36,7 @@ let chatSourceMgr = null;
 let twitchMgr = null;
 let twurpleMgr = null;
 let tray = null;
+let pluginMgr = null;
 
 // Main-process SQLite connection used by the asset-filesystem express
 // endpoint (vuefinder backend). better-sqlite3 with WAL mode handles
@@ -174,9 +176,24 @@ app.whenReady().then(() => {
 	const dbPath = join(app.getPath('userData'), 'ytct.db');
 	mainDb = new DatabaseManager(dbPath);
 
+	// Plugin manager: scans %appdata%/<app>/plugins for installed plugins and
+	// serves their files. Scan kicks off in the constructor; the renderer reads
+	// the manifest list over the 'get-installed-plugins' IPC below, and the
+	// live page over /plugins/installed.json.
+	pluginMgr = new PluginManager(app, { log: (m) => console.log(m) });
+	ipcMain.handle('get-installed-plugins', async () => {
+		await pluginMgr.ready();
+		return pluginMgr.getManifests();
+	});
+	ipcMain.handle('rescan-plugins', async () => {
+		await pluginMgr.scan();
+		return pluginMgr.getManifests();
+	});
+
 	// Create the OBSViewServer with the db so the asset-filesystem API
-	// can be mounted on the widget-server express app.
-	obsViewServer = new OBSViewServer(mainWindow, { db: mainDb });
+	// can be mounted on the widget-server express app, plus the plugin manager
+	// so /plugins/* routes are served.
+	obsViewServer = new OBSViewServer(mainWindow, { db: mainDb, pluginManager: pluginMgr });
 
 
 	// --- Legacy TMI Twitch path: DISABLED at cutover (Phase 4 / Task #20) ---
