@@ -29,6 +29,11 @@ const path = require('path');
 const crypto = require('crypto');
 const extract = require('extract-zip');
 
+// Where the shop fetches its remote catalog from. Override via the
+// PluginManager options if you host it elsewhere.
+const DEFAULT_REMOTE_INDEX_URL = 'https://reallyserious.business/chattoys/plugins/index.json';
+const REMOTE_CACHE_TTL_MS = 5 * 60 * 1000;
+
 
 class PluginManager {
 
@@ -52,6 +57,10 @@ class PluginManager {
 
 		// the SDK source, read once and served raw to iframes
 		this._sdkSource = this._loadSdkSource();
+
+		// remote catalog (the shop) + a short-lived cache
+		this.remoteIndexUrl = options.remoteIndexUrl || DEFAULT_REMOTE_INDEX_URL;
+		this._remoteCache = null;
 
 		// kick off the first scan; everything that needs data awaits this
 		this._ready = this.scan();
@@ -260,6 +269,73 @@ class PluginManager {
 	 */
 	getManifests() {
 		return Array.from(this.installed.values()).map(p => p.manifest);
+	}
+
+
+	/**
+	 * Fetch the remote shop catalog. Relative icon/thumbnail/zip paths in the
+	 * index are resolved to absolute URLs against the index URL, so the client
+	 * never configures a base URL. Short-lived in-memory cache. Network errors
+	 * resolve to an empty list (shop just shows local items).
+	 *
+	 * @param {boolean} [force]
+	 * @returns {Promise<Array<Object>>}
+	 */
+	async getRemoteIndex(force = false) {
+
+		if (!force && this._remoteCache && (Date.now() - this._remoteCache.at) < REMOTE_CACHE_TTL_MS)
+			return this._remoteCache.data;
+
+		try {
+			const res = await fetch(this.remoteIndexUrl);
+			if (!res.ok) throw new Error(`status ${res.status}`);
+			const data = await res.json();
+			const base = this.remoteIndexUrl;
+
+			const abs = (rel) => (rel ? new URL(rel, base).toString() : null);
+			const plugins = (data.plugins || []).map((p) => ({
+				...p,
+				icon: abs(p.icon),
+				thumbnails: (p.thumbnails || []).map(abs),
+				zip: abs(p.zip),
+			}));
+
+			this._remoteCache = { at: Date.now(), data: plugins };
+			return plugins;
+
+		} catch (e) {
+			this.log(`[PluginManager] remote index fetch failed: ${e.message}`);
+			return [];
+		}
+	}
+
+
+	/**
+	 * Download a remote plugin zip into the plugins dir (the canonical install
+	 * surface) and rescan so it becomes "installed".
+	 *
+	 * @param {string} zipUrl - absolute URL to the .zip
+	 * @param {string} [filename] - target filename in plugins/ (defaults to the URL basename)
+	 * @returns {Promise<Array<Object>>} the refreshed manifest list
+	 */
+	async installRemotePlugin(zipUrl, filename) {
+
+		if (!zipUrl)
+			throw new Error('installRemotePlugin: no zip url');
+
+		const fallbackName = path.basename(new URL(zipUrl).pathname) || 'plugin.zip';
+		const safe = String(filename || fallbackName).replace(/[^a-zA-Z0-9._-]/g, '_');
+
+		const res = await fetch(zipUrl);
+		if (!res.ok)
+			throw new Error(`download failed: status ${res.status}`);
+		const bytes = Buffer.from(await res.arrayBuffer());
+
+		this._ensureDirs();
+		fs.writeFileSync(path.join(this.pluginsDir, safe), bytes);
+
+		await this.scan();
+		return this.getManifests();
 	}
 
 

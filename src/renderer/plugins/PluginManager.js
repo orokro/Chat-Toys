@@ -275,3 +275,55 @@ export async function registerInstalledPluginsFromHTTP(port) {
 	console.log(`[PluginManager] (live) registered ${count} plugin(s)`);
 	return manifests;
 }
+
+
+/**
+ * Re-fetch installed manifests (after a remote install) and register any that
+ * aren't registered yet, resolving their command-name collisions. Idempotent:
+ * already-registered plugins are left untouched.
+ *
+ * @returns {Promise<Array<Object>>} the installed manifests
+ */
+export async function refreshInstalledPlugins() {
+
+	let manifests = [];
+	try {
+		manifests = (await window.electronAPI.invoke('get-installed-plugins')) || [];
+	} catch (e) {
+		console.warn('[PluginManager] refresh failed:', e);
+		return [];
+	}
+
+	const taken = collectTakenCommandNames();
+	const resolvedNames = readLS(LS_RESOLVED_CMD_NAMES, {});
+	const known = new Set(readLS(LS_KNOWN_PLUGINS, []));
+	let changed = false;
+
+	for (const manifest of manifests) {
+
+		if (!manifest || typeof manifest.slug !== 'string')
+			continue;
+		if (toysData.asObject[manifest.slug])
+			continue; // already registered
+
+		for (const cmd of (manifest.commands || [])) {
+			const id = `${manifest.slug}__${cmd.key}`;
+			let name = resolvedNames[id];
+			if (!name) { name = uniqueCommandName(cmd.default, taken); resolvedNames[id] = name; }
+			else taken.add(name.toLowerCase());
+			cmd.default = name;
+		}
+
+		if (mintAndRegister(manifest)) {
+			known.add(manifest.slug);
+			changed = true;
+		}
+	}
+
+	if (changed) {
+		writeLS(LS_RESOLVED_CMD_NAMES, resolvedNames);
+		writeLS(LS_KNOWN_PLUGINS, Array.from(known));
+	}
+
+	return manifests;
+}

@@ -190,6 +190,15 @@ app.whenReady().then(() => {
 		await pluginMgr.scan();
 		return pluginMgr.getManifests();
 	});
+	// remote shop: fetch catalog + download/install a remote plugin
+	ipcMain.handle('get-remote-plugins', async () => {
+		await pluginMgr.ready();
+		return pluginMgr.getRemoteIndex();
+	});
+	ipcMain.handle('install-remote-plugin', async (event, args) => {
+		const { url, filename } = args || {};
+		return pluginMgr.installRemotePlugin(url, filename);
+	});
 
 	// Create the OBSViewServer with the db so the asset-filesystem API
 	// can be mounted on the widget-server express app, plus the plugin manager

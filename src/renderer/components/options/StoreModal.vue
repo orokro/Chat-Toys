@@ -128,16 +128,33 @@
 <script setup>
 
 // vue
-import { ref, computed, inject } from 'vue';
+import { ref, reactive, computed, inject, onMounted } from 'vue';
 
 // components
 import ModalWindowFrame from './ModalWindowFrame.vue';
 import MarkdownBlock from '../MarkdownBlock.vue';
 
+// app
+import { refreshInstalledPlugins } from '../../plugins/PluginManager';
+
 // lib
 import { closeModal } from 'jenesius-vue-modal';
 
 const ctApp = inject('ctApp');
+
+// remote shop catalog (fetched via main; empty until the server index exists)
+const remoteItems = ref([]);
+
+// slugs currently downloading/installing
+const busy = reactive({});
+
+onMounted(async () => {
+	try {
+		remoteItems.value = (await window.electronAPI.invoke('get-remote-plugins')) || [];
+	} catch (e) {
+		remoteItems.value = [];
+	}
+});
 
 // view state
 const view = ref('grid');
@@ -175,15 +192,38 @@ function pluginAsset(slug, rel) {
 }
 
 
-// the full catalog: built-in toys + installed plugins (+ remote later)
+/**
+ * Numeric semver compare (ignores pre-release tags).
+ *
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean} true if a > b
+ */
+function semverGt(a, b) {
+	const pa = String(a || '0').split('.').map((x) => parseInt(x, 10) || 0);
+	const pb = String(b || '0').split('.').map((x) => parseInt(x, 10) || 0);
+	for (let i = 0; i < 3; i++) {
+		if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
+	}
+	return false;
+}
+
+function basename(u) {
+	return String(u || '').split('/').pop();
+}
+
+
+// the full catalog: built-in toys + installed plugins, merged with the remote
+// shop (remote-only items + update flags on installed ones)
 const items = computed(() => {
 
 	const enabled = ctApp.enabledToys.value;
-	const list = [];
+	const map = new Map();
 
+	// local: built-in toys + installed plugins
 	for (const c of ctApp.toysData) {
 		const m = c.manifest; // present only for plugins
-		list.push({
+		map.set(c.slug, {
 			slug: c.slug,
 			name: c.name,
 			desc: c.desc || '',
@@ -201,10 +241,39 @@ const items = computed(() => {
 		});
 	}
 
-	// TODO(server): merge remote-only items (source:'remote', downloadUrl,
-	// updateAvailable) from the fetched index.json here.
+	// remote: annotate updates on installed plugins, add remote-only entries
+	for (const r of remoteItems.value) {
+		const existing = map.get(r.slug);
+		if (existing && existing.source !== 'builtin') {
+			if (semverGt(r.version, existing.version)) {
+				existing.updateAvailable = true;
+				existing.zip = r.zip;
+				existing.zipFilename = basename(r.zip);
+				existing.remoteVersion = r.version;
+			}
+		} else if (!existing) {
+			map.set(r.slug, {
+				slug: r.slug,
+				name: r.name,
+				desc: r.description || '',
+				longDescription: r.longDescription || '',
+				toyClass: r.class || 'toy',
+				themeColor: r.themeColor || '#888888',
+				icon: r.icon || '',
+				thumbnails: r.thumbnails || [],
+				author: (r.author && r.author.name) || '',
+				version: r.version || '',
+				tags: r.tags || [],
+				source: 'remote',
+				added: enabled.includes(r.slug),
+				updateAvailable: false,
+				zip: r.zip,
+				zipFilename: basename(r.zip),
+			});
+		}
+	}
 
-	return list;
+	return Array.from(map.values());
 });
 
 
@@ -237,8 +306,10 @@ function classLabel(c) {
  * @returns {string}
  */
 function actionLabel(it) {
+	if (busy[it.slug]) return 'Installing…';
+	if (it.updateAvailable) return 'Update';
 	if (it.added) return 'Added ✓';
-	if (it.source === 'remote') return it.updateAvailable ? 'Update' : 'Get';
+	if (it.source === 'remote') return 'Get';
 	return 'Add';
 }
 
@@ -247,17 +318,31 @@ function actionLabel(it) {
  * @returns {Object} class bindings
  */
 function actionClass(it) {
-	return { added: it.added, get: it.source === 'remote' && !it.added };
+	return {
+		added: it.added && !it.updateAvailable,
+		get: (it.source === 'remote' && !it.added) || it.updateAvailable,
+	};
 }
 
 
 /**
- * Primary action for an item. Added -> jump to it. Local -> add + jump.
- * Remote -> download/install (wired for the server phase).
+ * Primary action for an item.
+ *  - update available -> download newer + re-register
+ *  - already added     -> jump to it
+ *  - remote (new)       -> download + install + add + jump
+ *  - local              -> add + jump
  *
  * @param {Object} it
  */
 async function onAction(it) {
+
+	if (busy[it.slug])
+		return;
+
+	if (it.updateAvailable) {
+		await getRemote(it, true);
+		return;
+	}
 
 	if (it.added) {
 		ctApp.navigateToToy(it.slug);
@@ -266,7 +351,7 @@ async function onAction(it) {
 	}
 
 	if (it.source === 'remote') {
-		await getRemote(it);
+		await getRemote(it, false);
 		return;
 	}
 
@@ -278,19 +363,29 @@ async function onAction(it) {
 
 
 /**
- * Download + install a remote plugin, then add it. The IPC handlers land with
- * the server work; until then this fails gracefully.
+ * Download + install (or update) a remote plugin via the main process, then
+ * register it on the renderer. On a fresh install we also add + route to it.
  *
  * @param {Object} it
+ * @param {boolean} isUpdate
  */
-async function getRemote(it) {
+async function getRemote(it, isUpdate) {
+
+	busy[it.slug] = true;
 	try {
-		await window.electronAPI.invoke('install-remote-plugin', { slug: it.slug, url: it.downloadUrl });
-		await window.electronAPI.invoke('rescan-plugins');
-		// NOTE: after install the renderer needs to register the new plugin
-		// class before addToy/navigate can work - handled in the server phase.
+		await window.electronAPI.invoke('install-remote-plugin', { url: it.zip, filename: it.zipFilename });
+		await refreshInstalledPlugins();
+
+		if (!isUpdate) {
+			ctApp.addToy(it.slug);
+			ctApp.navigateToToy(it.slug);
+		}
+		closeModal();
+
 	} catch (e) {
-		console.warn('[StoreModal] remote install not available yet:', e);
+		console.error('[StoreModal] install failed:', e);
+	} finally {
+		busy[it.slug] = false;
 	}
 }
 
