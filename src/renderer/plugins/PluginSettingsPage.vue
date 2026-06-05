@@ -20,6 +20,9 @@
 		:themeColor="toy.static.themeColor"
 	>
 
+		<!-- intro description at the top, like the built-in toy pages -->
+		<p v-if="description" class="pluginDesc">{{ description }}</p>
+
 		<SectionHeader v-if="hasCommands" title="Command Triggers" />
 		<CommandsConfigBox v-if="hasCommands" :toy="toy" />
 
@@ -121,6 +124,7 @@ const unsupportedFields = computed(() => schema.value.filter(f => !INPUT_TYPES.h
 const hasWidgets = computed(() => !!(toy?.static?.widgetComponents?.length));
 const hasCommands = computed(() => !!(toy?.manifest?.commands?.length));
 const pageTitle = computed(() => `${toy?.manifest?.name || 'Plugin'} Settings`);
+const description = computed(() => toy?.manifest?.description || '');
 
 
 /**
@@ -153,6 +157,13 @@ if (toy) {
 
 </script>
 <style lang="scss" scoped>
+
+	.pluginDesc {
+		margin: 4px 0 16px;
+		font-size: 15px;
+		line-height: 1.5;
+		opacity: 0.85;
+	}
 
 	.settingsBlock {
 		margin-bottom: 20px;

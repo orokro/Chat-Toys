@@ -135,7 +135,7 @@ import ModalWindowFrame from './ModalWindowFrame.vue';
 import MarkdownBlock from '../MarkdownBlock.vue';
 
 // app
-import { refreshInstalledPlugins } from '../../plugins/PluginManager';
+import { registerOrUpdatePlugin } from '../../plugins/PluginManager';
 
 // lib
 import { closeModal } from 'jenesius-vue-modal';
@@ -340,7 +340,7 @@ async function onAction(it) {
 		return;
 
 	if (it.updateAvailable) {
-		await getRemote(it, true);
+		await getRemote(it);
 		return;
 	}
 
@@ -351,7 +351,7 @@ async function onAction(it) {
 	}
 
 	if (it.source === 'remote') {
-		await getRemote(it, false);
+		await getRemote(it);
 		return;
 	}
 
@@ -364,22 +364,31 @@ async function onAction(it) {
 
 /**
  * Download + install (or update) a remote plugin via the main process, then
- * register it on the renderer. On a fresh install we also add + route to it.
+ * register/replace its class on the renderer, ensure it's enabled, restart its
+ * instance so the new version is live, and route to it. Same path for a fresh
+ * Get and an Update — both end with the toy added, current, and selected.
  *
  * @param {Object} it
- * @param {boolean} isUpdate
  */
-async function getRemote(it, isUpdate) {
+async function getRemote(it) {
 
 	busy[it.slug] = true;
 	try {
-		await window.electronAPI.invoke('install-remote-plugin', { url: it.zip, filename: it.zipFilename });
-		await refreshInstalledPlugins();
+		// main downloads the zip + rescans, returning the refreshed manifest list
+		const manifests = await window.electronAPI.invoke('install-remote-plugin', {
+			url: it.zip,
+			filename: it.zipFilename,
+		});
 
-		if (!isUpdate) {
-			ctApp.addToy(it.slug);
-			ctApp.navigateToToy(it.slug);
-		}
+		// register/replace the class with the just-installed version
+		const manifest = (manifests || []).find((m) => m && m.slug === it.slug);
+		if (manifest)
+			registerOrUpdatePlugin(manifest);
+
+		// ensure enabled, swap the running instance to the new class, route to it
+		ctApp.addToy(it.slug);
+		ctApp.toyManager.restartToy(it.slug);
+		ctApp.navigateToToy(it.slug);
 		closeModal();
 
 	} catch (e) {

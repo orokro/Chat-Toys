@@ -128,8 +128,11 @@ class PluginManager {
 				if (!manifest)
 					continue;
 
-				if (next.has(manifest.slug)) {
-					this.log(`[PluginManager] duplicate slug "${manifest.slug}" - keeping first`);
+				// duplicate slug (e.g. an old + new versioned zip both present):
+				// keep the HIGHEST version deterministically.
+				const prev = next.get(manifest.slug);
+				if (prev && this._semverCmp(manifest.version, prev.manifest.version) <= 0) {
+					this.log(`[PluginManager] "${manifest.slug}" v${manifest.version} <= kept v${prev.manifest.version}; skipping`);
 					continue;
 				}
 
@@ -451,6 +454,23 @@ class PluginManager {
 	 */
 	_hashFile(file) {
 		return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+	}
+
+
+	/**
+	 * Numeric semver compare (ignores pre-release tags).
+	 *
+	 * @param {string} a
+	 * @param {string} b
+	 * @returns {number} >0 if a>b, <0 if a<b, 0 if equal
+	 */
+	_semverCmp(a, b) {
+		const pa = String(a || '0').split('.').map((x) => parseInt(x, 10) || 0);
+		const pb = String(b || '0').split('.').map((x) => parseInt(x, 10) || 0);
+		for (let i = 0; i < 3; i++) {
+			if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
+		}
+		return 0;
 	}
 
 }

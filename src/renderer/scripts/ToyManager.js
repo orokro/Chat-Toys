@@ -100,6 +100,30 @@ export class ToyManager {
 
 
 	/**
+	 * Restart a single toy: end its current instance and recreate it from the
+	 * current toysData class (used after a plugin install/update so the new
+	 * version goes live without an app restart).
+	 *
+	 * @param {String} slug
+	 */
+	restartToy(slug) {
+
+		if (this.toys[slug]) {
+			if (typeof this.toys[slug].end === 'function')
+				this.toys[slug].end();
+			delete this.toys[slug];
+		}
+
+		// recreate only if it's currently enabled
+		if (this.chatToysApp.enabledToys.value.includes(slug)) {
+			const toyConstructor = this.chatToysApp.toysData.asObject[slug];
+			if (toyConstructor)
+				this.toys[slug] = new toyConstructor(this, toyConstructor);
+		}
+	}
+
+
+	/**
 	 * Completely restart all toys by destroying and re-syncing them.
 	 */
 	restartToysState() {

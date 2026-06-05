@@ -278,6 +278,51 @@ export async function registerInstalledPluginsFromHTTP(port) {
 
 
 /**
+ * Register OR update a single plugin from its manifest, REPLACING any existing
+ * class (so a version bump takes effect). Resolves command names and keeps the
+ * `toysData` array + asObject consistent. Used by the store after a remote
+ * install/update.
+ *
+ * @param {Object} manifest
+ * @returns {?string} the slug, or null if skipped (built-in collision / invalid)
+ */
+export function registerOrUpdatePlugin(manifest) {
+
+	if (!manifest || typeof manifest.slug !== 'string')
+		return null;
+
+	const existing = toysData.asObject[manifest.slug];
+	if (existing && !existing.manifest)
+		return null; // collides with a built-in
+
+	// resolve command names (stable)
+	const taken = collectTakenCommandNames();
+	const resolvedNames = readLS(LS_RESOLVED_CMD_NAMES, {});
+	for (const cmd of (manifest.commands || [])) {
+		const id = `${manifest.slug}__${cmd.key}`;
+		let name = resolvedNames[id];
+		if (!name) { name = uniqueCommandName(cmd.default, taken); resolvedNames[id] = name; }
+		cmd.default = name;
+	}
+	writeLS(LS_RESOLVED_CMD_NAMES, resolvedNames);
+
+	// mint and replace (array + asObject stay in sync)
+	const cls = makePluginToyClass(manifest, { optionsPageComponent: PluginSettingsPage });
+	const idx = toysData.findIndex((t) => t.slug === manifest.slug);
+	if (idx >= 0) toysData[idx] = cls;
+	else toysData.push(cls);
+	toysData.asObject[manifest.slug] = cls;
+
+	// remember it as installed
+	const known = new Set(readLS(LS_KNOWN_PLUGINS, []));
+	known.add(manifest.slug);
+	writeLS(LS_KNOWN_PLUGINS, Array.from(known));
+
+	return manifest.slug;
+}
+
+
+/**
  * Re-fetch installed manifests (after a remote install) and register any that
  * aren't registered yet, resolving their command-name collisions. Idempotent:
  * already-registered plugins are left untouched.
