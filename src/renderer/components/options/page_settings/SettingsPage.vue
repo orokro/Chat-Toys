@@ -45,7 +45,7 @@ import BTTVPage from './pages/BTTVPage.vue';
 const pageItems = [
 	{
 		slug: 'chatSettings',
-		name: 'Chat Settings',
+		name: 'YouTube Settings',
 	},
 	// Legacy TMI Twitch tab - hidden at cutover (Phase 4). The Twurple tab
 	// below is now the sole Twitch connection tab. Kept here (commented),

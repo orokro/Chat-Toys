@@ -7,7 +7,7 @@
 <template>
 
 	<PageBox
-		title="YT Chat Settings"
+		title="YouTube Settings"
 		themeColor="darkred"
 		themeImage="assets/bg_tiles/chatSettings.png"
 		bgSize="120px"

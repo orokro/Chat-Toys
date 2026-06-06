@@ -425,7 +425,7 @@ export default class ChatToysApp {
 			sub('help:contact', 'Contact', this.TAB.help, 'helpPageTab', 'help_contact', 'mail', 'Help', ['support', 'email']),
 			sub('help:credits', 'Credits', this.TAB.help, 'helpPageTab', 'credits', 'workspace_premium', 'Help'),
 			// Connection Settings
-			sub('set:chat', 'Chat Settings', this.TAB.settings, 'settingsPageTab', 'chatSettings', 'chat', 'Settings', ['youtube']),
+			sub('set:chat', 'YouTube Settings', this.TAB.settings, 'settingsPageTab', 'chatSettings', 'chat', 'Settings', ['youtube', 'yt', 'chat']),
 			sub('set:twitch', 'Twitch Settings', this.TAB.settings, 'settingsPageTab', 'twurple', 'sensors', 'Settings', ['connect', 'auth']),
 			sub('set:general', 'General Settings', this.TAB.settings, 'settingsPageTab', 'obsSettings', 'tune', 'Settings', ['obs', 'port']),
 			sub('set:vts', 'VTubeStudio Settings', this.TAB.settings, 'settingsPageTab', 'vtsSettings', 'face', 'Settings', ['vtuber', 'vts']),
