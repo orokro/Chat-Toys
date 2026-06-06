@@ -411,9 +411,11 @@ export default class ChatToysApp {
 			{ id: 'tab:system',   label: 'System',              tab: this.TAB.system,   icon: 'storage',           kind: 'Page', keywords: ['system', 'database'] },
 		];
 
-		// sub-pages within the permanent tabs (each sets its side-tab chromeRef)
+		// sub-pages within the permanent tabs (each sets its side-tab chromeRef).
+		// They have real strip icons at assets/icons/<subValue>.png; the material
+		// `icon` is only a fallback.
 		const sub = (id, label, tab, subKey, subValue, icon, group, kw = []) =>
-			({ id, label, tab, subKey, subValue, icon, kind: group, keywords: [label, group, ...kw] });
+			({ id, label, tab, subKey, subValue, icon, iconImg: `assets/icons/${subValue}.png`, kind: group, keywords: [label, group, ...kw] });
 
 		out.push(
 			// Help

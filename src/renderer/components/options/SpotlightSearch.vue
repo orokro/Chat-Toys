@@ -106,6 +106,8 @@ function iconFor(d) {
 		const c = ctApp.toysData.asObject[d.slug];
 		return { type: 'img', src: (c && c.iconURL) || `assets/icons/${d.slug}.png` };
 	}
+	if (d.iconImg)
+		return { type: 'img', src: d.iconImg };
 	return { type: 'mat', name: d.icon || 'tab' };
 }
 
