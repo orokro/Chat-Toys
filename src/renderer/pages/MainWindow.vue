@@ -38,6 +38,9 @@
 
 		</div>
 
+		<!-- hidden: runs headless plugin logic (game/state brains) -->
+		<HeadlessPluginRunner />
+
 	</div>
 </template>
 <script setup>
@@ -51,6 +54,7 @@ import TopTabBar from '../components/options/TopTabBar.vue'
 import HelpPage from '../components/options/page_help/HelpPage.vue'
 import SettingsPage from '../components/options/page_settings/SettingsPage.vue'
 import ToyClassPage from '../components/options/ToyClassPage.vue'
+import HeadlessPluginRunner from '../plugins/HeadlessPluginRunner.vue'
 import LayoutPage from '../components/options/page_layout/LayoutPage.vue'
 import DatabasePage from '../components/options/page_database/DatabasePage.vue'
 import { container as WidgetContainerModal } from "jenesius-vue-modal"; 

@@ -31,7 +31,11 @@
 import { ref, shallowRef } from 'vue';
 
 // lib
-import { v4 as uuidv4 } from 'uuid';
+// short correlation id without pulling in `uuid` (Node-crypto warning in browser)
+function uuidv4() {
+	if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+	return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 // our app
 import Toy from '../toys/Toy';
@@ -187,6 +191,7 @@ export default class PluginToy extends Toy {
 			user: {
 				id: msg.authorUniqueID ?? null,
 				displayName: msg.author ?? (user && (user.display_name ?? user.displayName)) ?? null,
+				avatar: msg.authorPFPUrl ?? null,
 				points: (user && (user.points ?? 0)) || 0,
 			},
 			params,
@@ -377,6 +382,7 @@ export default class PluginToy extends Toy {
 			id: c.id ?? null,
 			user: c.author ?? null,
 			userId: c.authorUniqueID ?? null,
+			avatar: c.authorPFPUrl ?? null,
 			text: c.messageText ?? '',
 			emojis: c.emojis ?? [],
 			platform: c.source ?? null,

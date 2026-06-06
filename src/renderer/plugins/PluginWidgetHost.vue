@@ -74,6 +74,9 @@ const brokerUnsubs = [];
 // lazily-created namespaced state sockets: key -> socketShallowRef
 const stateSockets = new Map();
 
+// state keys the iframe has subscribed to (key -> stop-watch fn)
+const stateWatchers = new Map();
+
 // read-only mirror of the plugin's published settings
 const settingsSocket = socketShallowRefReadOnly(settingsSocketKey(pluginSlug), {});
 
@@ -127,6 +130,26 @@ function stateSocket(key) {
 		stateSockets.set(key, s);
 	}
 	return s;
+}
+
+
+/**
+ * Start relaying a namespaced state key to the iframe: push the current value
+ * immediately and on every change, as a 'state' event. Idempotent per key.
+ *
+ * @param {string} key
+ */
+function subscribeState(key) {
+
+	if (stateWatchers.has(key))
+		return;
+
+	const s = stateSocket(key);
+	send({ kind: KIND.EVT, name: EVT.STATE, detail: { key, value: s.value } });
+	const stop = watch(s, (val) => {
+		send({ kind: KIND.EVT, name: EVT.STATE, detail: { key, value: val } });
+	});
+	stateWatchers.set(key, stop);
 }
 
 
@@ -225,6 +248,11 @@ async function handleRequest(msg) {
 			reply(true);
 			return;
 		}
+		if (msg.type === 'state.subscribe') {
+			subscribeState(msg.payload.key);
+			reply(true);
+			return;
+		}
 
 		// --- broker-handled, permission-gated ---
 		const result = await broker.request(msg.type, msg.payload);
@@ -280,6 +308,11 @@ onBeforeUnmount(() => {
 		try { off(); } catch (e) { /* noop */ }
 	}
 	brokerUnsubs.length = 0;
+
+	for (const stop of stateWatchers.values()) {
+		try { stop(); } catch (e) { /* noop */ }
+	}
+	stateWatchers.clear();
 
 	if (keepAlive && typeof keepAlive.stopInterval === 'function')
 		keepAlive.stopInterval();

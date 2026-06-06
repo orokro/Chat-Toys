@@ -27,7 +27,9 @@
 
 		<template v-else>
 			<div class="toyPageArea" ref="toyPageArea">
-				<component :is="toyComponent" />
+				<!-- toySlug + key so the generic plugin page knows WHICH plugin
+					it's for, and remounts when the selection changes -->
+				<component :is="toyComponent" :toySlug="selectedSlug" :key="selectedSlug" />
 			</div>
 		</template>
 

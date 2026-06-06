@@ -21,7 +21,16 @@
 */
 
 // lib
-import { v4 as uuidv4 } from 'uuid';
+/**
+ * Short unique id for correlation (no crypto strength needed). Avoids pulling
+ * the `uuid` lib into the browser bundle (which warns about Node crypto).
+ *
+ * @returns {string}
+ */
+function genId() {
+	if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+	return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 
 export class RemoteBrokerProxy {
@@ -32,7 +41,7 @@ export class RemoteBrokerProxy {
 	constructor(slug) {
 
 		this.slug = slug;
-		this.instanceId = uuidv4();
+		this.instanceId = genId();
 
 		this._pending = new Map();      // reqId -> { resolve, reject }
 		this._listeners = new Map();    // event name -> Set<fn>
@@ -154,7 +163,7 @@ export class RemoteBrokerProxy {
 	 */
 	request(type, payload = {}) {
 		return new Promise((resolve, reject) => {
-			const reqId = uuidv4();
+			const reqId = genId();
 			this._pending.set(reqId, { resolve, reject });
 			this._raw({
 				type: 'plugin-rpc',

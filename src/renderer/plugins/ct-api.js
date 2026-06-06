@@ -32,6 +32,7 @@
 	let nextId = 1;                  // request/response correlation
 	const pending = new Map();       // id -> { resolve, reject }
 	const listeners = new Map();     // event name -> Set<fn>
+	const stateListeners = new Map(); // state key -> Set<fn>
 	const preBuffer = [];            // requests issued before the port arrives
 
 	let readyResolve;
@@ -122,6 +123,15 @@
 		if (msg.kind === KIND.EVT) {
 			if (msg.name === 'load')
 				readyResolve(msg.detail || {});
+			// namespaced state change: { key, value } -> per-key listeners
+			if (msg.name === 'state' && msg.detail) {
+				const set = stateListeners.get(msg.detail.key);
+				if (set) for (const fn of set) {
+					try { fn(msg.detail.value); }
+					catch (e) { console.error('[CT] state listener threw', e); }
+				}
+				return;
+			}
 			emit(msg.name, msg.detail);
 			return;
 		}
@@ -170,6 +180,25 @@
 			 * @returns {Promise<void>}
 			 */
 			set: (k, v) => request('state.set', { key: k, value: v }),
+			/**
+			 * Subscribe to changes of a state key. Fires with the current value
+			 * immediately and on every change - this is how a widget renders
+			 * from the state the headless runner writes.
+			 *
+			 * @param {string} k
+			 * @param {Function} cb - called with the value
+			 * @returns {Function} unsubscribe
+			 */
+			onChange(k, cb) {
+				if (!stateListeners.has(k))
+					stateListeners.set(k, new Set());
+				stateListeners.get(k).add(cb);
+				request('state.subscribe', { key: k });
+				return () => {
+					const set = stateListeners.get(k);
+					if (set) set.delete(cb);
+				};
+			},
 		},
 
 		// --- commands (perm: commands:hook) ---

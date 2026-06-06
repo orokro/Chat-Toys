@@ -88,6 +88,11 @@ import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import MarkdownBlock from '@components/MarkdownBlock.vue';
 
+// which plugin this page is for (passed by ToyClassPage)
+const props = defineProps({
+	toySlug: { type: String, default: '' },
+});
+
 // the input types SettingsInputRow can render
 const INPUT_TYPES = new Set(['number', 'float', 'string', 'text', 'boolean', 'options', 'radio', 'color']);
 
@@ -105,7 +110,14 @@ const ctApp = inject('ctApp');
 function resolveToy() {
 	const tm = ctApp?.toyManager;
 	if (!tm) return null;
-	// check every class's selection (toy/game/tool) - a plugin can be any class
+
+	// the box page tells us exactly which plugin this page is for
+	if (props.toySlug) {
+		const t = tm.getToyBySlug(props.toySlug);
+		if (t && t.manifest) return t;
+	}
+
+	// fallback: first plugin selection across classes
 	const refs = ctApp.selectionRefs || { toy: ctApp.selectedToy, tool: ctApp.selectedTool };
 	for (const r of Object.values(refs)) {
 		const slug = r && r.value;
