@@ -338,7 +338,43 @@ class PluginManager {
 		fs.writeFileSync(path.join(this.pluginsDir, safe), bytes);
 
 		await this.scan();
+
+		// replace: drop any older zip of the same slug, then rescan
+		const slug = this._slugForZip(safe);
+		if (slug) {
+			this._removeSupersededZips(slug, safe);
+			await this.scan();
+		}
 		return this.getManifests();
+	}
+
+
+	/**
+	 * Copy a local .zip from disk into the plugins folder (for private,
+	 * non-store plugins) and rescan. Returns the manifest list plus the slug
+	 * that this zip resolved to (so the UI can add + route to it).
+	 *
+	 * @param {string} srcPath - absolute path to the chosen .zip
+	 * @returns {Promise<{canceled:boolean, manifests:Array<Object>, slug:?string}>}
+	 */
+	async importLocalZip(srcPath) {
+
+		this._ensureDirs();
+		const name = path.basename(srcPath);
+		fs.copyFileSync(srcPath, path.join(this.pluginsDir, name));
+
+		await this.scan();
+
+		// the imported zip's slug (read from its fresh extraction)
+		const slug = this._slugForZip(name);
+
+		// replace: an import always wins - drop other zips of the same slug
+		if (slug) {
+			this._removeSupersededZips(slug, name);
+			await this.scan();
+		}
+
+		return { canceled: false, manifests: this.getManifests(), slug };
 	}
 
 
@@ -454,6 +490,45 @@ class PluginManager {
 	 */
 	_hashFile(file) {
 		return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+	}
+
+
+	/**
+	 * The slug a zip resolves to, read from its (already-extracted) manifest.
+	 *
+	 * @param {string} zipName - filename in plugins/
+	 * @returns {?string}
+	 */
+	_slugForZip(zipName) {
+		const base = zipName.replace(/\.zip$/i, '');
+		const root = this._findManifestRoot(path.join(this.extractedDir, base));
+		if (!root) return null;
+		const m = this._readManifest(root);
+		return m ? m.slug : null;
+	}
+
+
+	/**
+	 * Remove every OTHER zip (and its extraction) that resolves to `slug`,
+	 * keeping only `keepZipName`. Gives "install/import replaces" semantics so a
+	 * plugin never has two zips fighting.
+	 *
+	 * @param {string} slug
+	 * @param {string} keepZipName
+	 */
+	_removeSupersededZips(slug, keepZipName) {
+
+		let zips = [];
+		try { zips = fs.readdirSync(this.pluginsDir).filter((f) => f.toLowerCase().endsWith('.zip')); }
+		catch (e) { return; }
+
+		for (const z of zips) {
+			if (z === keepZipName) continue;
+			if (this._slugForZip(z) !== slug) continue;
+			this.log(`[PluginManager] replacing: removing superseded zip "${z}" for "${slug}"`);
+			try { fs.unlinkSync(path.join(this.pluginsDir, z)); } catch (e) { /* noop */ }
+			try { fs.rmSync(path.join(this.extractedDir, z.replace(/\.zip$/i, '')), { recursive: true, force: true }); } catch (e) { /* noop */ }
+		}
 	}
 
 

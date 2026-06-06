@@ -37,6 +37,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Toy from '../toys/Toy';
 import PluginWidgetHost from './PluginWidgetHost.vue';
 import { REQUEST_PERMS } from './protocol';
+import { effectivePerms } from './pluginPerms';
 
 // how long to wait for a plugin to accept/reject a command before we auto-reject
 const COMMAND_ACK_TIMEOUT_MS = 15 * 1000;
@@ -58,8 +59,10 @@ export default class PluginToy extends Toy {
 		/** @type {Object} the plugin manifest backing this instance */
 		this.manifest = this.constructor.manifest;
 
-		/** granted permission set, for O(1) checks */
-		this._perms = new Set(this.manifest.permissions || []);
+		// The permissions actually in force = the user-GRANTED set (consent),
+		// falling back to the manifest set for grandfathered legacy installs.
+		// So a denied permission really is denied at the broker.
+		this._perms = new Set(effectivePerms(this.manifest.slug, this.manifest.permissions));
 
 		// broker event listeners: name -> Set<fn>
 		this._brokerListeners = new Map();

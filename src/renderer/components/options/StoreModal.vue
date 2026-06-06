@@ -47,6 +47,12 @@
 							@click="classFilter = c.value"
 						>{{ c.label }}</button>
 					</div>
+
+					<!-- import a private (non-store) plugin .zip from disk -->
+					<button class="importBtn" @click="importZip" title="Import a plugin .zip from your computer">
+						<span class="material-icons">folder_open</span>
+						<span>Import .zip</span>
+					</button>
 				</div>
 
 				<div class="cardGrid">
@@ -119,6 +125,13 @@
 					/>
 					<p v-else class="detailBody">{{ selected.desc }}</p>
 
+					<div v-if="selected.permissions && selected.permissions.length" class="perms">
+						<div class="permsTitle">This plugin can:</div>
+						<ul>
+							<li v-for="p in selected.permissions" :key="p">{{ permLabel(p) }}</li>
+						</ul>
+					</div>
+
 				</div>
 			</template>
 
@@ -133,12 +146,14 @@ import { ref, reactive, computed, inject, onMounted } from 'vue';
 // components
 import ModalWindowFrame from './ModalWindowFrame.vue';
 import MarkdownBlock from '../MarkdownBlock.vue';
+import PluginPermsModal from './PluginPermsModal.vue';
 
 // app
 import { registerOrUpdatePlugin } from '../../plugins/PluginManager';
+import { getGrantedPerms, grantPerms, permLabel } from '../../plugins/pluginPerms';
 
 // lib
-import { closeModal } from 'jenesius-vue-modal';
+import { closeModal, promptModal } from 'jenesius-vue-modal';
 
 const ctApp = inject('ctApp');
 
@@ -237,6 +252,7 @@ const items = computed(() => {
 			author: (m && m.author && m.author.name) || '',
 			version: (m && m.version) || '',
 			tags: (m && m.tags) || [],
+			permissions: (m && m.permissions) || [],
 			source: m ? 'installed' : 'builtin',
 			added: enabled.includes(c.slug),
 			updateAvailable: false,
@@ -266,6 +282,7 @@ const items = computed(() => {
 				author: (r.author && r.author.name) || '',
 				version: r.version || '',
 				tags: r.tags || [],
+				permissions: r.permissions || [],
 				source: 'remote',
 				added: enabled.includes(r.slug),
 				updateAvailable: false,
@@ -301,6 +318,84 @@ const filteredItems = computed(() => {
  */
 function classLabel(c) {
 	return { toy: 'Toy', game: 'Game', tool: 'Tool' }[c] || 'Toy';
+}
+
+/**
+ * Ensure the user has consented to the permissions a plugin needs before it's
+ * enabled. Returns true to proceed. Prompts only for permissions not already
+ * granted (so updates only ask about NEW ones); on allow, records the full set.
+ *
+ * @param {Object} it - { slug, name, icon }
+ * @param {Array<string>} perms - the version's full permission set
+ * @param {boolean} isUpdate
+ * @returns {Promise<boolean>}
+ */
+async function ensureConsent(it, perms, isUpdate) {
+
+	const list = perms || [];
+	const granted = getGrantedPerms(it.slug);
+	const needed = list.filter((p) => !granted.includes(p));
+
+	// nothing new to consent to
+	if (needed.length === 0) {
+		// ensure a grant record exists so the broker enforces granted (not grandfather)
+		if (list.length) grantPerms(it.slug, list);
+		return true;
+	}
+
+	const ok = await promptModal(PluginPermsModal, {
+		name: it.name,
+		icon: it.icon || '',
+		perms: needed,
+		isUpdate: !!isUpdate,
+	});
+	if (!ok)
+		return false;
+
+	grantPerms(it.slug, list);
+	return true;
+}
+
+
+/**
+ * Import a private (non-store) plugin .zip from disk: copy it into the plugins
+ * folder, register it, add + route to it. The file picker lives in the main
+ * process.
+ */
+async function importZip() {
+	try {
+		const r = await window.electronAPI.invoke('import-plugin-zip');
+		if (!r || r.canceled)
+			return;
+
+		if (r.slug) {
+			const manifest = (r.manifests || []).find((m) => m && m.slug === r.slug);
+			if (manifest)
+				registerOrUpdatePlugin(manifest);
+
+			const perms = (manifest && manifest.permissions) || [];
+			const it = {
+				slug: r.slug,
+				name: (manifest && manifest.name) || r.slug,
+				icon: (manifest && manifest.icon) ? pluginAsset(r.slug, manifest.icon) : '',
+			};
+			const ok = await ensureConsent(it, perms, false);
+			if (!ok) {
+				// imported but left disabled - the user can Add it later
+				closeModal();
+				return;
+			}
+
+			ctApp.addToy(r.slug);
+			ctApp.toyManager.restartToy(r.slug);
+			ctApp.navigateToToy(r.slug);
+			closeModal();
+		} else {
+			console.warn('[StoreModal] imported zip did not resolve to an installable plugin');
+		}
+	} catch (e) {
+		console.error('[StoreModal] import failed:', e);
+	}
 }
 
 /**
@@ -357,8 +452,14 @@ async function onAction(it) {
 		return;
 	}
 
-	// local (built-in or already-installed plugin): add + route to it
+	// local: built-ins have no permissions; installed plugins gate on consent
+	if (it.source !== 'builtin') {
+		const ok = await ensureConsent(it, it.permissions, false);
+		if (!ok) return;
+	}
+
 	ctApp.addToy(it.slug);
+	ctApp.toyManager.restartToy(it.slug);
 	ctApp.navigateToToy(it.slug);
 	closeModal();
 }
@@ -387,7 +488,18 @@ async function getRemote(it) {
 		if (manifest)
 			registerOrUpdatePlugin(manifest);
 
-		// ensure enabled, swap the running instance to the new class, route to it
+		// permission consent (delta-only for updates)
+		const isUpdate = !!it.updateAvailable;
+		const perms = (manifest && manifest.permissions) || it.permissions || [];
+		const allowed = await ensureConsent(it, perms, isUpdate);
+
+		// a declined FRESH install stays installed-but-not-enabled; a declined
+		// update still applies (new files) but keeps the old granted perms.
+		if (!allowed && !isUpdate) {
+			closeModal();
+			return;
+		}
+
 		ctApp.addToy(it.slug);
 		ctApp.toyManager.restartToy(it.slug);
 		ctApp.navigateToToy(it.slug);
@@ -467,6 +579,22 @@ function onIconError(e) {
 		color: #fff;
 		border-color: #2d2d2d;
 	}
+
+	.importBtn {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		margin-left: auto;
+		border: 1px solid rgba(0, 0, 0, 0.2);
+		background: #fff;
+		border-radius: 8px;
+		padding: 6px 12px;
+		font-size: 13px;
+		cursor: pointer;
+		white-space: nowrap;
+		.material-icons { font-size: 17px; }
+	}
+	.importBtn:hover { background: #f3f3f3; }
 
 	// ---- card grid ----
 	.cardGrid {
@@ -611,6 +739,21 @@ function onIconError(e) {
 		margin-top: 14px;
 		font-size: 14px;
 		color: #333;
+	}
+
+	.perms {
+		margin-top: 18px;
+		padding: 12px 16px;
+		background: rgba(0, 0, 0, 0.04);
+		border-radius: 8px;
+
+		.permsTitle {
+			font-weight: 700;
+			font-size: 13px;
+			margin-bottom: 6px;
+		}
+		ul { margin: 0; padding-left: 18px; }
+		li { font-size: 13px; margin: 2px 0; }
 	}
 
 </style>

@@ -6,7 +6,7 @@
 */
 
 // node/electron imports
-import { app, BrowserWindow, ipcMain, session } from 'electron';
+import { app, BrowserWindow, ipcMain, session, dialog } from 'electron';
 import { join } from 'path';
 
 // local imports
@@ -198,6 +198,17 @@ app.whenReady().then(() => {
 	ipcMain.handle('install-remote-plugin', async (event, args) => {
 		const { url, filename } = args || {};
 		return pluginMgr.installRemotePlugin(url, filename);
+	});
+	// import a local .zip from disk into the plugins folder (private plugins)
+	ipcMain.handle('import-plugin-zip', async () => {
+		const r = await dialog.showOpenDialog(mainWindow, {
+			title: 'Import a plugin (.zip)',
+			filters: [{ name: 'Plugin', extensions: ['zip'] }],
+			properties: ['openFile'],
+		});
+		if (r.canceled || !r.filePaths || !r.filePaths[0])
+			return { canceled: true };
+		return pluginMgr.importLocalZip(r.filePaths[0]);
 	});
 
 	// Create the OBSViewServer with the db so the asset-filesystem API
