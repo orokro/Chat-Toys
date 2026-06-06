@@ -370,7 +370,13 @@ export default class ChatToysApp {
 	navigateTo(dest) {
 		if (!dest) return;
 		if (dest.slug) { this.navigateToToy(dest.slug); return; }
-		if (typeof dest.tab === 'number') { this.navigateToTab(dest.tab); return; }
+		if (typeof dest.tab === 'number') {
+			// sub-page: set the page's side-tab chromeRef before switching tab
+			if (dest.subKey)
+				chromeRef(dest.subKey, dest.subValue).value = dest.subValue;
+			this.navigateToTab(dest.tab);
+			return;
+		}
 	}
 
 
@@ -393,14 +399,43 @@ export default class ChatToysApp {
 	 */
 	getNavDestinations() {
 
+		const isDev = !!(typeof window !== 'undefined' && window.env && window.env.isDev);
+
+		// top-level tabs
 		const out = [
-			{ id: 'tab:help',     label: 'Help',                tab: this.TAB.help,     keywords: ['help', 'docs', 'guide', 'how to'] },
-			{ id: 'tab:settings', label: 'Connection Settings', tab: this.TAB.settings, keywords: ['connection', 'settings', 'twitch', 'youtube', 'obs', 'vts', 'auth'] },
-			{ id: 'tab:toy',      label: 'Toy Box',             tab: this.TAB.toy,      keywords: ['toys', 'toy box', 'add'] },
-			{ id: 'tab:game',     label: 'Games',               tab: this.TAB.game,     keywords: ['games'] },
-			{ id: 'tab:tool',     label: 'Tool Box',            tab: this.TAB.tool,     keywords: ['tools', 'tool box'] },
-			{ id: 'tab:system',   label: 'System',              tab: this.TAB.system,   keywords: ['system', 'database', 'users', 'assets', 'logs'] },
+			{ id: 'tab:help',     label: 'Help',                tab: this.TAB.help,     icon: 'menu_book',         kind: 'Page', keywords: ['help', 'docs', 'guide', 'how to'] },
+			{ id: 'tab:settings', label: 'Connection Settings', tab: this.TAB.settings, icon: 'settings_ethernet', kind: 'Page', keywords: ['connection', 'settings', 'auth'] },
+			{ id: 'tab:toy',      label: 'Toy Box',             tab: this.TAB.toy,      icon: 'toys',              kind: 'Page', keywords: ['toys', 'toy box', 'add'] },
+			{ id: 'tab:game',     label: 'Games',               tab: this.TAB.game,     icon: 'sports_esports',    kind: 'Page', keywords: ['games'] },
+			{ id: 'tab:tool',     label: 'Tool Box',            tab: this.TAB.tool,     icon: 'build',             kind: 'Page', keywords: ['tools', 'tool box'] },
+			{ id: 'tab:system',   label: 'System',              tab: this.TAB.system,   icon: 'storage',           kind: 'Page', keywords: ['system', 'database'] },
 		];
+
+		// sub-pages within the permanent tabs (each sets its side-tab chromeRef)
+		const sub = (id, label, tab, subKey, subValue, icon, group, kw = []) =>
+			({ id, label, tab, subKey, subValue, icon, kind: group, keywords: [label, group, ...kw] });
+
+		out.push(
+			// Help
+			sub('help:welcome', 'Welcome', this.TAB.help, 'helpPageTab', 'help_welcome', 'waving_hand', 'Help'),
+			sub('help:docs', 'Help Docs', this.TAB.help, 'helpPageTab', 'helpDocs', 'help', 'Help', ['guide', 'how to']),
+			sub('help:videos', 'Videos', this.TAB.help, 'helpPageTab', 'help_videos', 'play_circle', 'Help'),
+			sub('help:contact', 'Contact', this.TAB.help, 'helpPageTab', 'help_contact', 'mail', 'Help', ['support', 'email']),
+			sub('help:credits', 'Credits', this.TAB.help, 'helpPageTab', 'credits', 'workspace_premium', 'Help'),
+			// Connection Settings
+			sub('set:chat', 'Chat Settings', this.TAB.settings, 'settingsPageTab', 'chatSettings', 'chat', 'Settings', ['youtube']),
+			sub('set:twitch', 'Twitch Settings', this.TAB.settings, 'settingsPageTab', 'twurple', 'sensors', 'Settings', ['connect', 'auth']),
+			sub('set:general', 'General Settings', this.TAB.settings, 'settingsPageTab', 'obsSettings', 'tune', 'Settings', ['obs', 'port']),
+			sub('set:vts', 'VTubeStudio Settings', this.TAB.settings, 'settingsPageTab', 'vtsSettings', 'face', 'Settings', ['vtuber', 'vts']),
+			sub('set:bttv', 'BTTV Integration', this.TAB.settings, 'settingsPageTab', 'bttv', 'sentiment_satisfied', 'Settings', ['emotes']),
+			// System
+			sub('sys:widgets', 'Widgets', this.TAB.system, 'databasePageTab', 'widgets', 'widgets', 'System'),
+			sub('sys:commands', 'Commands', this.TAB.system, 'databasePageTab', 'commands', 'terminal', 'System', ['triggers']),
+			sub('sys:assets', 'Assets', this.TAB.system, 'databasePageTab', 'assets_db', 'folder', 'System', ['images', 'sounds']),
+			sub('sys:users', 'Users', this.TAB.system, 'databasePageTab', 'users_db', 'group', 'System', ['points', 'viewers']),
+		);
+		if (isDev)
+			out.push(sub('sys:debug', 'Debug Tools', this.TAB.system, 'databasePageTab', 'debug', 'bug_report', 'System'));
 
 		// dynamic: each enabled toy/tool/game is its own page
 		for (const slug of this.enabledToys.value) {

@@ -72,17 +72,6 @@ const inputEl = ref(null);
 const query = ref('');
 const selected = ref(0);
 
-// material icon per permanent page
-const TAB_ICONS = {
-	'tab:help': 'menu_book',
-	'tab:settings': 'settings_ethernet',
-	'tab:toy': 'toys',
-	'tab:game': 'sports_esports',
-	'tab:tool': 'build',
-	'tab:system': 'storage',
-};
-
-
 // filtered, ranked destinations
 const results = computed(() => {
 	const all = ctApp.getNavDestinations();
@@ -117,7 +106,7 @@ function iconFor(d) {
 		const c = ctApp.toysData.asObject[d.slug];
 		return { type: 'img', src: (c && c.iconURL) || `assets/icons/${d.slug}.png` };
 	}
-	return { type: 'mat', name: TAB_ICONS[d.id] || 'tab' };
+	return { type: 'mat', name: d.icon || 'tab' };
 }
 
 /**
@@ -127,7 +116,7 @@ function iconFor(d) {
 function kindFor(d) {
 	if (d.slug)
 		return ({ toy: 'Toy', game: 'Game', tool: 'Tool' })[d.toyClass] || 'Toy';
-	return 'Page';
+	return d.kind || 'Page';
 }
 
 
