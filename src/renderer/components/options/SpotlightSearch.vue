@@ -252,7 +252,7 @@ watch(() => props.open, async (o) => {
 		}
 	}
 	.spotItem.active {
-		background: #E0A21F;
+		background: #00ABAE;
 		.spotItemLabel { color: #fff; }
 		.spotItemKind { color: rgba(255, 255, 255, 0.85); }
 		.spotItemIcon.mat { color: #fff; }

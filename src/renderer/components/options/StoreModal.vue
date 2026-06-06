@@ -66,7 +66,7 @@
 						<!-- tinted top band: icon + class badge (top-right) -->
 						<div class="cardTop" :style="{ background: tint(item.themeColor) }">
 							<img class="cardIcon" :src="item.icon" alt="" @error="onIconError" />
-							<span class="badge classBadge" :style="{ background: item.themeColor }">{{ classLabel(item.toyClass) }}</span>
+							<span class="badge classBadge">{{ classLabel(item.toyClass) }}</span>
 						</div>
 
 						<div class="cardBody">
@@ -105,7 +105,7 @@
 						<div class="detailMeta">
 							<div class="detailName">{{ selected.name }}</div>
 							<div class="detailSub">
-								<span class="badge" :style="{ background: selected.themeColor }">{{ classLabel(selected.toyClass) }}</span>
+								<span class="badge" style="background: #ffffff; color: #000000;">{{ classLabel(selected.toyClass) }}</span>
 								<span v-if="selected.author" class="muted">by {{ selected.author }}</span>
 								<span v-if="selected.version" class="muted">v{{ selected.version }}</span>
 							</div>
@@ -577,7 +577,7 @@ function onIconError(e) {
 		font-size: 14px;
 		outline: none;
 	}
-	.searchBox:focus { border-color: #E0A21F; }
+	.searchBox:focus { border-color: #00ABAE; }
 
 	.chipRow { display: flex; gap: 6px; }
 
@@ -653,10 +653,12 @@ function onIconError(e) {
 		padding: 16px;
 		min-height: 84px;
 	}
-	.classBadge {
+	.badge.classBadge {
 		position: absolute;
 		top: 8px;
 		right: 8px;
+		background: #ffffff;   // white pill; bg tint carries the theme color
+		color: #000000;
 	}
 
 	.cardIcon {
@@ -709,7 +711,7 @@ function onIconError(e) {
 	.actionBtn {
 		margin-left: auto;
 		border: 0;
-		background: #E0A21F;
+		background: #00ABAE;
 		color: #fff;
 		font-weight: 700;
 		font-size: 13px;
@@ -751,7 +753,7 @@ function onIconError(e) {
 		margin-bottom: 10px;
 		.material-icons { font-size: 18px; }
 	}
-	.backBtn:hover { color: #E0A21F; }
+	.backBtn:hover { color: #00ABAE; }
 
 	.detailHeader {
 		display: flex;

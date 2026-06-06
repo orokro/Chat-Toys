@@ -117,7 +117,7 @@ function resolve(allowed) {
 	}
 	.btn.cancel { background: #eee; color: #333; }
 	.btn.cancel:hover { background: #e0e0e0; }
-	.btn.allow { background: #E0A21F; color: #fff; }
+	.btn.allow { background: #00ABAE; color: #fff; }
 	.btn.allow:hover { filter: brightness(1.07); }
 
 </style>

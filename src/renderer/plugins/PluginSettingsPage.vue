@@ -254,16 +254,16 @@ if (toy) {
 		gap: 10px;
 		margin: 4px 0 16px;
 		padding: 10px 14px;
-		background: #fff7e6;
-		border: 1px solid #E0A21F;
+		background: #e6f7f7;
+		border: 1px solid #00ABAE;
 		border-radius: 8px;
 		font-weight: 600;
-		.material-icons { color: #E0A21F; }
+		.material-icons { color: #00ABAE; }
 
 		.updateBtn {
 			margin-left: auto;
 			border: 0;
-			background: #E0A21F;
+			background: #00ABAE;
 			color: #fff;
 			font-weight: 700;
 			padding: 6px 16px;
