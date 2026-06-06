@@ -62,13 +62,18 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 			label: 'Misc',
 			submenu: [
 				{
-					label: 'Show Live Window',
-					click: () => {
-						const port = store.get('port', 3001);
-						const url = isDev
-							? 'http://localhost:8080/live.html'
-							: `http://localhost:${port}/live/`;
-						shell.openExternal(url);
+					// Mirrors ctApp.demoMode (a socketShallowRef) in the renderer.
+					// Electron auto-toggles `checked` before this click fires, so we
+					// just forward the new value; the renderer pushes its value back
+					// (on boot + on every change) via the 'menu-set-demo-mode' IPC
+					// handler below, which keeps this checkmark in sync when the
+					// toggle is flipped from the OBS Settings page instead.
+					id: 'widgetDemoMode',
+					label: 'Widget Demo Mode',
+					type: 'checkbox',
+					checked: false,
+					click: (menuItem) => {
+						mainWindow.webContents.send('set-demo-mode', menuItem.checked);
 					}
 				},
 				// {
@@ -126,6 +131,19 @@ function createAppMenu(mainWindow, chatTesterWindow, destroyAllWindows) {
 
 	const menu = Menu.buildFromTemplate(template);
 	Menu.setApplicationMenu(menu);
+
+	// Keep the "Widget Demo Mode" checkmark in sync with the renderer's
+	// ctApp.demoMode. The renderer calls this on boot (to seed the correct
+	// initial state) and whenever the toggle changes from the OBS Settings
+	// page, so the menu always reflects the real value.
+	ipcMain.removeHandler('menu-set-demo-mode');
+	ipcMain.handle('menu-set-demo-mode', (event, value) => {
+		const appMenu = Menu.getApplicationMenu();
+		const item = appMenu && appMenu.getMenuItemById('widgetDemoMode');
+		if (item)
+			item.checked = !!value;
+		return true;
+	});
 }
 
 // stupid dumb module.exports 

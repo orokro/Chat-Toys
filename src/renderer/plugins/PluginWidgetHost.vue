@@ -80,6 +80,10 @@ const stateWatchers = new Map();
 // read-only mirror of the plugin's published settings
 const settingsSocket = socketShallowRefReadOnly(settingsSocketKey(pluginSlug), {});
 
+// read-only mirror of the app-wide "Widget Demo Mode" toggle, forwarded into
+// the frame as EVT.DEMO so plugins can render sample content for OBS layout.
+const demoSocket = socketShallowRefReadOnly('demoMode', false);
+
 // keep-alive so the app's live-status light works (no-op inside Electron)
 let keepAlive = null;
 
@@ -205,6 +209,8 @@ async function onPortMessage(ev) {
 		case KIND.HELLO: {
 			send({ kind: KIND.INIT, info: { slug: pluginSlug, widget: { slug: widgetSlug, key: props.widgetInfo.key } } });
 			send({ kind: KIND.EVT, name: EVT.LOAD, detail: await buildLoadDetail() });
+			// seed current demo-mode state right after load
+			send({ kind: KIND.EVT, name: EVT.DEMO, detail: { active: !!demoSocket.value } });
 			break;
 		}
 
@@ -298,6 +304,11 @@ onMounted(() => {
 	// push settings changes through to the frame as they arrive
 	brokerUnsubs.push(watch(settingsSocket, (val) => {
 		send({ kind: KIND.EVT, name: EVT.SETTINGS, detail: val || {} });
+	}));
+
+	// push demo-mode toggles through to the frame
+	brokerUnsubs.push(watch(demoSocket, (val) => {
+		send({ kind: KIND.EVT, name: EVT.DEMO, detail: { active: !!val } });
 	}));
 });
 

@@ -18,43 +18,43 @@
 		<transition name="dono">
 
 			<div
-				v-if="currentDono"
-				:key="currentDono.id"
+				v-if="displayDono"
+				:key="displayDono.id"
 				class="dono-card"
 				:style="cardStyle"
 			>
 				<!-- Tier color accent strip down the left edge. -->
-				<div class="accent" :style="{ background: currentDono.tierColor }"></div>
+				<div class="accent" :style="{ background: displayDono.tierColor }"></div>
 
 				<!-- Tier image (optional). -->
-				<div v-if="currentDono.imageUrl" class="image-slot">
-					<img :src="currentDono.imageUrl" alt="" />
+				<div v-if="displayDono.imageUrl" class="image-slot">
+					<img :src="displayDono.imageUrl" alt="" />
 				</div>
 
 				<div class="body">
 
 					<!-- Tier label (e.g. "Tier 3" or whatever the streamer set). -->
-					<div class="tier-label" :style="{ color: currentDono.tierColor }">
-						{{ currentDono.label }}
-						<span v-if="currentDono.bits > 0" class="bits"> • {{ currentDono.bits }} bits</span>
+					<div class="tier-label" :style="{ color: displayDono.tierColor }">
+						{{ displayDono.label }}
+						<span v-if="displayDono.bits > 0" class="bits"> • {{ displayDono.bits }} bits</span>
 					</div>
 
 					<!-- Username (optional). -->
 					<div
-						v-if="showUsername && currentDono.username"
+						v-if="showUsername && displayDono.username"
 						class="username"
 						:style="{ color: usernameColor }"
 					>
-						{{ currentDono.username }}
+						{{ displayDono.username }}
 					</div>
 
 					<!-- Message (optional). -->
 					<div
-						v-if="showMessage && currentDono.message"
+						v-if="showMessage && displayDono.message"
 						class="message"
 						:style="{ color: messageColor }"
 					>
-						{{ currentDono.message }}
+						{{ displayDono.message }}
 					</div>
 
 				</div>
@@ -96,6 +96,23 @@ const settings = useToySettings(thisSlug, 'widgetBox', emit, () => {
 
 // State from the toy.
 const currentDono = socketShallowRefReadOnly(slugify('currentDono'), null);
+
+
+// App-wide "Widget Demo Mode": donation cards are transient (nothing on screen
+// at rest), so while demo mode is on and no real dono is showing, render a
+// sample card so the streamer can position it in OBS. Sound is intentionally
+// NOT triggered for the demo (the watch below keys off the real currentDono).
+const demoMode = socketShallowRefReadOnly('demoMode', false);
+const demoDono = {
+	id: 'demo',
+	tierColor: '#E62117',
+	imageUrl: null,
+	label: 'Tier 3',
+	bits: 0,
+	username: 'GenerousViewer',
+	message: 'Thanks for the great stream! 🎉',
+};
+const displayDono = computed(() => currentDono.value || (demoMode.value ? demoDono : null));
 
 
 // Tunables.

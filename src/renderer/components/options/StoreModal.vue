@@ -152,7 +152,7 @@ import MarkdownBlock from '../MarkdownBlock.vue';
 import PluginPermsModal from './PluginPermsModal.vue';
 
 // app
-import { registerOrUpdatePlugin } from '../../plugins/PluginManager';
+import { registerOrUpdatePlugin, reconcileInstalledPlugins } from '../../plugins/PluginManager';
 import { getGrantedPerms, grantPerms, permLabel } from '../../plugins/pluginPerms';
 
 // lib
@@ -167,6 +167,17 @@ const remoteItems = ref([]);
 const busy = reactive({});
 
 onMounted(async () => {
+
+	// self-heal first: if any installed plugin's files went missing (folder/zip
+	// deleted out from under us), unregister it + drop it from the enabled list
+	// so it stops showing as a phantom "Added" with no tab and becomes
+	// installable again. Runs a fresh disk scan under the hood.
+	try {
+		await reconcileInstalledPlugins(ctApp);
+	} catch (e) {
+		console.warn('[StoreModal] plugin reconcile failed:', e);
+	}
+
 	try {
 		// force a fresh fetch each time the store opens so newly-published
 		// versions show up without an app restart

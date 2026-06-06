@@ -67,6 +67,7 @@ export const EVT = {
 	COMMAND:  'command',   // detail: { token, command, user, params } (perm: commands:hook)
 	OBS:      'obs',       // detail: { live:boolean }              (perm: obs:status)
 	STATE:    'state',     // detail: { key, value } namespaced render state
+	DEMO:     'demo',      // detail: { active:boolean } widget demo mode (no perm)
 };
 
 /**

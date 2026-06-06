@@ -52,7 +52,7 @@
 <script setup>
 
 // vue
-import { ref, provide, onBeforeMount, onMounted, onBeforeUnmount } from 'vue'
+import { ref, provide, watch, onBeforeMount, onMounted, onBeforeUnmount } from 'vue'
 import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 
 // components
@@ -101,7 +101,35 @@ function onGlobalKey(e) {
 		spotlightOpen.value = !spotlightOpen.value;
 	}
 }
-onMounted(() => window.addEventListener('keydown', onGlobalKey));
+onMounted(() => {
+
+	window.addEventListener('keydown', onGlobalKey);
+
+	// Two-way sync for the Misc -> Widget Demo Mode menu checkbox <-> the
+	// ctApp.demoMode socket ref. Set up here (not at <script setup> top level)
+	// because ctApp doesn't exist until onBeforeMount; watching the ref
+	// directly is what makes the renderer -> menu direction actually track.
+	//
+	// No feedback loop: a Vue watch only fires when the value actually
+	// changes, so the menu -> renderer path (which sets demoMode to the value
+	// the menu already has) settles after one hop, and updating the menu's
+	// `checked` flag never emits an event back to the renderer.
+	if (ctApp) {
+
+		// menu checkbox -> our state
+		window.electronAPI.onSetDemoMode((value) => {
+			ctApp.demoMode.value = !!value;
+		});
+
+		// our state (incl. the OBS Settings page toggle) -> menu checkmark
+		watch(ctApp.demoMode, (value) => {
+			window.electronAPI.invoke('menu-set-demo-mode', !!value);
+		});
+
+		// seed the menu with the current value on boot
+		window.electronAPI.invoke('menu-set-demo-mode', !!ctApp.demoMode.value);
+	}
+});
 onBeforeUnmount(() => window.removeEventListener('keydown', onGlobalKey));
 
 // before we render first time, we need to instantiate our main state

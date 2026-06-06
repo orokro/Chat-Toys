@@ -34,6 +34,7 @@
 	const listeners = new Map();     // event name -> Set<fn>
 	const stateListeners = new Map(); // state key -> Set<fn>
 	const preBuffer = [];            // requests issued before the port arrives
+	let demoActive = false;          // cached widget-demo-mode flag (host-pushed)
 
 	let readyResolve;
 	const readyPromise = new Promise((res) => { readyResolve = res; });
@@ -130,6 +131,13 @@
 					try { fn(msg.detail.value); }
 					catch (e) { console.error('[CT] state listener threw', e); }
 				}
+				return;
+			}
+			// widget demo mode toggled: cache it + fan the boolean out
+			if (msg.name === 'demo' && msg.detail) {
+				demoActive = !!msg.detail.active;
+				CT.demo.active = demoActive;
+				emit('demo', demoActive);
 				return;
 			}
 			emit(msg.name, msg.detail);
@@ -268,6 +276,28 @@
 			 * @returns {Promise<string>}
 			 */
 			url: (idOrPath) => request('assets.url', { ref: idOrPath }),
+		},
+
+		// --- widget demo mode (no perm; host-pushed) ---
+		// Mirrors the app-wide "Widget Demo Mode" toggle. Use this to render
+		// representative sample content so a streamer can position the widget
+		// in OBS even when it would normally be empty/hidden.
+		demo: {
+			/** @type {boolean} current demo-mode state */
+			active: false,
+			/**
+			 * Subscribe to demo-mode changes. Fires immediately with the current
+			 * value, then on every toggle.
+			 *
+			 * @param {Function} cb - called with a boolean
+			 * @returns {Function} unsubscribe
+			 */
+			onChange(cb) {
+				const off = on('demo', cb);
+				try { cb(demoActive); }
+				catch (e) { console.error('[CT] demo listener threw', e); }
+				return off;
+			},
 		},
 
 		// --- obs (perm: obs:status) ---

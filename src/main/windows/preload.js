@@ -49,6 +49,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	onChatMessage: (callback) => ipcRenderer.on('chat-message', (event, data) => callback(data)),
 	onServerLog: (callback) => ipcRenderer.on('server-log', (event, data) => callback(data)),
 	onShowHelp: (callback) => ipcRenderer.on('show-help', (event, data) => callback(data)),
+	// Misc -> Widget Demo Mode menu toggle -> renderer (sets ctApp.demoMode).
+	onSetDemoMode: (callback) => ipcRenderer.on('set-demo-mode', (event, value) => callback(value)),
 	tick: (callback) => ipcRenderer.on('tick', callback),
 	clearTick: (callback) => ipcRenderer.off('tick', callback),
 	invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),

@@ -107,9 +107,54 @@ function uniqueCommandName(desired, taken) {
 
 
 /**
+ * Drop the renderer-owned localStorage for a set of orphaned plugin slugs:
+ * each one's settings blob, its commands in the global command store, and its
+ * resolved command-name entries. Shared by the boot GC (purgeOrphans) and the
+ * runtime reconcile (reconcileInstalledPlugins).
+ *
+ * @param {Array<string>} orphans - plugin slugs whose files are gone
+ */
+function gcOrphanStorage(orphans) {
+
+	if (!orphans || orphans.length === 0)
+		return;
+
+	// drop each orphan's settings blob
+	for (const slug of orphans) {
+		try { localStorage.removeItem(settingsKey(slug)); } catch (e) { /* noop */ }
+	}
+
+	// drop their commands from the global command store
+	const commands = readLS(LS_COMMANDS, {});
+	let mutated = false;
+	for (const cmdSlug of Object.keys(commands)) {
+		if (orphans.some(s => cmdSlug.startsWith(`${s}__`))) {
+			delete commands[cmdSlug];
+			mutated = true;
+		}
+	}
+	if (mutated)
+		writeLS(LS_COMMANDS, commands);
+
+	// drop resolved-name entries for orphans
+	const resolved = readLS(LS_RESOLVED_CMD_NAMES, {});
+	let rMutated = false;
+	for (const id of Object.keys(resolved)) {
+		if (orphans.some(s => id.startsWith(`${s}__`))) {
+			delete resolved[id];
+			rMutated = true;
+		}
+	}
+	if (rMutated)
+		writeLS(LS_RESOLVED_CMD_NAMES, resolved);
+}
+
+
+/**
  * Remove the renderer-owned state for plugins that are no longer installed:
  * their settings blob, their commands in the global store, and any stale
- * enabled-list / known-list entries.
+ * enabled-list / known-list entries. Boot-time GC (runs before ChatToysApp
+ * exists, so it writes localStorage directly).
  *
  * @param {Set<string>} installedSlugs - slugs present this boot
  */
@@ -118,37 +163,7 @@ function purgeOrphans(installedSlugs) {
 	const known = readLS(LS_KNOWN_PLUGINS, []);
 	const orphans = known.filter(s => !installedSlugs.has(s));
 
-	if (orphans.length > 0) {
-
-		// drop each orphan's settings blob
-		for (const slug of orphans) {
-			try { localStorage.removeItem(settingsKey(slug)); } catch (e) { /* noop */ }
-		}
-
-		// drop their commands from the global command store
-		const commands = readLS(LS_COMMANDS, {});
-		let mutated = false;
-		for (const cmdSlug of Object.keys(commands)) {
-			if (orphans.some(s => cmdSlug.startsWith(`${s}__`))) {
-				delete commands[cmdSlug];
-				mutated = true;
-			}
-		}
-		if (mutated)
-			writeLS(LS_COMMANDS, commands);
-
-		// drop resolved-name entries for orphans
-		const resolved = readLS(LS_RESOLVED_CMD_NAMES, {});
-		let rMutated = false;
-		for (const id of Object.keys(resolved)) {
-			if (orphans.some(s => id.startsWith(`${s}__`))) {
-				delete resolved[id];
-				rMutated = true;
-			}
-		}
-		if (rMutated)
-			writeLS(LS_RESOLVED_CMD_NAMES, resolved);
-	}
+	gcOrphanStorage(orphans);
 
 	// defensively prune the enabled list of any slug we can't resolve to a
 	// known toy (built-in or installed plugin) - prevents a boot crash.
@@ -159,6 +174,108 @@ function purgeOrphans(installedSlugs) {
 
 	// remember this boot's installed set for next time's GC
 	writeLS(LS_KNOWN_PLUGINS, Array.from(installedSlugs));
+}
+
+
+/**
+ * Unregister a plugin's minted Toy class from the shared `toysData` (both the
+ * array and the asObject map). Built-ins (no `.manifest`) and unknown slugs are
+ * left untouched.
+ *
+ * @param {string} slug
+ * @returns {boolean} true if a plugin class was actually removed
+ */
+export function unregisterPlugin(slug) {
+
+	const existing = toysData.asObject[slug];
+	if (!existing || !existing.manifest)
+		return false;
+
+	const idx = toysData.findIndex((t) => t.slug === slug);
+	if (idx >= 0)
+		toysData.splice(idx, 1);
+	delete toysData.asObject[slug];
+	return true;
+}
+
+
+/**
+ * Safety net: reconcile what's REGISTERED/ENABLED against what's actually
+ * installed on disk right now. Forces a fresh main-process scan, then unregisters
+ * any plugin whose files have gone missing (folder/zip deleted out from under
+ * us), removes those orphans from the live enabled list, and GCs their stored
+ * settings/commands. Unlike the boot GC, this mutates the REACTIVE enabledToys
+ * so the UI heals without a restart - the orphan's tab disappears and the store
+ * offers it as installable again.
+ *
+ * Intended to run when the store opens (or any time we want to self-heal).
+ *
+ * @param {Object} ctApp - the live app instance (for reactive enabledToys)
+ * @returns {Promise<{installed:Array<string>, orphaned:Array<string>}>}
+ */
+export async function reconcileInstalledPlugins(ctApp) {
+
+	// force a fresh filesystem scan, then read the resulting manifests
+	let manifests = [];
+	try {
+		await window.electronAPI.invoke('rescan-plugins');
+		manifests = (await window.electronAPI.invoke('get-installed-plugins')) || [];
+	} catch (e) {
+		console.warn('[PluginManager] reconcile scan failed:', e);
+		return { installed: [], orphaned: [] };
+	}
+
+	const installedSlugs = new Set(
+		manifests
+			.filter((m) => m && typeof m.slug === 'string')
+			.map((m) => m.slug)
+	);
+
+	// collect orphans: currently-registered plugins, plus any enabled/known
+	// slug, whose files are no longer present on disk
+	const orphanSet = new Set();
+
+	for (const c of [...toysData]) {
+		if (c && c.manifest && !installedSlugs.has(c.slug))
+			orphanSet.add(c.slug);
+	}
+	const enabledNow = (ctApp && ctApp.enabledToys && ctApp.enabledToys.value) || [];
+	for (const slug of enabledNow) {
+		// only treat as an orphan if it isn't a built-in and isn't installed
+		const builtin = toysData.asObject[slug] && !toysData.asObject[slug].manifest;
+		if (!builtin && !installedSlugs.has(slug))
+			orphanSet.add(slug);
+	}
+	for (const slug of readLS(LS_KNOWN_PLUGINS, [])) {
+		if (!installedSlugs.has(slug))
+			orphanSet.add(slug);
+	}
+
+	const orphaned = Array.from(orphanSet);
+
+	if (orphaned.length > 0) {
+
+		for (const slug of orphaned) {
+			// remove from the enabled list FIRST (while the class is still
+			// registered, so removeToy resolves the right class and advances the
+			// box selection correctly), then unregister the minted class.
+			if (ctApp && typeof ctApp.removeToy === 'function'
+				&& ctApp.enabledToys && ctApp.enabledToys.value.includes(slug)) {
+				ctApp.removeToy(slug);
+			}
+			unregisterPlugin(slug);
+		}
+
+		// GC their renderer-owned storage
+		gcOrphanStorage(orphaned);
+
+		console.warn('[PluginManager] unregistered missing plugin(s):', orphaned);
+	}
+
+	// remember this scan's installed set for the next boot's GC
+	writeLS(LS_KNOWN_PLUGINS, Array.from(installedSlugs));
+
+	return { installed: Array.from(installedSlugs), orphaned };
 }
 
 
