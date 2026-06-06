@@ -427,7 +427,7 @@ export default class ChatToysApp {
 			// Connection Settings
 			sub('set:chat', 'YouTube Settings', this.TAB.settings, 'settingsPageTab', 'chatSettings', 'chat', 'Settings', ['youtube', 'yt', 'chat']),
 			sub('set:twitch', 'Twitch Settings', this.TAB.settings, 'settingsPageTab', 'twurple', 'sensors', 'Settings', ['connect', 'auth']),
-			sub('set:general', 'General Settings', this.TAB.settings, 'settingsPageTab', 'obsSettings', 'tune', 'Settings', ['obs', 'port']),
+			sub('set:general', 'OBS Settings', this.TAB.settings, 'settingsPageTab', 'obsSettings', 'tune', 'Settings', ['obs', 'general', 'server', 'port']),
 			sub('set:vts', 'VTubeStudio Settings', this.TAB.settings, 'settingsPageTab', 'vtsSettings', 'face', 'Settings', ['vtuber', 'vts']),
 			sub('set:bttv', 'BTTV Integration', this.TAB.settings, 'settingsPageTab', 'bttv', 'sentiment_satisfied', 'Settings', ['emotes']),
 			// System

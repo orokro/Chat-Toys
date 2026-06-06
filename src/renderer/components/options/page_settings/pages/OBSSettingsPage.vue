@@ -1,13 +1,22 @@
 <!--
-	GeneralSettingsPage.vue
-	-----------------------
+	OBSSettingsPage.vue
+	-------------------
 
-	Page to show settings that don't fit more specifically anywhere else.
+	OBS-related settings: the OBS WebSocket connection (for live-status
+	detection) and the local widget server that OBS Browser Sources point at.
+
+	NOTE: the widget-server port is intentionally NOT user-editable here.
+	The Twitch (Twurple) OAuth redirect URI is built from this same port
+	(http://localhost:<port>/auth/twurple/callback) and must exactly match
+	the URL registered in the Twitch dev console. Changing the port would
+	break Twitch login (and silently invalidate every existing OBS browser
+	source URL), so the port box + Restart Server button are commented out
+	below rather than exposed.
 -->
 <template>
 
 	<PageBox
-		title="OBS Connection & Widget Server Settings"
+		title="OBS Settings"
 		themeColor="#262262"
 		themeImage="assets/bg_tiles/obs.png"
 		bgSize="120px"
@@ -143,6 +152,16 @@
 			</SettingsInputRow>
 		</div>
 
+		<!--
+			Server Port config + Restart Server button are intentionally hidden.
+
+			The Twitch (Twurple) OAuth redirect URI is derived from this same
+			port and must exactly match the URL registered in the Twitch dev
+			console, so changing the port would break Twitch login. Changing it
+			would also invalidate every existing OBS Browser Source URL. The
+			port stays pinned at the default (3001). Left here, not deleted, in
+			case we ever want to re-expose it for advanced users.
+
 		<br/>
 		<div class="settingsBlock">
 			<SettingsInputRow
@@ -156,29 +175,30 @@
 					serve the Toy Widgets, set below.
 				</p><br/>
 				<p>
-					<strong>NOTE:</strong> This is NOT the same port as your OBS WebSocket port.
+					NOTE: This is NOT the same port as your OBS WebSocket port.
 					This will be for browsersource web pages.
 					You probably should not touch this at all unless you have something else running on this port.
-					<strong><em>({{ ctApp.serverPort }})</em></strong>
+					({{ ctApp.serverPort }})
 				</p><br/>
 				<p>
-					<strong>ALSO NOTE:</strong> The widgets you use in OBS Browser sources will use this port number.
+					ALSO NOTE: The widgets you use in OBS Browser sources will use this port number.
 					If you change it, you will need to update the URL in your OBS Browser sources to match.
 				</p><br/>
 				<p>
-					<strong>FINAL NOTE:</strong> Changing the port number is fickle. It's recommended you change
+					FINAL NOTE: Changing the port number is fickle. It's recommended you change
 					the number, click "Restart Server" then restart the entire app.
 				</p>
 			</SettingsInputRow>
 		</div>
 
-		<button 
+		<button
 			type="button"
 			class="restartButton"
 			@click="restartServer"
 		>
 			Restart Server
 		</button>
+		-->
 
 		<!-- eh this was kinda pointless, gonna hide it for now -->
 		<!-- 

@@ -61,7 +61,7 @@ const pageItems = [
 	},
 	{
 		slug: 'obsSettings',
-		name: 'General Settings',
+		name: 'OBS Settings',
 	},
 	{
 		slug: 'vtsSettings',
