@@ -26,6 +26,12 @@
 			@changeTab="(e)=>activeTab = e"
 		/>
 
+		<!-- quick-jump search (top-right, same row as the tabs) -->
+		<button class="spotlightBtn" title="Search (Ctrl+K)" @click="spotlightOpen = true">
+			<span class="material-icons">search</span>
+		</button>
+		<SpotlightSearch :open="spotlightOpen" @close="spotlightOpen = false" />
+
 		<!-- the tab pages will spawn in this container -->
 		<div class="tabPagesWrapper">
 
@@ -46,7 +52,7 @@
 <script setup>
 
 // vue
-import { ref, provide, onBeforeMount } from 'vue'
+import { ref, provide, onBeforeMount, onMounted, onBeforeUnmount } from 'vue'
 import { chromeRef, chromeShallowRef } from '@scripts/chromeRef';
 
 // components
@@ -54,6 +60,7 @@ import TopTabBar from '../components/options/TopTabBar.vue'
 import HelpPage from '../components/options/page_help/HelpPage.vue'
 import SettingsPage from '../components/options/page_settings/SettingsPage.vue'
 import ToyClassPage from '../components/options/ToyClassPage.vue'
+import SpotlightSearch from '../components/options/SpotlightSearch.vue'
 import HeadlessPluginRunner from '../plugins/HeadlessPluginRunner.vue'
 import LayoutPage from '../components/options/page_layout/LayoutPage.vue'
 import DatabasePage from '../components/options/page_database/DatabasePage.vue'
@@ -79,6 +86,23 @@ const tabs = [
 
 // the index of the active tab
 const activeTab = chromeRef('mainTab', 0);
+
+// spotlight quick-jump search
+const spotlightOpen = ref(false);
+
+/**
+ * Global Ctrl/Cmd+K toggles the spotlight.
+ *
+ * @param {KeyboardEvent} e
+ */
+function onGlobalKey(e) {
+	if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+		e.preventDefault();
+		spotlightOpen.value = !spotlightOpen.value;
+	}
+}
+onMounted(() => window.addEventListener('keydown', onGlobalKey));
+onBeforeUnmount(() => window.removeEventListener('keydown', onGlobalKey));
 
 // before we render first time, we need to instantiate our main state
 onBeforeMount(() => {
@@ -120,11 +144,32 @@ window.electronAPI.onShowHelp((page) => {
 
 		// top tab bar forced to top
 		.topTabBar {
-			
+
 			position: absolute;
 			inset: 0px 0px auto 11px;
 
 		}// .topTabBar
+
+		// quick-jump search button, top-right in the tab row
+		.spotlightBtn {
+			position: absolute;
+			top: 8px;
+			right: 14px;
+			z-index: 10;
+			width: 36px;
+			height: 36px;
+			border-radius: 8px;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			background: rgba(255, 255, 255, 0.12);
+			color: #fff;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+
+			.material-icons { font-size: 22px; }
+		}
+		.spotlightBtn:hover { background: rgba(255, 255, 255, 0.22); }
 
 		// the tab pages will spawn in this container
 		.tabPagesWrapper {
