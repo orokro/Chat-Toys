@@ -63,21 +63,24 @@
 						class="card"
 						@click="openDetail(item)"
 					>
-						<img class="cardIcon" :src="item.icon" alt="" @error="onIconError" />
-
-						<div class="cardMain">
-							<div class="cardName">{{ item.name }}</div>
-							<div class="cardDesc">{{ item.desc }}</div>
+						<!-- tinted top band: icon + class badge (top-right) -->
+						<div class="cardTop" :style="{ background: tint(item.themeColor) }">
+							<img class="cardIcon" :src="item.icon" alt="" @error="onIconError" />
+							<span class="badge classBadge" :style="{ background: item.themeColor }">{{ classLabel(item.toyClass) }}</span>
 						</div>
 
-						<div class="cardFooter">
-							<span class="badge" :style="{ background: item.themeColor }">{{ classLabel(item.toyClass) }}</span>
-							<span v-if="item.source === 'remote'" class="badge remote">Remote</span>
-							<button
-								class="actionBtn"
-								:class="actionClass(item)"
-								@click.stop="onAction(item)"
-							>{{ actionLabel(item) }}</button>
+						<div class="cardBody">
+							<div class="cardName">{{ item.name }}</div>
+							<div class="cardDesc">{{ item.desc }}</div>
+
+							<div class="cardFooter">
+								<span v-if="item.source === 'remote'" class="badge remote">Remote</span>
+								<button
+									class="actionBtn"
+									:class="actionClass(item)"
+									@click.stop="onAction(item)"
+								>{{ actionLabel(item) }}</button>
+							</div>
 						</div>
 					</div>
 
@@ -318,6 +321,20 @@ const filteredItems = computed(() => {
  */
 function classLabel(c) {
 	return { toy: 'Toy', game: 'Game', tool: 'Tool' }[c] || 'Toy';
+}
+
+/**
+ * A translucent tint of a #rrggbb theme color, for the card's top band.
+ *
+ * @param {string} hex
+ * @param {number} [a]
+ * @returns {string}
+ */
+function tint(hex, a = 0.16) {
+	const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+	if (!m) return 'rgba(0,0,0,0.05)';
+	const n = parseInt(m[1], 16);
+	return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 }
 
 /**
@@ -599,22 +616,25 @@ function onIconError(e) {
 	// ---- card grid ----
 	.cardGrid {
 		flex: 1 1 auto;
+		min-height: 0;          // let the grid actually scroll instead of squishing
 		overflow-y: auto;
 		padding: 14px;
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-		gap: 14px;
+		grid-auto-rows: max-content;  // rows sized to content, never stretched
+		align-items: start;
 		align-content: start;
+		gap: 14px;
 	}
 
 	.card {
+		height: 232px;            // uniform cards (tall enough to pin footers)
 		background: #fff;
 		border: 1px solid rgba(0, 0, 0, 0.12);
 		border-radius: 12px;
-		padding: 14px;
+		overflow: hidden;
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
 		cursor: pointer;
 		transition: box-shadow 0.15s ease, transform 0.1s ease;
 	}
@@ -623,14 +643,42 @@ function onIconError(e) {
 		transform: translateY(-2px);
 	}
 
+	// tinted top band with the icon + class badge
+	.cardTop {
+		position: relative;
+		flex: 0 0 auto;          // never shrink the top band
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 16px;
+		min-height: 84px;
+	}
+	.classBadge {
+		position: absolute;
+		top: 8px;
+		right: 8px;
+	}
+
 	.cardIcon {
 		width: 56px;
 		height: 56px;
 		object-fit: contain;
 	}
 
-	.cardMain { flex: 1 1 auto; }
-	.cardName { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+	.cardBody {
+		padding: 12px 14px 14px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		flex: 1 1 auto;
+	}
+	.cardName {
+		font-weight: 700;
+		font-size: 15px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 	.cardDesc {
 		font-size: 12.5px;
 		color: #555;
@@ -641,6 +689,7 @@ function onIconError(e) {
 	}
 
 	.cardFooter {
+		margin-top: auto;     // pin the action row to the bottom
 		display: flex;
 		align-items: center;
 		gap: 6px;

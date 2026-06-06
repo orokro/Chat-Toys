@@ -20,6 +20,15 @@
 		:themeColor="toy.static.themeColor"
 	>
 
+		<!-- update banner when a newer version is available remotely -->
+		<div v-if="updateInfo" class="updateBanner">
+			<span class="material-icons">system_update_alt</span>
+			<span>Update available — v{{ updateInfo.version }}</span>
+			<button class="updateBtn" :disabled="updating" @click="doUpdate">
+				{{ updating ? 'Updating…' : 'Update' }}
+			</button>
+		</div>
+
 		<!-- intro description at the top, like the built-in toy pages: prefer the
 			rich markdown longDescription, fall back to the one-line description -->
 		<MarkdownBlock v-if="longDescription" :source="longDescription" class="pluginDesc" />
@@ -77,7 +86,10 @@
 <script setup>
 
 // vue
-import { reactive, computed, inject } from 'vue';
+import { ref, reactive, computed, inject, onMounted } from 'vue';
+
+// app
+import { installAndActivate } from './pluginInstall';
 
 // components (the same ones built-in toy pages use)
 import PageBox from '@components/options/PageBox.vue';
@@ -130,6 +142,61 @@ function resolveToy() {
 
 const toy = resolveToy();
 
+// --- update availability ---
+const updateInfo = ref(null);   // { version, zip, zipFilename, permissions, icon }
+const updating = ref(false);
+
+function semverGt(a, b) {
+	const pa = String(a || '0').split('.').map((x) => parseInt(x, 10) || 0);
+	const pb = String(b || '0').split('.').map((x) => parseInt(x, 10) || 0);
+	for (let i = 0; i < 3; i++) {
+		if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
+	}
+	return false;
+}
+
+onMounted(async () => {
+	if (!toy || !toy.manifest) return;
+	let remote = [];
+	try { remote = (await window.electronAPI.invoke('get-remote-plugins')) || []; }
+	catch (e) { return; }
+	const r = remote.find((x) => x && x.slug === toy.manifest.slug);
+	if (r && semverGt(r.version, toy.manifest.version)) {
+		updateInfo.value = {
+			version: r.version,
+			zip: r.zip,
+			zipFilename: String(r.zip || '').split('/').pop(),
+			permissions: r.permissions || [],
+			icon: r.icon || '',
+		};
+	}
+});
+
+/**
+ * Download + apply the available update for this plugin (stays on the page).
+ */
+async function doUpdate() {
+	if (!updateInfo.value || updating.value) return;
+	updating.value = true;
+	try {
+		await installAndActivate(ctApp, {
+			slug: toy.manifest.slug,
+			zip: updateInfo.value.zip,
+			zipFilename: updateInfo.value.zipFilename,
+			name: toy.manifest.name,
+			icon: updateInfo.value.icon,
+			permissions: updateInfo.value.permissions,
+			isUpdate: true,
+			navigate: false,
+		});
+		updateInfo.value = null;
+	} catch (e) {
+		console.error('[PluginSettingsPage] update failed:', e);
+	} finally {
+		updating.value = false;
+	}
+}
+
 // schema fields, split by how we render them
 const schema = computed(() => (toy?.manifest?.settings) || []);
 const inputFields = computed(() => schema.value.filter(f => INPUT_TYPES.has(f.type)));
@@ -179,6 +246,31 @@ if (toy) {
 		font-size: 15px;
 		line-height: 1.5;
 		opacity: 0.85;
+	}
+
+	.updateBanner {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 4px 0 16px;
+		padding: 10px 14px;
+		background: #fff7e6;
+		border: 1px solid #E0A21F;
+		border-radius: 8px;
+		font-weight: 600;
+		.material-icons { color: #E0A21F; }
+
+		.updateBtn {
+			margin-left: auto;
+			border: 0;
+			background: #E0A21F;
+			color: #fff;
+			font-weight: 700;
+			padding: 6px 16px;
+			border-radius: 999px;
+			cursor: pointer;
+		}
+		.updateBtn:disabled { opacity: 0.6; cursor: default; }
 	}
 
 	.settingsBlock {
