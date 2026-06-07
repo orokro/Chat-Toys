@@ -45,6 +45,22 @@ function copyPluginSdk() {
     }
 }
 
+/**
+ * Copy the chat-theme harness into build/renderer/compat/ so the main process
+ * can read + inline it into each served Streamlabs-compat page in production.
+ * Like the plugin SDK, Vite never bundles it (it's served raw into a sandboxed
+ * iframe, not imported), so ChatThemeManager._loadHarness reads it from
+ * getAppPath()/renderer/compat/chatThemeHarness.js - this puts it there.
+ */
+function copyChatThemeHarness() {
+    const from = Path.join(__dirname, '..', 'src', 'renderer', 'toys', 'Chat2', 'compat', 'chatThemeHarness.js');
+    const toDir = Path.join(__dirname, '..', 'build', 'renderer', 'compat');
+    if (FileSystem.existsSync(from)) {
+        FileSystem.mkdirSync(toDir, { recursive: true });
+        FileSystem.copyFileSync(from, Path.join(toDir, 'chatThemeHarness.js'));
+    }
+}
+
 FileSystem.rmSync(Path.join(__dirname, '..', 'build'), { recursive: true, force: true });
 FileSystem.rmSync(Path.join(__dirname, '..', 'dist'), { recursive: true, force: true });
 
@@ -59,5 +75,6 @@ Promise.allSettled([
     // build-time JSON inlining (no on-disk file needed at runtime).
     copyShared();
     copyPluginSdk();
+    copyChatThemeHarness();
     console.log(Chalk.greenBright('Renderer & main successfully transpiled! (ready to be built with electron-builder)'));
 });

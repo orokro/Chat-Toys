@@ -70,9 +70,11 @@ const verticalItems = computed(() => {
 		.filter((t) => t && (t.toyClass || 'toy') === props.toyClass);
 });
 
-// true once every item of this class has been added
+// true once every (non-hidden) item of this class has been added. Hidden
+// legacy toys don't count toward the total, so the "+" button can disappear
+// once all addable toys are present.
 const allAdded = computed(() => {
-	const total = ctApp.toysData.filter((t) => (t.toyClass || 'toy') === props.toyClass).length;
+	const total = ctApp.toysData.filter((t) => (t.toyClass || 'toy') === props.toyClass && !t.hidden).length;
 	return verticalItems.value.length >= total;
 });
 

@@ -36,10 +36,15 @@ export default class Chat extends Toy {
 
 	static evenOddCounter = 0;
 
-	// static info	
-	static name = 'Chat';
+	// static info
+	// NOTE: superseded by the new Chat toy (slug 'chat2'). Renamed to "Chat
+	// Legacy" and hidden from the Add-Toy store, but the slug stays 'chat' so
+	// existing installs keep their config + OBS browser-source URLs working.
+	// Resurfaces in the store when the user searches "legacy".
+	static name = 'Chat Legacy';
 	static slug = 'chat';
-	static desc = 'Add a chat overlay to your stream.';
+	static hidden = true;
+	static desc = 'The original chat overlay (legacy). Superseded by Chat.';
 	static optionsPageComponent = ChatBoxPage;
 	static themeColor = '#60C5F1';
 	static widgetComponents = [

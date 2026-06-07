@@ -269,6 +269,7 @@ const items = computed(() => {
 			permissions: (m && m.permissions) || [],
 			source: m ? 'installed' : 'builtin',
 			added: enabled.includes(c.slug),
+			hidden: !!c.hidden,
 			updateAvailable: false,
 		});
 	}
@@ -310,10 +311,16 @@ const items = computed(() => {
 });
 
 
-// filtered + searched view of the catalog
+// filtered + searched view of the catalog. Hidden (legacy) items are excluded
+// by default and only surface when the query contains "legacy" - a reusable
+// reveal keyword for any superseded system. The keyword is stripped from the
+// text match so "legacy" on its own reveals all hidden items.
 const filteredItems = computed(() => {
-	const q = search.value.trim().toLowerCase();
+	const raw = search.value.trim().toLowerCase();
+	const revealHidden = raw.includes('legacy');
+	const q = revealHidden ? raw.replace(/legacy/g, '').trim() : raw;
 	return items.value.filter((it) => {
+		if (it.hidden && !revealHidden) return false;
 		if (classFilter.value !== 'all' && it.toyClass !== classFilter.value) return false;
 		if (statusFilter.value === 'added' && !it.added) return false;
 		if (statusFilter.value === 'not-added' && it.added) return false;

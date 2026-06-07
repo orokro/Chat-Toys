@@ -39,6 +39,12 @@ export default class Toy {
 	// server index.json and the shop both key off it.
 	static toyClass = 'toy';
 
+	// Hidden toys still work (and keep running for anyone who already added
+	// them), but are excluded from the Add-Toy store grid - used for legacy
+	// systems superseded by a newer toy. They resurface in the store only when
+	// the user searches "legacy". Default false; set true on the legacy class.
+	static hidden = false;
+
 	/**
 	 * Back-compat shim. Plenty of existing call sites read
 	 * `Constructor.isTool`; derive it from toyClass so they keep working

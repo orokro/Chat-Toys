@@ -17,7 +17,7 @@
 <template>
 
 	<PageBox
-		title="Chat 2 Settings"
+		title="Chat Settings"
 		:themeColor="toy.static.themeColor"
 		themeImage="assets/bg_tiles/chat.png"
 		bgSize="140px"
@@ -292,11 +292,16 @@ const {
 	hideAfterSeconds,
 } = toy.settings;
 
+// Compatibility (Streamlabs) mode is built but temporarily hidden while it's
+// refined - flip this to true to surface the selector option again. All the
+// compat code (template branch + logic) stays in place, just unreachable.
+const SHOW_COMPAT_MODE = false;
+
 // mode selector options
 const modeOptions = [
 	{ value: 'simple', name: 'Simple (no code)' },
 	{ value: 'custom', name: 'Custom Theme (code)' },
-	{ value: 'compat', name: 'Compatibility (Streamlabs)' },
+	...(SHOW_COMPAT_MODE ? [{ value: 'compat', name: 'Compatibility (Streamlabs)' }] : []),
 ];
 
 // entry-animation presets (values are the widget's keyframe names)

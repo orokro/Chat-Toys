@@ -44,9 +44,11 @@ export default class Chat2 extends Toy {
 	static lastAuthorUniqueID = null;
 
 	// static info
-	static name = 'Chat 2';
+	// The current Chat toy. Slug stays 'chat2' (distinct from the legacy
+	// 'chat' slug) so both can coexist; the display name is just "Chat".
+	static name = 'Chat';
 	static slug = 'chat2';
-	static desc = 'Next-gen chat overlay with simple / custom / compatibility theming.';
+	static desc = 'Add a chat overlay to your stream, with simple or custom theming.';
 	static optionsPageComponent = Chat2Page;
 	static themeColor = '#60C5F1';
 	static widgetComponents = [
@@ -55,7 +57,7 @@ export default class Chat2 extends Toy {
 			key: 'chatWidgetBox',
 			allowResize: true,
 			lockAspectRatio: false,
-			description: 'Displays live chat (v2).',
+			description: 'Displays live chat.',
 			slug: 'liveChat2',
 		},
 	];
