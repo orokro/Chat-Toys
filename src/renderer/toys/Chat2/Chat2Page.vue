@@ -54,14 +54,26 @@
 			<SectionHeader title="Appearance" />
 			<div class="settingsBlock">
 
-				<SettingsInputRow type="boolean" v-model="enableChatBoxImage">
-					<template #title>Enable Chat Box BG Image</template>
-					<p>Use the image below to frame the chat box.</p>
-				</SettingsInputRow>
-				<SettingsAssetRow v-model="chatBoxImage" :kind-filter="'image'">
-					<h3>Image Frame</h3>
-					<p>Choose Image frame (sliceable in 3x3) for chat box.</p>
-				</SettingsAssetRow>
+				<!-- box + row backgrounds: none / 9-slice / tiled, with the
+					 reusable slice editor -->
+				<SettingsBackgroundRow
+					:toy="toy"
+					label="Chat Box Background"
+					modeKey="chatBoxImageMode"
+					assetKey="chatBoxImage"
+					scaleKey="chatBoxImageScale"
+					sliceKey="chatBoxImageSlice"
+					desc="Frame or tile the whole chat box."
+				/>
+				<SettingsBackgroundRow
+					:toy="toy"
+					label="Chat Row Background"
+					modeKey="chatRowImageMode"
+					assetKey="chatRowImage"
+					scaleKey="chatRowImageScale"
+					sliceKey="chatRowImageSlice"
+					desc="Frame or tile each individual message row."
+				/>
 
 				<!-- Consolidated text-style settings (name color / text color /
 					 font size / shadow) behind the "..." in SettingsTextRow. -->
@@ -156,8 +168,8 @@ import SectionHeader from '@components/options/SectionHeader.vue';
 import InfoBox from '@components/options/InfoBox.vue';
 import SettingsRow from '@components/options/SettingsRow.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
-import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
 import SettingsTextRow from '@components/options/SettingsTextRow.vue';
+import SettingsBackgroundRow from '@components/options/SettingsBackgroundRow.vue';
 import SchemaSettingsRows from '@components/options/SchemaSettingsRows.vue';
 import WidgetSection from '@components/options/WidgetSection.vue';
 import Chat2BehaviorRows from './Chat2BehaviorRows.vue';
@@ -170,11 +182,10 @@ import { parseThemeSpec } from './themeSpec';
 const ctApp = inject('ctApp');
 const toy = ctApp.toyManager.toys[Chat2.slug];
 
-// our local refs state (behavior toggles live inside Chat2BehaviorRows)
+// our local refs state (behavior toggles live inside Chat2BehaviorRows;
+// background settings are driven by SettingsBackgroundRow via the toy)
 const {
 	chatMode,
-	enableChatBoxImage,
-	chatBoxImage,
 	customChatTheme,
 	themeFieldValues,
 } = toy.settings;

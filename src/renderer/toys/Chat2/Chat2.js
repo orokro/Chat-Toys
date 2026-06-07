@@ -29,6 +29,7 @@ import { ChatPointsHelper } from '../Chat/ChatPointsHelper';
 
 // theming backbone
 import { parseThemeSpec, defaultFieldValues } from './themeSpec';
+import { defaultSliceConfig } from '../../components/options/nineSlice';
 
 // components
 import Chat2Page from './Chat2Page.vue';
@@ -97,6 +98,9 @@ export default class Chat2 extends Toy {
 		this.chatFramePath = socketShallowRef(
 			this.static.slugify('chatFramePath'),
 			this.getAssetPath(this.settings.chatBoxImage.value));
+		this.chatRowFramePath = socketShallowRef(
+			this.static.slugify('chatRowFramePath'),
+			this.getAssetPath(this.settings.chatRowImage.value));
 		this.chatLog = socketShallowRef(this.static.slugify('chatLog'), []);
 		this.pointsData = socketShallowRef(this.static.slugify('pointsData'), []);
 
@@ -109,6 +113,11 @@ export default class Chat2 extends Toy {
 		// keep the framed-box image path in sync with the asset setting
 		watch(this.settings.chatBoxImage, (value) => {
 			this.chatFramePath.value = this.getAssetPath(value);
+		});
+
+		// likewise for the per-row background image
+		watch(this.settings.chatRowImage, (value) => {
+			this.chatRowFramePath.value = this.getAssetPath(value);
 		});
 
 		// reconcile theme field values whenever the theme text changes, so the
@@ -170,12 +179,22 @@ export default class Chat2 extends Toy {
 			showChatterPoints: ref(true),
 
 			// style (Mode 'simple' only)
-			enableChatBoxImage: ref(false),
-			chatBoxImage: ref('3'),
 			chatNameColor: ref('#00ABAE'),
 			chatTextColor: ref('#FFFFFF'),
 			chatTextShadow: ref(true),
 			chatTextSize: ref(24),
+
+			// box background (Mode 'simple') - none / sliced (9-slice) / tiled
+			chatBoxImageMode: ref('none'),
+			chatBoxImage: ref('3'),
+			chatBoxImageScale: ref(64),
+			chatBoxImageSlice: shallowRef(defaultSliceConfig()),
+
+			// per-row background (Mode 'simple') - same none / sliced / tiled
+			chatRowImageMode: ref('none'),
+			chatRowImage: ref(''),
+			chatRowImageScale: ref(64),
+			chatRowImageSlice: shallowRef(defaultSliceConfig()),
 
 			// custom theme (Mode 'custom') - the raw theme spec v2 / v1 blob
 			customChatTheme: ref(''),

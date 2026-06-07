@@ -7,9 +7,11 @@
 	Renders the socket-ref'd chat log into framed rows. The theming behavior is
 	mode-aware (driven by the `chatMode` setting):
 
-		- simple : built-in colors/box-image styling; no injected theme CSS.
+		- simple : built-in colors + no-code box/row backgrounds (none / 9-slice
+		           / tiled, via the shared frameStyle helper).
 		- custom : a ChatToys theme (spec v2 / legacy v1) supplies the injected
-		           CSS + per-slot HTML. Theme-declared field values are token-
+		           CSS + per-slot HTML; the built-in backgrounds step aside so
+		           the theme fully owns visual style. Field values are token-
 		           substituted into the CSS/HTML via {fieldKey}.
 		- compat : reserved for the Streamlabs harness (later phase); falls back
 		           to the simple render so nothing breaks in the meantime.
@@ -27,21 +29,13 @@
 		v-if="ready"
 		class="chatBoxWidget"
 		:class="{
-			disableBG: socketSettingsRef?.enableChatBoxImage == false,
 			demoMode: demoMode,
 			showTextShadow: socketSettingsRef?.chatTextShadow,
 			showChatterPoints: socketSettingsRef?.showChatterPoints,
 			hasPFP: socketSettingsRef?.showChatterPFP,
 			noPFP: !socketSettingsRef?.showChatterPFP,
 		}"
-		:style="{
-			border: '30 solid transparent',
-			borderImageSource: `url(${chatFramePath})`,
-			borderImageSlice: '200 fill',
-			borderImageRepeat: 'stretch',
-			'--fontSize': socketSettingsRef?.chatTextSize + 'px',
-			'--pfpSize': socketSettingsRef?.pfpSize + 'px',
-		}"
+		:style="boxStyle"
 	>
 		<div class="messageText">
 			<template
@@ -62,6 +56,7 @@
 						star3: message.moduloKey == 'c',
 						star4: message.moduloKey == 'd',
 					}"
+					:style="rowStyle"
 				>
 
 					<!-- Profile Picture -->
@@ -118,6 +113,7 @@ import { keepAliveSocket } from '../keepAliveSocket.js';
 
 // theming backbone
 import { parseThemeSpec, substituteTokens, EMPTY_INJECTS } from './themeSpec';
+import { frameStyle } from '../../components/options/nineSlice';
 
 // components (reuse the original Chat sub-components)
 import PfpImg from '../Chat/sub_components/PfpImg.vue';
@@ -151,6 +147,7 @@ const socketSettingsRef = useToySettings('chat2', 'chatWidgetBox', emit, () => {
 const demoMode = socketShallowRefReadOnly('demoMode', false);
 const chatLog = socketShallowRefReadOnly(slugify('chatLog'), '');
 const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
+const chatRowFramePath = socketShallowRefReadOnly(slugify('chatRowFramePath'), null);
 const pointsData = socketShallowRefReadOnly(slugify('pointsData'), null);
 
 // theme field values with asset IDs already resolved to URLs (toy-side)
@@ -222,6 +219,45 @@ watch(demoMode, (newVal) => {
 });
 
 
+// --- built-in (no-code) backgrounds: only in non-custom modes ---
+
+// custom theme mode owns all visual style; built-in backgrounds step aside
+const useBuiltinStyle = computed(() => socketSettingsRef.value?.chatMode !== 'custom');
+
+// the chat box style: font/pfp CSS vars, plus the box background frame
+const boxStyle = computed(() => {
+	const s = socketSettingsRef.value || {};
+	const vars = {
+		'--fontSize': (s.chatTextSize ?? 24) + 'px',
+		'--pfpSize': (s.pfpSize ?? 32) + 'px',
+	};
+	if (!useBuiltinStyle.value)
+		return vars;
+	return {
+		...vars,
+		...frameStyle({
+			mode: s.chatBoxImageMode,
+			url: chatFramePath.value,
+			scale: s.chatBoxImageScale,
+			config: s.chatBoxImageSlice,
+		}),
+	};
+});
+
+// the per-row background frame (same for every row)
+const rowStyle = computed(() => {
+	if (!useBuiltinStyle.value)
+		return {};
+	const s = socketSettingsRef.value || {};
+	return frameStyle({
+		mode: s.chatRowImageMode,
+		url: chatRowFramePath.value,
+		scale: s.chatRowImageScale,
+		config: s.chatRowImageSlice,
+	});
+});
+
+
 // --- theme parsing + token substitution (custom mode only) ---
 
 // the active theme parsed from the raw textarea blob
@@ -271,7 +307,7 @@ watch([injects, parsedTheme, themeActive, styleInjector], () => {
  * Format a chatter's point balance for display next to their name.
  *
  * @param {String} userID - the chatter's unique id
- * @returns {String} like " P 500", or '' when unknown
+ * @returns {String} like " ₱ 500", or '' when unknown
  */
 function getUserPoints(userID) {
 	const pdMap = pointsDataMap.value;
@@ -293,26 +329,20 @@ function getUserPoints(userID) {
 		// reset stacking context
 		position: relative;
 
+		// the box background frame (border-image / tile) is applied inline via
+		// frameStyle; box-sizing keeps any frame border inside the bounds
+		box-sizing: border-box;
+
 		transition: transform 0.25s ease-in-out;
 		transform: scale(1);
 		&.idle {
 			transform: scale(0);
 		}
 
-		// css slicing for the frame
-		border: 60px solid transparent;
-		box-sizing: border-box;
-
-		// disable the background/border if user wants
-		&.disableBG {
-			background: none !important;
-			border: 0px none !important;
-			border-image: none !important;
-
-			&.demoMode {
-				border: 1px dashed rgba(255, 255, 255, 0.5) !important;
-				transform: scale(1);
-			}
+		// faint outline so an empty box is visible while demoing
+		&.demoMode {
+			outline: 1px dashed rgba(255, 255, 255, 0.4);
+			outline-offset: -1px;
 		}
 
 		&.showTextShadow {
