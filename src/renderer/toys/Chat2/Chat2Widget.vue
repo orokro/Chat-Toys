@@ -79,6 +79,7 @@
 						class="message-contents"
 						:class="{ inline: !socketSettingsRef?.messageOnNewLine }"
 					>
+						<div v-html="injects.contentsInjects"></div>
 						<span
 							v-if="socketSettingsRef?.showChatterNames"
 							class="user"
@@ -151,6 +152,9 @@ const demoMode = socketShallowRefReadOnly('demoMode', false);
 const chatLog = socketShallowRefReadOnly(slugify('chatLog'), '');
 const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
 const pointsData = socketShallowRefReadOnly(slugify('pointsData'), null);
+
+// theme field values with asset IDs already resolved to URLs (toy-side)
+const resolvedFields = socketShallowRefReadOnly(slugify('themeFieldsResolved'), {});
 
 
 // grouped-or-not chat log (group consecutive messages from the same author)
@@ -226,8 +230,10 @@ const parsedTheme = computed(() => parseThemeSpec(socketSettingsRef.value?.custo
 // only custom mode applies an injected theme; other modes render plain
 const themeActive = computed(() => socketSettingsRef.value?.chatMode === 'custom');
 
-// the per-theme field values pushed from the settings block
-const fieldValues = computed(() => socketSettingsRef.value?.themeFieldValues || {});
+// the per-theme field values (asset IDs already resolved to URLs toy-side);
+// fall back to the raw settings map if the resolved socket hasn't arrived yet
+const fieldValues = computed(() =>
+	resolvedFields.value || socketSettingsRef.value?.themeFieldValues || {});
 
 // the HTML inject slots, with {fieldKey} tokens substituted from field values
 const injects = computed(() => {
@@ -253,7 +259,11 @@ watch([injects, parsedTheme, themeActive, styleInjector], () => {
 		? substituteTokens(parsedTheme.value.injects.styleInjects || '', fieldValues.value)
 		: '';
 
-	styleInjector.value.innerHTML = `<style scoped>${css}</style>`;
+	// build a real style element rather than innerHTML'ing a tag string, so
+	// CSS is never HTML-parsed and the SFC source carries no literal style tag
+	const styleEl = document.createElement('style');
+	styleEl.textContent = css;
+	styleInjector.value.replaceChildren(styleEl);
 }, { immediate: true });
 
 
@@ -261,7 +271,7 @@ watch([injects, parsedTheme, themeActive, styleInjector], () => {
  * Format a chatter's point balance for display next to their name.
  *
  * @param {String} userID - the chatter's unique id
- * @returns {String} like " ₱ 500", or '' when unknown
+ * @returns {String} like " P 500", or '' when unknown
  */
 function getUserPoints(userID) {
 	const pdMap = pointsDataMap.value;

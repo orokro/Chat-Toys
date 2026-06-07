@@ -100,6 +100,12 @@ export default class Chat2 extends Toy {
 		this.chatLog = socketShallowRef(this.static.slugify('chatLog'), []);
 		this.pointsData = socketShallowRef(this.static.slugify('pointsData'), []);
 
+		// The theme's field values, pushed to the widget with asset-typed
+		// fields resolved from stored asset IDs to served URLs (the widget
+		// can't resolve IDs itself). Non-asset values pass through unchanged.
+		// The raw IDs stay in settings.themeFieldValues for the asset picker.
+		this.themeFieldsResolved = socketShallowRef(this.static.slugify('themeFieldsResolved'), {});
+
 		// keep the framed-box image path in sync with the asset setting
 		watch(this.settings.chatBoxImage, (value) => {
 			this.chatFramePath.value = this.getAssetPath(value);
@@ -111,6 +117,13 @@ export default class Chat2 extends Toy {
 		watch(this.settings.customChatTheme, () => {
 			this.reconcileThemeFieldValues();
 		}, { immediate: true });
+
+		// recompute the resolved (asset-URL'd) field map for the widget whenever
+		// the theme or its values change
+		watch(
+			[this.settings.customChatTheme, this.settings.themeFieldValues],
+			() => { this.updateResolvedFieldValues(); },
+			{ immediate: true, deep: true });
 
 		// listen for incoming chat messages from the chat processor
 		this.handleChatMessage = this.handleChatMessage.bind(this);
@@ -208,6 +221,36 @@ export default class Chat2 extends Toy {
 		// only write if something actually changed (avoid feedback loops)
 		if (JSON.stringify(next) !== JSON.stringify(prev))
 			this.settings.themeFieldValues.value = next;
+	}
+
+
+	/**
+	 * Recompute the resolved field-value map pushed to the widget. Asset-typed
+	 * fields are converted from their stored asset ID to a served URL (via
+	 * getAssetPath) so themes can token-substitute an asset straight into CSS
+	 * (e.g. background-image: url({myAsset})). All other field values pass
+	 * through unchanged.
+	 */
+	updateResolvedFieldValues() {
+
+		const theme = parseThemeSpec(this.settings.customChatTheme.value);
+		const values = this.settings.themeFieldValues.value || {};
+
+		const resolved = {};
+		for (const field of theme.fields) {
+
+			// prefer the user-set value, else the field's declared default
+			const raw = Object.prototype.hasOwnProperty.call(values, field.key)
+				? values[field.key]
+				: field.value;
+
+			// asset fields store an ID; resolve it to a served URL for the widget
+			resolved[field.key] = (field.type === 'asset' && raw)
+				? this.getAssetPath(raw)
+				: raw;
+		}
+
+		this.themeFieldsResolved.value = resolved;
 	}
 
 
