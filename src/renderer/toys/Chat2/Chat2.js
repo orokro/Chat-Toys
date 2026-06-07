@@ -110,6 +110,13 @@ export default class Chat2 extends Toy {
 		// The raw IDs stay in settings.themeFieldValues for the asset picker.
 		this.themeFieldsResolved = socketShallowRef(this.static.slugify('themeFieldsResolved'), {});
 
+		// Publish the widget-server port so the compat-mode widget can build the
+		// nested iframe URL (http://localhost:<port>/chat-themes/<id>/index.html).
+		this.serverPortSocket = socketShallowRef(
+			this.static.slugify('serverPort'),
+			this.chatToysApp.serverPort.value);
+		watch(this.chatToysApp.serverPort, (v) => { this.serverPortSocket.value = v; });
+
 		// keep the framed-box image path in sync with the asset setting
 		watch(this.settings.chatBoxImage, (value) => {
 			this.chatFramePath.value = this.getAssetPath(value);
@@ -210,6 +217,12 @@ export default class Chat2 extends Toy {
 			// per-theme field values (theme spec v2 `fields[]`). A flat
 			// { key: value } map; reconciled from the theme's declared fields.
 			themeFieldValues: ref({}),
+
+			// compatibility mode (Mode 3 / Streamlabs): the selected imported
+			// theme id + per-theme Streamlabs Fields values (keyed by theme id
+			// so switching themes preserves each one's settings).
+			chatThemeId: ref(''),
+			chatThemeFieldsById: ref({}),
 
 			// widget box layout
 			chatWidgetBox: shallowRef({

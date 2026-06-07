@@ -138,6 +138,11 @@ class OBSViewServer {
 		// each express app boot. Omitted in legacy/test windows.
 		this.pluginManager = options.pluginManager || null;
 
+		// optional ChatThemeManager whose /chat-themes/* routes (the imported
+		// Streamlabs themes + their generated harness pages) get mounted on
+		// each express app boot. Omitted in legacy/test windows.
+		this.chatThemeManager = options.chatThemeManager || null;
+
 		// set up our IPC communication
 		this.initializeIPC();
 
@@ -414,6 +419,12 @@ class OBSViewServer {
 			// the /live block so plugin paths resolve first.
 			if (this.pluginManager) {
 					this.pluginManager.mountRoutes(expressApp);
+				}
+
+			// Mount the chat-theme routes (/chat-themes/installed.json and
+			// /chat-themes/<id>/index.html + assets) for Streamlabs compat mode.
+			if (this.chatThemeManager) {
+					this.chatThemeManager.mountRoutes(expressApp);
 				}
 
 			this.server = http.createServer(expressApp);

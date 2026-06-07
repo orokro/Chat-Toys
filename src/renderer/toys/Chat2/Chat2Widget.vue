@@ -13,12 +13,15 @@
 		           CSS + per-slot HTML; the built-in visuals step aside so the
 		           theme fully owns style. Field values token-substitute via
 		           {fieldKey}.
-		- compat : reserved for the Streamlabs harness (later phase); falls back
-		           to the simple render so nothing breaks in the meantime.
+		- compat : a third-party Streamlabs theme renders inside a sandboxed
+		           nested iframe served from /chat-themes/<id>/. We pipe chat in
+		           over postMessage and our harness owns the message loop.
 
-	Rows render inside a <TransitionGroup> so new messages play their CSS entry
-	animation (only after mount, never the whole backlog) and expired messages
-	fade out on leave.
+	Native rows (simple/custom) render inside a <TransitionGroup> so new messages
+	play their CSS entry animation (only after mount, never the whole backlog)
+	and expired messages fade out on leave. Compat mode renders the iframe
+	instead. Emotes (Twitch / BTTV / YouTube / unicode) work in every mode -
+	native rows via ParsedMessage, compat via renderEmotesToHtml piped as html.
 -->
 <template>
 
@@ -38,7 +41,18 @@
 		}"
 		:style="boxStyle"
 	>
-		<TransitionGroup tag="div" class="messageText" name="chatRow">
+		<!-- compatibility mode: the Streamlabs theme runs in a sandboxed iframe -->
+		<iframe
+			v-if="isCompat"
+			ref="compatFrame"
+			class="compatFrame"
+			sandbox="allow-scripts"
+			:src="compatUrl"
+			@load="onCompatLoad"
+		></iframe>
+
+		<!-- native rows (simple / custom) -->
+		<TransitionGroup v-else tag="div" class="messageText" name="chatRow">
 			<div
 				v-for="message in displayedChat"
 				:key="message.id"
@@ -111,6 +125,7 @@ import { keepAliveSocket } from '../keepAliveSocket.js';
 // theming backbone
 import { parseThemeSpec, substituteTokens, EMPTY_INJECTS } from './themeSpec';
 import { frameStyle } from '../../components/options/nineSlice';
+import { renderEmotesToHtml } from './compat/emoteHtml';
 
 // components (reuse the original Chat sub-components)
 import PfpImg from '../Chat/sub_components/PfpImg.vue';
@@ -118,6 +133,10 @@ import ParsedMessage from '../Chat/sub_components/ParsedMessage.vue';
 
 const thisSlug = 'chat2';
 const widgetSlug = 'liveChat2';
+
+// 1x1 transparent png, used as the avatar stub for SL templates that hard-
+// expect a pfp <img> when the user has avatars off (or none is available)
+const TRANSPARENT_PX = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 /**
  * Build a per-toy socket key (mirrors Toy.slugify on the state side).
@@ -146,6 +165,7 @@ const chatLog = socketShallowRefReadOnly(slugify('chatLog'), '');
 const chatFramePath = socketShallowRefReadOnly(slugify('chatFramePath'), null);
 const chatRowFramePath = socketShallowRefReadOnly(slugify('chatRowFramePath'), null);
 const pointsData = socketShallowRefReadOnly(slugify('pointsData'), null);
+const serverPort = socketShallowRefReadOnly(slugify('serverPort'), null);
 
 // theme field values with asset IDs already resolved to URLs (toy-side)
 const resolvedFields = socketShallowRefReadOnly(slugify('themeFieldsResolved'), {});
@@ -218,8 +238,10 @@ watch(demoMode, (newVal) => {
 
 // --- built-in (no-code) visuals: only in non-custom modes ---
 
-// custom theme mode owns all visual style; built-in visuals step aside
-const useBuiltinStyle = computed(() => socketSettingsRef.value?.chatMode !== 'custom');
+// only 'simple' mode uses our built-in visuals (box/row frames, spacing,
+// animations, hide-after). 'custom' and 'compat' both own their own style,
+// so the built-in box frame must not bleed into them.
+const useBuiltinStyle = computed(() => socketSettingsRef.value?.chatMode === 'simple');
 
 // the chat box style: font/pfp/spacing/animation CSS vars + box frame
 const boxStyle = computed(() => {
@@ -373,10 +395,177 @@ function getUserPoints(userID) {
 }
 
 
-// tidy up timers on unmount
+// ===================== compatibility mode (Mode 3) =====================
+
+// active when compat is selected AND a theme is chosen
+const isCompat = computed(() =>
+	socketSettingsRef.value?.chatMode === 'compat' && !!socketSettingsRef.value?.chatThemeId);
+
+/**
+ * Resolve the widget-server port for the iframe URL: prefer the toy-published
+ * port, then fall back to the plugin-style query/global resolution.
+ *
+ * @returns {Number}
+ */
+function resolvePort() {
+	if (serverPort.value) return serverPort.value;
+	try {
+		const q = new URLSearchParams(window.location.search);
+		return parseInt(q.get('port') || window.initPort || window.location.port || '3001', 10) || 3001;
+	} catch (e) { return 3001; }
+}
+
+// the served harness page URL for the selected theme
+const compatUrl = computed(() => {
+	const id = socketSettingsRef.value?.chatThemeId;
+	if (!id) return '';
+	return `http://localhost:${resolvePort()}/chat-themes/${encodeURIComponent(id)}/index.html`;
+});
+
+const compatFrame = ref(null);
+let compatReady = false;
+const compatSent = new Set();   // message ids already posted to the iframe
+
+/**
+ * Raw numeric point balance for a chatter (compat passes it as a value, not a
+ * pre-formatted string).
+ *
+ * @param {String} userID
+ * @returns {Number|String}
+ */
+function getPointsRaw(userID) {
+	const pdMap = pointsDataMap.value;
+	if (!pdMap || !pdMap[userID]) return '';
+	return pdMap[userID].points;
+}
+
+/**
+ * Map an internal chat message to the compat harness message shape, rendering
+ * emotes (Twitch/BTTV/YouTube/unicode) to an HTML string so they show inside
+ * the Streamlabs theme.
+ *
+ * @param {Object} m
+ * @returns {Object}
+ */
+function toCompatMsg(m) {
+	return {
+		id: String(m.id),
+		from: m.author,
+		message: m.message,
+		html: renderEmotesToHtml(m.message, m.emojis),
+		points: getPointsRaw(m.authorUniqueID),
+		pfpUrl: m.pfpUrl || '',
+		system: !!m.syslogger,
+	};
+}
+
+/**
+ * The feature options handed to the harness (avatars/points/limit/stub).
+ *
+ * @returns {Object}
+ */
+function compatOptions() {
+	const s = socketSettingsRef.value || {};
+	return {
+		limit: 100,
+		showAvatar: !!s.showChatterPFP,
+		showPoints: !!s.showChatterPoints,
+		pointsLabel: '₱ ',
+		stubPfp: TRANSPARENT_PX,
+	};
+}
+
+/**
+ * The selected theme's Streamlabs Fields values (complete map reconciled by
+ * the settings page, keyed by theme id).
+ *
+ * @returns {Object}
+ */
+function compatFields() {
+	const s = socketSettingsRef.value || {};
+	const byId = s.chatThemeFieldsById || {};
+	return byId[s.chatThemeId] || {};
+}
+
+/**
+ * Post a message into the compat iframe (best-effort; targetOrigin '*' since
+ * the sandboxed frame has an opaque origin).
+ *
+ * @param {Object} msg
+ */
+function postToFrame(msg) {
+	try {
+		const w = compatFrame.value && compatFrame.value.contentWindow;
+		if (w) w.postMessage(msg, '*');
+	} catch (e) { /* noop */ }
+}
+
+/**
+ * Push the full current state to the iframe: options, fields, then the whole
+ * visible backlog. Safe to call repeatedly - the harness de-dupes by id.
+ */
+function sendCompatState() {
+	if (!isCompat.value) return;
+	postToFrame({ type: 'ct-options', options: compatOptions() });
+	postToFrame({ type: 'ct-fields', fields: compatFields() });
+	const list = baseChat.value || [];
+	const msgs = list
+		.filter((m) => socketSettingsRef.value?.showSystemMessages || !m.syslogger)
+		.map(toCompatMsg);
+	if (msgs.length) postToFrame({ type: 'ct-chat', messages: msgs });
+	msgs.forEach((m) => compatSent.add(m.id));
+}
+
+/** iframe finished loading -> (re)send state. */
+function onCompatLoad() {
+	compatReady = true;
+	compatSent.clear();
+	sendCompatState();
+}
+
+// the harness also announces itself; treat that as a (re)sync trigger
+function onWindowMessage(ev) {
+	const d = ev && ev.data;
+	if (d && d.type === 'ct-harness-ready') {
+		compatReady = true;
+		compatSent.clear();
+		sendCompatState();
+	}
+}
+window.addEventListener('message', onWindowMessage);
+
+// stream newly-arrived messages to the iframe as they come in
+watch(baseChat, (list) => {
+	if (!isCompat.value || !compatReady) return;
+	const fresh = (list || [])
+		.filter((m) => !compatSent.has(String(m.id)))
+		.filter((m) => socketSettingsRef.value?.showSystemMessages || !m.syslogger)
+		.map(toCompatMsg);
+	if (fresh.length) {
+		postToFrame({ type: 'ct-chat', messages: fresh });
+		fresh.forEach((m) => compatSent.add(m.id));
+	}
+});
+
+// re-push options/fields when they change
+watch(() => [
+	socketSettingsRef.value?.showChatterPFP,
+	socketSettingsRef.value?.showChatterPoints,
+], () => { if (isCompat.value && compatReady) postToFrame({ type: 'ct-options', options: compatOptions() }); });
+
+watch(() => JSON.stringify(compatFields()), () => {
+	if (isCompat.value && compatReady) postToFrame({ type: 'ct-fields', fields: compatFields() });
+});
+
+// switching theme/url reloads the frame; reset our send-state
+watch(compatUrl, () => { compatReady = false; compatSent.clear(); });
+
+
+// tidy up timers + listeners on unmount
 onBeforeUnmount(() => {
 	clearInterval(nowTick);
 	if (demoInterval) clearInterval(demoInterval);
+	window.removeEventListener('message', onWindowMessage);
 });
 
 </script>
@@ -419,6 +608,17 @@ onBeforeUnmount(() => {
 			.messageText {
 				text-shadow: 0.05em 0.05em 0px black;
 			}
+		}
+
+		// the compat-mode Streamlabs iframe fills the box
+		.compatFrame {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			border: 0;
+			background: transparent;
+			display: block;
 		}
 
 		// text settings

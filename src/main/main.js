@@ -22,6 +22,7 @@ import { TwitchManager } from './system/TwitchManager.js';
 import { TwurpleManager } from './system/TwurpleManager.js';
 const { DatabaseManager } = require('./system/database');
 const { PluginManager } = require('./system/PluginManager');
+const { ChatThemeManager } = require('./system/ChatThemeManager');
 
 // load our window tests
 const { testURL } = require('./system/WindowTests');
@@ -38,6 +39,7 @@ let twitchMgr = null;
 let twurpleMgr = null;
 let tray = null;
 let pluginMgr = null;
+let chatThemeMgr = null;
 
 // Main-process SQLite connection used by the asset-filesystem express
 // endpoint (vuefinder backend). better-sqlite3 with WAL mode handles
@@ -211,10 +213,46 @@ app.whenReady().then(() => {
 		return pluginMgr.importLocalZip(r.filePaths[0]);
 	});
 
+	// Chat theme manager (Mode 3 / Streamlabs compatibility): imports a theme
+	// from a folder or .zip into %appdata%/<app>/chat-themes and serves a
+	// generated harness page over /chat-themes/<id>/index.html.
+	chatThemeMgr = new ChatThemeManager(app, { log: (m) => console.log(m) });
+
+	// import a Streamlabs theme from a folder or a .zip. `mode` picks the
+	// native dialog kind ('folder' | 'zip') since Windows can't offer both at once.
+	ipcMain.handle('import-chat-theme', async (event, args) => {
+		const mode = (args && args.mode) === 'folder' ? 'folder' : 'zip';
+		const opts = (mode === 'folder')
+			? { title: 'Pick a Streamlabs theme folder', properties: ['openDirectory'] }
+			: { title: 'Import a Streamlabs theme (.zip)', properties: ['openFile'], filters: [{ name: 'Theme', extensions: ['zip'] }] };
+		const r = await dialog.showOpenDialog(mainWindow, opts);
+		if (r.canceled || !r.filePaths || !r.filePaths[0])
+			return { canceled: true };
+		try {
+			const theme = await chatThemeMgr.importLocal(r.filePaths[0]);
+			return { canceled: false, theme, themes: chatThemeMgr.list() };
+		} catch (e) {
+			return { canceled: false, error: e.message || String(e), themes: chatThemeMgr.list() };
+		}
+	});
+
+	// list imported chat themes
+	ipcMain.handle('list-chat-themes', async () => {
+		return chatThemeMgr.list();
+	});
+
+	// remove an imported chat theme by id
+	ipcMain.handle('remove-chat-theme', async (event, args) => {
+		const id = args && args.id;
+		const removed = chatThemeMgr.remove(id);
+		return { removed, themes: chatThemeMgr.list() };
+	});
+
 	// Create the OBSViewServer with the db so the asset-filesystem API
 	// can be mounted on the widget-server express app, plus the plugin manager
-	// so /plugins/* routes are served.
-	obsViewServer = new OBSViewServer(mainWindow, { db: mainDb, pluginManager: pluginMgr });
+	// so /plugins/* routes are served, and the chat-theme manager for
+	// /chat-themes/* routes.
+	obsViewServer = new OBSViewServer(mainWindow, { db: mainDb, pluginManager: pluginMgr, chatThemeManager: chatThemeMgr });
 
 
 	// --- Legacy TMI Twitch path: DISABLED at cutover (Phase 4 / Task #20) ---

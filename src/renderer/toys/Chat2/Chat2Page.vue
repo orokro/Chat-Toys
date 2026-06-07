@@ -184,14 +184,46 @@
 			<div class="settingsBlock">
 				<InfoBox>
 					<p>
-						Compatibility mode will let you import a third-party
-						<strong>Streamlabs</strong> chat theme (folder or .zip) and
-						run it natively, with ChatToys features layered on top
-						(command filtering, avatar toggle, channel points).
+						Import a third-party <strong>Streamlabs</strong> chat theme
+						(a folder or .zip with its HTML / CSS / Fields / JS) and run
+						it natively. ChatToys features are layered on top: command
+						filtering, avatar toggle, channel points, and emote support
+						(Twitch / BTTV / YouTube / unicode).
 					</p>
-					<p>The import harness is coming in a later build. The mode
-						selector lives here now so the wiring is in place.</p>
+					<p>The theme's own JavaScript is not run; our harness owns the
+						message loop, so JS-only extras (e.g. pronouns) won't apply.</p>
 				</InfoBox>
+
+				<div class="importRow">
+					<button class="btn" @click="importTheme('folder')">Import Folder…</button>
+					<button class="btn" @click="importTheme('zip')">Import .zip…</button>
+					<span v-if="importError" class="importError">{{ importError }}</span>
+				</div>
+			</div>
+
+			<template v-if="themes.length">
+				<SectionHeader title="Theme" />
+				<div class="settingsBlock">
+					<SettingsInputRow type="options" :options="themeOptions" v-model="chatThemeId">
+						<template #title>Active Theme</template>
+						<p>Choose which imported Streamlabs theme to display.</p>
+					</SettingsInputRow>
+					<SettingsRow v-if="chatThemeId">
+						<button class="btn danger" @click="removeTheme(chatThemeId)">Remove this theme</button>
+					</SettingsRow>
+				</div>
+
+				<template v-if="compatFieldDefs.length">
+					<SectionHeader title="Theme Settings" />
+					<div class="settingsBlock">
+						<SchemaSettingsRows :fields="compatFieldDefs" v-model="compatValues" />
+					</div>
+				</template>
+			</template>
+
+			<SectionHeader title="Behavior" />
+			<div class="settingsBlock">
+				<Chat2BehaviorRows :toy="toy" />
 			</div>
 
 		</template>
@@ -202,7 +234,7 @@
 <script setup>
 
 // vue
-import { computed, inject } from 'vue';
+import { ref, computed, inject, onMounted, watch } from 'vue';
 
 // components
 import PageBox from '@components/options/PageBox.vue';
@@ -218,7 +250,7 @@ import Chat2BehaviorRows from './Chat2BehaviorRows.vue';
 
 // our app
 import Chat2 from './Chat2';
-import { parseThemeSpec } from './themeSpec';
+import { parseThemeSpec, adaptStreamlabsFields } from './themeSpec';
 
 // fetch the main app state context & our toy
 const ctApp = inject('ctApp');
@@ -230,6 +262,8 @@ const {
 	chatMode,
 	customChatTheme,
 	themeFieldValues,
+	chatThemeId,
+	chatThemeFieldsById,
 	messageSpacing,
 	messageAnimation,
 	messageAnimationDuration,
@@ -275,6 +309,90 @@ const themeValues = computed({
 });
 
 
+// --- compatibility mode (Streamlabs theme import) ---
+
+// imported themes (from the main process) + any import error to surface
+const themes = ref([]);
+const importError = ref('');
+
+// dropdown options for the theme picker
+const themeOptions = computed(() => themes.value.map((t) => ({ value: t.id, name: t.name || t.id })));
+
+// the currently-selected theme record
+const selectedTheme = computed(() => themes.value.find((t) => t.id === chatThemeId.value) || null);
+
+// the selected theme's Streamlabs Fields, normalized for our settings rows
+const compatFieldDefs = computed(() => selectedTheme.value ? adaptStreamlabsFields(selectedTheme.value.fields) : []);
+
+// two-way binding for the selected theme's field values (kept per theme id)
+const compatValues = computed({
+	get: () => (chatThemeFieldsById.value && chatThemeFieldsById.value[chatThemeId.value]) || {},
+	set: (v) => { chatThemeFieldsById.value = { ...(chatThemeFieldsById.value || {}), [chatThemeId.value]: v }; },
+});
+
+/**
+ * Ensure the selected theme's stored values include every field (defaults for
+ * any not yet set), so the widget always pushes a complete field map.
+ */
+function reconcileCompatFields() {
+	const id = chatThemeId.value;
+	if (!id) return;
+	const defs = compatFieldDefs.value;
+	if (!defs.length) return;
+	const prev = (chatThemeFieldsById.value && chatThemeFieldsById.value[id]) || {};
+	const next = {};
+	for (const f of defs)
+		next[f.key] = Object.prototype.hasOwnProperty.call(prev, f.key) ? prev[f.key] : f.value;
+	if (JSON.stringify(next) !== JSON.stringify(prev))
+		chatThemeFieldsById.value = { ...(chatThemeFieldsById.value || {}), [id]: next };
+}
+
+/**
+ * Load the imported-theme list from the main process.
+ */
+async function loadThemes() {
+	try { themes.value = (await window.electronAPI.invoke('list-chat-themes')) || []; }
+	catch (e) { themes.value = []; }
+}
+
+/**
+ * Import a Streamlabs theme from a folder or a .zip, then select it.
+ *
+ * @param {('folder'|'zip')} mode
+ */
+async function importTheme(mode) {
+	importError.value = '';
+	try {
+		const res = await window.electronAPI.invoke('import-chat-theme', { mode });
+		if (!res || res.canceled) return;
+		if (res.error) { importError.value = res.error; }
+		themes.value = res.themes || themes.value;
+		if (res.theme && res.theme.id) chatThemeId.value = res.theme.id;
+		reconcileCompatFields();
+	} catch (e) {
+		importError.value = e.message || String(e);
+	}
+}
+
+/**
+ * Remove an imported theme and clear the selection if it was active.
+ *
+ * @param {String} id
+ */
+async function removeTheme(id) {
+	try {
+		const res = await window.electronAPI.invoke('remove-chat-theme', { id });
+		themes.value = (res && res.themes) || [];
+		if (chatThemeId.value === id) chatThemeId.value = themes.value[0] ? themes.value[0].id : '';
+	} catch (e) { /* noop */ }
+}
+
+// load themes on mount; reconcile field defaults whenever the selection changes
+onMounted(loadThemes);
+watch(chatThemeId, reconcileCompatFields, { immediate: true });
+watch(compatFieldDefs, reconcileCompatFields);
+
+
 /**
  * Insert a literal tab into the theme textarea instead of moving focus.
  *
@@ -304,6 +422,30 @@ function insertTabInTheme(event) {
 		color: #b00020;
 		font-weight: bold;
 		margin-top: 8px;
+	}
+
+	.importRow {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 10px 0;
+	}
+
+	.importError {
+		color: #b00020;
+		font-weight: bold;
+	}
+
+	.btn {
+		padding: 7px 16px;
+		border: 2px solid black;
+		border-radius: 999px;
+		background: #00ABAE;
+		color: #fff;
+		font-weight: bold;
+		cursor: pointer;
+
+		&.danger { background: #b00020; }
 	}
 
 	.themeMeta {
