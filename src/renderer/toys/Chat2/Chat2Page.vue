@@ -85,6 +85,48 @@
 				/>
 			</div>
 
+			<SectionHeader title="Animation & Timing" />
+			<div class="settingsBlock">
+
+				<SettingsInputRow type="number" :min="0" :max="40" :step="1" v-model="messageSpacing">
+					<template #title>Spacing Between Messages</template>
+					<p>Vertical gap (px) between chat rows.</p>
+				</SettingsInputRow>
+
+				<SettingsInputRow type="options" :options="animationOptions" v-model="messageAnimation">
+					<template #title>Message Entry Animation</template>
+					<p>How new messages appear on screen.</p>
+				</SettingsInputRow>
+
+				<template v-if="messageAnimation !== 'none'">
+					<SettingsInputRow type="options" :options="easingOptions" v-model="messageAnimationEasing">
+						<template #title>Animation Easing</template>
+						<p>The motion curve for the entry animation.</p>
+					</SettingsInputRow>
+					<SettingsInputRow type="number" :min="50" :max="2000" :step="50" v-model="messageAnimationDuration">
+						<template #title>Animation Duration (ms)</template>
+						<p>How long the entry animation lasts.</p>
+					</SettingsInputRow>
+				</template>
+
+				<SettingsInputRow type="boolean" v-model="hideAfterEnabled">
+					<template #title>Hide Messages After a While</template>
+					<p>Fade messages out after they've been on screen for a time.</p>
+				</SettingsInputRow>
+				<SettingsInputRow
+					v-if="hideAfterEnabled"
+					type="number"
+					:min="3"
+					:max="600"
+					:step="1"
+					v-model="hideAfterSeconds"
+				>
+					<template #title>Hide After (seconds)</template>
+					<p>How long a message stays before fading out.</p>
+				</SettingsInputRow>
+
+			</div>
+
 			<SectionHeader title="Behavior" />
 			<div class="settingsBlock">
 				<Chat2BehaviorRows :toy="toy" />
@@ -188,6 +230,12 @@ const {
 	chatMode,
 	customChatTheme,
 	themeFieldValues,
+	messageSpacing,
+	messageAnimation,
+	messageAnimationDuration,
+	messageAnimationEasing,
+	hideAfterEnabled,
+	hideAfterSeconds,
 } = toy.settings;
 
 // mode selector options
@@ -195,6 +243,24 @@ const modeOptions = [
 	{ value: 'simple', name: 'Simple (no code)' },
 	{ value: 'custom', name: 'Custom Theme (code)' },
 	{ value: 'compat', name: 'Compatibility (Streamlabs)' },
+];
+
+// entry-animation presets (values are the widget's keyframe names)
+const animationOptions = [
+	{ value: 'none', name: 'Instant (no animation)' },
+	{ value: 'chat2FadeIn', name: 'Fade In' },
+	{ value: 'chat2SlideUp', name: 'Slide Up' },
+	{ value: 'chat2SlideFade', name: 'Slide + Fade' },
+	{ value: 'chat2Pop', name: 'Pop' },
+];
+
+// easing presets (values are CSS timing functions)
+const easingOptions = [
+	{ value: 'ease-out', name: 'Ease Out' },
+	{ value: 'ease-in', name: 'Ease In' },
+	{ value: 'ease-in-out', name: 'Ease In-Out' },
+	{ value: 'linear', name: 'Linear' },
+	{ value: 'cubic-bezier(0.68,-0.55,0.27,1.55)', name: 'Bounce' },
 ];
 
 // parse the active theme so we can render its fields + surface errors/metadata

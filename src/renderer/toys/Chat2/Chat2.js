@@ -196,6 +196,14 @@ export default class Chat2 extends Toy {
 			chatRowImageScale: ref(64),
 			chatRowImageSlice: shallowRef(defaultSliceConfig()),
 
+			// layout + motion (Mode 'simple')
+			messageSpacing: ref(0),                 // px gap between rows
+			messageAnimation: ref('none'),          // entry animation keyframe
+			messageAnimationDuration: ref(300),     // ms
+			messageAnimationEasing: ref('ease-out'),// timing function / cubic-bezier
+			hideAfterEnabled: ref(false),           // fade messages out after a while
+			hideAfterSeconds: ref(20),              // seconds on screen before fade
+
 			// custom theme (Mode 'custom') - the raw theme spec v2 / v1 blob
 			customChatTheme: ref(''),
 
