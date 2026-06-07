@@ -8,6 +8,7 @@
 // import the various toy systems
 import ChannelPoints from "./ChannelPoints/ChannelPoints";
 import Chat from "./Chat/Chat";
+import Chat2 from "./Chat2/Chat2";
 import Media from "./Media/Media";
 import Tosser from "./Tosser/Tosser";
 // VTSTosser is being merged into the original Tosser (VTS/OBS-aware tracking).
@@ -45,6 +46,7 @@ export const toysData = [
 	ChannelPoints,
 	OutputLog,
 	Chat,
+	Chat2,
 	SCConversion,
 	TwitchRedeems,
 	WidgetGroup,
