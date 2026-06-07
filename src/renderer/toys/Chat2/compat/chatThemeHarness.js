@@ -164,6 +164,7 @@
 			rawTemplate: '',
 			template: '',          // field-substituted template
 			fields: {},
+			extraCss: '',          // user override CSS, applied after theme CSS
 			options: { limit: 50, showAvatar: false, showPoints: false, pointsLabel: '', stubPfp: '' },
 			seen: {},              // id -> true (de-dupe)
 		};
@@ -182,10 +183,27 @@
 			el.textContent = css;
 		}
 
+		/**
+		 * Ensure a <style id="ct-extra-css"> exists (appended AFTER the theme
+		 * style so it wins) and write the user override CSS into it.
+		 * @param {String} css
+		 */
+		function writeExtraCss(css) {
+			var el = doc.getElementById('ct-extra-css');
+			if (!el) {
+				el = doc.createElement('style');
+				el.id = 'ct-extra-css';
+				(doc.head || doc.documentElement).appendChild(el);
+			}
+			el.textContent = css || '';
+		}
+
 		/** Recompute css + template from raw sources + current field values. */
 		function applyFields() {
 			state.template = substitute(state.rawTemplate, state.fields);
 			writeCss(substitute(state.rawCss, state.fields));
+			// keep the override layer last in the head
+			writeExtraCss(state.extraCss);
 		}
 
 		/** @returns {?Element} the #log container */
@@ -203,6 +221,7 @@
 			state.rawTemplate = cfg.template || extractTemplate(cfg.html || '');
 			if (cfg.options) setOptions(cfg.options);
 			if (cfg.fields) state.fields = cfg.fields || {};
+			if (cfg.extraCss != null) state.extraCss = cfg.extraCss;
 			applyFields();
 		}
 
@@ -210,6 +229,12 @@
 		function setFields(fields) {
 			state.fields = Object.assign({}, state.fields, fields || {});
 			applyFields();
+		}
+
+		/** @param {String} css - user override CSS */
+		function setExtraCss(css) {
+			state.extraCss = css || '';
+			writeExtraCss(state.extraCss);
 		}
 
 		/** @param {Object} options - merge feature options */
@@ -291,6 +316,7 @@
 			state: state,
 			init: init,
 			setFields: setFields,
+			setExtraCss: setExtraCss,
 			setOptions: setOptions,
 			appendMessage: appendMessage,
 			clear: clear,
@@ -317,6 +343,7 @@
 			switch (d.type) {
 				case 'ct-init': harness.init(d); break;
 				case 'ct-fields': harness.setFields(d.fields); break;
+				case 'ct-css': harness.setExtraCss(d.css); break;
 				case 'ct-options': harness.setOptions(d.options); break;
 				case 'ct-chat':
 					(d.messages || []).forEach(function (m) { harness.appendMessage(m); });

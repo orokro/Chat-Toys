@@ -488,6 +488,17 @@ function compatFields() {
 }
 
 /**
+ * The selected theme's optional CSS override (applied after the theme CSS).
+ *
+ * @returns {String}
+ */
+function compatExtraCss() {
+	const s = socketSettingsRef.value || {};
+	const byId = s.chatThemeCssById || {};
+	return byId[s.chatThemeId] || '';
+}
+
+/**
  * Post a message into the compat iframe (best-effort; targetOrigin '*' since
  * the sandboxed frame has an opaque origin).
  *
@@ -508,6 +519,7 @@ function sendCompatState() {
 	if (!isCompat.value) return;
 	postToFrame({ type: 'ct-options', options: compatOptions() });
 	postToFrame({ type: 'ct-fields', fields: compatFields() });
+	postToFrame({ type: 'ct-css', css: compatExtraCss() });
 	const list = baseChat.value || [];
 	const msgs = list
 		.filter((m) => socketSettingsRef.value?.showSystemMessages || !m.syslogger)
@@ -555,6 +567,10 @@ watch(() => [
 
 watch(() => JSON.stringify(compatFields()), () => {
 	if (isCompat.value && compatReady) postToFrame({ type: 'ct-fields', fields: compatFields() });
+});
+
+watch(compatExtraCss, () => {
+	if (isCompat.value && compatReady) postToFrame({ type: 'ct-css', css: compatExtraCss() });
 });
 
 // switching theme/url reloads the frame; reset our send-state

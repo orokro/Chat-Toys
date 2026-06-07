@@ -220,9 +220,11 @@ export default class Chat2 extends Toy {
 
 			// compatibility mode (Mode 3 / Streamlabs): the selected imported
 			// theme id + per-theme Streamlabs Fields values (keyed by theme id
-			// so switching themes preserves each one's settings).
+			// so switching themes preserves each one's settings) + an optional
+			// per-theme CSS override (reveals JS-gated decorations, fixes quirks).
 			chatThemeId: ref(''),
 			chatThemeFieldsById: ref({}),
+			chatThemeCssById: ref({}),
 
 			// widget box layout
 			chatWidgetBox: shallowRef({

@@ -219,6 +219,25 @@
 						<SchemaSettingsRows :fields="compatFieldDefs" v-model="compatValues" />
 					</div>
 				</template>
+
+				<SectionHeader title="Extra CSS (advanced)" />
+				<div class="settingsBlock">
+					<SettingsRow>
+						<p>
+							Some Streamlabs themes hide decorations (stars, corner
+							accents) until their own JavaScript reveals them - which we
+							don't run. Add CSS here to reveal or tweak anything; it is
+							applied after the theme's own CSS.
+						</p>
+						<button class="btn" @click="insertRevealSnippet">Insert "reveal decorations" snippet</button>
+						<textarea
+							v-model="compatCss"
+							rows="6"
+							style="resize: vertical; width: 100%; font-family: monospace; margin-top: 8px;"
+							placeholder=".leftsidecont { opacity: 1 !important; }"
+						/>
+					</SettingsRow>
+				</div>
 			</template>
 
 			<SectionHeader title="Behavior" />
@@ -264,6 +283,7 @@ const {
 	themeFieldValues,
 	chatThemeId,
 	chatThemeFieldsById,
+	chatThemeCssById,
 	messageSpacing,
 	messageAnimation,
 	messageAnimationDuration,
@@ -329,6 +349,28 @@ const compatValues = computed({
 	get: () => (chatThemeFieldsById.value && chatThemeFieldsById.value[chatThemeId.value]) || {},
 	set: (v) => { chatThemeFieldsById.value = { ...(chatThemeFieldsById.value || {}), [chatThemeId.value]: v }; },
 });
+
+// per-theme CSS override (applied after the theme CSS in the harness)
+const compatCss = computed({
+	get: () => (chatThemeCssById.value && chatThemeCssById.value[chatThemeId.value]) || '',
+	set: (v) => { chatThemeCssById.value = { ...(chatThemeCssById.value || {}), [chatThemeId.value]: v }; },
+});
+
+// a starter snippet that reveals the decorations many SL themes hide via JS
+const REVEAL_SNIPPET = [
+	"/* reveal decorations the theme's JS would normally show */",
+	'.leftsidecont, .anim { opacity: 1 !important; }',
+	'.bordertop, .borderbot, .connector, .star2 { visibility: visible !important; }',
+].join('\n');
+
+/**
+ * Append the reveal-decorations snippet to the override (once).
+ */
+function insertRevealSnippet() {
+	const cur = compatCss.value || '';
+	if (cur.includes('reveal decorations')) return;
+	compatCss.value = cur ? (cur + '\n\n' + REVEAL_SNIPPET) : REVEAL_SNIPPET;
+}
 
 /**
  * Ensure the selected theme's stored values include every field (defaults for
