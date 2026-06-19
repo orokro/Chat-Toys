@@ -155,6 +155,40 @@
 				<p>Higher means more sparks and a sharper rebuilt emoji, but is heavier to render.</p>
 			</SettingsInputRow>
 
+			<SettingsInputRow
+				type="float"
+				v-model="fireworkParticleScale"
+				:min="0.2"
+				:max="3"
+				:step=".1"
+			>
+				<template #title>Firework Particle Size</template>
+				<p>Scales each spark on top of the detail-based sizing.</p>
+				<p>Lower (e.g. 0.5) makes the sparks smaller for an airier burst; higher packs them denser.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="float"
+				v-model="fireworkFallSpeed"
+				:min="0.1"
+				:max="4"
+				:step=".1"
+			>
+				<template #title>Firework Fall Speed</template>
+				<p>How quickly the sparks fall after the burst peaks (gravity strength).</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="float"
+				v-model="fireworkFallDuration"
+				:min="0.3"
+				:max="5"
+				:step=".1"
+			>
+				<template #title>Firework Fall Duration</template>
+				<p>How long, from the peak of the explosion, before each spark shrinks out of existence.</p>
+			</SettingsInputRow>
+
 		</div>
 		
 		<!-- <SectionHeader title="Video Help"/>
@@ -197,6 +231,9 @@ const {
 	fountainCount,
 	fireworkCount,
 	fireworkDetail,
+	fireworkParticleScale,
+	fireworkFallSpeed,
+	fireworkFallDuration,
 	maxCount,
 	enableWildEmojis,
 	speed,

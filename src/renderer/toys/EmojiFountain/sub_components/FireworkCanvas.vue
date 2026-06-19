@@ -77,6 +77,10 @@ const seen = new Set();
 // Pixels read from a source this many (per axis) when no detail given.
 const DEFAULT_GRID = 18;
 
+// Seconds the burst takes to expand outward to the full-size emoji (the "peak"),
+// after which the user-controlled fall duration takes over.
+const BLOOM_TIME = 0.45;
+
 // Resolution of the offscreen sampling canvas (downsampled into the grid).
 const SAMPLE_RES = 64;
 
@@ -447,7 +451,13 @@ function drawAnim(anim, now) {
 	const t = (now - anim.startTime) / 1000;	// seconds since launch
 
 	const launchDur = ev.launchDuration || 1.2;
-	const explodeDur = ev.explodeDuration || 1.9;
+
+	// Burst lifetime is driven by settings, not the particle: a fixed bloom
+	// (outward expansion to the full emoji) plus the user's "fall duration"
+	// (peak -> sparks shrunk to nothing).
+	const bloomT = BLOOM_TIME;
+	const fallDuration = clamp(props.settings?.fireworkFallDuration ?? 1.4, 0.2, 6);
+	const explodeDur = bloomT + fallDuration;
 
 	if (t >= launchDur + explodeDur) return false;
 
@@ -465,7 +475,7 @@ function drawAnim(anim, now) {
 	}
 	else {
 		const te = t - launchDur;
-		drawBurst(anim, te, explodeDur, burstX, burstY, minWH, effScale);
+		drawBurst(anim, te, bloomT, fallDuration, burstX, burstY, minWH, effScale);
 	}
 
 	return true;
@@ -542,22 +552,33 @@ function drawEmojiSprite(anim, x, y, sz) {
 
 /**
  * Draw the burst: a transition flash/cloud, then the emoji rebuilt out of
- * colored sparks that expand to full size and fall under gravity while fading.
+ * colored sparks. The sparks bloom outward to full size, then (measured from
+ * that peak) fall under gravity while shrinking to nothing.
+ *
+ * Three settings shape this:
+ *   - fireworkParticleScale : multiplies each spark's radius (on top of the
+ *     detail-based sizing) so packed-in sparks can be made smaller/larger.
+ *   - fireworkFallSpeed     : multiplies gravity (how fast sparks fall).
+ *   - fireworkFallDuration  : seconds from the burst peak until the spark has
+ *     shrunk to 0 (passed in as `fallDuration`).
  *
  * @param {Object} anim - animation instance
  * @param {number} te - seconds since the burst began
- * @param {number} explodeDur - total burst duration (s)
+ * @param {number} bloomT - seconds for the outward expansion (peak) to complete
+ * @param {number} fallDuration - seconds from peak until sparks shrink to 0
  * @param {number} cx - burst center x (px)
  * @param {number} cy - burst center y (px)
  * @param {number} minWH - min(canvas w, h)
  * @param {number} scale - effective emoji scale
  * @returns {void}
  */
-function drawBurst(anim, te, explodeDur, cx, cy, minWH, scale) {
+function drawBurst(anim, te, bloomT, fallDuration, cx, cy, minWH, scale) {
 
-	const pe = te / explodeDur;
 	const bigSize = minWH * 0.5 * scale;	// diameter of the rebuilt emoji
-	const grav = minWH * 0.35;				// px / s^2
+
+	const sizeScale = clamp(props.settings?.fireworkParticleScale ?? 1, 0.1, 6);
+	const fallSpeed = clamp(props.settings?.fireworkFallSpeed ?? 1, 0.05, 6);
+	const grav = minWH * 0.6 * fallSpeed;	// px / s^2
 
 	// --- transition: smoke cloud puff (drawn first, behind sparks) ---
 	if (te < 0.6) {
@@ -600,22 +621,27 @@ function drawBurst(anim, te, explodeDur, cx, cy, minWH, scale) {
 	const pts = anim.points || [];
 	if (!pts.length) return;
 
-	const grid = Math.round(props.settings?.fireworkDetail || DEFAULT_GRID);
-	const cell = bigSize / clamp(grid, 6, 40);
-	const sparkR = Math.max(1, cell * 0.5);
+	const grid = clamp(Math.round(props.settings?.fireworkDetail || DEFAULT_GRID), 6, 40);
+	const cell = bigSize / grid;
+	const sparkR = Math.max(0.5, cell * 0.5) * sizeScale;
 
-	// outward expansion completes in the first ~45% of the burst
-	const expandT = explodeDur * 0.45;
-	const exP = easeOut(clamp(te / expandT, 0, 1));
+	// Outward expansion (bloom) up to the peak at te === bloomT.
+	const exP = easeOut(clamp(te / bloomT, 0, 1));
 
-	// global fade in (mask the pop) then fade out over the tail
-	const fadeIn = clamp(pe / 0.06, 0, 1);
-	const fadeOut = pe > 0.55 ? clamp(1 - (pe - 0.55) / 0.45, 0, 1) : 1;
+	// Fall phase, measured from the peak: 0 at the peak, 1 when fully gone.
+	const tFall = Math.max(0, te - bloomT);
+	const fp = clamp(tFall / fallDuration, 0, 1);
+
+	// Radius shrinks to 0 across the fall; sparks accelerate downward.
+	const rNow = sparkR * (1 - fp);
+	if (rNow <= 0.05) return;
+	const gy = 0.5 * grav * tFall * tFall;
+
+	// Quick ignite fade-in (masks the pop) and a gentle fade over the fall tail.
+	const fadeIn = clamp(te / 0.06, 0, 1);
+	const fadeOut = fp > 0.6 ? clamp(1 - (fp - 0.6) / 0.4, 0, 1) : 1;
 	const globalA = fadeIn * fadeOut;
 	if (globalA <= 0) return;
-
-	const gy = 0.5 * grav * te * te;		// gravity drop
-	const rNow = sparkR * (1 - 0.25 * pe);
 
 	for (let i = 0; i < pts.length; i++) {
 		const pt = pts[i];

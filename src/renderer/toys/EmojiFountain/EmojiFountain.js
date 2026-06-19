@@ -150,6 +150,9 @@ export default class EmojiFountain extends Toy {
 			fountainCount: ref(12),				// !fountain default
 			fireworkCount: ref(5),				// !firework default (# of rockets)
 			fireworkDetail: ref(18),			// firework sampling grid (NxN)
+			fireworkParticleScale: ref(1.0),	// spark size multiplier (on top of detail sizing)
+			fireworkFallSpeed: ref(1.0),		// gravity multiplier for falling sparks
+			fireworkFallDuration: ref(1.4),		// seconds from burst peak until sparks shrink to 0
 			maxCount: ref(200),					// max particles alive
 
 			// Behavior
