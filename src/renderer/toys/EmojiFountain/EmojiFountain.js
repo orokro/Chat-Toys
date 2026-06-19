@@ -12,30 +12,44 @@
 	- Responds to command system via onCommand:
 		- commandSlug === 'rain'     -> !rain <emoji(s)>
 		- commandSlug === 'fountain' -> !fountain <emoji(s)>
+		- commandSlug === 'firework' -> !firework <emoji(s)>
 		- Uses msg.emojis (must have at least one emoji).
 
 	- Exposes particles via socketShallowRef so the widget can render
 	  and use emojiCache.js to resolve blob URLs.
+
+	Render note:
+		- 'rain' | 'toss' | 'fountain' particles are rendered by the widget
+		  as DOM elements driven by generated CSS @keyframes.
+		- 'firework' particles are rendered separately on a <canvas> by the
+		  FireworkCanvas sub-component (rocket launch -> burst that samples
+		  the emoji's pixels to rebuild it, enlarged, out of colored sparks).
+		  Firework particles therefore only carry launch/explosion geometry
+		  and ignore the DOM-only fields (endX/endY/bounces/spinSpeed).
 
 	Each particle:
 	{
 		id: string,
 		url: string | null,
 		char: string | null,
-		type: 'rain' | 'toss' | 'fountain',
+		type: 'rain' | 'toss' | 'fountain' | 'firework',
 		createdAt: number,   // ms
-		duration: number,    // seconds (animation duration)
+		duration: number,    // seconds (total animation duration)
 		delay: number,       // seconds (for CSS animation-delay if desired)
 		startX: number,      // % (0-100)
 		endX: number,        // % (0-100)
-		apexX: number,       // % (0-100), for arcs
+		apexX: number,       // % (0-100), for arcs / firework burst center X
 		startY: number,      // %
-		apexY: number,       // %
+		apexY: number,       // %  (firework: burst center Y)
 		endY: number,        // %
 		bounces: number,     // 0,1,2
 		spinSpeed: number,   // deg/sec
 		scale: number,       // emojiSize
-		ttlMs: number        // ms, slightly longer than duration
+		ttlMs: number,       // ms, slightly longer than duration
+
+		// firework-only:
+		launchDuration: number, // seconds for the rocket to reach apex
+		explodeDuration: number // seconds for the burst to play out
 	}
 */
 
@@ -134,6 +148,8 @@ export default class EmojiFountain extends Toy {
 			// Counts
 			rainCount: ref(12),					// !rain default
 			fountainCount: ref(12),				// !fountain default
+			fireworkCount: ref(5),				// !firework default (# of rockets)
+			fireworkDetail: ref(18),			// firework sampling grid (NxN)
 			maxCount: ref(200),					// max particles alive
 
 			// Behavior
@@ -175,6 +191,15 @@ export default class EmojiFountain extends Toy {
 				description: 'Chatter can cause a fountain of emojis from their message',
 				userDesc: 'Sprout a fountain of emojis!',
 				tipText: 'Use {cmd} with any emojis to shoot them up like a fountain',
+			},
+			{
+				command: 'firework',
+				params: [
+					{ name: 'message', type: 'string', optional: false, desc: 'Message with Emojis to launch as fireworks' },
+				],
+				description: 'Chatter launches their emoji as a rocket that bursts into a giant version of itself made of colored sparks',
+				userDesc: 'Launch emoji fireworks!',
+				tipText: 'Use {cmd} with any emoji to launch it as a firework that explodes into a giant version of itself',
 			}
 		]);
 	}
@@ -335,6 +360,24 @@ export default class EmojiFountain extends Toy {
 			handshake.accept();
 			return;
 		}
+
+		// !firework <emoji(s)>
+		if (commandSlug === 'firework') {
+
+			if (!ensureEmojis())
+				return;
+
+			const count = this.settings.fireworkCount.value || 5;
+			if (count > 0) {
+				// Spread the rocket launches over ~1.6 seconds so they go up
+				// in a staggered volley rather than all at once.
+				const finalCount = Math.max(count, emojis.length);
+				this.spawnBurst('firework', emojis, finalCount, 1600);
+			}
+
+			handshake.accept();
+			return;
+		}
 	}
 
 
@@ -448,6 +491,9 @@ export default class EmojiFountain extends Toy {
 				break;
 			case 'fountain':
 				particle = this.makeFountainParticle(emoji, speed, scale);
+				break;
+			case 'firework':
+				particle = this.makeFireworkParticle(emoji, speed, scale);
 				break;
 			case 'toss':
 			default:
@@ -702,6 +748,63 @@ export default class EmojiFountain extends Toy {
 			bounces,
 			spinSpeed: this.randomRange(90, 240) * (Math.random() < 0.5 ? -1 : 1),
 			scale
+		};
+	}
+
+
+	/**
+	 * Firework: a rocket launches from a random spot along the bottom, flies up
+	 * to a random apex, then bursts. The actual rocket flight, transition flash
+	 * and pixel-sampled explosion are all drawn on a <canvas> by
+	 * FireworkCanvas.vue - this factory only supplies the launch/burst geometry
+	 * and timing. DOM-only fields (endX/endY/bounces/spinSpeed) are left at inert
+	 * defaults since the canvas renderer ignores them.
+	 *
+	 * @param {Object} emoji - { url?: string, char?: string }
+	 * @param {number} speed - global speed multiplier (>1 faster)
+	 * @param {number} scale - emojiSize multiplier
+	 * @returns {Object} firework particle
+	 */
+	makeFireworkParticle(emoji, speed, scale) {
+
+		// Launch x somewhere across the lower portion of the screen
+		const startX = this.randomRange(12, 88);
+
+		// Burst center: drift slightly from launch x, random height in the
+		// upper-middle of the screen (smaller % = higher up).
+		const apexYNorm = this.randomRange(0.18, 0.46);
+		const apexX = this.clamp(startX + this.randomRange(-10, 10), 6, 94);
+
+		// Rocket flight time scales with how high it climbs (feels like thrust),
+		// the burst gets a fixed-ish window to bloom and fade.
+		const climb = 1.05 - apexYNorm;					// 0..~0.87
+		let launchDuration = (0.85 + climb * 0.9) / speed;	// ~0.9s .. ~1.6s
+		let explodeDuration = 1.9 / speed;					// burst + fade window
+
+		return {
+			id: this.nextParticleId(),
+			url: emoji.url || null,
+			char: emoji.char || null,
+			type: 'firework',
+
+			duration: launchDuration + explodeDuration,
+			delay: 0,
+
+			startX,
+			endX: startX,
+			apexX,
+
+			startY: 105,					// just below the bottom edge
+			apexY: apexYNorm * 100,			// burst center Y (%)
+			endY: 105,
+
+			bounces: 0,
+			spinSpeed: 0,
+			scale,
+
+			// firework-only timing (seconds)
+			launchDuration,
+			explodeDuration
 		};
 	}
 

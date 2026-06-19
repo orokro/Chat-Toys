@@ -40,6 +40,14 @@
 			</div>
 		</div>
 
+		<!-- Firework particles render on their own canvas layer so the
+			 rocket-launch + pixel-sampled burst mode is fully independent of
+			 the DOM/CSS rain/toss/fountain renderers above. -->
+		<FireworkCanvas
+			:events="fireworkParticles"
+			:settings="socketSettingsRef || {}"
+		/>
+
 	</div>
 
 </template>
@@ -62,6 +70,9 @@ import { keepAliveSocket } from '../keepAliveSocket.js';
 
 // emoji cache helper
 import { getEmojiSource } from '../emojiCache.js';
+
+// firework (canvas) renderer
+import FireworkCanvas from './sub_components/FireworkCanvas.vue';
 
 const thisSlug = 'emojiFountain';
 const widgetSlug = 'emojiFountainWidget';
@@ -268,6 +279,89 @@ const particlesForRender = computed(() => {
 	return socketParticles.value || [];
 });
 
+// ---------- Firework particles (canvas layer) ----------
+
+// Synthetic fireworks generated on a timer while in demo mode so the dashboard
+// preview shows the mode without needing a live !firework command.
+const demoFireworks = ref([]);
+let demoFireworkTimer = null;
+let demoFireworkSeq = 0;
+
+/**
+ * Build a single demo firework particle mirroring the toy's makeFireworkParticle
+ * geometry/timing (the canvas reads the same fields live or demo).
+ *
+ * @returns {Object} firework particle
+ */
+function buildDemoFireworkParticle() {
+	const speed = safeSpeedFromSettings();
+	const scale = socketSettingsRef.value?.emojiSize ?? 1.0;
+
+	const startX = randomRange(15, 85);
+	const apexYNorm = randomRange(0.18, 0.46);
+	const apexX = clamp(startX + randomRange(-10, 10), 6, 94);
+	const climb = 1.05 - apexYNorm;
+	const launchDuration = (0.85 + climb * 0.9) / speed;
+	const explodeDuration = 1.9 / speed;
+
+	const url = DEMO_EMOJI_URLS[demoFireworkSeq % DEMO_EMOJI_URLS.length];
+
+	return {
+		id: `demo_fw_${demoFireworkSeq++}_${Date.now()}`,
+		url,
+		char: null,
+		type: 'firework',
+		duration: launchDuration + explodeDuration,
+		delay: 0,
+		startX,
+		endX: startX,
+		apexX,
+		startY: 105,
+		apexY: apexYNorm * 100,
+		endY: 105,
+		bounces: 0,
+		spinSpeed: 0,
+		scale,
+		launchDuration,
+		explodeDuration
+	};
+}
+
+/**
+ * Push a fresh demo firework and trim the buffer so the array stays small.
+ * @returns {void}
+ */
+function emitDemoFirework() {
+	const next = [...demoFireworks.value, buildDemoFireworkParticle()];
+	// keep only the most recent few; the canvas dedupes by id anyway
+	demoFireworks.value = next.slice(-6);
+}
+
+// Start/stop the demo firework timer with demo mode.
+watch(
+	() => demoMode.value,
+	(on) => {
+		if (on && !demoFireworkTimer) {
+			emitDemoFirework();
+			demoFireworkTimer = window.setInterval(emitDemoFirework, 2200);
+		}
+		else if (!on && demoFireworkTimer) {
+			window.clearInterval(demoFireworkTimer);
+			demoFireworkTimer = null;
+			demoFireworks.value = [];
+		}
+	},
+	{ immediate: true }
+);
+
+// Firework events handed to the canvas: live socket particles or demo ones.
+const fireworkParticles = computed(() => {
+	if (demoMode.value) {
+		return demoFireworks.value || [];
+	}
+	return (socketParticles.value || []).filter((p) => p && p.type === 'firework');
+});
+
 // kick off emoji src resolution whenever particles or cache setting change
 watch(
 	() => ({
@@ -427,7 +521,8 @@ const renderParticles = computed(() => {
 	const isDemo = demoMode.value;
 
 	return items
-		.filter((p) => !!p && (!!p.url || !!p.char))
+		// Fireworks are drawn by FireworkCanvas, not as DOM particles.
+		.filter((p) => !!p && p.type !== 'firework' && (!!p.url || !!p.char))
 		.map((p, idx) => {
 			const id = p.id || `ef_${idx}`;
 			const motionName = `ef_motion_${id}`;
@@ -506,6 +601,11 @@ onBeforeUnmount(() => {
 		dynamicStyleEl.value.parentNode.removeChild(dynamicStyleEl.value);
 	}
 	dynamicStyleEl.value = null;
+
+	if (demoFireworkTimer) {
+		window.clearInterval(demoFireworkTimer);
+		demoFireworkTimer = null;
+	}
 });
 
 // whenever renderParticles changes, update the CSS

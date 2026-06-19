@@ -30,6 +30,8 @@
 				They can either rain in from the top, or get tossed up from the bottom.</li>
 			<li>The !rain command let's user deliberately spawn a downpour of their chosen emojis from the top of the screen</li>
 			<li>The !fountain command let's user spawn a fountain of their chosen emojis from the bottom of the screen</li>
+			<li>The !firework command launches a chosen emoji as a rocket that bursts into a giant version of itself,
+				rebuilt out of colored sparks sampled from the emoji's own pixels</li>
 		</ul>
 		
 		<SectionHeader title="Command Triggers"/>
@@ -130,6 +132,29 @@
 				<p>When the !fountain command is used, how many emojis should spawn?</p>
 			</SettingsInputRow>
 
+			<SettingsInputRow
+				type="number"
+				v-model="fireworkCount"
+				:min="1"
+				:max="20"
+				:step="1"
+			>
+				<template #title>Firework Volley Size</template>
+				<p>When the !firework command is used, how many rockets should launch?</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				v-model="fireworkDetail"
+				:min="8"
+				:max="32"
+				:step="1"
+			>
+				<template #title>Firework Detail</template>
+				<p>How finely each firework samples the emoji when it bursts.</p>
+				<p>Higher means more sparks and a sharper rebuilt emoji, but is heavier to render.</p>
+			</SettingsInputRow>
+
 		</div>
 		
 		<!-- <SectionHeader title="Video Help"/>
@@ -170,6 +195,8 @@ const {
 	cacheEmojiImages,
 	rainCount,
 	fountainCount,
+	fireworkCount,
+	fireworkDetail,
 	maxCount,
 	enableWildEmojis,
 	speed,
