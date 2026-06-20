@@ -81,6 +81,34 @@ const DEFAULT_GRID = 18;
 // after which the user-controlled fall duration takes over.
 const BLOOM_TIME = 0.45;
 
+// Emote-image hosts whose CDN doesn't send CORS headers. A plain <img> (used by
+// rain/toss/fountain) can display them fine, but drawing one into a canvas to
+// read its pixels taints the canvas and getImageData throws - so the firework
+// burst could never sample the emoji. For these we route the load through the
+// app's own /emote-proxy (same-origin, CORS-clean), exactly like the Tosser.
+// BetterTTV is the known offender; the list is easy to extend.
+const PROXY_EMOTE_HOSTS = ['betterttv.net'];
+
+/**
+ * Rewrite an emote image URL to load through the local /emote-proxy when its
+ * host is known to lack CORS headers; otherwise return it unchanged.
+ *
+ * @param {string} url - the original emote image URL
+ * @returns {string}
+ */
+function emoteLoadUrl(url) {
+	try {
+		const u = new URL(url, window.location.href);
+		const needsProxy = (u.protocol === 'http:' || u.protocol === 'https:') &&
+			PROXY_EMOTE_HOSTS.some((h) => u.hostname === h || u.hostname.endsWith('.' + h));
+		if (needsProxy)
+			return '/emote-proxy?url=' + encodeURIComponent(url);
+	} catch (e) {
+		/* not a parseable URL — fall through and use as-is */
+	}
+	return url;
+}
+
 // Resolution of the offscreen sampling canvas (downsampled into the grid).
 const SAMPLE_RES = 64;
 
@@ -332,10 +360,13 @@ function spawnFrom(event) {
 	};
 
 	if (anim.kind === 'image') {
-		// Prefer a cached (blob) source for clean sampling; fall back to raw URL.
-		getEmojiSource(event.url)
+		// Route CORS-less CDNs (e.g. BetterTTV) through the same-origin proxy so
+		// the sampling canvas isn't tainted; then prefer a cached (blob) source
+		// for clean sampling, falling back to the (proxied) URL.
+		const loadUrl = emoteLoadUrl(event.url);
+		getEmojiSource(loadUrl)
 			.then(({ src }) => loadImage(src))
-			.catch(() => loadImage(event.url))
+			.catch(() => loadImage(loadUrl))
 			.then((img) => { anim.img = img; })
 			.catch(() => { /* keep img null -> fallback burst + no rocket sprite */ })
 			.finally(begin);
