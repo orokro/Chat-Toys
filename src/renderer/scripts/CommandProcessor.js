@@ -232,6 +232,106 @@ export class CommandProcessor {
 
 
 	/**
+	 * Lazily build / return a regex that matches a single emoji codepoint at the
+	 * START of a string. Uses \p{Extended_Pictographic} when the engine supports
+	 * it (Chromium / Electron does), with a BMP+SMP range fallback. Cached after
+	 * first build. This is the same family of detection the EmojiFountain toy
+	 * uses, kept local so the command parser has no toy dependency.
+	 *
+	 * @returns {RegExp} anchored, non-global emoji-start matcher
+	 */
+	getEmojiStartRegex() {
+
+		if (this._emojiStartRegex)
+			return this._emojiStartRegex;
+
+		try {
+			// Modern engines: proper Unicode property escape.
+			this._emojiStartRegex = new RegExp('^\\p{Extended_Pictographic}', 'u');
+		}
+		catch (e) {
+			// Fallback: common emoji blocks. Not exhaustive, but covers the
+			// glyphs chatters actually type after a command.
+			this._emojiStartRegex = /^[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+		}
+
+		return this._emojiStartRegex;
+	}
+
+
+	/**
+	 * Repair messages where a chatter glued an emoji directly onto a command
+	 * with no space, e.g. "!fountain🌸" or "!toss🤨". The parser keys off the
+	 * first whitespace-delimited run, so "fountain🌸" never matches a command
+	 * (and even if it did, the required emoji param would be empty). This finds
+	 * the command hiding at the start of that run and inserts the missing space
+	 * so the normal "!command <emoji…>" path can proceed.
+	 *
+	 * Safety (this runs for EVERY command across the whole app):
+	 *  - Only messages starting with '!' are considered.
+	 *  - If the first token is ALREADY a valid command, the message is returned
+	 *    untouched - so no currently-working command can change behavior.
+	 *  - A split only happens when a known command is immediately followed by an
+	 *    emoji. That emoji requirement is what stops false splits like
+	 *    "!rainbow" -> "!rain bow" (the char after "rain" is a letter, not an
+	 *    emoji, so it's left alone).
+	 *  - The longest matching command wins, so prefix pairs like toss/tosser
+	 *    resolve to the more specific command (e.g. "tosser🤨" -> "tosser 🤨").
+	 *
+	 * The original message object is never mutated; only the text used for
+	 * command lookup + param parsing is adjusted.
+	 *
+	 * @param {String} messageText - the raw chat message text
+	 * @returns {String} repaired text (space inserted) or the original string
+	 */
+	normalizeCommandEmojiSpacing(messageText) {
+
+		// only '!'-prefixed command messages are candidates
+		if (typeof messageText !== 'string' || messageText.startsWith('!') === false)
+			return messageText;
+
+		// isolate the first token (the command run) after the '!'
+		const afterBang = messageText.slice(1);
+		const wsIndex = afterBang.search(/\s/);
+		const firstToken = wsIndex === -1 ? afterBang : afterBang.slice(0, wsIndex);
+
+		// already a real command? leave it completely alone
+		if (this.commandMap[firstToken])
+			return messageText;
+
+		// find the longest known command that this token starts with AND that is
+		// immediately followed by an emoji
+		const emojiStart = this.getEmojiStartRegex();
+		let best = null;
+
+		for (const cmd of Object.keys(this.commandMap)) {
+
+			if (!cmd || firstToken.length <= cmd.length)
+				continue;
+			if (firstToken.startsWith(cmd) === false)
+				continue;
+
+			// what follows the command name must START with an emoji
+			const rest = firstToken.slice(cmd.length);
+			if (emojiStart.test(rest) === false)
+				continue;
+
+			if (best === null || cmd.length > best.length)
+				best = cmd;
+
+		}// next cmd
+
+		// nothing safe to repair
+		if (best === null)
+			return messageText;
+
+		// insert a single space between the command and the glued-on emoji,
+		// preserving everything after it (further emojis / text / params)
+		return '!' + best + ' ' + messageText.slice(1 + best.length);
+	}
+
+
+	/**
 	 * Check incoming chat messages for commands
 	 * 
 	 * @param {Array<Object>} messages - Array of new messages to look for commands
@@ -250,8 +350,15 @@ export class CommandProcessor {
 			if (messageText.startsWith('!') == false)
 				continue;
 
+			// Repair "!command🌸" (an emoji glued onto the command with no
+			// space) into "!command 🌸" so it parses normally. This is a no-op
+			// for any message whose first token is already a valid command, so
+			// existing commands are completely unaffected. We use the repaired
+			// text for command lookup + param parsing, but never mutate `msg`.
+			const effectiveText = this.normalizeCommandEmojiSpacing(messageText);
+
 			// split the message into parts, starting after the '!'
-			const parts = messageText.slice(1).split(/\s+/);
+			const parts = effectiveText.slice(1).split(/\s+/);
 
 			// if the first part is not a complete command, skip
 			// or if the command is not enabled GTFO
@@ -265,7 +372,8 @@ export class CommandProcessor {
 			}
 
 			// get potential params (not all commands have params)
-			const params = this.parseParams(commandData, messageText);
+			// use the repaired text so "!fountain🌸" yields the emoji param
+			const params = this.parseParams(commandData, effectiveText);
 
 			// get the user data from our data base
 			const user = this.getUser(authorUniqueID);
