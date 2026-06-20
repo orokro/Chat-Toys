@@ -552,8 +552,13 @@ function drawRocket(anim, p, sx, sy, bx, by, minWH, scale) {
 
 	const sz = minWH * 0.06 * scale;
 
-	// rocket glyph beneath the emoji, rotated so its nose points up
+	// rocket glyph beneath the emoji, rotated so its nose points up.
+	// NOTE: the trail loop above left ctx.fillStyle as a translucent rgba.
+	// Color-emoji glyphs honor the fill alpha, so we MUST reset to a fully
+	// opaque paint here or the rocket renders semi-transparent.
 	ctx.save();
+	ctx.globalAlpha = 1;
+	ctx.fillStyle = '#000';
 	ctx.translate(x, y + sz * 0.7);
 	ctx.rotate(-Math.PI / 4);
 	ctx.textAlign = 'center';
@@ -577,9 +582,15 @@ function drawRocket(anim, p, sx, sy, bx, by, minWH, scale) {
  */
 function drawEmojiSprite(anim, x, y, sz) {
 	if (anim.kind === 'image' && anim.img) {
+		// drawImage ignores fillStyle, so image emotes are always opaque.
 		ctx.drawImage(anim.img, x - sz / 2, y - sz / 2, sz, sz);
 	}
 	else if (anim.char) {
+		// Reset paint: the trail/burst may have left fillStyle translucent, and
+		// color-emoji glyphs honor the fill alpha - without this the emoji would
+		// render semi-transparent.
+		ctx.globalAlpha = 1;
+		ctx.fillStyle = '#000';
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
 		ctx.font = `${sz}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
