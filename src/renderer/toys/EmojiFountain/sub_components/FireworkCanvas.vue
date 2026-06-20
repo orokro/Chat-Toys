@@ -184,6 +184,10 @@ function binImageData(data, grid) {
 			pts.push({
 				nx: (gx + 0.5) / grid - 0.5,
 				ny: (gy + 0.5) / grid - 0.5,
+				// fixed per-spark random unit offset; scaled live by the jitter
+				// setting at draw time so the shape stays stable frame to frame
+				jx: Math.random() * 2 - 1,
+				jy: Math.random() * 2 - 1,
 				r: Math.round(r / a),
 				g: Math.round(g / a),
 				b: Math.round(b / a),
@@ -217,6 +221,8 @@ function fallbackPoints() {
 		pts.push({
 			nx: Math.cos(ang) * rad,
 			ny: Math.sin(ang) * rad,
+			jx: Math.random() * 2 - 1,
+			jy: Math.random() * 2 - 1,
 			r, g, b,
 			a: 1
 		});
@@ -625,6 +631,10 @@ function drawBurst(anim, te, bloomT, fallDuration, cx, cy, minWH, scale) {
 	const cell = bigSize / grid;
 	const sparkR = Math.max(0.5, cell * 0.5) * sizeScale;
 
+	// per-spark jitter off its grid spot, in px (a fraction of a grid cell)
+	const jitterAmt = clamp(props.settings?.fireworkJitter ?? 0.25, 0, 2);
+	const jitterPx = jitterAmt * cell;
+
 	// Outward expansion (bloom) up to the peak at te === bloomT.
 	const exP = easeOut(clamp(te / bloomT, 0, 1));
 
@@ -645,8 +655,8 @@ function drawBurst(anim, te, bloomT, fallDuration, cx, cy, minWH, scale) {
 
 	for (let i = 0; i < pts.length; i++) {
 		const pt = pts[i];
-		const x = cx + pt.nx * bigSize * exP;
-		const y = cy + pt.ny * bigSize * exP + gy;
+		const x = cx + (pt.nx * bigSize + (pt.jx || 0) * jitterPx) * exP;
+		const y = cy + (pt.ny * bigSize + (pt.jy || 0) * jitterPx) * exP + gy;
 		const a = clamp(pt.a * globalA, 0, 1);
 		if (a <= 0.02) continue;
 		ctx.beginPath();

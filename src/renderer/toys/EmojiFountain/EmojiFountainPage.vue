@@ -189,6 +189,18 @@
 				<p>How long, from the peak of the explosion, before each spark shrinks out of existence.</p>
 			</SettingsInputRow>
 
+			<SettingsInputRow
+				type="float"
+				v-model="fireworkJitter"
+				:min="0"
+				:max="1.5"
+				:step=".05"
+			>
+				<template #title>Firework Jitter</template>
+				<p>How far each spark strays from its exact grid spot in the rebuilt emoji.</p>
+				<p>0 is a crisp pixel grid; higher loosens it into a more scattered, organic burst.</p>
+			</SettingsInputRow>
+
 		</div>
 		
 		<!-- <SectionHeader title="Video Help"/>
@@ -234,6 +246,7 @@ const {
 	fireworkParticleScale,
 	fireworkFallSpeed,
 	fireworkFallDuration,
+	fireworkJitter,
 	maxCount,
 	enableWildEmojis,
 	speed,

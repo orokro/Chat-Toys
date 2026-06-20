@@ -153,6 +153,7 @@ export default class EmojiFountain extends Toy {
 			fireworkParticleScale: ref(1.0),	// spark size multiplier (on top of detail sizing)
 			fireworkFallSpeed: ref(1.0),		// gravity multiplier for falling sparks
 			fireworkFallDuration: ref(1.4),		// seconds from burst peak until sparks shrink to 0
+			fireworkJitter: ref(0.25),			// per-spark random offset from grid (fraction of a cell)
 			maxCount: ref(200),					// max particles alive
 
 			// Behavior
