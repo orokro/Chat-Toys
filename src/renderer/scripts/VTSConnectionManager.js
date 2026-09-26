@@ -800,13 +800,87 @@ export class VTSConnectionManager {
 		const outMs = typeof opts.outMs === 'number' ? opts.outMs : 90;
 		const backMs = typeof opts.backMs === 'number' ? opts.backMs : 260;
 
-		// tilt out…
-		await this.moveModel({ relative: true, rotation: angle, timeInSeconds: outMs / 1000 });
+		// Absolute-rotation recoil. Snapshot the model's TRUE resting rotation
+		// the first time a recoil starts; while one is pending we neither
+		// re-snapshot nor let rest drift, and we spring back to that same
+		// absolute rest (retrying until VTS accepts it). Because every recoil
+		// re-asserts an absolute target, a spring-back lost to a VTS hiccup is
+		// re-applied instead of accumulating into a permanent lean (the old
+		// relative +angle/-angle scheme could strand a tilt forever if the
+		// back-nudge was ever dropped).
+		if (!this._recoilPending)
+			this._recoilRest = (this.modelTransform && this.modelTransform.written)
+				? (this.modelTransform.rotation || 0)
+				: (this._recoilRest || 0);
+		this._recoilPending = true;
+		this._recoilBackMs = backMs;
 
-		// …then spring back once the out-tween has finished
-		window.setTimeout(() => {
-			this.moveModel({ relative: true, rotation: -angle, timeInSeconds: backMs / 1000 });
+		if (this._recoilBackTimer)
+			window.clearTimeout(this._recoilBackTimer);
+
+		const rest = this._recoilRest || 0;
+
+		// tilt OUT to an absolute (rest + delta) angle
+		await this.moveModel({ rotation: rest + angle, timeInSeconds: outMs / 1000 });
+
+		// spring back to the absolute rest once the out-tween has finished
+		this._recoilBackTimer = window.setTimeout(() => {
+			this._recoilBackTimer = null;
+			this._springToRest();
 		}, outMs);
+	}
+
+
+	/**
+	 * Spring the model back to its snapshotted rest rotation with an absolute
+	 * move, retrying until VTS accepts it. Only once accepted do we clear
+	 * `_recoilPending` (after the tween lands) and let rest-tracking resume, so
+	 * a spring-back lost to a transient VTS hiccup is re-asserted rather than
+	 * leaving the model permanently tilted.
+	 *
+	 * @param {number} [attempt=0]
+	 * @returns {Promise<void>}
+	 */
+	async _springToRest(attempt = 0) {
+
+		if (!this._recoilPending)
+			return;
+
+		const rest = this._recoilRest || 0;
+		const backMs = this._recoilBackMs || 260;
+
+		const ok = await this.moveModel({ rotation: rest, timeInSeconds: backMs / 1000 });
+		if (ok) {
+			// accepted; let the tween land, then resume rest-tracking
+			window.setTimeout(() => { this._recoilPending = false; }, backMs);
+			return;
+		}
+
+		// not ready / rejected: keep pending (rest stays frozen) and retry so a
+		// transient hiccup can't strand the model tilted. Give up after ~10s; a
+		// model (re)load resets the state anyway.
+		if (attempt < 20)
+			window.setTimeout(() => this._springToRest(attempt + 1), 500);
+		else
+			this._recoilPending = false;
+	}
+
+
+	/**
+	 * Clear all recoil bookkeeping. Called on model (un)load so a swapped-in
+	 * model starts from a clean rest and never inherits a pending tilt from the
+	 * previous model.
+	 *
+	 * @returns {void}
+	 */
+	_resetRecoilState() {
+
+		if (this._recoilBackTimer) {
+			window.clearTimeout(this._recoilBackTimer);
+			this._recoilBackTimer = null;
+		}
+		this._recoilPending = false;
+		this._recoilRest = 0;
 	}
 
 	/**
@@ -1353,6 +1427,10 @@ export class VTSConnectionManager {
 		// On unload, VTS still tells us which model unloaded; we report the
 		// resulting state as "no model loaded".
 		const loaded = !!data.modelLoaded;
+
+		// A model (un)load resets recoil so a swapped model never inherits a
+		// pending tilt from the previous one.
+		this._resetRecoilState();
 		const next = {
 			modelID: loaded ? (data.modelID || null) : null,
 			modelName: loaded ? (data.modelName || null) : null,
