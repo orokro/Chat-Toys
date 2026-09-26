@@ -800,30 +800,22 @@ export class VTSConnectionManager {
 		const outMs = typeof opts.outMs === 'number' ? opts.outMs : 90;
 		const backMs = typeof opts.backMs === 'number' ? opts.backMs : 260;
 
-		// Absolute-rotation recoil. Snapshot the model's TRUE resting rotation
-		// the first time a recoil starts; while one is pending we neither
-		// re-snapshot nor let rest drift, and we spring back to that same
-		// absolute rest (retrying until VTS accepts it). Because every recoil
-		// re-asserts an absolute target, a spring-back lost to a VTS hiccup is
-		// re-applied instead of accumulating into a permanent lean (the old
-		// relative +angle/-angle scheme could strand a tilt forever if the
-		// back-nudge was ever dropped).
-		if (!this._recoilPending)
-			this._recoilRest = (this.modelTransform && this.modelTransform.written)
-				? (this.modelTransform.rotation || 0)
-				: (this._recoilRest || 0);
-		this._recoilPending = true;
+		// RELATIVE bonk: a small tilt delta on top of the model's live pose.
+		// Relative (not absolute) tweens correctly and never hits the -360..360
+		// range / 360-wrap issues absolute rotation does (VTS reports an upright
+		// model's rotation as 360, so absolute+clamp produced zero motion). We
+		// track the NET offset applied and always drive it back to zero, retrying
+		// the return until VTS accepts it - so a dropped return can't strand a
+		// permanent lean.
 		this._recoilBackMs = backMs;
+		const ok = await this.moveModel({ relative: true, rotation: angle, timeInSeconds: outMs / 1000 });
+		if (ok)
+			this._recoilNetOffset = (this._recoilNetOffset || 0) + angle;
+		// TEMP diagnostic - remove once recoil is confirmed working
+		this._log(ok ? 'info' : 'warn', `recoil bonk: +${angle} net=${this._recoilNetOffset || 0} out=${ok ? 'sent' : 'FAILED'}`);
 
 		if (this._recoilBackTimer)
 			window.clearTimeout(this._recoilBackTimer);
-
-		const rest = this._recoilRest || 0;
-
-		// tilt OUT to an absolute (rest + delta) angle
-		await this.moveModel({ rotation: rest + angle, timeInSeconds: outMs / 1000 });
-
-		// spring back to the absolute rest once the out-tween has finished
 		this._recoilBackTimer = window.setTimeout(() => {
 			this._recoilBackTimer = null;
 			this._springToRest();
@@ -832,37 +824,31 @@ export class VTSConnectionManager {
 
 
 	/**
-	 * Spring the model back to its snapshotted rest rotation with an absolute
-	 * move, retrying until VTS accepts it. Only once accepted do we clear
-	 * `_recoilPending` (after the tween lands) and let rest-tracking resume, so
-	 * a spring-back lost to a transient VTS hiccup is re-asserted rather than
-	 * leaving the model permanently tilted.
+	 * Return the model to rest by undoing the whole accumulated recoil offset
+	 * with a relative move, retrying until VTS accepts it. Cancelling the
+	 * tracked NET offset (not a fixed -angle) means a dropped return is fully
+	 * corrected on the next attempt instead of leaving a permanent lean.
 	 *
 	 * @param {number} [attempt=0]
 	 * @returns {Promise<void>}
 	 */
 	async _springToRest(attempt = 0) {
 
-		if (!this._recoilPending)
+		const net = this._recoilNetOffset || 0;
+		if (net === 0)
 			return;
 
-		const rest = this._recoilRest || 0;
 		const backMs = this._recoilBackMs || 260;
-
-		const ok = await this.moveModel({ rotation: rest, timeInSeconds: backMs / 1000 });
+		const ok = await this.moveModel({ relative: true, rotation: -net, timeInSeconds: backMs / 1000 });
 		if (ok) {
-			// accepted; let the tween land, then resume rest-tracking
-			window.setTimeout(() => { this._recoilPending = false; }, backMs);
+			this._recoilNetOffset = 0;
 			return;
 		}
 
-		// not ready / rejected: keep pending (rest stays frozen) and retry so a
-		// transient hiccup can't strand the model tilted. Give up after ~10s; a
-		// model (re)load resets the state anyway.
+		// not applied (VTS not ready / rejected): retry so a hiccup can't leave
+		// the model leaning. Give up after ~10s; a model (re)load resets state.
 		if (attempt < 20)
 			window.setTimeout(() => this._springToRest(attempt + 1), 500);
-		else
-			this._recoilPending = false;
 	}
 
 
@@ -879,8 +865,7 @@ export class VTSConnectionManager {
 			window.clearTimeout(this._recoilBackTimer);
 			this._recoilBackTimer = null;
 		}
-		this._recoilPending = false;
-		this._recoilRest = 0;
+		this._recoilNetOffset = 0;
 	}
 
 	/**
@@ -1211,22 +1196,32 @@ export class VTSConnectionManager {
 		this.isAuthenticated.value = false;
 
 		try {
-			// If we already have a token stored, try to authenticate with it first.
+			// 1) If we have a stored token, try it first.
 			if (this._authToken.value) {
-				this._log('info', 'Authenticating with stored VTS token…');
-				await this._send('AuthenticationRequest', {
+				this._log('info', 'Authenticating with stored VTS token...');
+				const res = await this._send('AuthenticationRequest', {
 					pluginName: this._pluginName,
 					pluginDeveloper: this._pluginDeveloper,
 					authenticationToken: this._authToken.value
 				});
-				this.isAuthenticated.value = true;
-				this._log('info', 'VTS authentication successful.');
-				this._onAuthenticated();
-				return;
+				// VTS answers a REJECTED auth with a normal response carrying
+				// authenticated:false (not an API error), so we MUST check it -
+				// otherwise we'd wrongly believe we're authed and every later
+				// request fails with id=8 'not authenticated'.
+				if (res && res.authenticated === true) {
+					this.isAuthenticated.value = true;
+					this._log('info', 'VTS authentication successful.');
+					this._onAuthenticated();
+					return;
+				}
+				// Stored token rejected (revoked / expired / VTS reinstalled):
+				// drop it and fall through to request a fresh one.
+				this._log('warn', `Stored VTS token rejected${res && res.reason ? ': ' + res.reason : ''}. Requesting a new one...`);
+				this._authToken.value = null;
 			}
 
-			// No token yet → ask user for permission and get new token.
-			this._log('info', 'Requesting new VTS authentication token…');
+			// 2) No (valid) token -> request a fresh one (prompts the user in VTS).
+			this._log('info', 'Requesting new VTS authentication token...');
 			const tokenRes = await this._send('AuthenticationTokenRequest', {
 				pluginName: this._pluginName,
 				pluginDeveloper: this._pluginDeveloper
@@ -1234,26 +1229,31 @@ export class VTSConnectionManager {
 
 			const token = tokenRes?.authenticationToken;
 			if (!token) {
-				this._log('error', 'VTS returned no authenticationToken.');
+				this._log('error', 'VTS returned no authenticationToken (was the plugin request denied in VTubeStudio?).');
 				return;
 			}
 
 			this._authToken.value = token;
-			this._log('info', 'Got new VTS token, authenticating session…');
+			this._log('info', 'Got new VTS token, authenticating session...');
 
-			await this._send('AuthenticationRequest', {
+			const res2 = await this._send('AuthenticationRequest', {
 				pluginName: this._pluginName,
 				pluginDeveloper: this._pluginDeveloper,
 				authenticationToken: token
 			});
 
-			this.isAuthenticated.value = true;
-			this._log('info', 'VTS authentication successful.');
-			this._onAuthenticated();
+			if (res2 && res2.authenticated === true) {
+				this.isAuthenticated.value = true;
+				this._log('info', 'VTS authentication successful.');
+				this._onAuthenticated();
+			} else {
+				this._log('error', `VTS authentication failed${res2 && res2.reason ? ': ' + res2.reason : ''}.`);
+				this._authToken.value = null;
+			}
 
 		} catch (err) {
 			this._log('error', `Authentication failed: ${err?.message || err}`);
-			// If auth fails because token is bad, clear it so we can re-request next time.
+			// clear a possibly-bad token so the next attempt re-requests one.
 			this._authToken.value = null;
 		}
 	}
