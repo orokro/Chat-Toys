@@ -811,8 +811,6 @@ export class VTSConnectionManager {
 		const ok = await this.moveModel({ relative: true, rotation: angle, timeInSeconds: outMs / 1000 });
 		if (ok)
 			this._recoilNetOffset = (this._recoilNetOffset || 0) + angle;
-		// TEMP diagnostic - remove once recoil is confirmed working
-		this._log(ok ? 'info' : 'warn', `recoil bonk: +${angle} net=${this._recoilNetOffset || 0} out=${ok ? 'sent' : 'FAILED'}`);
 
 		if (this._recoilBackTimer)
 			window.clearTimeout(this._recoilBackTimer);
