@@ -107,6 +107,13 @@ export default class Tosser extends Toy {
 			() => this.setupTracking(),
 			{ deep: true }
 		);
+
+		// republish the collider when the reticle placement settings change so
+		// dragging it on the settings page updates the live widget promptly.
+		this.stopReticleWatch = watch(
+			[this.settings.reticleX, this.settings.reticleY, this.settings.reticleRadius, this.settings.vtsFollowEnabled],
+			() => this.scheduleColliderPublish()
+		);
 	}
 
 
@@ -119,6 +126,8 @@ export default class Tosser extends Toy {
 		this.teardownTracking();
 		if (this.stopTrackWatch)
 			this.stopTrackWatch();
+		if (this.stopReticleWatch)
+			this.stopReticleWatch();
 		if (this.stopHitWatch)
 			this.stopHitWatch();
 	}
@@ -515,25 +524,24 @@ export default class Tosser extends Toy {
 
 		const mode = this.settings.trackingMode.value;
 
+		// Manual mode (and any auto mode before we have a source rect) is handled
+		// widget-side from the reticle settings against the canvas, so we publish
+		// "invalid" and let the widget fall back to that.
 		if (mode === 'manual' || !this._obsRect) {
-			this.autoCollider.value = { valid: false, x: 0, y: 0, width: 0, height: 0 };
+			this.autoCollider.value = { valid: false, cx: 0.5, cy: 0.35, r: 0.15 };
 			return;
 		}
 
 		const src = this._obsRect;
-
-		// In obsVts mode the actual collider is a sub-box within the source;
-		// in obs mode it's the whole source rect.
-		const collider = (mode === 'obsVts') ? this._computeVtsSubBox(src) : src;
+		const reticle = this._computeReticle(src, mode);
 
 		this.autoCollider.value = {
 			valid: true,
-			// the actual collider used for collisions
-			x: collider.x,
-			y: collider.y,
-			width: collider.width,
-			height: collider.height,
-			// the full source rect (for the solid reference debug box)
+			// reticle centre + radius, normalized to the OBS canvas
+			cx: reticle.cx,
+			cy: reticle.cy,
+			r: reticle.r,
+			// the full source rect (for the reference outline in the debug view)
 			source: { x: src.x, y: src.y, width: src.width, height: src.height },
 			mode,
 		};
@@ -541,36 +549,39 @@ export default class Tosser extends Toy {
 
 
 	/**
-	 * Compute the obsVts sub-box: an upper-center region of the source (since
-	 * VTS has no head-position API), optionally offset by the live VTS model
-	 * position. All inputs/outputs are normalized (0..1) canvas coordinates.
+	 * Compute the reticle centre + radius for an auto mode. The reticle sits at
+	 * (reticleX, reticleY) as fractions of the source rect (so it rides the
+	 * source as it moves/resizes in OBS), radius a fraction of the source width.
+	 * In obsVts mode with VTS-follow enabled, the live model position also
+	 * translates it: VTS positionX/Y are ~-1..1 across the capture and the
+	 * source rect IS that capture, so +/-1 maps to +/- half the source
+	 * dimension (the 0.5 factor); vtsFollowStrength is a fine-tune on top. All
+	 * outputs are normalized (0..1) canvas coords; values outside 0..1 are fine.
 	 *
 	 * @param {{x:number,y:number,width:number,height:number}} src
-	 * @returns {{x:number,y:number,width:number,height:number}}
+	 * @param {String} mode
+	 * @returns {{cx:number, cy:number, r:number}}
 	 */
-	_computeVtsSubBox(src) {
+	_computeReticle(src, mode) {
 
 		const s = this.settings;
-		const bw = src.width * (s.vtsBoxWidth.value ?? 0.5);
-		const bh = src.height * (s.vtsBoxHeight.value ?? 0.5);
+		const rx = s.reticleX.value ?? 0.5;
+		const ry = s.reticleY.value ?? 0.35;
+		const rr = s.reticleRadius.value ?? 0.15;
 
-		// base center: horizontally centered, vertically in the upper area
-		let cx = src.x + src.width * 0.5;
-		let cy = src.y + src.height * (s.vtsBoxAnchorY.value ?? 0.32);
+		let cx = src.x + src.width * rx;
+		let cy = src.y + src.height * ry;
 
-		// optional follow: shift by the live VTS model position. VTS's
-		// position units don't map to OBS pixels by any knowable constant
-		// (depends on VTS's internal render size + window-capture cropping),
-		// so `follow` is a user-calibrated sensitivity: box shift = position *
-		// source dimension * follow. Dial it against the dotted debug box.
-		const follow = s.vtsFollowStrength.value ?? 0;
-		const m = this.vts && this.vts.modelTransform;
-		if (m && m.written && follow > 0) {
-			cx += (m.positionX || 0) * src.width * follow;
-			cy += -(m.positionY || 0) * src.height * follow;
+		if (mode === 'obsVts' && s.vtsFollowEnabled.value === true) {
+			const follow = s.vtsFollowStrength.value ?? 1;
+			const m = this.vts && this.vts.modelTransform;
+			if (m && m.written) {
+				cx += (m.positionX || 0) * 0.5 * src.width * follow;
+				cy += -(m.positionY || 0) * 0.5 * src.height * follow;
+			}
 		}
 
-		return { x: cx - bw / 2, y: cy - bh / 2, width: bw, height: bh };
+		return { cx, cy, r: src.width * rr };
 	}
 
 
@@ -623,6 +634,23 @@ export default class Tosser extends Toy {
 			// When an auto mode is active, overlay the tracked collider on the
 			// widget so the user can see where hits register (testing aid).
 			showColliderDebug: ref(false),
+
+			// --- Reticle placement (new hit-target model) ---
+			// The hit target is a POINT + RADIUS the streamer positions on the
+			// settings page, replacing the old width/height/anchor box. Coords
+			// are fractions of the active FRAME: the whole canvas in manual
+			// mode, or the tracked OBS source rect in auto modes. They may fall
+			// outside 0..1 (e.g. reticleY < 0 to sit above the source), since
+			// placement is unclamped. radius is a fraction of frame width. The
+			// legacy vtsBox*/vtsFollowStrength below are kept for backward-compat
+			// with stored data but no longer drive collision.
+			reticleX: ref(0.5),
+			reticleY: ref(0.35),
+			reticleRadius: ref(0.15),
+
+			// opt-in: let the live VTS model position translate the reticle in
+			// obsVts mode (off by default; approximate, can't see viewport zoom).
+			vtsFollowEnabled: ref(false),
 
 			// obsVts sub-box: where the avatar's hittable area sits WITHIN the
 			// tracked source. All fractions of the source rect. Default = an

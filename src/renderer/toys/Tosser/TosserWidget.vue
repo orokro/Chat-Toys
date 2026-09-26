@@ -20,30 +20,13 @@
 				class="canvasContainer"
 		></div>
 
-		<!-- manual collider (draggable) — only when not auto-tracking -->
-		<div
-			v-if="trackingMode === 'manual'"
-			class="colliderImage"
-			:style="{
-				width: colliderBox.width + 'px',
-				height: colliderBox.height + 'px',
-				left: colliderBox.x + 'px',
-				top: colliderBox.y + 'px',
-			}"
-			@mousedown="handleStartColliderDrag"
-		>
+		<!-- manual collider removed: placement is now the reticle (settings page) -->
 
-			<div
-				class="resizeHandle"
-				@mousedown="handleStartColliderResize"
-			></div>
-		</div>
-
-		<!-- auto-tracking debug: solid = source rect, dotted = obsVts sub-box -->
-		<template v-if="trackingMode !== 'manual' && showColliderDebug && autoCollider.valid">
+		<!-- debug: green reticle (all modes) + source-rect outline (auto modes) -->
+		<template v-if="showColliderDebug">
 			<div
 				v-if="sourceBoxPx"
-				class="debugCollider"
+				class="debugSource"
 				:style="{
 					width: sourceBoxPx.width + 'px',
 					height: sourceBoxPx.height + 'px',
@@ -51,16 +34,23 @@
 					top: sourceBoxPx.y + 'px',
 				}"
 			></div>
-			<div
-				v-if="trackingMode === 'obsVts'"
-				class="debugSubCollider"
+			<svg
+				class="reticleSvg"
 				:style="{
-					width: effectiveCollider.width + 'px',
-					height: effectiveCollider.height + 'px',
-					left: effectiveCollider.x + 'px',
-					top: effectiveCollider.y + 'px',
+					left: (reticlePx.cx - reticlePx.r) + 'px',
+					top: (reticlePx.cy - reticlePx.r) + 'px',
+					width: (reticlePx.r * 2) + 'px',
+					height: (reticlePx.r * 2) + 'px',
 				}"
-			></div>
+				viewBox="0 0 100 100"
+			>
+				<circle cx="50" cy="50" r="46" fill="none" stroke="#39ff14" stroke-width="3" stroke-dasharray="6 5" />
+				<circle cx="50" cy="50" r="3" fill="#39ff14" />
+				<line x1="50" y1="6" x2="50" y2="28" stroke="#39ff14" stroke-width="3" />
+				<line x1="50" y1="72" x2="50" y2="94" stroke="#39ff14" stroke-width="3" />
+				<line x1="6" y1="50" x2="28" y2="50" stroke="#39ff14" stroke-width="3" />
+				<line x1="72" y1="50" x2="94" y2="50" stroke="#39ff14" stroke-width="3" />
+			</svg>
 		</template>
 
 	</div>
@@ -163,15 +153,38 @@ const showColliderDebug = computed(() => !!socketSettingsRef.value?.showCollider
 // box by the widget's own size; otherwise we use the manually-dragged box.
 const effectiveCollider = computed(() => {
 	const a = autoCollider.value;
+	const W = window.innerWidth;
+	const H = window.innerHeight;
+
+	// reticle centre + radius, normalized 0..1. Auto modes take it from the
+	// toy-published box (source / VTS relative); otherwise (manual, or an auto
+	// mode before the source rect is known) we place it from the reticle
+	// settings against the whole canvas.
+	let cx, cy, r;
 	if (trackingMode.value !== 'manual' && a && a.valid) {
-		return {
-			x: a.x * window.innerWidth,
-			y: a.y * window.innerHeight,
-			width: a.width * window.innerWidth,
-			height: a.height * window.innerHeight,
-		};
+		cx = a.cx; cy = a.cy; r = a.r;
+	} else {
+		const s = socketSettingsRef.value || {};
+		cx = (s.reticleX ?? 0.5);
+		cy = (s.reticleY ?? 0.35);
+		r  = (s.reticleRadius ?? 0.15);
 	}
-	return colliderBox.value;
+
+	// radius is a fraction of WIDTH so the hit target stays circular in px
+	const rPx = r * W;
+	return {
+		x: cx * W - rPx,
+		y: cy * H - rPx,
+		width: 2 * rPx,
+		height: 2 * rPx,
+	};
+});
+
+
+// reticle centre + radius in widget px, for the debug overlay
+const reticlePx = computed(() => {
+	const c = effectiveCollider.value;
+	return { cx: c.x + c.width / 2, cy: c.y + c.height / 2, r: c.width / 2 };
 });
 
 // the full source rect in widget px (solid reference debug box). Only in auto
@@ -252,12 +265,6 @@ watch(tossQueue, (newVal) => {
 
 	}// next i
 
-	// if we have a tosser system, and the toss queue is not empty
-	if(tosserSystem != null){
-
-		// toss the items
-		tosserSystem.tossItem(newVal);
-	}
 });
 
 
@@ -418,4 +425,16 @@ function doDrag(keys){
 
 	}// .tosserWidget
 	
+	.debugSource {
+		position: absolute;
+		border: 2px solid #39ff14;
+		box-sizing: border-box;
+		pointer-events: none;
+	}
+	.reticleSvg {
+		position: absolute;
+		pointer-events: none;
+		overflow: visible;
+	}
+
 </style>

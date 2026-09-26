@@ -62,9 +62,37 @@
 
 		<SectionHeader title="Collider Tracking"/>
 		<p>
-			By default you place the collider by hand on the Tosser browser source in OBS.
-			Connect OBS and/or VTubeStudio and the collider can follow your avatar automatically.
+			Objects are aimed at the green <strong>reticle</strong>. Position it over your
+			avatar's head/face and set its size below. Connect OBS and/or VTubeStudio to
+			have the reticle follow your avatar's tracked source automatically.
 		</p>
+
+		<div class="settingsBlock">
+			<p>Placement is relative to the <em>frame</em>: the whole canvas in manual mode, or your tracked OBS source in auto modes. Turn on the debug box to see it live in OBS.</p>
+
+			<SettingsInputRow type="float" :min="-0.5" :max="1.5" :step="0.01" v-model="reticleX">
+				<template #title>Reticle Horizontal</template>
+				<p>0 = left, 0.5 = centre, 1 = right. Values beyond 0-1 are allowed.</p>
+			</SettingsInputRow>
+			<SettingsInputRow type="float" :min="-0.5" :max="1.5" :step="0.01" v-model="reticleY">
+				<template #title>Reticle Vertical</template>
+				<p>0 = top, 0.5 = middle, 1 = bottom. Can go <strong>below 0</strong> to sit above the tracked source (e.g. a head above the box) - the range the old slider couldn't reach.</p>
+			</SettingsInputRow>
+			<SettingsInputRow type="float" :min="0.02" :max="0.6" :step="0.01" v-model="reticleRadius">
+				<template #title>Reticle Size</template>
+				<p>Radius of the hit target, as a fraction of the frame width.</p>
+			</SettingsInputRow>
+
+			<SettingsRow>
+				<button class="refreshBtn" @click="recenterReticle">Recenter reticle</button>
+				<p>Snap the reticle back to the centre (50%, 50%) if it gets lost off-screen.</p>
+			</SettingsRow>
+
+			<SettingsInputRow type="boolean" v-model="showColliderDebug">
+				<template #title>Show Collider Debug Box</template>
+				<p>Overlays the green reticle (and, in auto modes, the tracked source outline) on the Tosser widget so you can see where hits register. Turn off before going live.</p>
+			</SettingsInputRow>
+		</div>
 
 		<div class="settingsBlock">
 
@@ -119,33 +147,16 @@
 					</SettingsRow>
 				</template>
 
-				<!-- testing aid: overlay the tracked collider on the widget -->
-				<SettingsInputRow
-					v-if="trackingMode !== 'manual'"
-					type="boolean"
-					v-model="showColliderDebug"
-				>
-					<template #title>Show Collider Debug Box</template>
-					<p>Overlays the tracked collider on the Tosser widget so you can see where hits will register — no need to toss items. Turn off before going live. Solid box = source rect; dotted box = the VTS hit area.</p>
-				</SettingsInputRow>
 
-				<!-- obsVts: tune the hit sub-box within the source -->
+				<!-- obsVts: optionally let the live VTS model position move the reticle -->
 				<template v-if="trackingMode === 'obsVts'">
-					<SettingsInputRow type="float" :min="0.05" :max="1" :step="0.05" v-model="vtsBoxWidth">
-						<template #title>Hit Box Width</template>
-						<p>Width of the avatar hit area within the source (fraction of the source).</p>
+					<SettingsInputRow type="boolean" v-model="vtsFollowEnabled">
+						<template #title>Let VTubeStudio move the reticle</template>
+						<p>When on, the reticle shifts with your VTS model's live position. Approximate - VTubeStudio can't report viewport zoom, so re-check placement after zooming. Off by default.</p>
 					</SettingsInputRow>
-					<SettingsInputRow type="float" :min="0.05" :max="1" :step="0.05" v-model="vtsBoxHeight">
-						<template #title>Hit Box Height</template>
-						<p>Height of the avatar hit area within the source (fraction of the source).</p>
-					</SettingsInputRow>
-					<SettingsInputRow type="float" :min="0" :max="1" :step="0.02" v-model="vtsBoxAnchorY">
-						<template #title>Hit Box Vertical Position</template>
-						<p>0 = top, 0.5 = middle, 1 = bottom. Default is the upper area (head / chest), since VTubeStudio has no head-position API.</p>
-					</SettingsInputRow>
-					<SettingsInputRow type="float" :min="0" :max="4" :step="0.05" v-model="vtsFollowStrength">
-						<template #title>Follow VTS Model</template>
-						<p>How much the hit box shifts with your VTubeStudio model's position (0 = fixed in place). Crank this up until the dotted box tracks your model 1:1 horizontally — VTubeStudio's coordinate units don't map to OBS pixels by any fixed amount, so this needs calibrating by eye.</p>
+					<SettingsInputRow v-if="vtsFollowEnabled" type="float" :min="0" :max="4" :step="0.05" v-model="vtsFollowStrength">
+						<template #title>VTS Follow Strength</template>
+						<p>Fine-tune how far the reticle shifts with the model. Around 1 tracks closely; adjust by eye with the debug reticle on.</p>
 					</SettingsInputRow>
 				</template>
 
@@ -303,6 +314,10 @@ const {
 	trackingMode,
 	trackingObsSources,
 	showColliderDebug,
+	reticleX,
+	reticleY,
+	reticleRadius,
+	vtsFollowEnabled,
 	vtsBoxWidth,
 	vtsBoxHeight,
 	vtsBoxAnchorY,
@@ -348,6 +363,15 @@ function isMissing(name) {
  */
 function removeSource(name) {
 	trackingObsSources.value = (trackingObsSources.value || []).filter((n) => n !== name);
+}
+
+
+/**
+ * Snap the reticle back to the centre of the frame.
+ */
+function recenterReticle() {
+	reticleX.value = 0.5;
+	reticleY.value = 0.5;
 }
 
 /**

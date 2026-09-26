@@ -227,8 +227,8 @@ export class ThreeJSTosserSystem {
 			return;
 
 		const box = unref(this.colliderRef);
-		const width = box.width * 0.75;
-		const x = box.x + (box.width - width) / 2;
+		const width = box.width;
+		const x = box.x;
 		const y = box.y;
 		const centerX = x + width / 2 - this.canvasWidth / 2;
 		const centerY = this.canvasHeight / 2 - (y + box.height / 2);
@@ -385,8 +385,8 @@ export class ThreeJSTosserSystem {
 	async _tossObject(def) {
 
 		const box = unref(this.colliderRef);
-		const width = box.width * 0.75;
-		const x = box.x + (box.width - width) / 2;
+		const width = box.width;
+		const x = box.x;
 		const y = box.y;
 		const centerX = x + width / 2 - this.canvasWidth / 2;
 		const centerY = this.canvasHeight / 2 - (y + box.height / 2);
@@ -453,8 +453,8 @@ export class ThreeJSTosserSystem {
 
 
 		const box = unref(this.colliderRef);
-		const width = box.width * 0.75;
-		const x = box.x + (box.width - width) / 2;
+		const width = box.width;
+		const x = box.x;
 		const y = box.y;
 		const minX = x - this.canvasWidth / 2;
 		const maxX = x + width - this.canvasWidth / 2;
