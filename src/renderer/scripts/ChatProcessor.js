@@ -11,6 +11,7 @@ import { shallowRef } from 'vue';
 
 // our app
 import { ABMap } from './ABMap';
+import { sanitizeMessage, contentFilterEnabled } from './contentFilter';
 
 /**
  * Class to process incoming chat messages
@@ -108,6 +109,14 @@ export class ChatProcessor {
 		parsedMessages = [...parsedMessages, ...twitchMessages];
 		parsedMessages = [...parsedMessages, ...this._parseYouTubeMessages(data)];
 		parsedMessages = [...parsedMessages, ...this._parseSysLoggerMessages(data)];
+
+		// central content-hardening pass (defense-in-depth): strip dangerous
+		// invisibles, clamp lengths, and drop non-allow-listed emote/avatar
+		// URLs. Runs once here where every source converges, before anything
+		// downstream sees the messages. On by default; the dev Debug page can
+		// flip contentFilterEnabled off to A/B test against raw chat.
+		if (contentFilterEnabled.value)
+			parsedMessages = parsedMessages.map((m) => sanitizeMessage(m));
 
 		if(parsedMessages.length > 0 && this._showDebugLogs)
 			console.log('Parsed Messages: ', parsedMessages);

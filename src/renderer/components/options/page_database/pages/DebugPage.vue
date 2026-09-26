@@ -28,6 +28,25 @@
 			external triggers (Twitch redemptions, real chat messages, etc).
 		</p>
 
+		<SectionHeader title="Chat Content Filter" />
+
+		<p>
+			The content-hardening pass in <code>ChatProcessor</code>: strip
+			invisible / bidi characters, clamp absurd lengths, and allow-list
+			emote &amp; avatar image URLs. <strong>On by default in every
+			build</strong> - this switch is a dev-only escape hatch to A/B test
+			it against raw chat, and does not exist in production.
+		</p>
+
+		<div class="formRow">
+			<label>Content filter</label>
+			<div class="formField">
+				<input type="checkbox" v-model="contentFilterEnabled" />
+				<span>{{ contentFilterEnabled ? 'On (hardening active)' : 'Off (raw chat)' }}</span>
+			</div>
+		</div>
+
+
 		<SectionHeader title="Twitch Redeem Simulator" />
 
 		<p>
@@ -133,6 +152,9 @@ import { ref, computed, inject } from 'vue';
 // components
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
+
+// app-wide content filter flag (dev toggle only; on by default in builds)
+import { contentFilterEnabled } from '@scripts/contentFilter';
 
 // fetch the main app state context
 const ctApp = inject('ctApp');
