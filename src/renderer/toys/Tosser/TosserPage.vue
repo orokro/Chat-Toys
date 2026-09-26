@@ -70,14 +70,14 @@
 		<div class="settingsBlock">
 			<p>Placement is relative to the <em>frame</em>: the whole canvas in manual mode, or your tracked OBS source in auto modes. Turn on the debug box to see it live in OBS.</p>
 
-			<SettingsInputRow type="float" :min="-0.5" :max="1.5" :step="0.01" v-model="reticleX">
-				<template #title>Reticle Horizontal</template>
-				<p>0 = left, 0.5 = centre, 1 = right. Values beyond 0-1 are allowed.</p>
-			</SettingsInputRow>
-			<SettingsInputRow type="float" :min="-0.5" :max="1.5" :step="0.01" v-model="reticleY">
-				<template #title>Reticle Vertical</template>
-				<p>0 = top, 0.5 = middle, 1 = bottom. Can go <strong>below 0</strong> to sit above the tracked source (e.g. a head above the box) - the range the old slider couldn't reach.</p>
-			</SettingsInputRow>
+			<SettingsRow>
+				<h3>Reticle Position</h3>
+				<p>Drag the target onto your avatar's head/face. The dashed rectangle is your frame (canvas, or tracked source); drag <strong>outside</strong> it to sit above/below. Use Recenter if it gets lost.</p>
+				<div class="reticlePad" ref="reticlePadRef" @mousedown="onPadDown">
+					<div class="reticlePadFrame"></div>
+					<div class="reticlePadDot" :style="{ left: padDotLeft + '%', top: padDotTop + '%' }"></div>
+				</div>
+			</SettingsRow>
 			<SettingsInputRow type="float" :min="0.02" :max="0.6" :step="0.01" v-model="reticleRadius">
 				<template #title>Reticle Size</template>
 				<p>Radius of the hit target, as a fraction of the frame width.</p>
@@ -219,6 +219,17 @@
 			</SettingsInputRow>
 
 			<SettingsInputRow
+				type="float"
+				:min="2"
+				:max="15"
+				:step="1"
+				v-model="delugeCount"
+			>
+				<template #title>Barrage Count</template>
+				<p>How many objects the barrage command (<span class="cmd">!deluge</span> by default) throws at once.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
 				type="boolean"
 				v-model="allEmojisToBeTossed"
 			>
@@ -277,7 +288,7 @@
 <script setup>
 
 // vue
-import { computed, inject } from 'vue';
+import { ref, computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 
 // lib/misc
@@ -310,6 +321,7 @@ const {
 	randomTossMode,
 	tossSpeed,
 	soundVolume,
+	delugeCount,
 	allEmojisToBeTossed,
 	trackingMode,
 	trackingObsSources,
@@ -372,6 +384,50 @@ function removeSource(name) {
 function recenterReticle() {
 	reticleX.value = 0.5;
 	reticleY.value = 0.5;
+}
+
+
+// --- Reticle trackpad ---
+// The pad maps to a range slightly wider than the frame so the reticle can
+// be placed above/below it. The pad is drawn 16:9 (canvas aspect) so a drag
+// feels proportional on both axes rather than quicker on the shorter one.
+const reticlePadRef = ref(null);
+const PAD_MIN = -0.5;
+const PAD_MAX = 1.5;
+const PAD_SPAN = PAD_MAX - PAD_MIN;
+
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+const padDotLeft = computed(() => clamp01((reticleX.value - PAD_MIN) / PAD_SPAN) * 100);
+const padDotTop = computed(() => clamp01((reticleY.value - PAD_MIN) / PAD_SPAN) * 100);
+
+/**
+ * Set the reticle from a pointer event's position over the pad.
+ * @param {MouseEvent} e
+ */
+function padSet(e) {
+	const el = reticlePadRef.value;
+	if (!el) return;
+	const r = el.getBoundingClientRect();
+	const fx = clamp01((e.clientX - r.left) / r.width);
+	const fy = clamp01((e.clientY - r.top) / r.height);
+	reticleX.value = +(PAD_MIN + fx * PAD_SPAN).toFixed(3);
+	reticleY.value = +(PAD_MIN + fy * PAD_SPAN).toFixed(3);
+}
+
+/**
+ * Begin dragging the reticle on the pad; track until mouse-up.
+ * @param {MouseEvent} e
+ */
+function onPadDown(e) {
+	e.preventDefault();
+	padSet(e);
+	const move = (ev) => padSet(ev);
+	const up = () => {
+		window.removeEventListener('mousemove', move);
+		window.removeEventListener('mouseup', up);
+	};
+	window.addEventListener('mousemove', move);
+	window.addEventListener('mouseup', up);
 }
 
 /**
@@ -471,6 +527,35 @@ const toss_command = computed(() => {
 				&:hover { background: #e3556a; color: white; }
 			}
 		}
+	}
+
+	.reticlePad {
+		position: relative;
+		width: 280px;
+		max-width: 100%;
+		aspect-ratio: 16 / 9;
+		background: #1b1b1b;
+		border: 1px solid #444;
+		border-radius: 6px;
+		cursor: crosshair;
+		user-select: none;
+		margin: 8px 0;
+	}
+	.reticlePadFrame {
+		position: absolute;
+		left: 25%; top: 25%; width: 50%; height: 50%;
+		border: 1px dashed rgba(57, 255, 20, 0.5);
+		box-sizing: border-box;
+		pointer-events: none;
+	}
+	.reticlePadDot {
+		position: absolute;
+		width: 16px; height: 16px;
+		margin: -8px 0 0 -8px;
+		border: 2px solid #39ff14;
+		border-radius: 50%;
+		background: rgba(57, 255, 20, 0.25);
+		pointer-events: none;
 	}
 
 </style>

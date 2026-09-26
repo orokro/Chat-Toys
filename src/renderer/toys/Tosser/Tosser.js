@@ -112,8 +112,25 @@ export default class Tosser extends Toy {
 		// dragging it on the settings page updates the live widget promptly.
 		this.stopReticleWatch = watch(
 			[this.settings.reticleX, this.settings.reticleY, this.settings.reticleRadius, this.settings.vtsFollowEnabled],
-			() => this.scheduleColliderPublish()
+			() => {
+				this.scheduleColliderPublish();
+				// save edits into the live VTS model's slot (silent per-model)
+				if (!this._applyingModelPlacement && this._currentReticleModelID)
+					this._saveReticleForModel(this._currentReticleModelID);
+			}
 		);
+
+		// --- silent per-model reticle placement ---
+		// Remember reticle placement per VTS model so different avatars keep
+		// their own target. No UI: first sight of a model snapshots the current
+		// placement into its slot; switching models restores that slot; edits
+		// save back to it (above).
+		this._currentReticleModelID = null;
+		this._applyingModelPlacement = false;
+		this._onReticleModelLoaded = (info) => this._applyReticleForModel(info);
+		this.vts.onModelLoaded(this._onReticleModelLoaded);
+		if (this.vts.currentModel && this.vts.currentModel.value)
+			this._applyReticleForModel(this.vts.currentModel.value);
 	}
 
 
@@ -128,6 +145,8 @@ export default class Tosser extends Toy {
 			this.stopTrackWatch();
 		if (this.stopReticleWatch)
 			this.stopReticleWatch();
+		if (this.vts && this._onReticleModelLoaded)
+			this.vts.offModelLoaded(this._onReticleModelLoaded);
 		if (this.stopHitWatch)
 			this.stopHitWatch();
 	}
@@ -619,6 +638,9 @@ export default class Tosser extends Toy {
 			allEmojisToBeTossed: ref(true),
 			soundVolume: ref(1),
 
+			// how many objects a single !deluge / barrage throws (streamer-set).
+			delugeCount: ref(5),
+
 			// Collider tracking (VTS/OBS-aware). 'manual' = today's behavior
 			// (drag the silhouette in OBS). 'obs' = follow a chosen OBS source's
 			// rectangle. 'obsVts' = OBS source rect composed with the live VTS
@@ -647,6 +669,9 @@ export default class Tosser extends Toy {
 			reticleX: ref(0.5),
 			reticleY: ref(0.35),
 			reticleRadius: ref(0.15),
+
+			// silent per-VTS-model reticle placement: { modelID: {x,y,r} }.
+			reticlePlacementByModel: ref({}),
 
 			// opt-in: let the live VTS model position translate the reticle in
 			// obsVts mode (off by default; approximate, can't see viewport zoom).
@@ -692,6 +717,15 @@ export default class Tosser extends Toy {
 				userDesc: 'Toss at item at a user! (Optionally specify the item)',
 				tipText: 'Throw something at the streamer with {cmd}, or at another chatter: {cmd} @user',
 			},
+			{
+				command: 'deluge',
+				params: [
+					{ name: 'item', type: 'string', optional: true, desc: 'Which item to barrage (optional)' },
+				],
+				description: 'Toss a whole barrage of items at once!',
+				userDesc: 'Unleash a barrage! Optionally specify the item, or include emojis.',
+				tipText: 'Rain a barrage with {cmd}, or a specific item: {cmd} tomato',
+			},
 		]);
 	}
 	
@@ -711,6 +745,13 @@ export default class Tosser extends Toy {
 		if(this.settings.tosserAssets.value.length === 0) {
 			this.chatToysApp.log.error('Toss command failed, no tossable items found');
 			handshake.reject();
+			return;
+		}
+
+		// !deluge / barrage: toss several at once, staggered
+		if (commandSlug === 'deluge') {
+			this._handleDeluge(msg, params);
+			handshake.accept();
 			return;
 		}
 
@@ -794,6 +835,101 @@ export default class Tosser extends Toy {
 
 		// use regular method
 		this.tossItem(msg, slug);
+	}
+
+
+	/**
+	 * Handle a !deluge / barrage: toss `delugeCount` objects, staggered by a
+	 * small random gap so they don't fire as one wall (and each lands its own
+	 * recoil). Source is resolved once: emojis in the message (random pick
+	 * each), else a named item, else random/unspecified per the usual rules.
+	 *
+	 * @param {Object} msg - the chat message
+	 * @param {Object} params - command params (optional `item`)
+	 * @returns {void}
+	 */
+	_handleDeluge(msg, params) {
+
+		const count = Math.max(1, Math.min(30, Math.round(this.settings.delugeCount.value || 5)));
+
+		// resolve the source ONCE
+		const emojis = (this.settings.allEmojisToBeTossed.value === true)
+			? this.extractEmojisFromMsg(msg)
+			: [];
+		const named = (params && params.item !== undefined)
+			? this.settings.tosserAssets.value.find(it => it.slug === String(params.item).toLowerCase())
+			: undefined;
+
+		let delay = 0;
+		for (let i = 0; i < count; i++) {
+			delay += 60 + Math.random() * 140; // ~60-200ms between each
+			window.setElectronTimeout(() => {
+				if (emojis.length > 0) {
+					const e = emojis[Math.floor(Math.random() * emojis.length)];
+					const s = (e.kind === 'image') ? e.url : e.char;
+					this.tossItem(msg, s, true);
+				} else if (named !== undefined) {
+					this.tossItem(msg, named.slug);
+				} else {
+					this.tossUnspecifiedItem(msg);
+				}
+			}, delay);
+		}
+	}
+
+
+	/**
+	 * Apply the saved reticle placement for a (newly) loaded VTS model, or seed
+	 * that model's slot from the current placement the first time it's seen.
+	 * Silent - no UI. Guarded so applying doesn't recursively re-save.
+	 *
+	 * @param {{modelID?:String, loaded?:Boolean}} info
+	 * @returns {void}
+	 */
+	_applyReticleForModel(info) {
+
+		const id = (info && info.loaded && info.modelID) ? info.modelID : null;
+		if (id === this._currentReticleModelID)
+			return;
+		this._currentReticleModelID = id;
+		if (!id)
+			return;
+
+		const map = this.settings.reticlePlacementByModel.value || {};
+		const saved = map[id];
+
+		this._applyingModelPlacement = true;
+		if (saved && typeof saved.x === 'number') {
+			this.settings.reticleX.value = saved.x;
+			this.settings.reticleY.value = saved.y;
+			this.settings.reticleRadius.value = saved.r;
+		} else {
+			// first time we've seen this model - snapshot current placement
+			this._saveReticleForModel(id);
+		}
+		this._applyingModelPlacement = false;
+
+		this.scheduleColliderPublish();
+	}
+
+
+	/**
+	 * Persist the current reticle placement into a VTS model's slot.
+	 *
+	 * @param {String} id - VTS modelID
+	 * @returns {void}
+	 */
+	_saveReticleForModel(id) {
+
+		if (!id)
+			return;
+		const map = { ...(this.settings.reticlePlacementByModel.value || {}) };
+		map[id] = {
+			x: this.settings.reticleX.value,
+			y: this.settings.reticleY.value,
+			r: this.settings.reticleRadius.value,
+		};
+		this.settings.reticlePlacementByModel.value = map;
 	}
 
 
