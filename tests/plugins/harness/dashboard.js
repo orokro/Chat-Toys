@@ -4,7 +4,7 @@
 // with the real SDK, and the real Omni settings page. pluginDataDB is a small
 // in-memory stand-in (the SQLite store has its own node tests).
 import { ref, h, createApp, nextTick } from 'vue';
-import { setGlobalSocketRefPort } from '@scripts/sockets';
+import { setGlobalSocketRefPort, socketShallowRefReadOnly } from '@scripts/sockets';
 import { chromeShallowRef } from '@scripts/chromeRef';
 import { CommandProcessor } from '@scripts/CommandProcessor';
 import { OmniRegistry } from '@scripts/OmniRegistry';
@@ -94,14 +94,20 @@ createApp({ render: () => h('div', hosts) }).provide('ctApp', app).mount('#app')
 createApp({ render: () => h(OmniPage) }).provide('ctApp', app).mount('#omniPage');
 
 let cmdSeq = 0;
+const stateRefs = new Map();
 window.__t = {
+	// read a plugin CT.state key (what its headless published)
+	state(key) {
+		if (!stateRefs.has(key)) stateRefs.set(key, socketShallowRefReadOnly(`plugin:${pluginSlug}:state:${key}`, null));
+		return JSON.parse(JSON.stringify(stateRefs.get(key).value));
+	},
 	app, toys, errs, calls, Raffle, logs, balances,
 	setPoints(id, n) { balances.set(id, n); },
 	// run a chat command through the plugin the way CommandProcessor does;
 	// resolves with { accepted, reason }
-	command(key, userId, params = {}, name = userId) {
+	command(key, userId, params = {}, name = userId, avatar = null) {
 		return new Promise((resolve) => {
-			const msg = { id: 'm' + (++cmdSeq), authorUniqueID: userId, author: name, authorPFPUrl: null, messageText: '!' + key };
+			const msg = { id: 'm' + (++cmdSeq), authorUniqueID: userId, author: name, authorPFPUrl: avatar, messageText: '!' + key };
 			toys[pluginSlug].onCommand(`${pluginSlug}__${key}`, msg, { points: balances.get(userId) || 0 }, params, {
 				accept: () => resolve({ accepted: true }),
 				reject: (reason) => { logs.push(['err', String(reason)]); resolve({ accepted: false, reason }); },

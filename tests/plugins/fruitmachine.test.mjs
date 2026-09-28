@@ -61,6 +61,7 @@ test('the reel draw follows the weights', { skip }, () => {
 test('bet parsing', { skip }, () => {
 	const lim = { minBet: 10, maxBet: 5000, balance: 1200 };
 	assert.deepEqual(S.parseBet('250', lim), { amount: 250 });
+	assert.deepEqual(S.parseBet('250 please!', lim), { amount: 250 }, 'first word only');
 	assert.deepEqual(S.parseBet(' 1,000 ', lim), { amount: 1000 });
 	assert.deepEqual(S.parseBet('1.2k', lim), { amount: 1200 });
 	assert.deepEqual(S.parseBet('MIN', lim), { amount: 10 });
