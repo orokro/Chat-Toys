@@ -18,7 +18,12 @@
 
 			<!-- User Avatar (behind) -->
 			<div class="user-avatar-circle">
-				<img :src="pfpUrl || defaultPfp" class="avatar-img" />
+				<img
+					:src="avatarSrc"
+					referrerpolicy="no-referrer"
+					class="avatar-img"
+					@error="onAvatarError"
+				/>
 			</div>
 
 		</div>
@@ -27,7 +32,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+
+// same avatar cache the chat widget uses (IndexedDB, per-origin - so avatars
+// chat has already shown are reused here instead of re-fetched)
+import { getPfpSource } from '../Chat/sub_components/pfpCache';
 
 const props = defineProps({
 	username: String,
@@ -41,6 +50,47 @@ const props = defineProps({
 });
 
 const defaultPfp = 'assets/icons/chat.png';
+
+
+/*
+	Avatar loading. This used to be a bare <img :src="pfpUrl">, which broke
+	for some (mostly YouTube) users while the same avatar showed fine in chat:
+	  - it sent the localhost widget page as the Referer, which YouTube's avatar
+	    CDN sometimes rejects (every other remote image in the app already uses
+	    referrerpolicy="no-referrer");
+	  - it always hit the network, while chat usually shows a cached copy;
+	  - the default avatar only covered an EMPTY url, not one that failed.
+	Now: no referrer, reuse chat's cache, and fall back to the default on error.
+*/
+const avatarSrc = ref(props.pfpUrl || defaultPfp);
+let avatarLoadId = 0;
+
+async function loadAvatar() {
+	const url = props.pfpUrl;
+	const loadId = ++avatarLoadId;
+
+	if (!url) {
+		avatarSrc.value = defaultPfp;
+		return;
+	}
+
+	// show the raw URL right away, then swap to the cached copy if there is one
+	avatarSrc.value = url;
+	try {
+		const result = await getPfpSource(url, { cacheEnabled: true });
+		if (loadId === avatarLoadId && result.src)
+			avatarSrc.value = result.src;
+	} catch (_) {
+		/* keep the raw URL */
+	}
+}
+
+function onAvatarError() {
+	if (avatarSrc.value !== defaultPfp)
+		avatarSrc.value = defaultPfp;
+}
+
+watch(() => props.pfpUrl, loadAvatar, { immediate: true });
 
 const progress = computed(() => {
 	const p = (props.points / props.raceLength) * 100;
