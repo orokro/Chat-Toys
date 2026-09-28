@@ -52,14 +52,14 @@ export async function ensurePluginConsent({ slug, name, icon, perms, isUpdate })
  * then enable + restart it. Returns true if it ended up enabled.
  *
  * @param {Object} ctApp
- * @param {Object} opts - { slug, zip, zipFilename, name, icon, permissions, isUpdate, navigate }
+ * @param {Object} opts - { slug, zip, zipFilename, zipHash, name, icon, permissions, isUpdate, navigate }
  * @returns {Promise<boolean>}
  */
 export async function installAndActivate(ctApp, opts) {
 
-	const { slug, zip, zipFilename, name, icon, permissions, isUpdate, navigate = true } = opts;
+	const { slug, zip, zipFilename, zipHash, name, icon, permissions, isUpdate, navigate = true } = opts;
 
-	const manifests = await window.electronAPI.invoke('install-remote-plugin', { url: zip, filename: zipFilename });
+	const manifests = await window.electronAPI.invoke('install-remote-plugin', { url: zip, filename: zipFilename, zipHash });
 
 	const manifest = (manifests || []).find((m) => m && m.slug === slug);
 	if (manifest)

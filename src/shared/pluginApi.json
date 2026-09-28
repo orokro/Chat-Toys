@@ -1,0 +1,7 @@
+{
+	"pluginApiVersion": 2,
+	"history": {
+		"1": "Chat Toys 0.5.x: the original plugin API (points, commands, chat, state, OBS live, settings schema)",
+		"2": "session:read + CT.session, CT.visibility / CT.onVisibility, CT.apiVersion, multi-line 'text' settings, proxied avatar URLs"
+	}
+}

@@ -8,9 +8,11 @@
 	a grid of cards that open an in-modal detail page, and an action button
 	that adds the item then routes the app to its page.
 
-	Remote-ready: items carry a `source` ('builtin' | 'installed' | 'remote')
-	and the action button already branches to Get/Update; the remote index +
-	download wiring lands with the server.
+	Items carry a `source` ('builtin' | 'installed' | 'remote'); the action
+	button branches to Add / Get / Update. Remote entries come from main,
+	already resolved to the newest version this app can run. A plugin with no
+	runnable version (built for a newer plugin API) is still listed, greyed
+	out, with "Needs a newer Chat Toys" instead of a button.
 -->
 <template>
 
@@ -61,6 +63,7 @@
 						v-for="item in filteredItems"
 						:key="item.slug"
 						class="card"
+						:class="{ incompatible: !item.compatible }"
 						@click="openDetail(item)"
 					>
 						<!-- tinted top band: icon + class badge (top-right) -->
@@ -74,8 +77,10 @@
 							<div class="cardDesc">{{ item.desc }}</div>
 
 							<div class="cardFooter">
-								<span v-if="item.source === 'remote'" class="badge remote">Remote</span>
+								<span v-if="item.source === 'remote' && item.compatible" class="badge remote">Remote</span>
+								<span v-if="!item.compatible" class="needsApp" title="Built for a newer version of Chat Toys">Needs a newer Chat Toys</span>
 								<button
+									v-else
 									class="actionBtn"
 									:class="actionClass(item)"
 									@click.stop="onAction(item)"
@@ -110,11 +115,27 @@
 								<span v-if="selected.version" class="muted">v{{ selected.version }}</span>
 							</div>
 							<button
+								v-if="selected.compatible"
 								class="actionBtn big"
 								:class="actionClass(selected)"
 								@click="onAction(selected)"
 							>{{ actionLabel(selected) }}</button>
+							<button v-else class="actionBtn big disabled" disabled>Needs a newer Chat Toys</button>
 						</div>
+					</div>
+
+					<div v-if="!selected.compatible" class="compatNote">
+						<span class="material-icons">info</span>
+						<span>
+							This plugin was made for a newer version of Chat Toys.
+							Update Chat Toys to install it.
+						</span>
+					</div>
+					<div v-else-if="selected.newerNeedsApp" class="compatNote subtle">
+						<span class="material-icons">info</span>
+						<span>
+							v{{ selected.newerNeedsApp }} is out, but needs a newer version of Chat Toys.
+						</span>
 					</div>
 
 					<div v-if="selected.thumbnails && selected.thumbnails.length" class="thumbs">
@@ -271,19 +292,26 @@ const items = computed(() => {
 			added: enabled.includes(c.slug),
 			hidden: !!c.hidden,
 			updateAvailable: false,
+			compatible: true,        // anything installed + registered can run here
+			newerNeedsApp: null,     // a newer remote version this app can't run
 		});
 	}
 
 	// remote: annotate updates on installed plugins, add remote-only entries
 	for (const r of remoteItems.value) {
 		const existing = map.get(r.slug);
+		const compatible = r.compatible !== false;
 		if (existing && existing.source !== 'builtin') {
-			if (semverGt(r.version, existing.version)) {
+			// r.version is the newest version this app can run
+			if (compatible && r.zip && semverGt(r.version, existing.version)) {
 				existing.updateAvailable = true;
 				existing.zip = r.zip;
 				existing.zipFilename = basename(r.zip);
+				existing.zipHash = r.zipHash || null;
 				existing.remoteVersion = r.version;
 			}
+			if (r.newestVersion && semverGt(r.newestVersion, existing.version) && semverGt(r.newestVersion, compatible ? r.version : '0'))
+				existing.newerNeedsApp = r.newestVersion;
 		} else if (!existing) {
 			map.set(r.slug, {
 				slug: r.slug,
@@ -301,8 +329,11 @@ const items = computed(() => {
 				source: 'remote',
 				added: enabled.includes(r.slug),
 				updateAvailable: false,
+				compatible,
+				newerNeedsApp: r.newerNeedsAppUpdate ? r.newestVersion : null,
 				zip: r.zip,
 				zipFilename: basename(r.zip),
+				zipHash: r.zipHash || null,
 			});
 		}
 	}
@@ -319,7 +350,7 @@ const filteredItems = computed(() => {
 	const raw = search.value.trim().toLowerCase();
 	const revealHidden = raw.includes('legacy');
 	const q = revealHidden ? raw.replace(/legacy/g, '').trim() : raw;
-	return items.value.filter((it) => {
+	const list = items.value.filter((it) => {
 		if (it.hidden && !revealHidden) return false;
 		if (classFilter.value !== 'all' && it.toyClass !== classFilter.value) return false;
 		if (statusFilter.value === 'added' && !it.added) return false;
@@ -330,6 +361,8 @@ const filteredItems = computed(() => {
 		}
 		return true;
 	});
+	// things you can't install yet go last (stable sort keeps the rest in order)
+	return list.sort((a, b) => Number(!a.compatible) - Number(!b.compatible));
 });
 
 
@@ -403,6 +436,12 @@ async function importZip() {
 		if (!r || r.canceled)
 			return;
 
+		// refused by main (not a plugin, or needs a newer Chat Toys)
+		if (r.error) {
+			alert(r.error);
+			return;
+		}
+
 		if (r.slug) {
 			const manifest = (r.manifests || []).find((m) => m && m.slug === r.slug);
 			if (manifest)
@@ -468,7 +507,7 @@ function actionClass(it) {
  */
 async function onAction(it) {
 
-	if (busy[it.slug])
+	if (busy[it.slug] || !it.compatible)
 		return;
 
 	if (it.updateAvailable) {
@@ -516,6 +555,7 @@ async function getRemote(it) {
 		const manifests = await window.electronAPI.invoke('install-remote-plugin', {
 			url: it.zip,
 			filename: it.zipFilename,
+			zipHash: it.zipHash || null,
 		});
 
 		// register/replace the class with the just-installed version
@@ -542,6 +582,9 @@ async function getRemote(it) {
 
 	} catch (e) {
 		console.error('[StoreModal] install failed:', e);
+		// ipc errors arrive as "Error invoking remote method '...': Error: <msg>"
+		const msg = String((e && e.message) || e).replace(/^.*Error: /, '');
+		alert(`Couldn't install ${it.name}: ${msg}`);
 	} finally {
 		busy[it.slug] = false;
 	}
@@ -744,6 +787,50 @@ function onIconError(e) {
 	}
 	.actionBtn.get { background: #2a7ae2; }
 	.actionBtn.big { padding: 9px 26px; font-size: 15px; margin: 8px 0 0; }
+	.actionBtn.disabled,
+	.actionBtn:disabled {
+		background: #d6d6d6;
+		color: #666;
+		cursor: default;
+		filter: none;
+	}
+
+	// built for a newer Chat Toys: listed so people know it exists, not installable
+	.card.incompatible {
+		.cardTop { filter: grayscale(1); opacity: 0.6; }
+		.cardName, .cardDesc { opacity: 0.55; }
+	}
+	.card.incompatible:hover {
+		box-shadow: none;
+		transform: none;
+	}
+	.needsApp {
+		margin-left: auto;
+		font-size: 11.5px;
+		font-weight: 700;
+		color: #777;
+		background: #eeeeee;
+		border-radius: 999px;
+		padding: 5px 10px;
+		white-space: nowrap;
+	}
+	.compatNote {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-top: 16px;
+		padding: 10px 14px;
+		background: #fff4e5;
+		border: 1px solid #f0a33a;
+		border-radius: 8px;
+		font-size: 14px;
+		.material-icons { color: #d9822b; }
+	}
+	.compatNote.subtle {
+		background: rgba(0, 0, 0, 0.04);
+		border-color: rgba(0, 0, 0, 0.12);
+		.material-icons { color: #888; }
+	}
 
 	.emptyState {
 		grid-column: 1 / -1;

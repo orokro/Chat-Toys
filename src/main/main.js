@@ -250,8 +250,8 @@ app.whenReady().then(() => {
 		return pluginMgr.getRemoteIndex(!!(args && args.force));
 	});
 	ipcMain.handle('install-remote-plugin', async (event, args) => {
-		const { url, filename } = args || {};
-		return pluginMgr.installRemotePlugin(url, filename);
+		const { url, filename, zipHash } = args || {};
+		return pluginMgr.installRemotePlugin(url, filename, zipHash);
 	});
 	// import a local .zip from disk into the plugins folder (private plugins)
 	ipcMain.handle('import-plugin-zip', async () => {

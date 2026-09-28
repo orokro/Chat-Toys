@@ -27,6 +27,11 @@
 	const PORT_HANDSHAKE = 'CT_PORT_HANDSHAKE';
 	const KIND = { HELLO: 'hello', INIT: 'init', REQ: 'req', RES: 'res', EVT: 'evt', ACK: 'ack', LOG: 'log' };
 
+	// the plugin API level this app supports. The main process substitutes the
+	// token when it serves this file (src/shared/pluginApi.json); left as-is it
+	// reads as NaN and falls back to 1.
+	const API_VERSION = Number('__CT_PLUGIN_API_VERSION__') || 1;
+
 	// --- internal state -------------------------------------------------
 	let port = null;                 // private MessagePort, handed over at load
 	let nextId = 1;                  // request/response correlation
@@ -162,6 +167,15 @@
 
 		/** @type {?Object} static info: { slug, id, version, class, widget:{slug,key,box} } */
 		info: null,
+
+		/**
+		 * The plugin API level of the app running this widget (an integer).
+		 * The store only installs plugins whose manifest "apiVersion" is <= this,
+		 * so a plugin can rely on everything up to its own apiVersion. Compare
+		 * against it to use newer features optionally.
+		 * @type {number}
+		 */
+		apiVersion: API_VERSION,
 
 		/**
 		 * Resolves once the host handshake completes. The resolved value

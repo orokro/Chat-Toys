@@ -25,13 +25,18 @@
 */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const extract = require('extract-zip');
+const { PLUGIN_API_VERSION, manifestApiVersion, isApiCompatible, semverCmp, selectRemotePlugins } = require('./pluginCompat');
 
 // Where the shop fetches its remote catalog from. Override via the
-// PluginManager options if you host it elsewhere.
+// PluginManager options if you host it elsewhere. This is the legacy flat
+// index (API-1 plugins only); the versioned index.v2.json next to it is tried
+// first. See pluginCompat.js.
 const DEFAULT_REMOTE_INDEX_URL = 'https://reallyserious.business/chattoys/plugins/index.json';
+const REMOTE_INDEX_V2_NAME = 'index.v2.json';
 const REMOTE_CACHE_TTL_MS = 5 * 60 * 1000;
 
 
@@ -54,6 +59,10 @@ class PluginManager {
 
 		// slug -> { manifest, root } where root is the served directory
 		this.installed = new Map();
+
+		// slug -> { version, apiVersion } for installed plugins this app is too
+		// old to run (skipped by scan; kept for logs / diagnostics)
+		this.incompatible = new Map();
 
 		// the SDK source, read once and served raw to iframes
 		this._sdkSource = this._loadSdkSource();
@@ -100,6 +109,7 @@ class PluginManager {
 		this.log(`[PluginManager] scanning ${this.pluginsDir}`);
 
 		const next = new Map();
+		const incompatible = new Map();
 
 		let entries = [];
 		try { entries = fs.readdirSync(this.pluginsDir, { withFileTypes: true }); }
@@ -128,6 +138,14 @@ class PluginManager {
 				if (!manifest)
 					continue;
 
+				// built for a newer plugin API than this app has: don't load it
+				// (an older zip of the same plugin, if present, still can be)
+				if (!isApiCompatible(manifest)) {
+					this.log(`[PluginManager] "${manifest.slug}" v${manifest.version} needs plugin API ${manifestApiVersion(manifest)} (this app has ${PLUGIN_API_VERSION}); skipping`);
+					incompatible.set(manifest.slug, { version: manifest.version, apiVersion: manifestApiVersion(manifest) });
+					continue;
+				}
+
 				// duplicate slug (e.g. an old + new versioned zip both present):
 				// keep the HIGHEST version deterministically.
 				const prev = next.get(manifest.slug);
@@ -145,6 +163,7 @@ class PluginManager {
 		}
 
 		this.installed = next;
+		this.incompatible = incompatible;
 
 		// GC: drop extracted dirs that no longer have a backing zip
 		this._gcExtracted();
@@ -276,10 +295,13 @@ class PluginManager {
 
 
 	/**
-	 * Fetch the remote shop catalog. Relative icon/thumbnail/zip paths in the
-	 * index are resolved to absolute URLs against the index URL, so the client
-	 * never configures a base URL. Short-lived in-memory cache. Network errors
-	 * resolve to an empty list (shop just shows local items).
+	 * Fetch the remote shop catalog: one entry per plugin, at the newest
+	 * version this app can run (or flagged compatible:false when there is
+	 * none; see pluginCompat.selectRemotePlugins). Tries the versioned
+	 * index.v2.json first and falls back to the legacy index.json, so a server
+	 * that hasn't been regenerated yet still works. Relative paths resolve
+	 * against the index URL. Short-lived in-memory cache. Network errors
+	 * resolve to an empty list (the shop just shows local items).
 	 *
 	 * @param {boolean} [force]
 	 * @returns {Promise<Array<Object>>}
@@ -289,62 +311,76 @@ class PluginManager {
 		if (!force && this._remoteCache && (Date.now() - this._remoteCache.at) < REMOTE_CACHE_TTL_MS)
 			return this._remoteCache.data;
 
-		try {
-			const res = await fetch(this.remoteIndexUrl);
+		const fetchJson = async (url) => {
+			const res = await fetch(url);
 			if (!res.ok) throw new Error(`status ${res.status}`);
-			const data = await res.json();
-			const base = this.remoteIndexUrl;
+			return res.json();
+		};
 
-			const abs = (rel) => (rel ? new URL(rel, base).toString() : null);
-			const plugins = (data.plugins || []).map((p) => ({
-				...p,
-				icon: abs(p.icon),
-				thumbnails: (p.thumbnails || []).map(abs),
-				zip: abs(p.zip),
-			}));
+		const urls = [new URL(REMOTE_INDEX_V2_NAME, this.remoteIndexUrl).toString(), this.remoteIndexUrl];
+		let lastErr = null;
 
-			this._remoteCache = { at: Date.now(), data: plugins };
-			return plugins;
-
-		} catch (e) {
-			this.log(`[PluginManager] remote index fetch failed: ${e.message}`);
-			return [];
+		for (const url of urls) {
+			try {
+				const data = await fetchJson(url);
+				const plugins = selectRemotePlugins(data, { baseUrl: url, apiVersion: PLUGIN_API_VERSION });
+				this._remoteCache = { at: Date.now(), data: plugins };
+				return plugins;
+			} catch (e) {
+				lastErr = e;
+				this.log(`[PluginManager] remote index ${url} failed: ${e.message}`);
+			}
 		}
+
+		this.log(`[PluginManager] no remote index available (${lastErr && lastErr.message})`);
+		return [];
 	}
 
 
 	/**
 	 * Download a remote plugin zip into the plugins dir (the canonical install
-	 * surface) and rescan so it becomes "installed".
+	 * surface) and rescan so it becomes "installed". The zip is checked BEFORE
+	 * it goes into plugins/: its hash (when the index gave one), that it is a
+	 * plugin at all, and that this app can run it. A bad download therefore
+	 * never replaces a working older version.
 	 *
 	 * @param {string} zipUrl - absolute URL to the .zip
 	 * @param {string} [filename] - target filename in plugins/ (defaults to the URL basename)
+	 * @param {string} [expectedHash] - sha256 hex from the index
 	 * @returns {Promise<Array<Object>>} the refreshed manifest list
 	 */
-	async installRemotePlugin(zipUrl, filename) {
+	async installRemotePlugin(zipUrl, filename, expectedHash) {
 
 		if (!zipUrl)
 			throw new Error('installRemotePlugin: no zip url');
 
 		const fallbackName = path.basename(new URL(zipUrl).pathname) || 'plugin.zip';
-		const safe = String(filename || fallbackName).replace(/[^a-zA-Z0-9._-]/g, '_');
+		const safe = this._safeZipName(filename || fallbackName);
 
 		const res = await fetch(zipUrl);
 		if (!res.ok)
 			throw new Error(`download failed: status ${res.status}`);
 		const bytes = Buffer.from(await res.arrayBuffer());
 
-		this._ensureDirs();
-		fs.writeFileSync(path.join(this.pluginsDir, safe), bytes);
-
-		await this.scan();
-
-		// replace: drop any older zip of the same slug, then rescan
-		const slug = this._slugForZip(safe);
-		if (slug) {
-			this._removeSupersededZips(slug, safe);
-			await this.scan();
+		if (expectedHash) {
+			const got = crypto.createHash('sha256').update(bytes).digest('hex');
+			if (got !== String(expectedHash).toLowerCase())
+				throw new Error('download failed: file does not match the store index (try again later)');
 		}
+
+		// stage outside plugins/ and inspect before admitting it
+		const tmp = path.join(os.tmpdir(), `ct-plugin-${process.pid}-${Date.now()}.zip`);
+		fs.writeFileSync(tmp, bytes);
+		try {
+			const manifest = await this._inspectZip(tmp);
+			this._assertInstallable(manifest);
+			this._ensureDirs();
+			fs.copyFileSync(tmp, path.join(this.pluginsDir, safe));
+			await this._settleInstall(manifest.slug, safe);
+		} finally {
+			try { fs.unlinkSync(tmp); } catch (e) { /* noop */ }
+		}
+
 		return this.getManifests();
 	}
 
@@ -352,29 +388,92 @@ class PluginManager {
 	/**
 	 * Copy a local .zip from disk into the plugins folder (for private,
 	 * non-store plugins) and rescan. Returns the manifest list plus the slug
-	 * that this zip resolved to (so the UI can add + route to it).
+	 * that this zip resolved to (so the UI can add + route to it). A zip that
+	 * isn't a plugin, or needs a newer app, is refused with `error` and
+	 * nothing is copied.
 	 *
 	 * @param {string} srcPath - absolute path to the chosen .zip
-	 * @returns {Promise<{canceled:boolean, manifests:Array<Object>, slug:?string}>}
+	 * @returns {Promise<{canceled:boolean, manifests:Array<Object>, slug:?string, error?:string}>}
 	 */
 	async importLocalZip(srcPath) {
 
-		this._ensureDirs();
-		const name = path.basename(srcPath);
-		fs.copyFileSync(srcPath, path.join(this.pluginsDir, name));
-
-		await this.scan();
-
-		// the imported zip's slug (read from its fresh extraction)
-		const slug = this._slugForZip(name);
-
-		// replace: an import always wins - drop other zips of the same slug
-		if (slug) {
-			this._removeSupersededZips(slug, name);
-			await this.scan();
+		let manifest;
+		try {
+			manifest = await this._inspectZip(srcPath);
+			this._assertInstallable(manifest);
+		} catch (e) {
+			return { canceled: false, manifests: this.getManifests(), slug: null, error: e.message };
 		}
 
-		return { canceled: false, manifests: this.getManifests(), slug };
+		this._ensureDirs();
+		const name = this._safeZipName(path.basename(srcPath));
+		fs.copyFileSync(srcPath, path.join(this.pluginsDir, name));
+
+		// an import always wins - drop other zips of the same slug
+		await this._settleInstall(manifest.slug, name);
+
+		return { canceled: false, manifests: this.getManifests(), slug: manifest.slug };
+	}
+
+
+	/**
+	 * Read a zip's manifest without installing it (extracts to a temp dir).
+	 *
+	 * @param {string} zipPath
+	 * @returns {Promise<?Object>} the manifest, or null if it isn't a plugin
+	 */
+	async _inspectZip(zipPath) {
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ct-plugin-inspect-'));
+		try {
+			await extract(zipPath, { dir });
+			const root = this._findManifestRoot(dir);
+			return root ? this._readManifest(root) : null;
+		} finally {
+			try { fs.rmSync(dir, { recursive: true, force: true }); } catch (e) { /* noop */ }
+		}
+	}
+
+
+	/**
+	 * Throw a user-readable error if a manifest can't be installed here.
+	 *
+	 * @param {?Object} manifest
+	 */
+	_assertInstallable(manifest) {
+		if (!manifest)
+			throw new Error("That file isn't a Chat Toys plugin (no valid manifest.json inside).");
+		if (!isApiCompatible(manifest)) {
+			const name = manifest.name || manifest.slug;
+			throw new Error(`${name} v${manifest.version} needs a newer version of Chat Toys (plugin API ${manifestApiVersion(manifest)}; this version has ${PLUGIN_API_VERSION}).`);
+		}
+	}
+
+
+	/**
+	 * After a new zip lands in plugins/: rescan, remove every other zip of the
+	 * same plugin ("install replaces"), rescan again.
+	 *
+	 * @param {string} slug
+	 * @param {string} keepZipName
+	 */
+	async _settleInstall(slug, keepZipName) {
+		await this.scan();
+		if (slug) {
+			this._removeSupersededZips(slug, keepZipName);
+			await this.scan();
+		}
+	}
+
+
+	/**
+	 * @param {string} name
+	 * @returns {string} a filename safe to write into plugins/
+	 */
+	_safeZipName(name) {
+		let safe = String(name || 'plugin.zip').replace(/[^a-zA-Z0-9._-]/g, '_');
+		if (!safe.toLowerCase().endsWith('.zip'))
+			safe += '.zip';
+		return safe;
 	}
 
 
@@ -473,7 +572,7 @@ class PluginManager {
 		for (const c of candidates) {
 			try {
 				if (fs.existsSync(c))
-					return fs.readFileSync(c, 'utf8');
+					return fs.readFileSync(c, 'utf8').replace(/__CT_PLUGIN_API_VERSION__/g, String(PLUGIN_API_VERSION));
 			} catch (e) { /* try next */ }
 		}
 
@@ -540,12 +639,7 @@ class PluginManager {
 	 * @returns {number} >0 if a>b, <0 if a<b, 0 if equal
 	 */
 	_semverCmp(a, b) {
-		const pa = String(a || '0').split('.').map((x) => parseInt(x, 10) || 0);
-		const pb = String(b || '0').split('.').map((x) => parseInt(x, 10) || 0);
-		for (let i = 0; i < 3; i++) {
-			if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
-		}
-		return 0;
+		return semverCmp(a, b);
 	}
 
 }

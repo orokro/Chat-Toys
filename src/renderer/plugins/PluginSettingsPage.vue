@@ -29,6 +29,12 @@
 			</button>
 		</div>
 
+		<!-- a newer version exists, but it needs a newer Chat Toys -->
+		<div v-if="newerNeedsApp" class="updateBanner subtle">
+			<span class="material-icons">info</span>
+			<span>v{{ newerNeedsApp }} is out, but needs a newer version of Chat Toys.</span>
+		</div>
+
 		<!-- intro description at the top, like the built-in toy pages: prefer the
 			rich markdown longDescription, fall back to the one-line description -->
 		<MarkdownBlock v-if="longDescription" :source="longDescription" class="pluginDesc" />
@@ -160,8 +166,9 @@ function resolveToy() {
 const toy = resolveToy();
 
 // --- update availability ---
-const updateInfo = ref(null);   // { version, zip, zipFilename, permissions, icon }
+const updateInfo = ref(null);   // { version, zip, zipFilename, zipHash, permissions, icon }
 const updating = ref(false);
+const newerNeedsApp = ref(null); // version string of a newer release this app can't run
 
 function semverGt(a, b) {
 	const pa = String(a || '0').split('.').map((x) => parseInt(x, 10) || 0);
@@ -178,15 +185,24 @@ onMounted(async () => {
 	try { remote = (await window.electronAPI.invoke('get-remote-plugins')) || []; }
 	catch (e) { return; }
 	const r = remote.find((x) => x && x.slug === toy.manifest.slug);
-	if (r && semverGt(r.version, toy.manifest.version)) {
+	if (!r) return;
+
+	// main already picked the newest version this app can run (r.version);
+	// compatible:false means none of the published versions can
+	const compatible = r.compatible !== false;
+	if (compatible && r.zip && semverGt(r.version, toy.manifest.version)) {
 		updateInfo.value = {
 			version: r.version,
 			zip: r.zip,
 			zipFilename: String(r.zip || '').split('/').pop(),
+			zipHash: r.zipHash || null,
 			permissions: r.permissions || [],
 			icon: r.icon || '',
 		};
 	}
+	if (r.newestVersion && semverGt(r.newestVersion, toy.manifest.version)
+		&& semverGt(r.newestVersion, compatible ? r.version : '0'))
+		newerNeedsApp.value = r.newestVersion;
 });
 
 /**
@@ -200,6 +216,7 @@ async function doUpdate() {
 			slug: toy.manifest.slug,
 			zip: updateInfo.value.zip,
 			zipFilename: updateInfo.value.zipFilename,
+			zipHash: updateInfo.value.zipHash,
 			name: toy.manifest.name,
 			icon: updateInfo.value.icon,
 			permissions: updateInfo.value.permissions,
@@ -209,6 +226,8 @@ async function doUpdate() {
 		updateInfo.value = null;
 	} catch (e) {
 		console.error('[PluginSettingsPage] update failed:', e);
+		const msg = String((e && e.message) || e).replace(/^.*Error: /, '');
+		alert(`Couldn't update ${toy.manifest.name}: ${msg}`);
 	} finally {
 		updating.value = false;
 	}
@@ -286,6 +305,12 @@ if (toy) {
 			cursor: pointer;
 		}
 		.updateBtn:disabled { opacity: 0.6; cursor: default; }
+	}
+	.updateBanner.subtle {
+		background: rgba(0, 0, 0, 0.04);
+		border-color: rgba(0, 0, 0, 0.12);
+		font-weight: 500;
+		.material-icons { color: #888; }
 	}
 
 	.settingsBlock {
