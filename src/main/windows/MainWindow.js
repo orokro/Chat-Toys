@@ -78,8 +78,17 @@ function createMainWindow() {
 
 	// create an interval that will ping the renderer process every second
 	const tickInterval = setInterval(() => {
+		// on quit the window can be destroyed before this is cleared; guard so
+		// we don't throw "Object has been destroyed", and self-clear if gone.
+		if (mainWindow.isDestroyed() || mainWindow.webContents.isDestroyed()) {
+			clearInterval(tickInterval);
+			return;
+		}
 		mainWindow.webContents.send('tick');
 	}, 1000);
+
+	// stop the ticker once the window is actually gone
+	mainWindow.on('closed', () => clearInterval(tickInterval));
 
 	// allow programmatic opening of the dev tools
 	ipcMain.on('toggle-devtools', () => {

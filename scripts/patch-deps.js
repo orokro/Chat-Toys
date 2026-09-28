@@ -168,4 +168,63 @@ for (const rootRel of ROOTS) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Targeted source patches for two first-party libs whose fixes must survive
+// `npm install`. Each is idempotent (guarded by a marker that exists only in
+// the patched output) and each from-block matches the pinned upstream source
+// exactly, so a surprise version bump warns loudly instead of silently
+// dropping the fix.
+// ---------------------------------------------------------------------------
+
+/**
+ * Apply ordered [from,to] string replacements to a file, only if `marker` is
+ * absent. Warns (does not throw) if a from-block is missing.
+ *
+ * @param {string} relFile
+ * @param {string} marker
+ * @param {Array<[string,string]>} pairs
+ */
+function applyBlockPatches(relFile, marker, pairs) {
+	const abs = path.resolve(__dirname, '..', relFile);
+	let src;
+	try {
+		src = fs.readFileSync(abs, 'utf8');
+	} catch (e) {
+		console.warn(`[patch-deps] ${relFile} not found - skipping`);
+		return;
+	}
+	if (src.includes(marker)) return; // already patched
+	let next = src;
+	for (const [from, to] of pairs) {
+		if (!next.includes(from)) {
+			console.warn(`[patch-deps] !!! ${relFile}: expected block not found; fix NOT applied. Re-derive the patch.`);
+			return;
+		}
+		next = next.replace(from, to);
+	}
+	if (next !== src) {
+		fs.writeFileSync(abs, next, 'utf8');
+		patched++;
+		console.log(`[patch-deps] patched ${relFile}`);
+	}
+}
+
+// electron-interval-system: guard webContents.send against destroyed
+// renderers + auto-clear intervals/timeouts on 'destroyed'.
+applyBlockPatches('node_modules/electron-interval-system/main.js', 'isDestroyed', [
+		["\t\tconst interval = setInterval(() => {\n\t\t\twebContents.send('eis:tick', uuid);\n\t\t}, rate);\n\n\t\t// save the interval in the registry with the specified uuid so we can clear via uuid, later\n\t\tintervalRegistry.set(uuid, interval);\n",
+		 "\t\tconst interval = setInterval(() => {\n\t\t\t// the renderer that requested this interval may have been destroyed\n\t\t\t// (window closed, OBS source reloaded, navigation) without clearing it;\n\t\t\t// sending to a dead webContents throws \"Object has been destroyed\".\n\t\t\t// Guard, and self-clear so a stray interval can't leak or spam errors.\n\t\t\tif (webContents.isDestroyed()) {\n\t\t\t\tclearInterval(interval);\n\t\t\t\tintervalRegistry.delete(uuid);\n\t\t\t\treturn;\n\t\t\t}\n\t\t\twebContents.send('eis:tick', uuid);\n\t\t}, rate);\n\n\t\t// save the interval in the registry with the specified uuid so we can clear via uuid, later\n\t\tintervalRegistry.set(uuid, interval);\n\n\t\t// also clear automatically the moment the webContents is gone\n\t\twebContents.once('destroyed', () => {\n\t\t\tclearInterval(interval);\n\t\t\tintervalRegistry.delete(uuid);\n\t\t});\n"],
+		["\t\tconst timeOut = setTimeout(() => {\n\n\t\t\t// set the timeout to send a message to the renderer process\n\t\t\twebContents.send('eis:timeout', uuid);\n\n\t\t\t// clear the timeout and remove it from the registry\n\t\t\ttimeOutRegistry.delete(uuid);\n\t\t\tclearTimeout(timeOut);\n\n\t\t}, length);\n\n\t\t// save the timeOut in the registry with the specified uuid so we can clear via uuid, later\n\t\ttimeOutRegistry.set(uuid, timeOut);\n",
+		 "\t\tconst timeOut = setTimeout(() => {\n\n\t\t\t// guard: the requesting renderer may be gone by the time this fires\n\t\t\tif (!webContents.isDestroyed())\n\t\t\t\twebContents.send('eis:timeout', uuid);\n\n\t\t\t// clear the timeout and remove it from the registry\n\t\t\ttimeOutRegistry.delete(uuid);\n\t\t\tclearTimeout(timeOut);\n\n\t\t}, length);\n\n\t\t// save the timeOut in the registry with the specified uuid so we can clear via uuid, later\n\t\ttimeOutRegistry.set(uuid, timeOut);\n\n\t\t// clear automatically if the webContents is destroyed before it fires\n\t\twebContents.once('destroyed', () => {\n\t\t\tclearTimeout(timeOut);\n\t\t\ttimeOutRegistry.delete(uuid);\n\t\t});\n"],
+]);
+
+// socket-ref: backpressure/coalesce in the server broadcast so a slow client
+// can't build an unbounded send-buffer backlog (gradual chat-lag fix).
+applyBlockPatches('node_modules/socket-ref/socketRefServer.js', 'BACKPRESSURE_BYTES', [
+		["\tconst keyStateMap = new Map(); // key => { value, timestamp }\n",
+		 "\tconst keyStateMap = new Map(); // key => { value, timestamp }\n\n\t// Backpressure: if a client's WebSocket send buffer exceeds this many\n\t// bytes, stop piling on full-value updates and instead coalesce to the\n\t// LATEST value per key, flushing once the buffer drains. socket-ref values\n\t// are latest-state, so dropping superseded intermediates is lossless - and\n\t// this is what stops a slow client (e.g. a busy OBS scene) from building an\n\t// unbounded server-side backlog that surfaces as gradual chat lag.\n\tconst BACKPRESSURE_BYTES = 1 << 20; // 1 MB\n\tconst PENDING_FLUSH_MS = 50;\n"],
+		["\tfunction broadcast(key, value, timestamp, excludeSocket = null) {\n\n\t\tconst message = JSON.stringify({ key, value, timestamp });\n\t\tfor (const client of wss.clients) {\n\t\t\tif (client !== excludeSocket && client.readyState === client.OPEN) {\n\t\t\t\tclient.send(message);\n\t\t\t}\n\t\t}// next client\n\t}\n",
+		 "\tfunction sendOrQueue(client, key, message) {\n\n\t\t// buffer backed up? coalesce - remember only the LATEST message for\n\t\t// this key and let the drain pump flush it later.\n\t\tif (client.bufferedAmount > BACKPRESSURE_BYTES) {\n\t\t\tif (!client._srPending) client._srPending = new Map();\n\t\t\tclient._srPending.set(key, message);\n\t\t\treturn;\n\t\t}\n\n\t\t// healthy: send now, and drop any now-stale pending value for this key\n\t\tif (client._srPending) client._srPending.delete(key);\n\t\ttry { client.send(message); } catch (e) { /* client going away */ }\n\t}\n\n\tfunction broadcast(key, value, timestamp, excludeSocket = null) {\n\n\t\tconst message = JSON.stringify({ key, value, timestamp });\n\t\tfor (const client of wss.clients) {\n\t\t\tif (client !== excludeSocket && client.readyState === client.OPEN) {\n\t\t\t\tsendOrQueue(client, key, message);\n\t\t\t}\n\t\t}// next client\n\t}\n\n\t// Drain pump: periodically flush each client's coalesced pending updates\n\t// once its send buffer has room. Bounded, single timer for the server.\n\tconst _drainPump = setInterval(() => {\n\t\tfor (const client of wss.clients) {\n\t\t\tconst pending = client._srPending;\n\t\t\tif (!pending || pending.size === 0) continue;\n\t\t\tif (client.readyState !== client.OPEN) { pending.clear(); continue; }\n\t\t\tfor (const [key, message] of pending) {\n\t\t\t\tif (client.bufferedAmount > BACKPRESSURE_BYTES) break; // re-saturated; keep the rest\n\t\t\t\ttry { client.send(message); } catch (e) { /* ignore */ }\n\t\t\t\tpending.delete(key);\n\t\t\t}\n\t\t}\n\t}, PENDING_FLUSH_MS);\n\tif (typeof _drainPump.unref === 'function') _drainPump.unref();\n\twss.on('close', () => clearInterval(_drainPump));\n"],
+]);
+
 console.log(`[patch-deps] scanned ${scanned} file(s), patched ${patched}.`);

@@ -6,7 +6,7 @@
 */
 
 // node/electron imports
-import { app, BrowserWindow, ipcMain, session, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, session, dialog, crashReporter } from 'electron';
 import { join } from 'path';
 
 // local imports
@@ -66,6 +66,54 @@ console.error = (...args) => {
 process.on('uncaughtException', console.error);
 process.on('unhandledRejection', console.error);
 
+// --- crash + memory diagnostics --------------------------------------------
+// The app previously shipped with NO crash logging, so an OOM death (Windows
+// RADAR_PRE_LEAK_64) left nothing behind. crashReporter captures native crash
+// minidumps locally; the process-gone handlers record renderer / child deaths
+// WITH their reason ('oom', 'crashed', 'killed', ...); and a slow sampler logs
+// total memory footprint so a climb is visible after the fact. All writes are
+// wrapped so logging can never itself crash the app.
+try { crashReporter.start({ uploadToServer: false, compress: true }); } catch (e) { console.error('crashReporter start failed', e); }
+
+function diagLog(line) {
+	try {
+		const fs = require('fs');
+		const dir = join(app.getPath('userData'), 'logs');
+		try { fs.mkdirSync(dir, { recursive: true }); } catch (_) {}
+		fs.appendFile(join(dir, 'diag.log'), `${new Date().toISOString()} ${line}\n`, () => {});
+	} catch (_) { /* never let logging crash the app */ }
+}
+
+function startMemorySampler() {
+	const sample = () => {
+		try {
+			const metrics = app.getAppMetrics();
+			let totalMB = 0;
+			const parts = [];
+			for (const m of metrics) {
+				const kb = (m.memory && m.memory.workingSetSize) || 0;
+				totalMB += kb / 1024;
+				parts.push(`${m.type}:${Math.round(kb / 1024)}MB`);
+			}
+			diagLog(`mem total=${Math.round(totalMB)}MB [${parts.join(' ')}]`);
+		} catch (e) {
+			diagLog(`mem sample error ${e && e.message}`);
+		}
+	};
+	sample();
+	const id = setInterval(sample, 60000);
+	if (typeof id.unref === 'function') id.unref();
+}
+
+app.on('render-process-gone', (event, webContents, details) => {
+	diagLog(`render-process-gone reason=${details && details.reason} exitCode=${details && details.exitCode}`);
+	console.error('[render-process-gone]', details);
+});
+app.on('child-process-gone', (event, details) => {
+	diagLog(`child-process-gone type=${details && details.type} reason=${details && details.reason} exitCode=${details && details.exitCode}`);
+	console.error('[child-process-gone]', details);
+});
+
 // function to destroy all windows
 function destroyAllWindows_old() {
 	openedWindows.forEach((win) => {
@@ -122,6 +170,9 @@ app.whenReady().then(() => {
 	// Create the window.
 	mainWindow = createMainWindow();
 	openedWindows.push(mainWindow);
+
+	// begin sampling process memory (writes to userData/logs/diag.log)
+	startMemorySampler();
 
 	// Ensure new windows (like Karaoke Manager) have the correct preload and settings.
 	// Also: deny any popup pointed at our own widget server / API. The vuefinder

@@ -118,6 +118,9 @@
 import { ref, shallowRef, watch, computed, onBeforeUnmount } from 'vue';
 import { socketShallowRefReadOnly } from 'socket-ref';
 
+// dev-only perf/leak diagnostics (no-op unless ?diag=1 on the widget URL)
+import { startPerfDiag } from '@scripts/perfDiag.js';
+
 // our settings system
 import { useToySettings } from '@toys/useToySettings';
 import { keepAliveSocket } from '../keepAliveSocket.js';
@@ -150,6 +153,11 @@ const slugify = (text) => {
 
 // set up our live-light heartbeat
 keepAliveSocket(thisSlug, widgetSlug);
+
+// dev-only: sample heap / DOM / socket count so a live stream test can show
+// whether a gradual slowdown is memory, sockets, or DOM growth. Off unless
+// enabled via ?diag=1 (or localStorage ct_perfDiag=1); torn down on unmount.
+const _stopPerfDiag = startPerfDiag({ label: 'chat2' });
 
 const emit = defineEmits(['boxChange']);
 
@@ -579,6 +587,7 @@ watch(compatUrl, () => { compatReady = false; compatSent.clear(); });
 
 // tidy up timers + listeners on unmount
 onBeforeUnmount(() => {
+	if (_stopPerfDiag) _stopPerfDiag();
 	clearInterval(nowTick);
 	if (demoInterval) clearInterval(demoInterval);
 	window.removeEventListener('message', onWindowMessage);

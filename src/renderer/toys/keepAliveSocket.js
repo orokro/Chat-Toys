@@ -150,6 +150,16 @@ export async function keepAliveSocket(toySlug, widgetSlug) {
 		clearInterval(timeUpdateInterval);
 	};
 
+	// Auto-teardown: in OBS / a browser the widget IS the page, so clear the
+	// reporting interval when the page is being unloaded (reload, scene change,
+	// close) instead of relying on every call site to hold onto stopInterval
+	// (most discard it). Harmless if the page context is torn down anyway.
+	const _teardownOnUnload = () => stopInterval();
+	try {
+		window.addEventListener('pagehide', _teardownOnUnload, { once: true });
+		window.addEventListener('beforeunload', _teardownOnUnload, { once: true });
+	} catch (_) { /* non-window environment - ignore */ }
+
 	// return the socket ref & method to stop interval
 	return {
 		socketRef: socketShallowRefReadOnly(socketSlug, socketRef),

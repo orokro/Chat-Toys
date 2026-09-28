@@ -52,8 +52,15 @@ export class ChatProcessor {
 		// userName:userUniqueID pairs we've seen
 		this.seenAuthors = new ABMap();
 
+		// bound seenAuthors so a long / viral stream can't grow it forever;
+		// FIFO-evict the oldest first-seen names once past the cap (command
+		// targeting only ever resolves recently-active chatters).
+		this.maxSeenAuthors = options.maxSeenAuthors || 5000;
+		this._seenAuthorOrder = [];
+
 		// cache for Twitch avatar URLs so we don't hammer external services
 		this._twitchAvatarCache = new Map();
+		this.maxTwitchAvatarCache = options.maxTwitchAvatarCache || 5000;
 		this._twitchAvatarInFlight = new Map();
 
 		// Hook up to Electron API
@@ -242,7 +249,7 @@ export class ChatProcessor {
 		this._markMessageAsSeen(formatted.id);
 
 		// update relationships
-		this.seenAuthors.set(formatted.author, formatted.authorUniqueID);
+		this._rememberAuthor(formatted.author, formatted.authorUniqueID);
 
 		// resolve avatar URL via decapi.me, but only once per username
 		try {
@@ -555,7 +562,7 @@ export class ChatProcessor {
 			}
 
 			// always reset this relationship because either side could change
-			this.seenAuthors.set(authorName, authorChannelId);
+			this._rememberAuthor(authorName, authorChannelId);
 
 			// add it to our list & mark it as seen so we don't repeat it
 			newMessages.push(formatted);
@@ -582,6 +589,56 @@ export class ChatProcessor {
 		if (this._seenMessageIDs.size > this.rollingIDListLength) {
 			const ids = Array.from(this._seenMessageIDs);
 			this._seenMessageIDs = new Set(ids.slice(-this.rollingIDListLength));
+		}
+	}
+
+
+	/**
+	 * Remember a name<->uniqueID pair with a FIFO cap so the map can't grow
+	 * unbounded over a long or viral stream. Only the oldest first-seen names
+	 * are evicted; command targeting (ChannelPoints) resolves against
+	 * recently-active chatters, which are retained.
+	 *
+	 * @param {String} name - author display name
+	 * @param {String} id - author unique / channel ID
+	 */
+	_rememberAuthor(name, id) {
+
+		if (name == null || id == null)
+			return;
+
+		// track first-seen order only (repeat authors don't re-queue)
+		if (!this.seenAuthors.hasA(name))
+			this._seenAuthorOrder.push(name);
+
+		this.seenAuthors.set(name, id);
+
+		// evict oldest names until within cap
+		while (this._seenAuthorOrder.length > this.maxSeenAuthors) {
+			const oldest = this._seenAuthorOrder.shift();
+			if (oldest !== undefined && oldest !== name)
+				this.seenAuthors.deleteA(oldest);
+		}
+	}
+
+
+	/**
+	 * Set a Twitch avatar cache entry with a simple size cap (FIFO eviction
+	 * of the oldest key), so the cache can't grow unbounded across unique
+	 * usernames over a long session.
+	 *
+	 * @param {String} key - lowercased twitch username
+	 * @param {String|null} value - resolved avatar URL, or null
+	 */
+	_setTwitchAvatar(key, value) {
+
+		this._twitchAvatarCache.set(key, value);
+
+		while (this._twitchAvatarCache.size > this.maxTwitchAvatarCache) {
+			const oldestKey = this._twitchAvatarCache.keys().next().value;
+			if (oldestKey === undefined)
+				break;
+			this._twitchAvatarCache.delete(oldestKey);
 		}
 	}
 
@@ -617,7 +674,7 @@ export class ChatProcessor {
 
 				if (!res.ok) {
 					console.warn('[ChatProcessor] decapi.me returned non-OK for', key, res.status);
-					this._twitchAvatarCache.set(key, null);
+					this._setTwitchAvatar(key, null);
 					return null;
 				}
 
@@ -626,12 +683,12 @@ export class ChatProcessor {
 				// decapi.me returns the avatar URL as plain text
 				const avatarUrl = text && text.startsWith('http') ? text : null;
 
-				this._twitchAvatarCache.set(key, avatarUrl || null);
+				this._setTwitchAvatar(key, avatarUrl || null);
 				return avatarUrl || null;
 
 			} catch (e) {
 				console.warn('[ChatProcessor] Error fetching Twitch avatar for', key, e);
-				this._twitchAvatarCache.set(key, null);
+				this._setTwitchAvatar(key, null);
 				return null;
 			} finally {
 				this._twitchAvatarInFlight.delete(key);

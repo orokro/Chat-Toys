@@ -1,20 +1,85 @@
 // pfpCache.js
 // Bounded cache for profile pictures using IndexedDB + in-memory map.
+//
+// Two durable tiers (in-memory pool -> IndexedDB on disk) plus the origin as a
+// last resort, mirroring emojiCache. The in-memory map is a bounded LRU POOL:
+// it holds live blob: URLs for the most-recently-used avatars and revokes them
+// on eviction so memory can't climb for the life of a stream, while the
+// IndexedDB tier (hard-capped at MAX_PFP_ENTRIES) means an eviction from the
+// pool costs at most one fast local disk read, never a network refetch.
 
 const DB_NAME = 'pfp-image-cache';
 const STORE_NAME = 'pfp-images';
 const DB_VERSION = 1;
 
-// Hard cap for how many PFPs we store persistently
+// Hard cap for how many PFPs we store persistently (on disk)
 const MAX_PFP_ENTRIES = 500;
 
-// In-memory map: key => { status, blobUrl }
+// How many blob: URLs to hold RESIDENT in memory at once. Kept a little under
+// the disk cap: evicting from the pool just drops the live blob: URL (revoked
+// here), and the avatar re-serves from disk on its next appearance.
+const MAX_MEMORY_ENTRIES = 400;
+
+// Back off from re-fetching a URL that just failed (404 / network) rather
+// than retrying on every later appearance.
+const ERROR_COOLDOWN_MS = 5 * 60 * 1000;
+
+// In-memory LRU map: key => { status, blobUrl }. Map iteration order is
+// insertion order, so we emulate LRU by delete+re-insert on access and evict
+// from the oldest (front) when over cap.
 const memory = new Map();
 // Avoid scheduling cleanup too often
 let cleanupScheduled = false;
 
+
+/**
+ * Revoke a memory entry's blob: URL if it holds one.
+ *
+ * @param {Object} entry
+ */
+function revokeEntry(entry) {
+	if (entry && entry.blobUrl) {
+		try {
+			URL.revokeObjectURL(entry.blobUrl);
+		} catch (_) { /* ignore */ }
+	}
+}
+
+
+/**
+ * Insert / touch a key as most-recently-used, evicting (and revoking) the
+ * least-recently-used entries until within MAX_MEMORY_ENTRIES. The IndexedDB
+ * copy is untouched, so an evicted avatar re-serves from disk next time.
+ *
+ * @param {String} key
+ * @param {Object} entry
+ */
+function memorySet(key, entry) {
+
+	if (memory.has(key))
+		memory.delete(key);
+	memory.set(key, entry);
+
+	while (memory.size > MAX_MEMORY_ENTRIES) {
+		const oldestKey = memory.keys().next().value;
+		if (oldestKey === undefined || oldestKey === key)
+			break;
+		revokeEntry(memory.get(oldestKey));
+		memory.delete(oldestKey);
+	}
+}
+
+
+// Single shared IndexedDB connection, opened once and reused (opening one per
+// get/put leaked connections over a long session).
+let dbPromise = null;
+
 function openDB() {
-	return new Promise((resolve, reject) => {
+
+	if (dbPromise)
+		return dbPromise;
+
+	dbPromise = new Promise((resolve, reject) => {
 		const req = indexedDB.open(DB_NAME, DB_VERSION);
 
 		req.onupgradeneeded = () => {
@@ -24,9 +89,20 @@ function openDB() {
 			}
 		};
 
-		req.onsuccess = () => resolve(req.result);
-		req.onerror = () => reject(req.error);
+		req.onsuccess = () => {
+			const db = req.result;
+			db.onclose = () => { dbPromise = null; };
+			db.onerror = (e) => { console.error('[pfpCache] db error', e); };
+			resolve(db);
+		};
+
+		req.onerror = () => {
+			dbPromise = null;
+			reject(req.error);
+		};
 	});
+
+	return dbPromise;
 }
 
 async function getEntry(key) {
@@ -54,7 +130,7 @@ async function putEntry(entry) {
 }
 
 async function touchEntry(entry) {
-	
+
 	const now = Date.now();
 	const lastAccess = entry.lastAccess || 0;
 
@@ -138,11 +214,14 @@ function scheduleCleanup() {
 
 async function fetchAndStore(key, url) {
 	const mem = memory.get(key);
-	if (mem && (mem.status === 'loading' || mem.status === 'ready')) {
-		return;
+	if (mem) {
+		if (mem.status === 'loading' || mem.status === 'ready')
+			return;
+		if (mem.status === 'error' && (Date.now() - (mem.erroredAt || 0)) < ERROR_COOLDOWN_MS)
+			return;
 	}
 
-	memory.set(key, { status: 'loading', blobUrl: null });
+	memorySet(key, { status: 'loading', blobUrl: null });
 
 	try {
 		const res = await fetch(url, {
@@ -165,7 +244,7 @@ async function fetchAndStore(key, url) {
 		await putEntry(entry);
 
 		const blobUrl = URL.createObjectURL(blob);
-		memory.set(key, {
+		memorySet(key, {
 			status: 'ready',
 			blobUrl
 		});
@@ -173,9 +252,10 @@ async function fetchAndStore(key, url) {
 		scheduleCleanup();
 	} catch (err) {
 		console.error('[pfpCache] fetchAndStore error', err);
-		memory.set(key, {
+		memorySet(key, {
 			status: 'error',
-			blobUrl: null
+			blobUrl: null,
+			erroredAt: Date.now()
 		});
 	}
 }
@@ -200,9 +280,10 @@ export async function getPfpSource(url, { cacheEnabled = true } = {}) {
 
 	const key = url;
 
-	// 1) In-memory hit
+	// 1) In-memory hit (mark most-recently-used)
 	const mem = memory.get(key);
 	if (mem && mem.status === 'ready' && mem.blobUrl) {
+		memorySet(key, mem);
 		return {
 			src: mem.blobUrl,
 			fromCache: true
@@ -214,7 +295,7 @@ export async function getPfpSource(url, { cacheEnabled = true } = {}) {
 		const entry = await getEntry(key);
 		if (entry && entry.blob) {
 			const blobUrl = URL.createObjectURL(entry.blob);
-			memory.set(key, {
+			memorySet(key, {
 				status: 'ready',
 				blobUrl
 			});
