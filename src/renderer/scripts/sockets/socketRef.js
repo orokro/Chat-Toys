@@ -35,7 +35,7 @@
 */
 
 // vue
-import { ref, shallowRef, watch, computed } from 'vue';
+import { ref, shallowRef, watch, computed, isRef } from 'vue';
 
 
 // ----------------------------------------------------------------------
@@ -708,6 +708,14 @@ function createSocketRef(refType, keyOrObj, initialValue, readOnly, onInitialCon
 	const key = options.key;
 	const ip = options.ip || 'localhost';
 	const port = options.port || undefined;
+
+	// A ref passed as the default is unwrapped to its value. ref(someRef)
+	// returns someRef itself, which would alias the caller's ref (e.g.
+	// keepAliveSocket passes its writable heartbeat ref as the default of a
+	// read-only view of the same key). A sibling on the same key stays in
+	// sync anyway, so a plain copy of the value is the right default.
+	if (isRef(initialValue))
+		initialValue = initialValue.value;
 
 	const state = refType(initialValue);
 

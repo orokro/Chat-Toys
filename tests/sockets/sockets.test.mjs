@@ -387,3 +387,16 @@ test('a garbage-collected ref releases its subscription', { skip: typeof global.
 	}
 	assert.equal(S.server.subscribers.has('gc-k'), false, 'unsubscribed after GC');
 });
+
+test('a ref passed as the default is unwrapped, not aliased (keepAliveSocket pattern)', async () => {
+	const page = await newPage(S.port);
+	const writer = page.socketShallowRef('alias-k', 'Z_0');
+	const view = page.socketShallowRefReadOnly('alias-k', writer);
+	await waitFor(() => page.getSocketStats()[0].keys.every(k => k.ready), 'ready');
+	assert.equal(view.value, 'Z_0');
+	writer.value = 'O_123';
+	assert.equal(view.value, 'O_123', 'read-only view follows the writer');
+	const reader = await newPage(S.port);
+	const remote = reader.socketShallowRefReadOnly('alias-k', 'U_0');
+	await waitFor(() => remote.value === 'O_123', 'other page sees it');
+});
