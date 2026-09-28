@@ -15,7 +15,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const lib = await import(pathToFileURL(path.resolve(HERE, '../../src/renderer/scripts/commandLookup.js')).href);
-const { buildCommandLookup, takenCommandWords, pickFreeCommandWord, commandWordsForToy, toySlugOf, commandKeyOf } = lib;
+const { buildCommandLookup, takenCommandWords, pickFreeCommandWord, commandWordsForToy, toySlugOf, commandKeyOf, assignPluginCommandWords, commandWordsSocketKey } = lib;
 
 
 const cmd = (slug, command, extra = {}) => ({ slug, command, enabled: true, ...extra });
@@ -113,4 +113,31 @@ test('commandWordsForToy reports the real word and whether it answers', () => {
 	const l2 = buildCommandLookup(commands, ['streamBuddies', 'raffle']);
 	assert.deepEqual(commandWordsForToy(commands, 'raffle', l2), { join: { command: 'join', enabled: true, active: false } });
 	assert.deepEqual(commandWordsForToy(commands, 'horseRacing', null).joinrace, { command: 'joinrace', enabled: true, active: false });
+});
+
+test('assignPluginCommandWords: only running toys push a plugin to join2', () => {
+	const manifestCmds = [{ key: 'join', default: 'join' }, { key: 'leave', default: 'leave' }];
+	const fresh = saved();
+	delete fresh['raffle__join']; // the plugin is being added for the first time
+
+	// Stream Buddies saved but NOT running: the plugin keeps its defaults
+	assert.deepEqual(assignPluginCommandWords(manifestCmds, 'raffle', fresh, ['horseRacing', 'raffle']), { join: 'join', leave: 'leave' });
+
+	// Stream Buddies running: free words
+	assert.deepEqual(assignPluginCommandWords(manifestCmds, 'raffle', fresh, ['streamBuddies', 'raffle']), { join: 'join2', leave: 'leave2' });
+});
+
+test('assignPluginCommandWords: saved (possibly renamed) words win and are reserved', () => {
+	const s = saved();
+	s['raffle__join'] = cmd('raffle__join', 'enter');
+	// a new command defaulting to the plugin's own saved word gets a free one
+	const out = assignPluginCommandWords([{ key: 'join', default: 'join' }, { key: 'again', default: 'enter' }], 'raffle', s, ['raffle']);
+	assert.deepEqual(out, { join: 'enter', again: 'enter2' });
+	// two new commands with the same default don't collide with each other
+	assert.deepEqual(assignPluginCommandWords([{ key: 'a', default: 'go' }, { key: 'b', default: 'go' }], 'p', {}, ['p']), { a: 'go', b: 'go2' });
+});
+
+test('commandWordsSocketKey mirrors the settings key convention', () => {
+	assert.equal(commandWordsSocketKey('horseRacing'), 'horse-racing-commands');
+	assert.equal(commandWordsSocketKey('credits'), 'credits-commands');
 });

@@ -13,7 +13,9 @@
 
 	What it does, in order:
 	  1. fetch the installed manifests over IPC (get-installed-plugins)
-	  2. resolve command-name (the typed `!name`) collisions, stably
+	  2. (command words are NOT resolved here any more: a plugin picks free
+	     words when it's first added, against the toys running then - see
+	     PluginToy.buildCommands / scripts/commandLookup.js)
 	  3. mint a per-plugin Toy subclass per manifest and register it into
 	     the shared `toysData` array + asObject
 	  4. purge settings/commands/enabled entries for plugins whose zip is gone
@@ -27,7 +29,7 @@ import PluginSettingsPage from './PluginSettingsPage.vue';
 // localStorage keys (chromeRef stores raw key -> JSON; see chromeRef.js)
 const LS_COMMANDS = 'commands';
 const LS_ENABLED = 'enabledToys';
-const LS_RESOLVED_CMD_NAMES = 'plugin-command-names';   // { 'slug__key': resolvedName }
+const LS_RESOLVED_CMD_NAMES = 'plugin-command-names';   // legacy (pre command-lookup); removed at boot
 const LS_KNOWN_PLUGINS = 'installed-plugin-slugs';      // [ slug, ... ]
 
 
@@ -72,41 +74,6 @@ function settingsKey(slug) {
 
 
 /**
- * Collect the set of command names (the typed text, lowercased) already in use,
- * so plugin commands can avoid colliding with them.
- *
- * @returns {Set<string>}
- */
-function collectTakenCommandNames() {
-	const taken = new Set();
-	const commands = readLS(LS_COMMANDS, {});
-	for (const slug in commands) {
-		const c = commands[slug];
-		if (c && typeof c.command === 'string')
-			taken.add(c.command.toLowerCase());
-	}
-	return taken;
-}
-
-
-/**
- * Pick a free command name by suffixing a number if needed.
- *
- * @param {string} desired
- * @param {Set<string>} taken - lowercased names already in use (mutated)
- * @returns {string} a name not in `taken`
- */
-function uniqueCommandName(desired, taken) {
-	let name = desired;
-	let n = 2;
-	while (taken.has(name.toLowerCase()))
-		name = `${desired}${n++}`;
-	taken.add(name.toLowerCase());
-	return name;
-}
-
-
-/**
  * Drop the renderer-owned localStorage for a set of orphaned plugin slugs:
  * each one's settings blob, its commands in the global command store, and its
  * resolved command-name entries. Shared by the boot GC (purgeOrphans) and the
@@ -135,18 +102,6 @@ function gcOrphanStorage(orphans) {
 	}
 	if (mutated)
 		writeLS(LS_COMMANDS, commands);
-
-	// drop resolved-name entries for orphans
-	const resolved = readLS(LS_RESOLVED_CMD_NAMES, {});
-	let rMutated = false;
-	for (const id of Object.keys(resolved)) {
-		if (orphans.some(s => id.startsWith(`${s}__`))) {
-			delete resolved[id];
-			rMutated = true;
-		}
-	}
-	if (rMutated)
-		writeLS(LS_RESOLVED_CMD_NAMES, resolved);
 }
 
 
@@ -322,30 +277,17 @@ export async function registerInstalledPlugins() {
 		return [];
 	}
 
-	const taken = collectTakenCommandNames();
-	const resolvedNames = readLS(LS_RESOLVED_CMD_NAMES, {});
 	const installedSlugs = new Set();
+
+	// legacy: names used to be reserved here against every saved command,
+	// even of toys that weren't running. The saved commands already carry
+	// whatever was chosen, so this map is no longer needed.
+	try { localStorage.removeItem(LS_RESOLVED_CMD_NAMES); } catch (e) { /* noop */ }
 
 	for (const manifest of manifests) {
 
 		if (!manifest || typeof manifest.slug !== 'string')
 			continue;
-
-		// resolve command-name collisions, stably (persist the choice)
-		for (const cmd of (manifest.commands || [])) {
-			const id = `${manifest.slug}__${cmd.key}`;
-			let name = resolvedNames[id];
-			if (!name) {
-				name = uniqueCommandName(cmd.default, taken);
-				resolvedNames[id] = name;
-			} else {
-				taken.add(name.toLowerCase());
-			}
-			if (name !== cmd.default) {
-				console.warn(`[PluginManager] command "${cmd.default}" for ${manifest.slug} renamed to "${name}" (collision)`);
-				cmd.default = name;
-			}
-		}
 
 		// mint + register the per-plugin Toy class
 		const slug = mintAndRegister(manifest);
@@ -353,7 +295,6 @@ export async function registerInstalledPlugins() {
 			installedSlugs.add(slug);
 	}
 
-	writeLS(LS_RESOLVED_CMD_NAMES, resolvedNames);
 	purgeOrphans(installedSlugs);
 
 	console.log(`[PluginManager] registered ${installedSlugs.size} plugin(s):`, Array.from(installedSlugs));
@@ -412,17 +353,6 @@ export function registerOrUpdatePlugin(manifest) {
 	if (existing && !existing.manifest)
 		return null; // collides with a built-in
 
-	// resolve command names (stable)
-	const taken = collectTakenCommandNames();
-	const resolvedNames = readLS(LS_RESOLVED_CMD_NAMES, {});
-	for (const cmd of (manifest.commands || [])) {
-		const id = `${manifest.slug}__${cmd.key}`;
-		let name = resolvedNames[id];
-		if (!name) { name = uniqueCommandName(cmd.default, taken); resolvedNames[id] = name; }
-		cmd.default = name;
-	}
-	writeLS(LS_RESOLVED_CMD_NAMES, resolvedNames);
-
 	// mint and replace (array + asObject stay in sync)
 	const cls = makePluginToyClass(manifest, { optionsPageComponent: PluginSettingsPage });
 	const idx = toysData.findIndex((t) => t.slug === manifest.slug);
@@ -441,7 +371,7 @@ export function registerOrUpdatePlugin(manifest) {
 
 /**
  * Re-fetch installed manifests (after a remote install) and register any that
- * aren't registered yet, resolving their command-name collisions. Idempotent:
+ * aren't registered yet. Idempotent:
  * already-registered plugins are left untouched.
  *
  * @returns {Promise<Array<Object>>} the installed manifests
@@ -456,8 +386,6 @@ export async function refreshInstalledPlugins() {
 		return [];
 	}
 
-	const taken = collectTakenCommandNames();
-	const resolvedNames = readLS(LS_RESOLVED_CMD_NAMES, {});
 	const known = new Set(readLS(LS_KNOWN_PLUGINS, []));
 	let changed = false;
 
@@ -468,24 +396,14 @@ export async function refreshInstalledPlugins() {
 		if (toysData.asObject[manifest.slug])
 			continue; // already registered
 
-		for (const cmd of (manifest.commands || [])) {
-			const id = `${manifest.slug}__${cmd.key}`;
-			let name = resolvedNames[id];
-			if (!name) { name = uniqueCommandName(cmd.default, taken); resolvedNames[id] = name; }
-			else taken.add(name.toLowerCase());
-			cmd.default = name;
-		}
-
 		if (mintAndRegister(manifest)) {
 			known.add(manifest.slug);
 			changed = true;
 		}
 	}
 
-	if (changed) {
-		writeLS(LS_RESOLVED_CMD_NAMES, resolvedNames);
+	if (changed)
 		writeLS(LS_KNOWN_PLUGINS, Array.from(known));
-	}
 
 	return manifests;
 }

@@ -29,6 +29,7 @@
 
 // vue
 import { ref, shallowRef } from 'vue';
+import { assignPluginCommandWords } from '../scripts/commandLookup';
 
 // lib
 // short correlation id without pulling in `uuid` (Node-crypto warning in browser)
@@ -156,24 +157,41 @@ export default class PluginToy extends Toy {
 
 
 	/**
-	 * Build commands from the manifest. Command TEXT collisions are resolved by
-	 * the PluginManager BEFORE this runs (it rewrites manifest.commands[].default
-	 * to a free name and persists it), so we can trust the names here.
+	 * Build commands from the manifest. Runs when the plugin is added (its
+	 * Toy is constructed). A command seen for the first time gets its default
+	 * word unless a RUNNING toy already uses it, in which case it gets a free
+	 * one (join -> join2) - toys that aren't running don't count, since they
+	 * can't answer anyway. After that the saved command (and any rename by the
+	 * user) wins; widgets learn the real word via CT.commands.
 	 */
 	buildCommands() {
 
 		const manifest = this.constructor.manifest;
+		const saved = (this.chatToysApp.commands && this.chatToysApp.commands.value) || {};
+		const words = assignPluginCommandWords(
+			manifest.commands || [],
+			manifest.slug,
+			saved,
+			this.chatToysApp.enabledToys?.value || []);
 
-		super.buildCommands((manifest.commands || []).map(c => ({
-			command: c.default,
-			slug: `${manifest.slug}__${c.key}`,
-			description: c.description,
-			userDesc: c.userDesc,
-			params: c.params || [],
-			cost: c.cost ?? 0,
-			coolDown: c.coolDown ?? 0,
-			groupCoolDown: c.groupCoolDown ?? 0,
-		})));
+		super.buildCommands((manifest.commands || []).map(c => {
+
+			const slug = `${manifest.slug}__${c.key}`;
+			const word = words[c.key];
+			if (!(slug in saved) && word !== c.default)
+				console.warn(`[PluginToy] "${manifest.slug}": using !${word} for "${c.key}" (default !${c.default})`);
+
+			return {
+				command: word,
+				slug,
+				description: c.description,
+				userDesc: c.userDesc,
+				params: c.params || [],
+				cost: c.cost ?? 0,
+				coolDown: c.coolDown ?? 0,
+				groupCoolDown: c.groupCoolDown ?? 0,
+			};
+		}));
 	}
 
 

@@ -195,3 +195,50 @@ export function commandWordsForToy(commands, toySlug, lookup) {
 	}
 	return out;
 }
+
+
+/**
+ * The socket key a toy's command words are published on (dashboard ->
+ * widgets / plugin iframes). Mirrors the `<slug-kebab>-settings` convention.
+ *
+ * @param {string} toySlug
+ * @returns {string} e.g. 'horse-racing-commands'
+ */
+export function commandWordsSocketKey(toySlug) {
+	return String(toySlug).replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() + '-commands';
+}
+
+
+/**
+ * The words a plugin's commands get when the plugin is added. A command that
+ * is already saved keeps its saved word (the user may have renamed it). A new
+ * one gets its manifest default unless a RUNNING toy (or an earlier command
+ * of the same plugin) already uses it, in which case it gets default2, 3...
+ * Toys that aren't running don't count: they can't answer anyway.
+ *
+ * @param {Array<{key: string, default: string}>} manifestCommands
+ * @param {string} pluginSlug
+ * @param {Object<string, Object>} saved - the saved commands
+ * @param {Array<string>} enabledToySlugs
+ * @returns {Object<string, string>} key -> word
+ */
+export function assignPluginCommandWords(manifestCommands, pluginSlug, saved, enabledToySlugs) {
+
+	const taken = takenCommandWords(saved, enabledToySlugs, { exceptToy: pluginSlug });
+	const out = {};
+	const list = manifestCommands || [];
+
+	// saved words first, so a new command can't take one of them
+	for (const c of list) {
+		const rec = saved && saved[`${pluginSlug}__${c.key}`];
+		if (rec && typeof rec.command === 'string' && rec.command) {
+			out[c.key] = rec.command;
+			taken.add(rec.command.toLowerCase());
+		}
+	}
+	for (const c of list) {
+		if (!(c.key in out))
+			out[c.key] = pickFreeCommandWord(String(c.default || c.key), taken);
+	}
+	return out;
+}

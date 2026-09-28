@@ -129,12 +129,17 @@
 		// pushed event
 		if (msg.kind === KIND.EVT) {
 			if (msg.name === 'load') {
+				if (msg.detail && msg.detail.commands && typeof msg.detail.commands === 'object')
+					CT.commands = msg.detail.commands;
 				if (msg.detail && msg.detail.visibility) {
 					visibility = { visible: !!msg.detail.visibility.visible, active: !!msg.detail.visibility.active };
 					CT.visibility = { ...visibility };
 				}
 				readyResolve(msg.detail || {});
 			}
+			// command words changed (renamed / enabled / clash): cache, then listeners
+			if (msg.name === 'commands' && msg.detail && typeof msg.detail === 'object')
+				CT.commands = msg.detail;
 			// OBS source shown/hidden: cache it, then fall through to listeners
 			if (msg.name === 'visibility' && msg.detail) {
 				visibility = { visible: !!msg.detail.visible, active: !!msg.detail.active };
@@ -324,6 +329,41 @@
 				return off;
 			},
 		},
+
+		// --- command words (no perm; host-pushed) ---
+		// The streamer can rename your commands, and if another running toy
+		// already uses your default word you get a free one (join -> join2).
+		// So never hard-code "Type !join": ask for the real word.
+
+		/**
+		 * Your commands as { [key]: { command, enabled, active } }: key is the
+		 * manifest command key, command the word chat types (no '!'), active
+		 * whether typing it reaches you (enabled and not answered by another
+		 * toy). Filled at load; kept current.
+		 * @type {Object<string, {command:string, enabled:boolean, active:boolean}>}
+		 */
+		commands: {},
+
+		/**
+		 * The word chat types for one of your commands (no '!').
+		 *
+		 * @param {string} key - the manifest command key
+		 * @param {string} [fallback] - used until the app has sent the words (default: key)
+		 * @returns {string}
+		 */
+		commandWord(key, fallback) {
+			const c = CT.commands && CT.commands[key];
+			return (c && c.command) || (fallback === undefined ? key : fallback);
+		},
+
+		/**
+		 * Called with the new CT.commands whenever a word, enabled flag or
+		 * clash changes. Re-render any "Type !..." text here.
+		 *
+		 * @param {Function} cb
+		 * @returns {Function} unsubscribe
+		 */
+		onCommandsChange(cb) { return on('commands', cb); },
 
 		// --- OBS source visibility (no perm; host-pushed) ---
 		// Whether this browser source is currently shown in OBS. OBS keeps

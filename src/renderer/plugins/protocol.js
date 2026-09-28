@@ -61,7 +61,7 @@ export const KIND = {
  * @type {Object<string,string>}
  */
 export const EVT = {
-	LOAD:     'load',      // detail: { settings, info, obsLive } (mirrors SE onWidgetLoad)
+	LOAD:     'load',      // detail: { settings, info, obsLive, visibility, commands } (mirrors SE onWidgetLoad)
 	SETTINGS: 'settings',  // detail: the new settings object
 	CHAT:     'chat',      // detail: a chat message object        (perm: chat:read)
 	COMMAND:  'command',   // detail: { token, command, user, params } (perm: commands:hook)
@@ -70,6 +70,7 @@ export const EVT = {
 	DEMO:     'demo',      // detail: { active:boolean } widget demo mode (no perm)
 	SESSION:  'session',   // detail: { id, chatterCount, live } stream session changed (perm: session:read)
 	VISIBILITY: 'visibility', // detail: { visible, active } OBS source shown/hidden (no perm)
+	COMMANDS: 'commands',  // detail: { [key]: { command, enabled, active } } this plugin's command words (no perm)
 };
 
 /**

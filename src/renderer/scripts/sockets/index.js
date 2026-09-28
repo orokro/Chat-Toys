@@ -15,7 +15,7 @@ export {
 	socketRef, socketShallowRef,
 	socketRefReadOnly, socketShallowRefReadOnly,
 	socketRefAsync, socketShallowRefAsync,
-	disposeSocketRef, getSocketStats,
+	disposeSocketRef, getSocketStats, whenSocketRefReady,
 } from './socketRef.js';
 
 export { bindRef, bindRefs } from './bindRefs.js';

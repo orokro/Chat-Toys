@@ -830,6 +830,31 @@ export function socketShallowRefAsync(keyOrObj, defaultValue) {
 
 
 /**
+ * Run `cb` once the ref is in sync with the server (right away if it already
+ * is). Writes made before that are overwritten by the server's reply (see
+ * the file header), so an owner that computes its value locally should
+ * (re)publish here. No-op for anything that isn't a socket ref.
+ *
+ * @param {import('vue').Ref} r
+ * @param {Function} cb
+ */
+export function whenSocketRefReady(r, cb) {
+	const b = r && r[BINDING];
+	if (!b || b.disposed)
+		return;
+	if (b.ready) {
+		cb();
+		return;
+	}
+	const prev = b.onInitialConnect;
+	b.onInitialConnect = () => {
+		if (prev) prev();
+		cb();
+	};
+}
+
+
+/**
  * Stop syncing a ref now instead of waiting for garbage collection. The ref
  * keeps its last value but no longer sends or receives. No-op for anything
  * that isn't a socket ref.

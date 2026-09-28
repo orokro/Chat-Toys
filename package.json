@@ -14,6 +14,7 @@
 		"test": "node --expose-gc --experimental-detect-module --test --test-force-exit tests/sockets/sockets.test.mjs tests/streamSession/streamSessionTracker.test.mjs tests/imageProxy/imageProxy.test.mjs tests/plugins/pluginVersioning.test.mjs tests/commands/commandLookup.test.mjs",
 		"test:sockets": "node --expose-gc --experimental-detect-module --test --test-force-exit tests/sockets/sockets.test.mjs",
 		"test:e2e:credits": "node tests/plugins/credits.e2e.cjs",
+		"test:e2e:commands": "node tests/plugins/commandWords.e2e.cjs",
 		"bench:sockets": "node --experimental-detect-module tests/sockets/bench/bench.mjs",
 		"postinstall": "node scripts/patch-deps.js && electron-rebuild"
 	},

@@ -226,6 +226,28 @@ test('changes made before a ref is in sync are not sent (widget mount cannot clo
 	assert.equal(S.server.store.get('clobber-k').value, 'GET');
 });
 
+test('whenSocketRefReady: an owner can republish after the server reply replaced its early write', async () => {
+	// a previous run left a stale value on the server
+	const old = await newPage(S.port);
+	old.socketShallowRef('ready-k', { word: 'stale' });
+	await waitFor(() => S.server.store.get('ready-k')?.value?.word === 'stale', 'stale seeded');
+
+	const owner = await newPage(S.port);
+	const r = owner.socketShallowRef('ready-k', { word: 'fresh' });
+	r.value = { word: 'fresh' };           // before init: will be overwritten
+	let fired = 0;
+	owner.whenSocketRefReady(r, () => { fired++; r.value = { word: 'fresh' }; });
+	await waitFor(() => S.server.store.get('ready-k')?.value?.word === 'fresh', 'republished after ready');
+	assert.equal(fired, 1);
+
+	// already ready: runs right away
+	let now = 0;
+	owner.whenSocketRefReady(r, () => { now++; });
+	assert.equal(now, 1);
+	// not a socket ref: no-op
+	owner.whenSocketRefReady({ value: 1 }, () => { throw new Error('should not run'); });
+});
+
 test('async variants resolve once in sync, including when the key is already live on the page', async () => {
 	const page = await newPage(S.port);
 	const first = await page.socketShallowRefAsync('async-k', 'd');

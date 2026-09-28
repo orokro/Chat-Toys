@@ -39,6 +39,7 @@
 // vue
 import { ref, computed, inject, watch, onMounted, onBeforeUnmount } from 'vue';
 import { socketShallowRef, socketShallowRefReadOnly } from '@scripts/sockets';
+import { commandWordsSocketKey } from '@scripts/commandLookup';
 
 // our app
 import { keepAliveSocket } from '../toys/keepAliveSocket.js';
@@ -79,6 +80,10 @@ const stateWatchers = new Map();
 
 // read-only mirror of the plugin's published settings
 const settingsSocket = socketShallowRefReadOnly(settingsSocketKey(pluginSlug), {});
+
+// read-only mirror of the plugin's command words (Toy.publishCommandWords),
+// forwarded into the frame as CT.commands / EVT.COMMANDS
+const commandsSocket = socketShallowRefReadOnly(commandWordsSocketKey(pluginSlug), {});
 
 // read-only mirror of the app-wide "Widget Demo Mode" toggle, forwarded into
 // the frame as EVT.DEMO so plugins can render sample content for OBS layout.
@@ -232,6 +237,7 @@ async function buildLoadDetail() {
 		},
 		obsLive,
 		visibility: { ...visibility },
+		commands: commandsSocket.value || {},
 	};
 }
 
@@ -363,6 +369,11 @@ onMounted(() => {
 	// push settings changes through to the frame as they arrive
 	brokerUnsubs.push(watch(settingsSocket, (val) => {
 		send({ kind: KIND.EVT, name: EVT.SETTINGS, detail: val || {} });
+	}));
+
+	// push command-word changes through to the frame
+	brokerUnsubs.push(watch(commandsSocket, (val) => {
+		send({ kind: KIND.EVT, name: EVT.COMMANDS, detail: val || {} });
 	}));
 
 	// push demo-mode toggles through to the frame

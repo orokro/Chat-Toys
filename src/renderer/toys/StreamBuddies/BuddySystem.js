@@ -171,7 +171,7 @@ class BuddySystem {
 
 		// if the user is not in the active buddies list, return false
 		if (this.activeBuddies.value.find(user=>user.id==userID)==undefined) {
-			this.streamBuddies.chatToysApp.log.error(`${username}: type '!join' to use this command.`);
+			this.streamBuddies.chatToysApp.log.error(`${username}: type '!${this.streamBuddies.commandWord('join')}' to use this command.`);
 			return false;
 		}
 

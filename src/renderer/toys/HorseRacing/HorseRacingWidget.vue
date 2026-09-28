@@ -23,7 +23,7 @@
 			<!-- Apples -->
 			<div v-for="apple in apples" :key="apple.id" class="apple" :style="{ left: apple.x + '%', top: apple.y + '%' }">
 				<img src="/assets/horse_racing/apple.png" class="apple-img" />
-				<div class="apple-label">!eat {{ apple.number }}</div>
+				<div class="apple-label">!{{ cmd('eat') }} {{ apple.number }}</div>
 			</div>
 
 			<!-- In-race countdown HUD - shows how long racers have left before auto-end -->
@@ -47,7 +47,7 @@
 					<template v-if="gameState === 'LOBBY'">
 						<h2>Joining Race...</h2>
 						<div class="timer">{{ timer }}s</div>
-						<div class="msg">Type !joinrace to play!</div>
+						<div class="msg">Type !{{ cmd('joinrace') }} to play!</div>
 						<div class="players-count">{{ players.length }} / 8 Players</div>
 					</template>
 
@@ -59,7 +59,7 @@
 					<template v-if="gameState === 'BET'">
 						<h2>Place Your Bets!</h2>
 						<div class="timer">{{ timer }}s</div>
-						<div class="msg">!horsebet &lt;amount&gt; @username</div>
+						<div class="msg">!{{ cmd('horsebet') }} &lt;amount&gt; @username</div>
 						<div class="bets-info">{{ bets.length }} bets placed</div>
 					</template>
 
@@ -96,7 +96,7 @@
 
 			<!-- Idle Message -->
 			<div class="idle-msg" v-if="gameState === 'IDLE'">
-				Type !joinrace to play!
+				Type !{{ cmd('joinrace') }} to play!
 			</div>
 		</div>
 	</div>
@@ -106,6 +106,7 @@
 import { ref, watch, computed, inject } from 'vue';
 import { socketShallowRefReadOnly } from '@scripts/sockets';
 import { useToySettings } from '@toys/useToySettings';
+import { useCommandWords } from '@toys/useCommandWords';
 import { keepAliveSocket } from '../keepAliveSocket.js';
 import Horse from './Horse.vue';
 
@@ -115,6 +116,9 @@ const slugify = (text) => thisSlug + '__' + text.toLowerCase();
 
 // keep alive the socket
 keepAliveSocket(thisSlug, widgetSlug);
+
+// the real (possibly renamed) command words, for the "Type !..." hints
+const { cmd } = useCommandWords(thisSlug);
 
 const emit = defineEmits(['boxChange']);
 

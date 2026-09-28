@@ -10,7 +10,8 @@
 
 // vue
 import { ref, shallowRef, watch } from 'vue';
-import { socketRef, socketShallowRef, socketShallowRefReadOnly, disposeSocketRef } from '@scripts/sockets';
+import { socketRef, socketShallowRef, socketShallowRefReadOnly, disposeSocketRef, whenSocketRefReady } from '@scripts/sockets';
+import { commandWordsForToy, commandWordsSocketKey } from '@scripts/commandLookup';
 
 
 /**
@@ -88,6 +89,10 @@ export default class Toy {
 		// we'll use a callback that can be overridden by the toy
 		this.onCommandFn = this.onCommand.bind(this);
 		this.chatToysApp.commandProcessor.hookToyCommands(this.slug, this.onCommandFn);
+
+		// tell our widgets the real words for our commands (users can rename
+		// them, and a plugin may have been given join2)
+		this.publishCommandWords();
 
 		// Auto-managed heartbeat tracking. `heartBeatAlive` becomes true
 		// whenever ANY of this toy's widgets has sent a keep-alive heartbeat
@@ -453,6 +458,16 @@ export default class Toy {
 		if (this.stopSettingsSocketWatch)
 			this.stopSettingsSocketWatch();
 
+		// stop publishing command words
+		if (this._stopCommandWordsWatch) {
+			this._stopCommandWordsWatch();
+			this._stopCommandWordsWatch = null;
+		}
+		if (this.commandWordsSocketRef) {
+			disposeSocketRef(this.commandWordsSocketRef);
+			this.commandWordsSocketRef = null;
+		}
+
 		// stop the heartbeat ticker and release the live-state subscriptions
 		if (this._heartBeatInterval) {
 			window.clearElectronInterval(this._heartBeatInterval);
@@ -499,6 +514,63 @@ export default class Toy {
 			return `builtin/${fileData.name}`;
 		else
 			return `http://localhost:${this.chatToysApp.serverPort.value}/${fileData.file_path}`;
+	}
+
+
+	/**
+	 * Publish this toy's command words to its widgets on the
+	 * `<slug-kebab>-commands` socket key, as
+	 *   { [key]: { command, enabled, active } }
+	 * where key is the part after '__' (e.g. 'joinrace'), command the word the
+	 * user typed / renamed, and active whether chat typing it reaches this toy
+	 * (enabled, and not answered by another running toy). Widgets read it with
+	 * useCommandWords(); plugin iframes get it as CT.commands. Dashboard only.
+	 */
+	publishCommandWords(){
+
+		if (!window.isPrimaryWindow)
+			return;
+
+		const compute = () => commandWordsForToy(
+			this.chatToysApp.commands.value || {},
+			this.slug,
+			this.chatToysApp.commandProcessor.lookup.value);
+
+		let last = null;
+		const push = () => {
+			if (!this.commandWordsSocketRef) return;
+			const next = compute();
+			const json = JSON.stringify(next);
+			if (json === last) return;
+			last = json;
+			this.commandWordsSocketRef.value = next;
+		};
+
+		this.commandWordsSocketRef = socketShallowRef(commandWordsSocketKey(this.slug), compute());
+
+		// writes before the socket is in sync are replaced by the server's
+		// reply (possibly a stale value from a previous run), so publish the
+		// current words once it is
+		whenSocketRefReady(this.commandWordsSocketRef, () => { last = null; push(); });
+
+		this._stopCommandWordsWatch = watch(
+			[this.chatToysApp.commands, this.chatToysApp.commandProcessor.lookup],
+			push);
+	}
+
+
+	/**
+	 * The word chat types for one of this toy's commands (without the '!').
+	 * Reads the saved commands directly, so it's current even when the
+	 * commands page isn't open.
+	 *
+	 * @param {String} key - the part after '__', e.g. 'join'
+	 * @param {String} [fallback] - returned if the command isn't saved yet
+	 * @returns {String}
+	 */
+	commandWord(key, fallback = key){
+		const saved = this.chatToysApp.commands?.value?.[`${this.slug}__${key}`];
+		return (saved && saved.command) || fallback;
 	}
 
 
