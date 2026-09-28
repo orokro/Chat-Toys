@@ -186,6 +186,11 @@ export default class TwitchRedeems extends Toy {
 			// deduction (see CommandProcessor._notifyListeners).
 			source: 'twitch-redeem',
 
+			// The exact command this reward is mapped to. CommandProcessor
+			// dispatches on this instead of the typed word, so a redeem
+			// still reaches its toy when two running toys share a word.
+			_commandSlug: mapping.commandSlug,
+
 			// Metadata Task #17 will use to refund the Twitch redemption
 			// when the command is rejected.
 			_redemption: {

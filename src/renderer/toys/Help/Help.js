@@ -206,6 +206,9 @@ export default class Help extends Toy {
 			const commands = toy.localCommandsList?.value || [];
 			for (const cmd of commands) {
 				if (!cmd || !cmd.enabled) continue;
+				// don't advertise a command another running toy answers instead
+				const standing = this.chatToysApp?.commandProcessor?.getCommandStanding?.(cmd.slug);
+				if (standing && !standing.active) continue;
 				const tip = typeof cmd.tipText === 'string' ? cmd.tipText.trim() : '';
 				if (!tip) continue;
 				out.push({

@@ -6,12 +6,13 @@
 */
 
 // vue
-import { computed, watch } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 
 // our app
 import { ChatProcessor } from "./ChatProcessor";
 import ChatToysApp from "./ChatToysApp";
 import ChannelPoints from '@toys/ChannelPoints/ChannelPoints';
+import { buildCommandLookup } from './commandLookup';
 
 /**
  * CommandProcessor class
@@ -31,8 +32,10 @@ export class CommandProcessor {
 		this.chatProcessor = chatProcessor;
 		this.commandsRef = this.chatToysApp.commands
 
-		// build a map of commands for easy lookup
+		// typed word -> command, for RUNNING toys only (see commandLookup.js).
+		// `lookup` also carries the clashes, for the command config UI.
 		this.commandMap = {};
+		this.lookup = shallowRef({ map: {}, conflicts: {}, bySlug: {} });
 		this.buildCommandMap();
 
 		// out map of listeners based on toySlugs
@@ -177,8 +180,10 @@ export class CommandProcessor {
 	 */
 	subscribeEvents() {
 
-		// whenever the commands change, rebuild the command map
+		// rebuild the lookup whenever the commands change, or a toy is added /
+		// removed (only running toys' commands take part)
 		watch(this.commandsRef, ()=> this.buildCommandMap());
+		watch(this.chatToysApp.enabledToys, ()=> this.buildCommandMap());
 
 		// subscribe to the stream of new chat messages to check for commands
 		this.chatProcessor.onNewChats((messages) => this.handleChats(messages));
@@ -218,16 +223,32 @@ export class CommandProcessor {
 
 
 	/**
-	 * Build a map of commands for easy lookup
+	 * Build the typed-word lookup from the commands of the toys that are
+	 * running right now. Commands saved for toys that were removed are left
+	 * out, so they can't answer (or swallow) a word another toy uses. When two
+	 * running toys share a word, the one added first answers and the clash is
+	 * recorded in `this.lookup.value.conflicts`.
 	 */
 	buildCommandMap(){
 
-		// build a map of commands for easy lookup
-		// note: we need to run this every time this.commandsRef changes
-		this.commandMap = Object.values(this.commandsRef.value).reduce((map, cmd) => {
-			map[cmd.command] = cmd;
-			return map;
-		}, {});
+		const lookup = buildCommandLookup(
+			this.commandsRef.value || {},
+			this.chatToysApp.enabledToys?.value || []);
+
+		this.commandMap = lookup.map;
+		this.lookup.value = lookup;
+	}
+
+
+	/**
+	 * How a command stands against other running toys' commands.
+	 *
+	 * @param {String} slug - full command slug, e.g. 'horseRacing__joinrace'
+	 * @returns {?{word: String, active: Boolean, winner: String, others: Array<String>}}
+	 *   null when the command's toy isn't running
+	 */
+	getCommandStanding(slug) {
+		return this.lookup.value.bySlug[slug] || null;
 	}
 
 
@@ -362,10 +383,18 @@ export class CommandProcessor {
 
 			// if the first part is not a complete command, skip
 			// or if the command is not enabled GTFO
+			// A Twitch redeem names the exact command it's mapped to, so it
+			// reaches that toy even if another running toy shares the word.
+			// Otherwise the typed word picks the command (running toys only).
 			const commandKey = parts[0];
-			const commandData = commandMap[commandKey];
-			if (!commandData)
+			const commandData = msg._commandSlug
+				? (this.lookup.value.bySlug[msg._commandSlug] ? this.commandsRef.value[msg._commandSlug] : null)
+				: commandMap[commandKey];
+			if (!commandData) {
+				// no running toy has this command (no-op for ordinary chat)
+				this._refundDroppedRedeem(msg, 'no toy is handling this command');
 				continue;
+			}
 			if (!commandData.enabled) {
 				this._refundDroppedRedeem(msg, 'command is disabled', commandData);
 				continue;

@@ -77,7 +77,7 @@
 			>
 				<div
 					class="commandRow"
-					:class="{ 'disabled': !command.enabled }"
+					:class="{ 'disabled': !command.enabled, 'shadowed': clashOf(command) && !clashOf(command).active }"
 				>
 					
 					<div class="cellEnabled cell">
@@ -103,6 +103,11 @@
 					</div>					
 					<div class="cellCmd cell">
 						<div class="cmdText">
+							<span
+								v-if="clashOf(command)"
+								class="clashIcon material-icons"
+								v-tippy="clashText(command)"
+							>warning</span>
 							!{{ command.command }}
 						</div>
 						<div class="editButton" @click="(e)=>doEdit(command, 'command')">✏️</div>
@@ -156,6 +161,17 @@
 						</div>
 					</div>
 				</div>
+
+				<!-- another running toy uses the same word -->
+				<div
+					v-if="clashOf(command)"
+					class="clashRow"
+					:class="{ shadowed: !clashOf(command).active }"
+				>
+					<span class="material-icons">warning</span>
+					<span class="clashMsg">{{ clashText(command) }}</span>
+					<button class="clashFix" @click="doEdit(command, 'command')">Rename</button>
+				</div>
 			</template>
 		</div>
 		
@@ -176,6 +192,7 @@ import ConfirmModal from './ConfirmModal.vue';
 // lib/ misc
 import { openModal, promptModal } from "jenesius-vue-modal"
 import ChannelPoints from '@toys/ChannelPoints/ChannelPoints';
+import { takenCommandWords } from '../../scripts/commandLookup';
 
 // all of the commands system wide are stored in this chrome shallow ref
 const commandsRef = chromeShallowRef('commands', {});
@@ -205,6 +222,54 @@ const props = defineProps({
 // true if we have at 'channel_points' enabled in ctApp.enabledToys.value
 const isChannelPointsEnabled = computed(()=>
 	ctApp.enabledToys.value.includes(ChannelPoints.slug));
+
+
+// how each command stands against other RUNNING toys' commands (reactive:
+// the CommandProcessor rebuilds it when commands or running toys change)
+const standings = computed(()=>
+	(ctApp.commandProcessor && ctApp.commandProcessor.lookup.value.bySlug) || {});
+
+
+/**
+ * The clash for a command, if another running toy has an enabled command with
+ * the same word (and this one is enabled too).
+ *
+ * @param {Object} command
+ * @returns {?{word: String, active: Boolean, others: Array<String>}}
+ */
+function clashOf(command){
+	const st = standings.value[command.slug];
+	if (!st || !command.enabled || st.others.length === 0)
+		return null;
+	return st;
+}
+
+
+/**
+ * Human name of the toy a command slug belongs to.
+ *
+ * @param {String} slug - e.g. 'horseRacing__joinrace'
+ * @returns {String}
+ */
+function toyNameOfSlug(slug){
+	const toySlug = String(slug).split('__')[0];
+	const t = ctApp.toysData && ctApp.toysData.asObject && ctApp.toysData.asObject[toySlug];
+	return (t && t.name) || toySlug;
+}
+
+
+/**
+ * @param {Object} command
+ * @returns {String} explanation for the clash row / tooltip
+ */
+function clashText(command){
+	const st = clashOf(command);
+	if (!st) return '';
+	const names = Array.from(new Set(st.others.map(toyNameOfSlug))).join(', ');
+	return st.active
+		? `!${st.word} is also a command in ${names}. This one answers it, so theirs won't respond. Rename one of them.`
+		: `!${st.word} is also a command in ${names}, which was added first and answers it, so this one won't respond. Rename one of them.`;
+}
 
 
 
@@ -247,6 +312,23 @@ function getUniqueCommands(data) {
 
 
 /**
+ * Words a command can't be renamed to: the other commands of RUNNING toys,
+ * plus this toy's own other commands. Toys that aren't running may share a
+ * word (they can't both answer it). The command's own current word is
+ * allowed, so saving it unchanged works.
+ *
+ * @param {Object} command
+ * @returns {Array<String>}
+ */
+function reservedWordsFor(command){
+	return Array.from(takenCommandWords(
+		commandsRef.value,
+		ctApp.enabledToys.value,
+		{ exceptSlug: command.slug, includeToy: props.toy.slug }));
+}
+
+
+/**
  * Open the edit command modal to edit a specific field in a command
  * 
  * @param {Object} command the command object to edit
@@ -258,7 +340,7 @@ async function doEdit(command, field){
 		commandDetails: command,
 		kind: field,
 		initialValue: command[field],
-		reservedCommands: getUniqueCommands(commandsRef.value)
+		reservedCommands: reservedWordsFor(command)
 	});
 
 	// if response was cancel or closed, then we don't need to do anything
@@ -682,6 +764,45 @@ async function deleteCustomCommand(slug){
 				}// .cellDesc
 
 			}// .commandRow
+
+			// a command whose word another running toy also uses
+			.commandRow.shadowed {
+				box-shadow: inset 4px 0 0 #e8912d;
+			}
+			.cmdText .clashIcon {
+				font-size: 14px;
+				vertical-align: -3px;
+				margin-right: 2px;
+				color: #ffd27a;
+				cursor: help;
+			}
+			.clashRow {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 6px 10px;
+				font-size: 12px;
+				background: #fff4e5;
+				color: #6b3d00;
+				border-bottom: 2px solid black;
+				.material-icons { font-size: 16px; color: #d9822b; }
+				.clashMsg { flex: 1 1 auto; }
+				.clashFix {
+					flex: 0 0 auto;
+					border: 0;
+					border-radius: 999px;
+					padding: 3px 12px;
+					font-size: 12px;
+					font-weight: 700;
+					background: #d9822b;
+					color: #fff;
+					cursor: pointer;
+				}
+				.clashFix:hover { filter: brightness(1.08); }
+			}
+			.clashRow.shadowed {
+				background: #ffe8cc;
+			}
 
 		}// .commandsList
 
