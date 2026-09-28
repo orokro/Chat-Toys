@@ -90,6 +90,7 @@ export const PERMISSIONS = [
 	'assets:read',
 	'obs:status',
 	'session:read',
+	'userdata:store',
 	// future (reserved, not yet honoured): 'events:*', 'net:fetch', 'storage:user'
 ];
 
@@ -110,6 +111,13 @@ export const REQUEST_PERMS = {
 	'assets.url':    'assets:read',
 	'obs.isLive':    'obs:status',
 	'session.get':   'session:read',
+	'userData.get':     'userdata:store',
+	'userData.getMany': 'userdata:store',
+	'userData.set':     'userdata:store',
+	'userData.update':  'userdata:store',
+	'userData.delete':  'userdata:store',
+	'userData.top':     'userdata:store',
+	'userData.limits':  'userdata:store',
 	// 'state.get' / 'state.set' -> handled by host, no perm (own namespace)
 };
 

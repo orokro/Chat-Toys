@@ -32,6 +32,7 @@ export const PERM_LABELS = {
 	'assets:read': 'Use stream assets',
 	'obs:status': 'Read OBS live status',
 	'session:read': 'See who chatted this stream',
+	'userdata:store': 'Remember things about viewers (e.g. high scores)',
 };
 
 

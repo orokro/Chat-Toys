@@ -292,6 +292,37 @@
 			set: (user, amount) => request('points.set', { user, amount }),
 		},
 
+		// --- per-viewer saved data (perm: userdata:store) ---
+		// Remember things about a viewer across streams: a high score, a
+		// collection, a streak. Private to your plugin (keyed by your manifest
+		// id). `user` is the id you get as command.user.id / chat.userId.
+		// Data is a plain JSON object; limits: ~4 KB per viewer, ~10 MB for your
+		// whole plugin, and a write rate cap (see limits()). Over a limit the
+		// call rejects with a clear message - nothing is cut short. The app never
+		// reads your data, so its shape is yours: keep a version field in it if
+		// you may change it later.
+		userData: {
+			/** @param {string} user @returns {Promise<?Object>} saved data or null */
+			get: (user) => request('userData.get', { user }),
+			/** @param {Array<string>} users - up to 500 @returns {Promise<Object<string, ?Object>>} */
+			getMany: (users) => request('userData.getMany', { users }),
+			/** Replace. @param {string} user @param {Object} data @returns {Promise<Object>} */
+			set: (user, data) => request('userData.set', { user, data }),
+			/** Merge top-level fields (a field set to null is removed). @returns {Promise<Object>} */
+			update: (user, patch) => request('userData.update', { user, patch }),
+			/** @param {string} user @returns {Promise<boolean>} */
+			delete: (user) => request('userData.delete', { user }),
+			/**
+			 * Leaderboard by a numeric field ('highScore' or 'stats.wins').
+			 * @param {string} field
+			 * @param {{limit?: number, order?: 'desc'|'asc'}} [opts] - limit up to 100
+			 * @returns {Promise<Array<{userId: string, name: ?string, value: number, data: Object}>>}
+			 */
+			top: (field, opts = {}) => request('userData.top', { field, limit: opts.limit, order: opts.order }),
+			/** @returns {Promise<Object>} the size / rate limits */
+			limits: () => request('userData.limits', {}),
+		},
+
 		// --- users (perm: users:read) ---
 		users: {
 			/** @param {string} user - user id @returns {Promise<Object>} */

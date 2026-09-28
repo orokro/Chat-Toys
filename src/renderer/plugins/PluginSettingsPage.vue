@@ -96,6 +96,24 @@
 
 		</div>
 
+		<!-- what this plugin remembers about viewers (CT.userData) -->
+		<template v-if="usesUserData">
+			<SectionHeader title="Saved Viewer Data" />
+			<div class="savedData">
+				<p>
+					This plugin remembers things about viewers (like high scores) between streams.
+					<template v-if="dataStats">
+						It has saved data for <b>{{ dataStats.users }}</b> viewer{{ dataStats.users === 1 ? '' : 's' }}
+						({{ formatBytes(dataStats.bytes) }}).
+					</template>
+					Removing the plugin keeps this data, so reinstalling it brings everything back.
+				</p>
+				<button class="dangerBtn" :disabled="!dataStats || dataStats.users === 0" @click="deleteSavedData">
+					Delete this plugin's saved data
+				</button>
+			</div>
+		</template>
+
 	</PageBox>
 
 	<div v-else class="missingToy">
@@ -110,6 +128,8 @@ import { ref, reactive, computed, inject, onMounted } from 'vue';
 
 // app
 import { installAndActivate } from './pluginInstall';
+import { promptModal } from 'jenesius-vue-modal';
+import ConfirmModal from '@components/options/ConfirmModal.vue';
 
 // components (the same ones built-in toy pages use)
 import PageBox from '@components/options/PageBox.vue';
@@ -233,6 +253,41 @@ async function doUpdate() {
 	}
 }
 
+// --- saved per-viewer data (CT.userData) ---
+const usesUserData = computed(() => (toy?.manifest?.permissions || []).includes('userdata:store'));
+const dataStats = ref(null);   // { users, bytes }
+
+function dataId() {
+	return String(toy?.manifest?.id || toy?.manifest?.slug || '');
+}
+
+function refreshDataStats() {
+	if (!usesUserData.value || !window.pluginDataDB) return;
+	try { dataStats.value = window.pluginDataDB.stats(dataId()); }
+	catch (e) { dataStats.value = null; }
+}
+
+function formatBytes(n) {
+	if (n < 1024) return `${n} bytes`;
+	if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+	return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+async function deleteSavedData() {
+	const r = await promptModal(ConfirmModal, {
+		title: 'Delete saved viewer data?',
+		prompt: `This permanently deletes everything ${toy.manifest.name} remembers about viewers (${dataStats.value ? dataStats.value.users : 0} viewers). It can't be undone.`,
+		buttons: ['delete', 'nevermind'],
+		icon: 'warning',
+	});
+	if (!r || r.button !== 'delete') return;
+	try { window.pluginDataDB.clear(dataId()); }
+	catch (e) { console.error('[PluginSettingsPage] clearing saved data failed:', e); }
+	refreshDataStats();
+}
+
+onMounted(refreshDataStats);
+
 // schema fields, split by how we render them
 const schema = computed(() => (toy?.manifest?.settings) || []);
 const unsupportedFields = computed(() => schema.value.filter(f => !INPUT_TYPES.has(f.type) && f.type !== 'asset' && f.type !== 'text'));
@@ -315,6 +370,21 @@ if (toy) {
 
 	.settingsBlock {
 		margin-bottom: 20px;
+	}
+
+	.savedData {
+		margin-bottom: 20px;
+		p { margin: 4px 0 10px; line-height: 1.5; }
+		.dangerBtn {
+			border: 0;
+			border-radius: 999px;
+			padding: 7px 16px;
+			font-weight: 700;
+			background: #c62828;
+			color: #fff;
+			cursor: pointer;
+		}
+		.dangerBtn:disabled { opacity: 0.45; cursor: default; }
 	}
 
 	.unsupportedNote {

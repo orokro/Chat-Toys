@@ -390,6 +390,23 @@ export default class PluginToy extends Toy {
 				return snap;
 			}
 
+			// per-chatter saved data, namespaced by this plugin's manifest id
+			// (limits + batching live in main/system/pluginUserData.js)
+			case 'userData.get':
+				return this._userDataDB().get(this._dataId(), String(payload.user ?? ''));
+			case 'userData.getMany':
+				return this._userDataDB().getMany(this._dataId(), payload.users);
+			case 'userData.set':
+				return this._userDataDB().set(this._dataId(), String(payload.user ?? ''), payload.data);
+			case 'userData.update':
+				return this._userDataDB().update(this._dataId(), String(payload.user ?? ''), payload.patch);
+			case 'userData.delete':
+				return this._userDataDB().remove(this._dataId(), String(payload.user ?? ''));
+			case 'userData.top':
+				return this._userDataDB().top(this._dataId(), payload.field, { limit: payload.limit, order: payload.order });
+			case 'userData.limits':
+				return { ...this._userDataDB().limits };
+
 			case 'obs.isLive':
 				// OBSConnectionManager exposes a reactive live flag; fall back false.
 				return !!(this.chatToysApp.obsConnMgr && this.chatToysApp.obsConnMgr.isLive
@@ -405,6 +422,27 @@ export default class PluginToy extends Toy {
 	// =====================================================================
 	// Helpers
 	// =====================================================================
+
+	/**
+	 * The key this plugin's saved per-chatter data lives under: its permanent
+	 * manifest id (so a reinstall or slug change keeps the data).
+	 *
+	 * @returns {string}
+	 */
+	_dataId() {
+		return String(this.manifest.id || this.manifest.slug);
+	}
+
+
+	/**
+	 * @returns {Object} window.pluginDataDB (throws if unavailable)
+	 */
+	_userDataDB() {
+		const db = window.pluginDataDB;
+		if (!db)
+			throw new Error('Per-viewer plugin data is not available in this window');
+		return db;
+	}
 
 	/**
 	 * Resolve an asset ref to a fetchable URL. A ref containing a slash is

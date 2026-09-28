@@ -37,6 +37,27 @@ contextBridge.exposeInMainWorld("ytctDB", {
 });
 
 
+// Per-chatter, per-plugin saved data (plugin SDK CT.userData). Same SQLite
+// file, one shared table; see system/pluginUserData.js for the limits.
+const { PluginUserDataStore, LIMITS: PLUGIN_USER_DATA_LIMITS } = require(path.join(__dirname, "../system/pluginUserData"));
+const pluginUserData = new PluginUserDataStore(db.db);
+// writes are batched in memory for a moment; don't lose the last ones on quit
+window.addEventListener('beforeunload', () => {
+	try { pluginUserData.flush(); } catch (e) { /* noop */ }
+});
+contextBridge.exposeInMainWorld("pluginDataDB", {
+	get: (pluginId, userId) => pluginUserData.get(pluginId, userId),
+	getMany: (pluginId, userIds) => pluginUserData.getMany(pluginId, userIds),
+	set: (pluginId, userId, data) => pluginUserData.set(pluginId, userId, data),
+	update: (pluginId, userId, patch) => pluginUserData.update(pluginId, userId, patch),
+	remove: (pluginId, userId) => pluginUserData.remove(pluginId, userId),
+	top: (pluginId, field, opts) => pluginUserData.top(pluginId, field, opts),
+	stats: (pluginId) => pluginUserData.stats(pluginId),
+	clear: (pluginId) => pluginUserData.clear(pluginId),
+	limits: PLUGIN_USER_DATA_LIMITS,
+});
+
+
 // Expose our environment variable to the renderer process
 contextBridge.exposeInMainWorld('env', {
 	isDev,
