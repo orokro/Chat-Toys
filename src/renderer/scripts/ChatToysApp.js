@@ -25,6 +25,7 @@ import { PluginBridge } from '../plugins/PluginBridge.js';
 import { YouTubeConnectionManager } from './YouTubeConnectionManager.js';
 import { VTSConnectionManager } from './VTSConnectionManager.js';
 import { BTTVManager } from './BTTVManager.js';
+import { StreamSession } from './StreamSession.js';
 
 // lib/misc
 import DragHelper from 'gdraghelper';
@@ -120,6 +121,12 @@ export default class ChatToysApp {
 		// main process. The main process gets them from a WebSocket server from
 		// a chrome plugin.
 		this.chatProcessor = new ChatProcessor(this);
+
+		// who chatted during the current stream (automatic stream boundaries;
+		// see StreamSession.js). Created right after the chat processor and
+		// BEFORE the command processor + toys, so its chat listener runs first
+		// and reads each chatter's points baseline before anything awards them.
+		this.streamSession = new StreamSession(this);
 
 		// make a new command processor to handle all incoming commands
 		this.commandProcessor = new CommandProcessor(this, this.chatProcessor);
