@@ -43,8 +43,10 @@
 
 		<SectionHeader title="Available Alert Toys"/>
 		<p class="small">
-			Toys currently in chat-toys with <code>isAlertToy = true</code>.
-			Drag any of these into a group below.
+			Alert-style toys you've added (including plugins that support the
+			Omni widget). Drag any of these into a group below. If you remove a
+			toy it disappears from here and from its group, and comes back to
+			the same group if you add it again.
 		</p>
 
 		<div
@@ -58,7 +60,10 @@
 				:toySlug="slug"
 				@dragstart="onDragStart(slug, null, $event)"
 			/>
-			<div v-if="poolToys.length === 0" class="empty-pool-hint">
+			<div v-if="poolToys.length === 0 && allAlertSlugs.length === 0" class="empty-pool-hint">
+				No alert toys added yet. Add one (like Shout or Head Pats, or a plugin that supports the Omni widget) and it shows up here.
+			</div>
+			<div v-else-if="poolToys.length === 0" class="empty-pool-hint">
 				All alert toys are currently assigned. Drag one back here to remove it from its group.
 			</div>
 		</div>
@@ -88,17 +93,17 @@
 
 				<div
 					class="group-drop"
-					:class="{ empty: (group.includedToys?.length || 0) === 0 }"
+					:class="{ empty: visibleIn(group).length === 0 }"
 					@dragover.prevent="onDragOver"
 					@drop="onDropToGroup(group.id, $event)"
 				>
 					<ToyChip
-						v-for="slug in (group.includedToys || [])"
+						v-for="slug in visibleIn(group)"
 						:key="slug"
 						:toySlug="slug"
 						@dragstart="onDragStart(slug, group.id, $event)"
 					/>
-					<div v-if="(group.includedToys?.length || 0) === 0" class="empty-group-hint">
+					<div v-if="visibleIn(group).length === 0" class="empty-group-hint">
 						Drop alert toys here
 					</div>
 				</div>
@@ -134,19 +139,37 @@ const { omniGroups } = toy.settings;
 
 
 /**
- * All slugs of toys with `static isAlertToy = true` in the registry.
- * Doesn't include the Omni itself.
+ * Slugs of alert toys (`static isAlertToy = true`, incl. plugins with an
+ * "omni" widget) that are ADDED right now. Doesn't include the Omni itself.
+ *
+ * A toy that's removed (or a plugin that's uninstalled) disappears from the
+ * pool and from its group's drop box, but stays in the group's saved
+ * `includedToys`, so re-adding it puts it back where it was. The Omni widget
+ * likewise skips toys it can't load.
  *
  * @type {import('vue').ComputedRef<string[]>}
  */
 const allAlertSlugs = computed(() => {
+	const enabled = new Set(ctApp.enabledToys.value || []);
 	const out = [];
 	for (const T of ctApp.toysData) {
 		if (T.slug === Omni.slug) continue;
-		if (T.isAlertToy === true) out.push(T.slug);
+		if (T.isAlertToy === true && enabled.has(T.slug)) out.push(T.slug);
 	}
 	return out;
 });
+
+
+/**
+ * The chips to show in a group's drop box: its saved toys that are added.
+ *
+ * @param {Object} group
+ * @returns {string[]}
+ */
+function visibleIn(group) {
+	const shown = new Set(allAlertSlugs.value);
+	return (group.includedToys || []).filter((s) => shown.has(s));
+}
 
 
 /**

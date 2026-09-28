@@ -122,6 +122,17 @@ export const REQUEST_PERMS = {
 };
 
 /**
+ * Brokered requests that need NO permission: they only affect the plugin's own
+ * pacing in the Omni widget (see PluginToy: omni turns).
+ *
+ * @type {Set<string>}
+ */
+export const OPEN_REQUESTS = new Set([
+	'omni.turn',
+	'omni.done',
+]);
+
+/**
  * Build the namespaced socket-ref key a plugin's render-state value lives under.
  * Every state key is forced beneath `plugin:<slug>:state:` so a plugin can never
  * read or clobber another toy's socket keys. THIS is the enforced sandbox for

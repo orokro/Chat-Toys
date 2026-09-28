@@ -20,7 +20,7 @@
 	>
 		<img
 			class="icon"
-			:src="`/assets/icons/${toySlug}.png`"
+			:src="iconSrc"
 			alt=""
 			onerror="this.style.display='none'"
 		/>
@@ -49,6 +49,9 @@ const toyClass = computed(() => ctApp.toysData.asObject[props.toySlug] || null);
 const toyName = computed(() => toyClass.value?.name || props.toySlug);
 
 const themeColor = computed(() => toyClass.value?.themeColor || '#888');
+
+// plugins serve their own icon (iconURL); built-ins ship assets/icons/<slug>.png
+const iconSrc = computed(() => toyClass.value?.iconURL || `/assets/icons/${props.toySlug}.png`);
 
 </script>
 <style lang="scss" scoped>

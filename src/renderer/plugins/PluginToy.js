@@ -41,7 +41,7 @@ function uuidv4() {
 // our app
 import Toy from '../toys/Toy';
 import PluginWidgetHost from './PluginWidgetHost.vue';
-import { REQUEST_PERMS } from './protocol';
+import { REQUEST_PERMS, OPEN_REQUESTS } from './protocol';
 import { effectivePerms } from './pluginPerms';
 
 // how long to wait for a plugin to accept/reject a command before we auto-reject
@@ -49,6 +49,12 @@ const COMMAND_ACK_TIMEOUT_MS = 15 * 1000;
 
 // minimum gap between 'session' broker events (see _emitSessionThrottled)
 const SESSION_EVENT_MS = 2000;
+
+// Omni turns (see PluginToy._omniTurn)
+const OMNI_DEFAULT_HOLD_MS = 60 * 1000;
+const OMNI_MAX_HOLD_MS = 120 * 1000;
+const OMNI_MAX_WAITING = 50;
+const OMNI_POLL_MS = 250;
 
 
 export default class PluginToy extends Toy {
@@ -74,6 +80,12 @@ export default class PluginToy extends Toy {
 
 		// broker event listeners: name -> Set<fn>
 		this._brokerListeners = new Map();
+
+		// Omni turns (see _omniTurn): waiting requests + the one being shown
+		this._omniQueue = [];
+		this._omniHolder = null;
+		this._omniPoll = null;
+		this._omniSeq = 0;
 
 		// outstanding command handshakes keyed by token
 		this._pendingHandshakes = new Map();
@@ -337,6 +349,12 @@ export default class PluginToy extends Toy {
 	 */
 	async request(type, payload = {}) {
 
+		// no-permission requests (own pacing only)
+		if (OPEN_REQUESTS.has(type)) {
+			if (type === 'omni.turn') return this._omniTurn(payload);
+			if (type === 'omni.done') return this._omniDone(payload);
+		}
+
 		// deny-unknown + permission check
 		const needed = REQUEST_PERMS[type];
 		if (!needed)
@@ -416,6 +434,108 @@ export default class PluginToy extends Toy {
 			default:
 				throw new Error(`Unhandled request "${type}"`);
 		}
+	}
+
+
+	// =====================================================================
+	// Omni widget turns
+	// =====================================================================
+	//
+	// An Omni group shows one alert at a time. Built-in alert toys hold their
+	// StateTickerQueue while another toy in the group is on screen; a plugin's
+	// show/wait logic lives in its sandbox, so it asks for a turn instead:
+	//
+	//   const t = await CT.omni.turn();   // waits for the slot (instant if not in an Omni)
+	//   ...show the alert...
+	//   CT.omni.done();                   // hand the slot back
+	//
+	// While a turn is held, isShowing() is true, so the other toys in the
+	// group wait. A turn is released automatically after maxMs (default 60s)
+	// so a plugin can never jam the slot. Call it from the plugin's headless
+	// script: its widget may be open in several places at once.
+
+	/**
+	 * Is this plugin on screen right now (holding an Omni turn)? Read by the
+	 * Omni toy to gate the other toys in its group.
+	 *
+	 * @returns {boolean}
+	 */
+	isShowing() {
+		return !!this._omniHolder;
+	}
+
+
+	/**
+	 * Queue a turn request; resolves when it's granted.
+	 *
+	 * @param {Object} payload - { maxMs? } how long the turn may be held (1-120s, default 60s)
+	 * @returns {Promise<{id: number, inOmni: boolean}>}
+	 */
+	_omniTurn(payload = {}) {
+		if (this._omniQueue.length >= OMNI_MAX_WAITING)
+			return Promise.reject(new Error(`omni.turn: ${OMNI_MAX_WAITING} turns are already waiting`));
+		const maxMs = Math.max(1000, Math.min(OMNI_MAX_HOLD_MS, Number(payload.maxMs) || OMNI_DEFAULT_HOLD_MS));
+		return new Promise((resolve, reject) => {
+			this._omniQueue.push({ id: ++this._omniSeq, maxMs, resolve, reject });
+			this._omniPump();
+		});
+	}
+
+
+	/**
+	 * Release a turn (the current one if no id is given, or if the id matches).
+	 *
+	 * @param {Object} payload - { id? }
+	 * @returns {boolean} true if a turn was released
+	 */
+	_omniDone(payload = {}) {
+		const h = this._omniHolder;
+		if (!h) return false;
+		if (payload.id != null && payload.id !== h.id) return false;
+		this._omniRelease();
+		return true;
+	}
+
+
+	_omniRelease() {
+		const h = this._omniHolder;
+		if (!h) return;
+		(window.clearElectronTimeout || clearTimeout)(h.timer);
+		this._omniHolder = null;
+		this._omniPump();
+	}
+
+
+	/**
+	 * Grant the next waiting turn if the slot is free. While another toy in
+	 * our Omni group is showing, re-check every OMNI_POLL_MS (built-in toys
+	 * re-check once a second on their tick).
+	 */
+	_omniPump() {
+		if (this._omniHolder || this._omniQueue.length === 0 || this._ended)
+			return;
+
+		const registry = this.chatToysApp.omniRegistry;
+		if (registry && registry.isBlocking(this.slug)) {
+			if (!this._omniPoll) {
+				const setT = window.setElectronTimeout || setTimeout;
+				this._omniPoll = setT(() => { this._omniPoll = null; this._omniPump(); }, OMNI_POLL_MS);
+			}
+			return;
+		}
+
+		const next = this._omniQueue.shift();
+		const setT = window.setElectronTimeout || setTimeout;
+		this._omniHolder = {
+			id: next.id,
+			timer: setT(() => {
+				if (this._omniHolder && this._omniHolder.id === next.id) {
+					console.warn(`[PluginToy] "${this.slug}" held its Omni turn for ${next.maxMs}ms without calling done(); releasing`);
+					this._omniRelease();
+				}
+			}, next.maxMs),
+		};
+		next.resolve({ id: next.id, inOmni: !!(registry && registry.getOmniFor(this.slug)) });
 	}
 
 
@@ -556,6 +676,21 @@ export default class PluginToy extends Toy {
 			try { hs.reject('Plugin disabled'); } catch (e) { /* noop */ }
 		}
 		this._pendingHandshakes.clear();
+
+		// Omni: drop waiting turns and free the slot for the rest of the group
+		this._ended = true;
+		for (const w of this._omniQueue) {
+			try { w.reject(new Error('Plugin disabled')); } catch (e) { /* noop */ }
+		}
+		this._omniQueue = [];
+		if (this._omniPoll) {
+			(window.clearElectronTimeout || clearTimeout)(this._omniPoll);
+			this._omniPoll = null;
+		}
+		if (this._omniHolder) {
+			(window.clearElectronTimeout || clearTimeout)(this._omniHolder.timer);
+			this._omniHolder = null;
+		}
 		this._brokerListeners.clear();
 	}
 
@@ -594,6 +729,14 @@ export function makePluginToyClass(manifest, options = {}) {
 	}));
 
 	class MintedPluginToy extends PluginToy {}
+
+	// Omni: one widget may be marked "omni": true. That makes the plugin an
+	// alert toy the Omni widget can include (its turns come from CT.omni).
+	const omniWidget = (manifest.widgets || []).find((w) => w && w.omni === true);
+	if (omniWidget) {
+		MintedPluginToy.isAlertToy = true;
+		MintedPluginToy.alertWidgetSlug = omniWidget.slug;
+	}
 
 	// identity + presentation
 	MintedPluginToy.manifest = manifest;

@@ -41,6 +41,7 @@
 	const preBuffer = [];            // requests issued before the port arrives
 	let demoActive = false;          // cached widget-demo-mode flag (host-pushed)
 	let visibility = { visible: true, active: true }; // cached OBS source visibility
+	let omniTurnId = null;           // last Omni turn granted to this frame
 
 	let readyResolve;
 	const readyPromise = new Promise((res) => { readyResolve = res; });
@@ -290,6 +291,45 @@
 			adjust: (user, delta) => request('points.adjust', { user, delta }),
 			/** @param {string} user @param {number} amount @returns {Promise<number>} */
 			set: (user, amount) => request('points.set', { user, amount }),
+		},
+
+		// --- Omni widget turns (no perm) ---
+		// Mark one widget "omni": true in the manifest and the streamer can put
+		// your plugin in an Omni group, which shows one alert at a time. Ask for
+		// a turn before showing, and hand it back when done:
+		//
+		//   await CT.omni.turn();   // waits while another toy in the group shows
+		//   ...show the alert...
+		//   CT.omni.done();
+		//
+		// or: await CT.omni.run(async () => { ...show, await the animation... });
+		//
+		// Not in an Omni group? turn() resolves right away (it still lines up
+		// your own alerts one at a time). A turn held longer than maxMs
+		// (default 60s, max 120s) is released for you. Call these from your
+		// headless script: your widget may be open in several places at once.
+		omni: {
+			/**
+			 * @param {{maxMs?: number}} [opts]
+			 * @returns {Promise<{id: number, inOmni: boolean}>}
+			 */
+			turn: (opts = {}) => request('omni.turn', { maxMs: opts.maxMs }).then((t) => { omniTurnId = t && t.id; return t; }),
+			/**
+			 * Hand the slot back (the current turn, or the one with this id).
+			 * @param {number} [id]
+			 * @returns {Promise<boolean>}
+			 */
+			done: (id) => request('omni.done', { id: id != null ? id : omniTurnId }),
+			/**
+			 * turn(), run fn, then done() - even if fn throws.
+			 * @param {Function} fn - async ({ id, inOmni }) => void
+			 * @param {{maxMs?: number}} [opts]
+			 */
+			async run(fn, opts = {}) {
+				const t = await CT.omni.turn(opts);
+				try { return await fn(t); }
+				finally { await CT.omni.done(t.id); }
+			},
 		},
 
 		// --- per-viewer saved data (perm: userdata:store) ---
