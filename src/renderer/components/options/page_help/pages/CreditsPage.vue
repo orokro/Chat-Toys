@@ -150,6 +150,13 @@
 		</div>
 		<div class="moveUp">Via <span class="fakeLink" @click="openLink(`https://www.freepik.com/`)">Freepik</span></div>
 
+		<div
+			class="fakeLink"
+			@click="openLink(`https://www.flaticon.com/free-icons/slot-machine`)">
+			<h3>Slot machine icons created by IconsNova - Flaticon</h3>
+		</div>
+		<div class="moveUp">Fruit Machine plugin. Via <span class="fakeLink" @click="openLink(`https://www.flaticon.com/`)">Flaticon</span></div>
+
 		<SectionHeader title="Tools"/>
 
 		<div

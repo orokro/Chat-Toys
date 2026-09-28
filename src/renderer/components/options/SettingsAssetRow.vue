@@ -30,12 +30,13 @@
 							/>
 						</td>
 						<td class="name-cell" align="center">
-							{{ ctApp.assetsMgr.getFileData(assetValue)?.name }}
+							{{ ctApp.assetsMgr.getFileData(assetValue)?.name || (!assetValue && emptyLabel ? emptyLabel : '') }}
 						</td>
 					</tr>
 					<tr>
 						<td align="center">
 							<button @click="handlePickAsset">{{ pickButtonName }}</button>
+							<button v-if="clearable && assetValue" class="clearBtn" @click="assetValue = ''">{{ clearLabel }}</button>
 						</td>
 					</tr>
 				</tbody>
@@ -76,6 +77,21 @@ const props = defineProps({
 	},
 	// the description of the setting
 	desc: {
+		type: String,
+		default: ''
+	},
+	// show a button that empties the value (e.g. plugin assets where empty
+	// means "use the plugin's built-in file")
+	clearable: {
+		type: Boolean,
+		default: false
+	},
+	clearLabel: {
+		type: String,
+		default: 'Use default'
+	},
+	// shown in place of the file name while nothing is picked
+	emptyLabel: {
 		type: String,
 		default: ''
 	},
@@ -190,5 +206,10 @@ async function handlePickAsset(){
 		}// .settings-asset-row
 	
 	}// .box
+
+
+	.clearBtn {
+		margin-left: 8px;
+	}
 
 </style>

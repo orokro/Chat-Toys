@@ -82,6 +82,8 @@
 					v-else-if="field.type === 'asset'"
 					:kindFilter="(field.accept && field.accept[0]) || null"
 					:desc="field.desc || ''"
+					:clearable="!field.default"
+					:emptyLabel="field.emptyLabel || (!field.default ? 'Built-in default' : '')"
 					v-model="models[field.key]"
 				>
 					<template #title>{{ field.label || field.key }}</template>

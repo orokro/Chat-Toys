@@ -19,7 +19,13 @@ window.setElectronTimeout = setTimeout; window.setElectronInterval = setInterval
 window.clearElectronInterval = clearInterval; window.clearElectronTimeout = clearTimeout;
 window.env = { isDev: false };
 window.initPort = 3001;
-window.ytctDB = { getUser() { return null; }, getUsers() { return []; } };
+// points: an in-memory stand-in for the users table
+const balances = new Map();
+window.ytctDB = {
+	getUser: (id) => (balances.has(id) ? { youtube_id: id, display_name: id, points: balances.get(id) } : null),
+	getUsers: () => [],
+	updateUser: (id, { relativePoints = 0 } = {}) => { balances.set(id, (balances.get(id) || 0) + relativePoints); },
+};
 const tickers = new Set();
 window.electronAPI = { invoke: async () => null, on() {}, send() {}, tick: (fn) => tickers.add(fn), clearTick: (fn) => tickers.delete(fn) };
 setInterval(() => { for (const fn of tickers) fn(); }, 1000);
@@ -40,16 +46,20 @@ localStorage.setItem('enabledToys', JSON.stringify(['omni', 'shout']));
 
 setGlobalSocketRefPort(3001);
 
-const manifest = await (await fetch('/plugins/installed.json')).json().then((j) => j.plugins.find((p) => p.slug === 'raffle'));
+// ?plugin=<slug> picks the installed plugin to host (default: the runtime
+// test's "raffle")
+const pluginSlug = new URL(location.href).searchParams.get('plugin') || 'raffle';
+const manifest = await (await fetch('/plugins/installed.json')).json().then((j) => j.plugins.find((p) => p.slug === pluginSlug));
 const Raffle = makePluginToyClass(manifest, {});
 
 const toys = {};
+const logs = [];
 const app = {
 	commands: chromeShallowRef('commands', {}),
 	enabledToys: chromeShallowRef('enabledToys', []),
 	serverPort: ref(3001),
-	log: { err() {}, error() {}, info() {}, log() {}, msg() {} },
-	toysData: Object.assign([Omni, Shout, Raffle], { asObject: { raffle: Raffle, shout: Shout, omni: Omni } }),
+	log: { err: (m) => logs.push(['err', String(m)]), error() {}, info() {}, log() {}, msg: (m) => logs.push(['msg', String(m)]) },
+	toysData: Object.assign([Omni, Shout, Raffle], { asObject: { [pluginSlug]: Raffle, shout: Shout, omni: Omni } }),
 	omniRegistry: new OmniRegistry(),
 	assetsMgr: { getFileData() { return null; } },
 	twitchEvents: null,
@@ -62,20 +72,42 @@ app.toyManager = tm;
 const errs = [];
 try { toys.omni = new Omni(tm); } catch (e) { errs.push('omni: ' + e.stack); }
 try { toys.shout = new Shout(tm); } catch (e) { errs.push('shout: ' + e.stack); }
-app.enabledToys.value = [...app.enabledToys.value, 'raffle'];
+app.enabledToys.value = [...app.enabledToys.value, pluginSlug];
 await nextTick();
-try { toys.raffle = new Raffle(tm); } catch (e) { errs.push('raffle: ' + e.stack); }
+try { toys[pluginSlug] = new Raffle(tm); } catch (e) { errs.push(pluginSlug + ': ' + e.stack); }
 
-// the plugin's page, hosted exactly like the dashboard preview does
-const widgetInfo = Raffle.widgetComponents[0];
-createApp({ render: () => h('div', { style: 'width:400px;height:200px' }, [h(PluginWidgetHost, { widgetInfo })]) })
-	.provide('ctApp', app).mount('#app');
+// the plugin's pages, hosted exactly like the dashboard does: its headless
+// script (as HeadlessPluginRunner mounts it) and every widget (as the
+// dashboard preview does). ?w=<px>&h=<px> sizes the widget boxes.
+const q = new URL(location.href).searchParams;
+const box = { width: (q.get('w') || 400) + 'px', height: (q.get('h') || 200) + 'px' };
+const hosts = [];
+if (manifest.headless && manifest.headless.entry)
+	hosts.push(h('div', { class: 'headless', style: 'width:1px;height:1px;overflow:hidden' }, [h(PluginWidgetHost, { widgetInfo: {
+		pluginSlug, slug: '__headless', widgetSlug: '__headless', entry: manifest.headless.entry, permissions: manifest.permissions || [],
+	} })]));
+for (const widgetInfo of Raffle.widgetComponents)
+	hosts.push(h('div', { class: 'widgetBox', 'data-widget': widgetInfo.widgetSlug, style: `position:relative;width:${box.width};height:${box.height};background:#556` }, [h(PluginWidgetHost, { widgetInfo })]));
+createApp({ render: () => h('div', hosts) }).provide('ctApp', app).mount('#app');
 
 // the Omni settings page (drag-and-drop pool + groups)
 createApp({ render: () => h(OmniPage) }).provide('ctApp', app).mount('#omniPage');
 
+let cmdSeq = 0;
 window.__t = {
-	app, toys, errs, calls, Raffle,
+	app, toys, errs, calls, Raffle, logs, balances,
+	setPoints(id, n) { balances.set(id, n); },
+	// run a chat command through the plugin the way CommandProcessor does;
+	// resolves with { accepted, reason }
+	command(key, userId, params = {}, name = userId) {
+		return new Promise((resolve) => {
+			const msg = { id: 'm' + (++cmdSeq), authorUniqueID: userId, author: name, authorPFPUrl: null, messageText: '!' + key };
+			toys[pluginSlug].onCommand(`${pluginSlug}__${key}`, msg, { points: balances.get(userId) || 0 }, params, {
+				accept: () => resolve({ accepted: true }),
+				reject: (reason) => { logs.push(['err', String(reason)]); resolve({ accepted: false, reason }); },
+			});
+		});
+	},
 	setGroups(slugs) { toys.omni.settings.omniGroups.value = [{ id: 'g1', name: 'G', includedToys: slugs }]; },
 	shoutShow(on) { toys.shout.shoutMode.value = on ? 'SHOW' : 'IDLE'; },
 	enable(list) { app.enabledToys.value = list; },
