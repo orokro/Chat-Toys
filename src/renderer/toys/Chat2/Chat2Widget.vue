@@ -52,7 +52,7 @@
 		></iframe>
 
 		<!-- native rows (simple / custom) -->
-		<TransitionGroup v-else tag="div" class="messageText" name="chatRow">
+		<TransitionGroup v-else tag="div" class="messageText" name="chatRow" @leave="onRowLeave" @leave-cancelled="onRowLeaveCancelled">
 			<div
 				v-for="message in displayedChat"
 				:key="message.id"
@@ -322,6 +322,9 @@ watch(baseChat, (v) => syncFirstSeen(v || []), { immediate: true });
 const now = ref(Date.now());
 const nowTick = setInterval(() => { now.value = Date.now(); }, 500);
 
+// most rows we ever keep in the DOM at once (see displayedChat cap below)
+const MAX_RENDERED_ROWS = 60;
+
 // the actually-rendered list: system-message filtered + hide-after expired
 const displayedChat = computed(() => {
 	let list = baseChat.value || [];
@@ -340,8 +343,42 @@ const displayedChat = computed(() => {
 		});
 	}
 
-	return list;
+	// Hard cap RENDERED rows (the data log is capped upstream too). A heavy
+	// custom theme's per-row infinite animations + will-change make
+	// render/cleanup so costly that leaving rows can pile up as DOM ghosts and
+	// the DOM grows without bound (the freeze). Bounding what we render keeps
+	// per-frame cost (and OBS's CPU compositing) in check; it is well above
+	// what any overlay actually shows on screen.
+	return list.length > MAX_RENDERED_ROWS ? list.slice(-MAX_RENDERED_ROWS) : list;
 });
+
+/**
+ * Deterministic row-leave: remove a leaving row on a fixed timer instead of
+ * waiting for CSS animationend. Custom themes can put infinite animations /
+ * will-change on rows, which stalls TransitionGroup's end-detection so leaving
+ * rows are never torn down and the DOM balloons. A fixed timer guarantees
+ * teardown regardless of the theme's CSS.
+ *
+ * @param {HTMLElement} el
+ * @param {Function} done - call to let Vue remove the element
+ */
+function onRowLeave(el, done) {
+	if (el._leaveTimer)
+		clearTimeout(el._leaveTimer);
+	el._leaveTimer = setTimeout(done, 350);
+}
+
+/**
+ * Clear a pending leave timer if the leave is cancelled (row re-added).
+ *
+ * @param {HTMLElement} el
+ */
+function onRowLeaveCancelled(el) {
+	if (el._leaveTimer) {
+		clearTimeout(el._leaveTimer);
+		el._leaveTimer = null;
+	}
+}
 
 
 // --- theme parsing + token substitution (custom mode only) ---
