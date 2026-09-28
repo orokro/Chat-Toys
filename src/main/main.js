@@ -17,6 +17,7 @@ import { createSystemTray } from './system/SystemTray.js';
 import { createAppMenu } from './system/MainAppMenu.js';
 import { chatForward } from './system/chatForward.js';
 import { pluginForward } from './system/pluginForward.js';
+import { startDiagnostics } from './system/diagnostics.js';
 import ChatSourceManager from './system/ChatSourceManager.js';
 import { TwitchManager } from './system/TwitchManager.js';
 import { TwurpleManager } from './system/TwurpleManager.js';
@@ -337,6 +338,10 @@ app.whenReady().then(() => {
 	// set up the plugin RPC relay so OBS/live-page widgets can reach the
 	// dashboard PluginToy broker (capabilities + command acks).
 	pluginForward(obsViewServer.socketServer, mainWindow);
+
+	// socket stats for the Debug page, plus (with --diag) a per-second
+	// diag.log and a watchdog thread that logs main-thread freezes
+	startDiagnostics({ socketServer: obsViewServer.socketServer });
 
 	// set up the chat source manager to manage list of chats to read
 	chatSourceMgr = new ChatSourceManager(mainWindow, testURL);

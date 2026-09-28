@@ -6,6 +6,8 @@
 	window.env.isDev is true; suppressed in production builds.
 
 	Currently hosts:
+	  - Socket Monitor: live view of the socket layer (connections, keys,
+	    traffic, main-loop lag). See SocketMonitor.vue.
 	  - Twitch Redeem Simulator: fires synthetic redemption events into
 	    chatToysApp.twitchEvents, exercising the entire downstream pipeline
 	    (mapping lookup -> synthesis -> CommandProcessor -> toy.onCommand)
@@ -27,6 +29,18 @@
 			Tools here let you exercise ChatToys subsystems without their normal
 			external triggers (Twitch redemptions, real chat messages, etc).
 		</p>
+
+		<SectionHeader title="Socket Monitor" />
+
+		<p>
+			Live view of the socket layer: every connected page (dashboard, OBS
+			sources, browser tabs), what it's subscribed to, and what the heaviest
+			keys cost. Launch with <code>--diag</code> to also write this to a
+			log file every second, with a watchdog that records main-thread freezes.
+		</p>
+
+		<SocketMonitor />
+
 
 		<SectionHeader title="Chat Content Filter" />
 
@@ -152,6 +166,7 @@ import { ref, computed, inject } from 'vue';
 // components
 import PageBox from '../../PageBox.vue';
 import SectionHeader from '../../SectionHeader.vue';
+import SocketMonitor from './SocketMonitor.vue';
 
 // app-wide content filter flag (dev toggle only; on by default in builds)
 import { contentFilterEnabled } from '@scripts/contentFilter';
