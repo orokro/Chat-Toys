@@ -38,7 +38,7 @@
 
 // vue
 import { ref, computed, inject, watch, onMounted, onBeforeUnmount } from 'vue';
-import { socketShallowRef, socketShallowRefReadOnly } from '@scripts/sockets';
+import { socketShallowRef, socketShallowRefReadOnly, whenSocketRefReady } from '@scripts/sockets';
 import { commandWordsSocketKey } from '@scripts/commandLookup';
 
 // our app
@@ -186,6 +186,32 @@ function stateSocket(key) {
 
 
 /**
+ * CT.state.set: write a namespaced state key.
+ *
+ * A socket ref ignores writes made before its first sync with the server
+ * (the server's value replaces them - see sockets/socketRef.js). A plugin's
+ * first state.set for a key usually lands exactly then (the ref is created
+ * on demand), so the value is written now AND again once the ref is in sync;
+ * only the latest value is replayed.
+ *
+ * @param {string} key
+ * @param {*} value
+ */
+const pendingState = new Map();
+function setState(key, value) {
+	const s = stateSocket(key);
+	pendingState.set(key, value);
+	s.value = value;
+	whenSocketRefReady(s, () => {
+		if (!pendingState.has(key)) return;
+		const v = pendingState.get(key);
+		pendingState.delete(key);
+		if (s.value !== v) s.value = v;
+	});
+}
+
+
+/**
  * Start relaying a namespaced state key to the iframe: push the current value
  * immediately and on every change, as a 'state' event. Idempotent per key.
  *
@@ -300,7 +326,7 @@ async function handleRequest(msg) {
 			return;
 		}
 		if (msg.type === 'state.set') {
-			stateSocket(msg.payload.key).value = msg.payload.value;
+			setState(msg.payload.key, msg.payload.value);
 			reply(true);
 			return;
 		}
