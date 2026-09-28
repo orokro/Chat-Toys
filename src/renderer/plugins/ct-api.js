@@ -35,6 +35,7 @@
 	const stateListeners = new Map(); // state key -> Set<fn>
 	const preBuffer = [];            // requests issued before the port arrives
 	let demoActive = false;          // cached widget-demo-mode flag (host-pushed)
+	let visibility = { visible: true, active: true }; // cached OBS source visibility
 
 	let readyResolve;
 	const readyPromise = new Promise((res) => { readyResolve = res; });
@@ -122,8 +123,18 @@
 
 		// pushed event
 		if (msg.kind === KIND.EVT) {
-			if (msg.name === 'load')
+			if (msg.name === 'load') {
+				if (msg.detail && msg.detail.visibility) {
+					visibility = { visible: !!msg.detail.visibility.visible, active: !!msg.detail.visibility.active };
+					CT.visibility = { ...visibility };
+				}
 				readyResolve(msg.detail || {});
+			}
+			// OBS source shown/hidden: cache it, then fall through to listeners
+			if (msg.name === 'visibility' && msg.detail) {
+				visibility = { visible: !!msg.detail.visible, active: !!msg.detail.active };
+				CT.visibility = { ...visibility };
+			}
 			// namespaced state change: { key, value } -> per-key listeners
 			if (msg.name === 'state' && msg.detail) {
 				const set = stateListeners.get(msg.detail.key);
@@ -298,6 +309,52 @@
 				catch (e) { console.error('[CT] demo listener threw', e); }
 				return off;
 			},
+		},
+
+		// --- OBS source visibility (no perm; host-pushed) ---
+		// Whether this browser source is currently shown in OBS. OBS keeps
+		// hidden browser sources running, so a widget that should "start when
+		// it comes on screen" (e.g. an end-screen credits roll) restarts here.
+		// `active` = on the program output (live on stream), `visible` = shown
+		// in any view. Outside OBS both stay true.
+
+		/** @type {{visible:boolean, active:boolean}} current state */
+		visibility: { visible: true, active: true },
+
+		/**
+		 * Called on every OBS show/hide transition with
+		 * { visible, active, event }. `event` is true for a real OBS transition
+		 * (the source was just shown or hidden) and false for a state sync.
+		 * OBS never reports the initial state, so a source that loads while its
+		 * scene is off-air only hears about it when it comes on.
+		 *
+		 * @param {Function} cb
+		 * @returns {Function} unsubscribe
+		 */
+		onVisibility(cb) { return on('visibility', cb); },
+
+		// --- stream session (perm: session:read) ---
+		// Everyone who chatted during the current stream. Stream boundaries are
+		// automatic (OBS live state when available, YouTube live ids, and long
+		// gaps); the list is kept after a stream ends until the next one starts.
+		session: {
+			/**
+			 * @returns {Promise<?Object>} { id, startedAt, live, chatterCount,
+			 *   chatters: [{ id, name, platform, avatar, isMember, messages,
+			 *   firstSeen, points?, pointsThisStream? }] } in first-seen order.
+			 *   points / pointsThisStream are included only with points:read.
+			 *   null if nobody has chatted yet.
+			 */
+			get: () => request('session.get'),
+			/**
+			 * Called (throttled) when a new chatter joins, a new stream starts, or
+			 * live state changes, with { id, chatterCount, live }. Re-fetch with
+			 * session.get() if you need the list.
+			 *
+			 * @param {Function} cb
+			 * @returns {Function} unsubscribe
+			 */
+			onChange: (cb) => on('session', cb),
 		},
 
 		// --- obs (perm: obs:status) ---

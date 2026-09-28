@@ -46,6 +46,9 @@ import { effectivePerms } from './pluginPerms';
 // how long to wait for a plugin to accept/reject a command before we auto-reject
 const COMMAND_ACK_TIMEOUT_MS = 15 * 1000;
 
+// minimum gap between 'session' broker events (see _emitSessionThrottled)
+const SESSION_EVENT_MS = 2000;
+
 
 export default class PluginToy extends Toy {
 
@@ -86,6 +89,41 @@ export default class PluginToy extends Toy {
 			};
 			this.chatToysApp.chatProcessor.onNewChats(this._onChat);
 		}
+
+		// Stream-session change notifications (new chatter / new stream /
+		// live state), throttled: with a busy chat new chatters arrive many
+		// times a second, and every event is relayed to OBS pages. Plugins
+		// re-fetch with CT.session.get() when notified.
+		this._offSession = null;
+		this._sessionTimer = null;
+		this._sessionPending = null;
+		const session = this.chatToysApp.streamSession;
+		if (this._perms.has('session:read') && session && typeof session.onChange === 'function') {
+			this._offSession = session.onChange((detail) => this._emitSessionThrottled(detail));
+		}
+	}
+
+
+	/**
+	 * Emit a 'session' broker event at most once per SESSION_EVENT_MS
+	 * (leading + trailing, so the latest state always goes out).
+	 *
+	 * @param {Object} detail - { id, chatterCount, live }
+	 */
+	_emitSessionThrottled(detail) {
+		this._sessionPending = detail;
+		if (this._sessionTimer)
+			return;
+		this._emitBroker('session', detail);
+		this._sessionPending = null;
+		this._sessionTimer = setTimeout(() => {
+			this._sessionTimer = null;
+			if (this._sessionPending) {
+				const d = this._sessionPending;
+				this._sessionPending = null;
+				this._emitSessionThrottled(d);
+			}
+		}, SESSION_EVENT_MS);
 	}
 
 
@@ -191,7 +229,8 @@ export default class PluginToy extends Toy {
 			user: {
 				id: msg.authorUniqueID ?? null,
 				displayName: msg.author ?? (user && (user.display_name ?? user.displayName)) ?? null,
-				avatar: msg.authorPFPUrl ?? null,
+				avatar: this._avatarUrl(msg.authorPFPUrl),
+				avatarOriginal: msg.authorPFPUrl ?? null,
 				points: (user && (user.points ?? 0)) || 0,
 			},
 			params,
@@ -320,6 +359,19 @@ export default class PluginToy extends Toy {
 			case 'assets.url':
 				return this._resolveAssetUrl(payload.ref);
 
+			case 'session.get': {
+				const session = this.chatToysApp.streamSession;
+				const snap = session ? session.getSnapshot({ withPoints: this._perms.has('points:read') }) : null;
+				if (!snap)
+					return null;
+				snap.chatters = snap.chatters.map((c) => ({
+					...c,
+					avatar: this._avatarUrl(c.avatar),
+					avatarOriginal: c.avatar ?? null,
+				}));
+				return snap;
+			}
+
 			case 'obs.isLive':
 				// OBSConnectionManager exposes a reactive live flag; fall back false.
 				return !!(this.chatToysApp.obsConnMgr && this.chatToysApp.obsConnMgr.isLive
@@ -356,6 +408,35 @@ export default class PluginToy extends Toy {
 
 
 	/**
+	 * Turn a chatter avatar URL into one that works inside a plugin iframe.
+	 *
+	 * Plugin widgets are sandboxed pages on localhost. A plain <img> of a
+	 * YouTube/Twitch avatar from there sends the localhost page as Referer
+	 * (YouTube's avatar CDN can reject that - the Horse Racing bug), and a
+	 * canvas/WebGL plugin can't use it at all without CORS. So remote avatars
+	 * go through the widget server's /avatar-proxy: fetched server-side with
+	 * no Referer, cached, and served with CORS. Hosts the proxy doesn't cover
+	 * are redirected to the original URL, so this is never worse than raw.
+	 * Relative app paths (e.g. the Chat Toys system avatar) are made absolute.
+	 *
+	 * @param {?string} url
+	 * @returns {?string}
+	 */
+	_avatarUrl(url) {
+		if (typeof url !== 'string' || url === '')
+			return null;
+		const port = this.chatToysApp.serverPort.value;
+		if (/^https?:\/\//i.test(url))
+			return `http://localhost:${port}/avatar-proxy?url=${encodeURIComponent(url)}`;
+		if (url.startsWith('/builtin/'))
+			return `http://localhost:${port}/live${url}`;
+		if (url.startsWith('/'))
+			return `http://localhost:${port}${url}`;
+		return url;
+	}
+
+
+	/**
 	 * Reduce a DB user row to a safe subset for the sandbox.
 	 *
 	 * @param {?Object} user
@@ -382,7 +463,9 @@ export default class PluginToy extends Toy {
 			id: c.id ?? null,
 			user: c.author ?? null,
 			userId: c.authorUniqueID ?? null,
-			avatar: c.authorPFPUrl ?? null,
+			avatar: this._avatarUrl(c.authorPFPUrl),
+			avatarOriginal: c.authorPFPUrl ?? null,
+			isMember: !!c.isMember,
 			text: c.messageText ?? '',
 			emojis: c.emojis ?? [],
 			platform: c.source ?? null,
@@ -401,6 +484,13 @@ export default class PluginToy extends Toy {
 			this.chatToysApp.chatProcessor.removeNewChatsListener(this._onChat);
 			this._onChat = null;
 		}
+
+		if (this._offSession) {
+			this._offSession();
+			this._offSession = null;
+		}
+		clearTimeout(this._sessionTimer);
+		this._sessionTimer = null;
 
 		for (const timer of this._handshakeTimers.values())
 			window.clearElectronTimeout(timer);

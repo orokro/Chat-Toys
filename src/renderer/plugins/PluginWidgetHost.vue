@@ -87,6 +87,49 @@ const demoSocket = socketShallowRefReadOnly('demoMode', false);
 // keep-alive so the app's live-status light works (no-op inside Electron)
 let keepAlive = null;
 
+// OBS source visibility, forwarded into the frame as EVT.VISIBILITY.
+//
+// OBS fires obsSourceVisibleChanged / obsSourceActiveChanged on the TOP page of
+// a browser source, only when OBS's own state changes, and never reports the
+// initial state. So:
+//   - every OBS event is forwarded as a real transition (detail.event = true),
+//     even if it matches what we assumed - a source that loaded while its scene
+//     was off-air never got a "hidden" event, so its first "active" event must
+//     still count;
+//   - we assume "shown" until told otherwise;
+//   - inside a GroupWidget iframe the group page relays OBS events to us, and we
+//     ask it for the current state on mount (see GroupWidget.vue).
+const visibility = { visible: true, active: true };
+const VISIBILITY_MSG = 'ct-obs-source-visibility';
+const VISIBILITY_REQ = 'ct-obs-source-visibility-request';
+
+
+/**
+ * Apply a visibility update and tell the frame.
+ *
+ * @param {{visible?:boolean, active?:boolean}} patch
+ * @param {boolean} isEvent - a real OBS transition (always forwarded)
+ */
+function applyVisibility(patch, isEvent) {
+	let changed = false;
+	for (const k of ['visible', 'active']) {
+		if (typeof patch[k] === 'boolean' && patch[k] !== visibility[k]) {
+			visibility[k] = patch[k];
+			changed = true;
+		}
+	}
+	if (isEvent || changed)
+		send({ kind: KIND.EVT, name: EVT.VISIBILITY, detail: { ...visibility, event: !!isEvent } });
+}
+
+const onObsVisible = (e) => applyVisibility({ visible: !!(e && e.detail && e.detail.visible) }, true);
+const onObsActive = (e) => applyVisibility({ active: !!(e && e.detail && e.detail.active) }, true);
+const onParentMessage = (e) => {
+	if (e.source !== window.parent || !e.data || e.data.type !== VISIBILITY_MSG)
+		return;
+	applyVisibility({ visible: e.data.visible, active: e.data.active }, !!e.data.event);
+};
+
 
 /**
  * Absolute URL to the plugin's entry HTML on the Express plugin-serving route.
@@ -188,6 +231,7 @@ async function buildLoadDetail() {
 			widget: { slug: widgetSlug, key: props.widgetInfo.key, box: props.widgetInfo.defaultBox },
 		},
 		obsLive,
+		visibility: { ...visibility },
 	};
 }
 
@@ -300,6 +344,21 @@ onMounted(() => {
 	brokerUnsubs.push(broker.onBroker('command', (detail) => send({ kind: KIND.EVT, name: EVT.COMMAND, detail })));
 	brokerUnsubs.push(broker.onBroker('chat', (detail) => send({ kind: KIND.EVT, name: EVT.CHAT, detail })));
 	brokerUnsubs.push(broker.onBroker('obs', (detail) => send({ kind: KIND.EVT, name: EVT.OBS, detail })));
+	brokerUnsubs.push(broker.onBroker('session', (detail) => send({ kind: KIND.EVT, name: EVT.SESSION, detail })));
+
+	// OBS source shown / hidden (top page), or relayed by a parent GroupWidget
+	window.addEventListener('obsSourceVisibleChanged', onObsVisible);
+	window.addEventListener('obsSourceActiveChanged', onObsActive);
+	window.addEventListener('message', onParentMessage);
+	if (window.parent && window.parent !== window) {
+		try { window.parent.postMessage({ type: VISIBILITY_REQ }, '*'); }
+		catch (_) { /* no parent access - fine */ }
+	}
+	brokerUnsubs.push(() => {
+		window.removeEventListener('obsSourceVisibleChanged', onObsVisible);
+		window.removeEventListener('obsSourceActiveChanged', onObsActive);
+		window.removeEventListener('message', onParentMessage);
+	});
 
 	// push settings changes through to the frame as they arrive
 	brokerUnsubs.push(watch(settingsSocket, (val) => {

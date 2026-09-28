@@ -68,6 +68,8 @@ export const EVT = {
 	OBS:      'obs',       // detail: { live:boolean }              (perm: obs:status)
 	STATE:    'state',     // detail: { key, value } namespaced render state
 	DEMO:     'demo',      // detail: { active:boolean } widget demo mode (no perm)
+	SESSION:  'session',   // detail: { id, chatterCount, live } stream session changed (perm: session:read)
+	VISIBILITY: 'visibility', // detail: { visible, active } OBS source shown/hidden (no perm)
 };
 
 /**
@@ -86,6 +88,7 @@ export const PERMISSIONS = [
 	'users:read',
 	'assets:read',
 	'obs:status',
+	'session:read',
 	// future (reserved, not yet honoured): 'events:*', 'net:fetch', 'storage:user'
 ];
 
@@ -105,6 +108,7 @@ export const REQUEST_PERMS = {
 	'users.get':     'users:read',
 	'assets.url':    'assets:read',
 	'obs.isLive':    'obs:status',
+	'session.get':   'session:read',
 	// 'state.get' / 'state.set' -> handled by host, no perm (own namespace)
 };
 

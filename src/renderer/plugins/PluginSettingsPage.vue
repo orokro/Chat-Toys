@@ -43,31 +43,45 @@
 
 		<div class="settingsBlock">
 
-			<!-- input-style fields -->
-			<SettingsInputRow
-				v-for="field in inputFields"
-				:key="field.key"
-				:type="rowType(field.type)"
-				:options="field.options"
-				:min="field.min"
-				:max="field.max"
-				:step="field.step"
-				v-model="models[field.key]"
-			>
-				<template #title>{{ field.label || field.key }}</template>
-				<p v-if="field.desc">{{ field.desc }}</p>
-			</SettingsInputRow>
+			<!-- one row per schema field, in manifest order -->
+			<template v-for="field in schema" :key="field.key">
 
-			<!-- asset-picker fields -->
-			<SettingsAssetRow
-				v-for="field in assetFields"
-				:key="field.key"
-				:kindFilter="(field.accept && field.accept[0]) || null"
-				:desc="field.desc || ''"
-				v-model="models[field.key]"
-			>
-				<template #title>{{ field.label || field.key }}</template>
-			</SettingsAssetRow>
+				<!-- input-style fields -->
+				<SettingsInputRow
+					v-if="INPUT_TYPES.has(field.type)"
+					:type="rowType(field.type)"
+					:options="field.options"
+					:min="field.min"
+					:max="field.max"
+					:step="field.step"
+					v-model="models[field.key]"
+				>
+					<template #title>{{ field.label || field.key }}</template>
+					<p v-if="field.desc">{{ field.desc }}</p>
+				</SettingsInputRow>
+
+				<!-- multi-line text fields -->
+				<SettingsTextAreaRow
+					v-else-if="field.type === 'text'"
+					:desc="field.desc || null"
+					:placeholder="field.placeholder || ''"
+					:rows="field.rows || 5"
+					v-model="models[field.key]"
+				>
+					<template #title>{{ field.label || field.key }}</template>
+				</SettingsTextAreaRow>
+
+				<!-- asset-picker fields -->
+				<SettingsAssetRow
+					v-else-if="field.type === 'asset'"
+					:kindFilter="(field.accept && field.accept[0]) || null"
+					:desc="field.desc || ''"
+					v-model="models[field.key]"
+				>
+					<template #title>{{ field.label || field.key }}</template>
+				</SettingsAssetRow>
+
+			</template>
 
 			<p v-if="unsupportedFields.length" class="unsupportedNote">
 				Some settings types aren't editable yet in this build:
@@ -98,6 +112,7 @@ import WidgetSection from '@components/options/WidgetSection.vue';
 import CommandsConfigBox from '@components/options/CommandsConfigBox.vue';
 import SettingsInputRow from '@components/options/SettingsInputRow.vue';
 import SettingsAssetRow from '@components/options/SettingsAssetRow.vue';
+import SettingsTextAreaRow from '@components/options/SettingsTextAreaRow.vue';
 import MarkdownBlock from '@components/MarkdownBlock.vue';
 
 // which plugin this page is for (passed by ToyClassPage)
@@ -105,8 +120,10 @@ const props = defineProps({
 	toySlug: { type: String, default: '' },
 });
 
-// the input types SettingsInputRow can render
-const INPUT_TYPES = new Set(['number', 'float', 'string', 'text', 'boolean', 'options', 'radio', 'color']);
+// the input types SettingsInputRow can render. "text" is NOT here: per the
+// plugin spec it's the multi-line type (SettingsTextAreaRow); "string" is the
+// single-line one.
+const INPUT_TYPES = new Set(['number', 'float', 'string', 'boolean', 'options', 'radio', 'color']);
 
 // app + resolve our plugin toy instance
 const ctApp = inject('ctApp');
@@ -199,9 +216,7 @@ async function doUpdate() {
 
 // schema fields, split by how we render them
 const schema = computed(() => (toy?.manifest?.settings) || []);
-const inputFields = computed(() => schema.value.filter(f => INPUT_TYPES.has(f.type)));
-const assetFields = computed(() => schema.value.filter(f => f.type === 'asset'));
-const unsupportedFields = computed(() => schema.value.filter(f => !INPUT_TYPES.has(f.type) && f.type !== 'asset'));
+const unsupportedFields = computed(() => schema.value.filter(f => !INPUT_TYPES.has(f.type) && f.type !== 'asset' && f.type !== 'text'));
 
 const hasWidgets = computed(() => !!(toy?.static?.widgetComponents?.length));
 const hasCommands = computed(() => !!(toy?.manifest?.commands?.length));
@@ -217,7 +232,7 @@ const longDescription = computed(() => toy?.manifest?.longDescription || '');
  * @returns {string}
  */
 function rowType(t) {
-	if (t === 'string' || t === 'text') return 'text';
+	if (t === 'string') return 'text';
 	return t;
 }
 

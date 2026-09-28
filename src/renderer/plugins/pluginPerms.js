@@ -31,6 +31,7 @@ export const PERM_LABELS = {
 	'users:read': 'Read viewer profiles',
 	'assets:read': 'Use stream assets',
 	'obs:status': 'Read OBS live status',
+	'session:read': 'See who chatted this stream',
 };
 
 

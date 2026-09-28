@@ -65,7 +65,7 @@ export class PluginBridge {
 			return;
 
 		const unsubs = [];
-		for (const name of ['command', 'chat', 'obs']) {
+		for (const name of ['command', 'chat', 'obs', 'session']) {
 			unsubs.push(toy.onBroker(name, (detail) => {
 				this._send({ type: 'plugin-rpc', kind: 'evt', slug, name, detail });
 			}));

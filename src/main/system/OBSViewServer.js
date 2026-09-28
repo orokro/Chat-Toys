@@ -28,84 +28,8 @@ const https = require('https');
 const httpMod = require('http');
 
 
-/**
- * Emote-image CDNs the /emote-proxy route is allowed to fetch from. Keeping a
- * strict allow-list avoids turning the proxy into an open relay (SSRF).
- *
- * @type {Array<string>}
- */
-const EMOTE_PROXY_HOSTS = [
-	'cdn.betterttv.net',
-	'cdn.frankerfacez.com',
-	'cdn.7tv.app',
-	'static-cdn.jtvnw.net',
-	'yt3.ggpht.com',
-	'lh3.googleusercontent.com',
-];
-
-
-/**
- * Fetch the raw bytes of an emote image in the main process (Node has no CORS),
- * following a few redirects. Used by the /emote-proxy route so CDNs that don't
- * send CORS headers (e.g. BetterTTV) can still be drawn into a WebGL texture by
- * the Tosser widget.
- *
- * @param {string} url - absolute http(s) URL
- * @param {number} [redirectsLeft=3] - max redirects to follow
- * @returns {Promise<{buffer: Buffer, contentType: string}>}
- */
-function fetchEmoteBytes(url, redirectsLeft = 3) {
-	return new Promise((resolve, reject) => {
-
-		let parsed;
-		try {
-			parsed = new URL(url);
-		} catch (e) {
-			reject(e);
-			return;
-		}
-
-		const lib = parsed.protocol === 'http:' ? httpMod : https;
-		const req = lib.get(url, {
-			headers: {
-				// some CDNs 403 a missing UA; send a benign one
-				'User-Agent': 'ChatToys/1.0',
-				'Accept': 'image/*,*/*',
-			},
-		}, (res) => {
-
-			const status = res.statusCode || 0;
-
-			// follow redirects
-			if (status >= 300 && status < 400 && res.headers.location && redirectsLeft > 0) {
-				res.resume(); // drain
-				const next = new URL(res.headers.location, url).toString();
-				resolve(fetchEmoteBytes(next, redirectsLeft - 1));
-				return;
-			}
-
-			if (status !== 200) {
-				res.resume();
-				reject(new Error(`upstream status ${status}`));
-				return;
-			}
-
-			const chunks = [];
-			res.on('data', (c) => chunks.push(c));
-			res.on('end', () => {
-				resolve({
-					buffer: Buffer.concat(chunks),
-					contentType: res.headers['content-type'] || 'image/png',
-				});
-			});
-		});
-
-		req.on('error', reject);
-		req.setTimeout(8000, () => {
-			req.destroy(new Error('timeout'));
-		});
-	});
-}
+// emote + avatar image proxies (hosts, fetch, bounded cache)
+import { mountImageProxy, BoundedImageCache, EMOTE_PROXY_HOSTS, AVATAR_PROXY_HOSTS } from './imageProxy.js';
 
 
 /**
@@ -132,6 +56,10 @@ class OBSViewServer {
 		// Created once and re-attached on every (re)start so stored values
 		// and registered handlers survive a server restart / port change.
 		this.socketServer = new SocketServer();
+
+		// bounded image caches for the /emote-proxy and /avatar-proxy routes
+		this.emoteProxyCache = new BoundedImageCache({ maxEntries: 1000, maxBytes: 64 * 1024 * 1024, ttlMs: 60 * 60 * 1000 });
+		this.avatarProxyCache = new BoundedImageCache({ maxEntries: 2000, maxBytes: 64 * 1024 * 1024, ttlMs: 6 * 60 * 60 * 1000 });
 
 		// optional database handle for the asset filesystem endpoint.
 		// Kept on `this` so startServers() (and a future restartServers)
@@ -345,60 +273,25 @@ class OBSViewServer {
 			// ---- Emote image proxy ----
 			// Some emote CDNs (notably BetterTTV) don't send CORS headers, so
 			// their images can't be uploaded into a WebGL texture by the Tosser
-			// widget (a plain <img> in chat is fine; a canvas/WebGL texture is
-			// not). We fetch the bytes here in the main process (no CORS in
-			// Node) and serve them back through this server, which already
-			// attaches permissive CORS headers — making the image same-origin
-			// and clean for the widget. Restricted to known emote CDNs.
-			const emoteProxyCache = new Map(); // raw url -> { buf, type, at }
-			const EMOTE_PROXY_TTL = 1000 * 60 * 60; // 1h
-			expressApp.get('/emote-proxy', (req, res) => {
+			// widget. We fetch the bytes in the main process and serve them from
+			// this server (which already sends permissive CORS headers).
+			// Restricted to known emote CDNs. See imageProxy.js.
+			mountImageProxy(expressApp, '/emote-proxy', {
+				hosts: EMOTE_PROXY_HOSTS,
+				cache: this.emoteProxyCache,
+				log: (m) => this.logToFE(m),
+			});
 
-				const raw = req.query.url;
-				if (typeof raw !== 'string' || !raw) {
-					res.status(400).send('missing url');
-					return;
-				}
-
-				let parsed;
-				try {
-					parsed = new URL(raw);
-				} catch (e) {
-					res.status(400).send('bad url');
-					return;
-				}
-
-				if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-					res.status(400).send('bad protocol');
-					return;
-				}
-
-				const hostOk = EMOTE_PROXY_HOSTS.some(
-					(h) => parsed.hostname === h || parsed.hostname.endsWith('.' + h)
-				);
-				if (!hostOk) {
-					res.status(403).send('host not allowed');
-					return;
-				}
-
-				// serve from cache when fresh
-				const cached = emoteProxyCache.get(raw);
-				if (cached && (Date.now() - cached.at) < EMOTE_PROXY_TTL) {
-					res.set('Content-Type', cached.type);
-					res.send(cached.buf);
-					return;
-				}
-
-				fetchEmoteBytes(raw)
-					.then(({ buffer, contentType }) => {
-						emoteProxyCache.set(raw, { buf: buffer, type: contentType, at: Date.now() });
-						res.set('Content-Type', contentType);
-						res.send(buffer);
-					})
-					.catch((err) => {
-						this.logToFE(`[emote-proxy] failed for ${raw}: ${err.message}`);
-						res.status(502).send('proxy fetch failed');
-					});
+			// ---- Avatar proxy (plugins) ----
+			// Plugin widgets get chatter avatars through here: fetched with no
+			// Referer (YouTube's avatar CDN can reject a localhost Referer),
+			// cached, and CORS-clean for canvas use. Unknown hosts redirect to
+			// the original URL. See PluginToy._avatarUrl.
+			mountImageProxy(expressApp, '/avatar-proxy', {
+				hosts: AVATAR_PROXY_HOSTS,
+				redirectOthers: true,
+				cache: this.avatarProxyCache,
+				log: (m) => this.logToFE(m),
 			});
 
 			// Mount the vuefinder-backed asset filesystem API. The renderer
