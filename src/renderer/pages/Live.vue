@@ -29,7 +29,7 @@
 
 // vue
 import { ref, onBeforeMount } from 'vue';
-import { socketRef, socketShallowRef } from 'socket-ref';
+import { socketRef, socketShallowRef } from '@scripts/sockets';
 
 // components
 import LiveLayout from '@components/live/LiveLayout.vue';

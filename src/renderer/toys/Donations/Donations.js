@@ -21,7 +21,7 @@
 */
 
 import { ref, shallowRef } from 'vue';
-import { socketShallowRef } from 'socket-ref';
+import { socketShallowRef } from '@scripts/sockets';
 import { v4 as uuidv4 } from 'uuid';
 
 import Toy from '../Toy';

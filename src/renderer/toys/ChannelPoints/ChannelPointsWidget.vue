@@ -113,7 +113,7 @@
 import { ref, shallowRef, watch, computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 import { RefAggregator } from '../../scripts/RefAggregator';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 
 // other components
 import AutoSizer from '@components/AutoSizer.vue';

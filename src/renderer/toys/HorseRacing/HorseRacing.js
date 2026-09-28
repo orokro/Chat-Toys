@@ -6,7 +6,7 @@
 */
 
 import { ref, shallowRef, watch, computed } from 'vue';
-import { socketShallowRef, bindRef } from 'socket-ref';
+import { socketShallowRef, bindRef } from '@scripts/sockets';
 // our app
 import Toy from "../Toy";
 

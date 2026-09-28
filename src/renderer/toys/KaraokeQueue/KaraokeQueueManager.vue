@@ -154,7 +154,7 @@
 
 // vue
 import { ref, computed, watch } from 'vue';
-import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRef, socketShallowRefReadOnly } from '@scripts/sockets';
 
 // our app
 import KaraokeQueue from './KaraokeQueue';

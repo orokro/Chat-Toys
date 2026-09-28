@@ -48,7 +48,7 @@
 
 // vue
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';

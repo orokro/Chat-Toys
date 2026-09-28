@@ -230,7 +230,7 @@
 
 // vue
 import { ref, inject, shallowRef, onMounted, watch, computed } from 'vue';
-import { socketShallowRef } from 'socket-ref';
+import { socketShallowRef } from '@scripts/sockets';
 
 // components
 import PageBox from '../../PageBox.vue';

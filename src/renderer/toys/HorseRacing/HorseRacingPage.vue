@@ -170,7 +170,7 @@
 
 // vue
 import { ref, watch, inject, computed } from 'vue';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 
 // components
 import PageBox from '@components/options/PageBox.vue';

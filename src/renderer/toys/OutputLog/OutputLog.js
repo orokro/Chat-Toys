@@ -11,7 +11,7 @@
 
 // vue
 import { ref, shallowRef, watch } from 'vue';
-import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from 'socket-ref';
+import { socketRef, socketShallowRef, socketShallowRefAsync, bindRef } from '@scripts/sockets';
 
 // our app
 import Toy from "../Toy";

@@ -7,7 +7,7 @@
 import { createApp } from 'vue'
 import Live from './pages/Live.vue'
 import 'material-icons/iconfont/material-icons.css';
-import { setGlobalSocketRefPort, enableConnectionLogs } from 'socket-ref';
+import { setGlobalSocketRefPort, enableConnectionLogs } from '@scripts/sockets';
 import { registerInstalledPluginsFromHTTP } from './plugins/PluginManager';
 
 // get the port number from the window url

@@ -61,7 +61,7 @@
 // vue
 import { ref, shallowRef, watch, computed, inject, onMounted, onBeforeUnmount } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
-import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRef, socketShallowRefReadOnly } from '@scripts/sockets';
 
 // lib/misc
 import DragHelper from 'gdraghelper';

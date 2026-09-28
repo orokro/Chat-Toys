@@ -22,7 +22,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 import { useToySettings } from '@toys/useToySettings';
 import { keepAliveSocket } from '../keepAliveSocket.js';
 

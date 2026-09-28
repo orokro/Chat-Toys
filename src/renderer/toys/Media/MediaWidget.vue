@@ -49,7 +49,7 @@
 
 // vue
 import { ref, watch, computed, inject } from 'vue';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';

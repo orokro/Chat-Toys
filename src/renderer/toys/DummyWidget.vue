@@ -27,7 +27,7 @@
 
 // vue
 import { ref, watch, computed, onMounted } from 'vue';
-import { socketRef, socketShallowRef, socketRefAsync, bindRef, bindRefs } from 'socket-ref';
+import { socketRef, socketShallowRef, socketRefAsync, bindRef, bindRefs } from '@scripts/sockets';
 
 import { useToySettings } from '@toys/useToySettings';
 

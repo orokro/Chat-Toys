@@ -27,7 +27,7 @@
 
 // vue
 import { ref } from 'vue';
-import { socketRef, socketShallowRef } from 'socket-ref';
+import { socketRef, socketShallowRef } from '@scripts/sockets';
 
 // include the demo channel points widget
 import ChannelPointsWidget from '../toys/ChannelPoints/ChannelPointsWidget.vue';

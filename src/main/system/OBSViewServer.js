@@ -17,7 +17,7 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import { createHttpTerminator } from 'http-terminator';
-const { socketRefServer } = require('socket-ref/server');
+import { SocketServer } from './sockets/SocketServer.js';
 const serveIndex = require('serve-index');
 const Store = require('electron-store');
 const { mountAssetFsAPI } = require('./assetFsAPI');
@@ -128,6 +128,11 @@ class OBSViewServer {
 		// save ref to our main window
 		this.mainWindow = mainWindow;
 
+		// socket-ref sync server + typed message bus (chat, plugin-rpc, ...).
+		// Created once and re-attached on every (re)start so stored values
+		// and registered handlers survive a server restart / port change.
+		this.socketServer = new SocketServer();
+
 		// optional database handle for the asset filesystem endpoint.
 		// Kept on `this` so startServers() (and a future restartServers)
 		// can re-mount on each express app boot.
@@ -201,24 +206,13 @@ class OBSViewServer {
 			return;
 		}
 
-		// note that, WSS comes from the socket-ref server
-		// and is already set up to handle incoming messages
-		this.wss.on('connection', (socket) => {
-
-			// when we get a message, parse it and forward it to the renderer
-			socket.on('message', (data) => {
-				let msg;
-
-				try {
-					msg = JSON.parse(data);
-				} catch (err) {
-					return; // ignore non-JSON messages
-				}
-
-				if (msg.type === 'echo' && msg.data !== undefined) {
-					socket.send(`Echo: ${msg.data}`);
-				}
-			});
+		// messages are parsed once by the SocketServer and routed by type
+		if (this._echoRegistered)
+			return;
+		this._echoRegistered = true;
+		this.socketServer.onMessage('echo', (msg, socket) => {
+			if (msg.data !== undefined)
+				socket.send(`Echo: ${msg.data}`);
 		});
 	}
 
@@ -238,6 +232,10 @@ class OBSViewServer {
 		// Try closing WebSocket interface if it's separate (for safety)
 		await this.terminatorWS.terminate();
 		this.wss = null;
+
+		// drop socket connections + timers; stored values and handlers are
+		// kept on this.socketServer for the next startServers()
+		this.socketServer.detach();
 
 		console.log('server kill attempt complete');
 	}
@@ -429,8 +427,8 @@ class OBSViewServer {
 
 			this.server = http.createServer(expressApp);
 
-			// using our socket-ref server, that syncs socketRefs
-			this.wss = socketRefServer({ server: this.server, port });
+			// socket-ref sync server (routes each key only to its subscribers)
+			this.wss = this.socketServer.attach(this.server);
 
 			// web socket server logging
 			this.wss.on('connection', (ws, req) => {

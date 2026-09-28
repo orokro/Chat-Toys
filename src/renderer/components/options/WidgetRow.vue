@@ -27,7 +27,7 @@
 
 // vue
 import { ref, inject, computed } from 'vue';
-import { socketRef, socketShallowRef, socketShallowRefReadOnly, socketRefAsync, bindRef, bindRefs } from 'socket-ref';
+import { socketRef, socketShallowRef, socketShallowRefReadOnly, socketRefAsync, bindRef, bindRefs } from '@scripts/sockets';
 
 // components
 import URLCopyBox from '@components/options/URLCopyBox.vue';

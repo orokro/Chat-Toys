@@ -11,30 +11,20 @@ import { ipcMain } from 'electron';
 /**
  * Listens for WebSocket "chat" messages and forwards them to the renderer via IPC.
  *
- * @param {WebSocketServer} wss - The WebSocket server instance
+ * @param {import('./sockets/SocketServer.js').SocketServer} socketServer - widget server's socket bus
  * @param {BrowserWindow} mainWindow - The main Electron window to forward messages to
  */
-export function chatForward(wss, mainWindow) {
+export function chatForward(socketServer, mainWindow) {
 
-	// note that, WSS comes from the socket-ref server
-	// and is already set up to handle incoming messages
-	wss.on('connection', (socket) => {
-
-		// when we get a message, parse it and forward it to the renderer
-		socket.on('message', (data) => {
-			let msg;
-
-
-			try {
-				msg = JSON.parse(data);
-			} catch (err) {
-				return; // ignore non-JSON messages
-			}
-
-			if (msg.type === 'chat' && msg.data !== undefined) {
-				mainWindow.webContents.send('chat-message', msg.data);
-			}
-		});
+	// the SocketServer parses each frame once and routes it by type; the
+	// handler survives server restarts (it lives on socketServer, not on a
+	// particular ws.WebSocketServer instance)
+	socketServer.onMessage('chat', (msg) => {
+		if (msg.data === undefined)
+			return;
+		if (!mainWindow || mainWindow.isDestroyed())
+			return;
+		mainWindow.webContents.send('chat-message', msg.data);
 	});
 
 	// set up a way to forward chats from another window in the app

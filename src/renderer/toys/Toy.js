@@ -10,7 +10,7 @@
 
 // vue
 import { ref, shallowRef, watch } from 'vue';
-import { socketRef, socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
+import { socketRef, socketShallowRef, socketShallowRefReadOnly, disposeSocketRef } from '@scripts/sockets';
 
 
 /**
@@ -116,9 +116,8 @@ export default class Toy {
 		if (widgets.length === 0) return;
 
 		// Subscribe once per widget. Same socket key the widget side writes
-		// to via keepAliveSocket(). socket-ref creates a real WebSocket on
-		// construction - flagged in misc/architecture-notes.md, still ours
-		// to live with until the socket-mux refactor.
+		// to via keepAliveSocket(). These are just subscriptions on the
+		// page's single shared socket (see scripts/sockets/socketRef.js).
 		for (const w of widgets) {
 			const socketKey = `live-state-${this.slug}-${w.slug}`;
 			this._heartBeatRefs.push(socketShallowRefReadOnly(socketKey, 'U_0'));
@@ -454,13 +453,13 @@ export default class Toy {
 		if (this.stopSettingsSocketWatch)
 			this.stopSettingsSocketWatch();
 
-		// stop the heartbeat ticker (socket refs themselves can't be
-		// "disposed" via socket-ref's current API; they'll go away with
-		// garbage collection once we drop our references to them).
+		// stop the heartbeat ticker and release the live-state subscriptions
 		if (this._heartBeatInterval) {
 			window.clearElectronInterval(this._heartBeatInterval);
 			this._heartBeatInterval = null;
 		}
+		for (const r of this._heartBeatRefs)
+			disposeSocketRef(r);
 		this._heartBeatRefs = [];
 	}
 

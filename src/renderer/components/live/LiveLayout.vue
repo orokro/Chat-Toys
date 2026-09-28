@@ -47,7 +47,7 @@
 
 // vue
 import { shallowRef, watch, markRaw } from 'vue'
-import { socketRef, socketShallowRef, socketRefAsync, bindRef, bindRefs } from 'socket-ref';
+import { socketRef, socketShallowRef, socketRefAsync, bindRef, bindRefs } from '@scripts/sockets';
 import { RefAggregator } from '../../scripts/RefAggregator';
 
 // components

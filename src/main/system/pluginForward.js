@@ -27,37 +27,27 @@ import { ipcMain } from 'electron';
 /**
  * Wire up the plugin RPC relay on the widget server's WebSocket server.
  *
- * @param {import('ws').WebSocketServer} wss - socket-ref's WS server
+ * @param {import('./sockets/SocketServer.js').SocketServer} socketServer - widget server's socket bus
  * @param {import('electron').BrowserWindow} mainWindow - dashboard window
  */
-export function pluginForward(wss, mainWindow) {
+export function pluginForward(socketServer, mainWindow) {
 
 	// sockets that have announced themselves as plugin RPC clients
 	const clients = new Set();
 
-	wss.on('connection', (socket) => {
+	// frames are parsed once by the SocketServer and routed here by type
+	socketServer.onMessage('plugin-rpc', (msg, socket) => {
 
-		socket.on('message', (data) => {
+		// first message from a plugin client registers it for broadcasts
+		if (msg.kind === 'hello')
+			clients.add(socket);
 
-			let msg;
-			try { msg = JSON.parse(data); }
-			catch (err) { return; } // not JSON - ignore (socket-ref traffic, etc.)
-
-			if (!msg || msg.type !== 'plugin-rpc')
-				return;
-
-			// first message from a plugin client registers it for broadcasts
-			if (msg.kind === 'hello')
-				clients.add(socket);
-
-			// forward everything (hello/req/ack) up to the dashboard renderer
-			if (mainWindow && !mainWindow.isDestroyed())
-				mainWindow.webContents.send('plugin-rpc-from-live', msg);
-		});
-
-		socket.on('close', () => clients.delete(socket));
-		socket.on('error', () => clients.delete(socket));
+		// forward everything (hello/req/ack) up to the dashboard renderer
+		if (mainWindow && !mainWindow.isDestroyed())
+			mainWindow.webContents.send('plugin-rpc-from-live', msg);
 	});
+
+	socketServer.onDisconnect((socket) => clients.delete(socket));
 
 	// dashboard renderer -> live pages (responses + pushed events)
 	ipcMain.on('plugin-rpc-to-live', (event, msg) => {

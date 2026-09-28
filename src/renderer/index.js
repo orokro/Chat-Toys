@@ -7,7 +7,7 @@
 import { createApp } from 'vue'
 import MainWindow from './pages/MainWindow.vue'
 import 'material-icons/iconfont/material-icons.css';
-import { setGlobalSocketRefPort, enableConnectionLogs } from 'socket-ref';
+import { setGlobalSocketRefPort, enableConnectionLogs } from '@scripts/sockets';
 import { installHelpPrimitives } from './components/options/page_help/help_system/helpPrimitivesPlugin';
 import { registerInstalledPlugins } from './plugins/PluginManager';
 

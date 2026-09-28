@@ -7,7 +7,7 @@
 import { createApp } from 'vue'
 import OBSTestPage from './pages/OBSTestPage.vue'
 import 'material-icons/iconfont/material-icons.css';
-import { setGlobalSocketRefPort, enableConnectionLogs } from 'socket-ref';
+import { setGlobalSocketRefPort, enableConnectionLogs } from '@scripts/sockets';
 
 // get the port number from the window url
 const paramPort = parseInt(new URL(location.href).searchParams.get('port') || '3001');

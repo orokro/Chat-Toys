@@ -15,7 +15,7 @@
 */
 
 import { ref, watch } from 'vue';
-import { socketRef, socketShallowRefReadOnly, socketShallowRefAsync } from 'socket-ref';
+import { socketRef, socketShallowRefReadOnly, socketShallowRefAsync } from '@scripts/sockets';
 
 export function useToySettings(slug, key, emits, ready){
 

@@ -104,7 +104,7 @@
 
 <script setup>
 import { ref, watch, computed, inject } from 'vue';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 import { useToySettings } from '@toys/useToySettings';
 import { keepAliveSocket } from '../keepAliveSocket.js';
 import Horse from './Horse.vue';

@@ -38,7 +38,7 @@
 
 // vue
 import { ref, computed, inject, watch, onMounted, onBeforeUnmount } from 'vue';
-import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRef, socketShallowRefReadOnly } from '@scripts/sockets';
 
 // our app
 import { keepAliveSocket } from '../toys/keepAliveSocket.js';

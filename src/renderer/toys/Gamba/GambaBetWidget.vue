@@ -136,7 +136,7 @@
 import { ref, watch, computed, inject } from 'vue';
 import { chromeRef, chromeShallowRef } from '../../scripts/chromeRef';
 import { RefAggregator } from '../../scripts/RefAggregator';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 
 // our settings system
 import { useToySettings } from '@toys/useToySettings';

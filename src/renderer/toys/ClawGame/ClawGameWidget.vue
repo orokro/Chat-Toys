@@ -62,7 +62,7 @@
 
 // vue
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRef, socketShallowRefReadOnly } from '@scripts/sockets';
 
 // chat-toys plumbing
 import { useToySettings } from '@toys/useToySettings';

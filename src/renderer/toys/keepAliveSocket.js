@@ -8,7 +8,7 @@
 */
 
 // vue
-import { socketRef, socketShallowRef, socketShallowRefReadOnly, socketRefAsync, bindRef, bindRefs } from 'socket-ref';
+import { socketRef, socketShallowRef, socketShallowRefReadOnly, socketRefAsync, bindRef, bindRefs } from '@scripts/sockets';
 
 
 /**

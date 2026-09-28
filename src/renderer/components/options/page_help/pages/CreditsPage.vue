@@ -217,7 +217,6 @@
 ├── sass@1.86.0
 ├── seedrandom@3.0.5
 ├── serve-index@1.9.1
-├── socket-ref@0.0.5
 ├── three@0.174.0
 ├── typescript@5.8.2
 ├── uuid@11.1.0

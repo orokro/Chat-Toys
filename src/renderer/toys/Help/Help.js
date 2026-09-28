@@ -29,7 +29,7 @@
 */
 
 import { ref, shallowRef, watch } from 'vue';
-import { socketShallowRef } from 'socket-ref';
+import { socketShallowRef } from '@scripts/sockets';
 
 import Toy from '../Toy';
 import { StateTickerQueue } from '@scripts/StateTickerQueue';

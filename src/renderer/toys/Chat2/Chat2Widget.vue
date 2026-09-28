@@ -116,7 +116,7 @@
 
 // vue
 import { ref, shallowRef, watch, computed, onBeforeUnmount } from 'vue';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 
 // dev-only perf/leak diagnostics (no-op unless ?diag=1 on the widget URL)
 import { startPerfDiag } from '@scripts/perfDiag.js';

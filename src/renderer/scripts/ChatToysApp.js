@@ -8,7 +8,7 @@
 // vue
 import { ref, shallowRef, watch } from 'vue';
 import { chromeRef, chromeShallowRef } from './chromeRef';
-import { socketShallowRef, socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRef, socketShallowRefReadOnly } from '@scripts/sockets';
 import { RefAggregator } from './RefAggregator';
 
 // our app

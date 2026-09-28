@@ -47,7 +47,7 @@
 
 // vue
 import { ref, computed } from 'vue';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 
 // chat-toys plumbing
 import { useToySettings } from '@toys/useToySettings';

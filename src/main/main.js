@@ -332,11 +332,11 @@ app.whenReady().then(() => {
 	obsViewServer.startServers();
 
 	// set up system to forward chat messages from websocket to the main window
-	chatForward(obsViewServer.wss, mainWindow);
+	chatForward(obsViewServer.socketServer, mainWindow);
 
 	// set up the plugin RPC relay so OBS/live-page widgets can reach the
 	// dashboard PluginToy broker (capabilities + command acks).
-	pluginForward(obsViewServer.wss, mainWindow);
+	pluginForward(obsViewServer.socketServer, mainWindow);
 
 	// set up the chat source manager to manage list of chats to read
 	chatSourceMgr = new ChatSourceManager(mainWindow, testURL);

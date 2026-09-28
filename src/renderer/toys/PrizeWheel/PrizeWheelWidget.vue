@@ -104,7 +104,7 @@
 
 // vue
 import { ref, watch, computed, inject } from 'vue';
-import { socketShallowRefReadOnly } from 'socket-ref';
+import { socketShallowRefReadOnly } from '@scripts/sockets';
 
 // other components
 import AutoSizer from '@components/AutoSizer.vue';
