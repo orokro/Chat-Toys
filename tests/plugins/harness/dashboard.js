@@ -12,6 +12,7 @@ import Omni from '@toys/Omni/Omni';
 import Shout from '@toys/Shout/Shout';
 import { makePluginToyClass } from '@plugins/PluginToy.js';
 import PluginWidgetHost from '@plugins/PluginWidgetHost.vue';
+import HeadlessPluginRunner from '@plugins/HeadlessPluginRunner.vue';
 import OmniPage from '@toys/Omni/OmniPage.vue';
 
 window.isPrimaryWindow = true;
@@ -82,10 +83,9 @@ try { toys[pluginSlug] = new Raffle(tm); } catch (e) { errs.push(pluginSlug + ':
 const q = new URL(location.href).searchParams;
 const box = { width: (q.get('w') || 400) + 'px', height: (q.get('h') || 200) + 'px' };
 const hosts = [];
+// the headless brain runs in the real HeadlessPluginRunner (as MainWindow mounts it)
 if (manifest.headless && manifest.headless.entry)
-	hosts.push(h('div', { class: 'headless', style: 'width:1px;height:1px;overflow:hidden' }, [h(PluginWidgetHost, { widgetInfo: {
-		pluginSlug, slug: '__headless', widgetSlug: '__headless', entry: manifest.headless.entry, permissions: manifest.permissions || [],
-	} })]));
+	hosts.push(h(HeadlessPluginRunner));
 for (const widgetInfo of Raffle.widgetComponents)
 	hosts.push(h('div', { class: 'widgetBox', 'data-widget': widgetInfo.widgetSlug, style: `position:relative;width:${box.width};height:${box.height};background:#556` }, [h(PluginWidgetHost, { widgetInfo })]));
 createApp({ render: () => h('div', hosts) }).provide('ctApp', app).mount('#app');

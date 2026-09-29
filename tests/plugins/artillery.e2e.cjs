@@ -53,7 +53,9 @@ const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ?
 	const dash = new WS('ws://127.0.0.1:3001'); await new Promise((r) => dash.on('open', r));
 	const put = (key, value) => dash.send(JSON.stringify({ type: 'update', key, value, timestamp: Date.now() }));
 
-	const b = await chromium.launch();
+	// keep Chromium's timer throttling ON (Playwright turns it off by default):
+	// the headless brain must run at full speed the way the real dashboard hosts it
+	const b = await chromium.launch({ ignoreDefaultArgs: ['--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'] });
 	const d = await b.newPage({ viewport: { width: 1300, height: 800 } });
 	const errs = [];
 	await d.route(/^https?:\/\/(?!localhost)/, (r) => r.abort());
@@ -107,9 +109,19 @@ const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ?
 		tanks = await st('tanks');
 		const a0 = tanks.find((t) => t.id === 'alice');
 		const dir = a0.x < 640 ? 'right' : 'left';
+		const movedAt = Date.now();
 		r = await cmd('move', 'alice', `${dir} 40`);
 		check('!move accepted when ready', r.accepted, r.reason);
-		await wait(900);
+		const drive = (await st('fx')).items.filter((f) => f.kind === 'move').pop();
+		let arrived = null;
+		for (let i = 0; i < 100 && !arrived; i++) {
+			await wait(25);
+			const a = (await st('tanks')).find((t) => t.id === 'alice');
+			if (Math.abs(a.x - a0.x) > 1) arrived = Date.now();
+		}
+		// (the headless is hosted as the dashboard hosts it; a hidden
+		// cross-origin frame gets its timers throttled to 1/s)
+		check('the new position is published as the drive ends, not late', arrived && arrived - (movedAt + drive.duration) < 250, arrived ? `${arrived - (movedAt + drive.duration)}ms after the drive` : 'never');
 		tanks = await st('tanks');
 		const a1 = tanks.find((t) => t.id === 'alice');
 		check('the tank drove 40 along the ground', Math.abs(Math.abs(a1.x - a0.x) - 40) < 0.5 && Math.abs(a1.y - G.heightAt(world.terrain, a1.x)) < 1, `${a0.x} -> ${a1.x}`);
