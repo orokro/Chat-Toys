@@ -27,9 +27,22 @@ test('terrain: seeded, same seed same hills, within bounds', { skip }, () => {
 	assert.equal(a.length, G.COLS);
 	assert.deepEqual(a, b);
 	assert.notDeepEqual(a, c);
+	// default: the hills stay in the bottom quarter of the screen
 	for (const t of [a, c]) {
-		assert.ok(Math.min(...t) >= G.H * 0.17 && Math.max(...t) <= G.H * 0.63, `${Math.min(...t)}..${Math.max(...t)}`);
+		assert.ok(Math.min(...t) >= G.H * 0.08 && Math.max(...t) <= G.H * 0.25 + 1, `${Math.min(...t)}..${Math.max(...t)}`);
+		assert.ok(Math.max(...t) >= G.H * 0.23, 'uses the range');
 	}
+});
+
+test('terrain: the tallest-hills setting', { skip }, () => {
+	const tall = G.generateTerrain(42, { maxHeight: 60 });
+	assert.ok(Math.max(...tall) <= G.H * 0.6 + 1 && Math.max(...tall) >= G.H * 0.57, `${Math.max(...tall)}`);
+	assert.ok(Math.min(...tall) >= G.H * 0.2);
+	// clamped to 10-90%, junk -> the default
+	assert.ok(Math.max(...G.generateTerrain(42, { maxHeight: 2 })) <= G.H * 0.1 + 1);
+	assert.ok(Math.min(...G.generateTerrain(42, { maxHeight: 2 })) >= G.H * 0.04 - 1, 'never too thin to stand on');
+	assert.deepEqual(G.generateTerrain(42, { maxHeight: 'lots' }), G.generateTerrain(42));
+	assert.equal(G.DEFAULT_MAX_HEIGHT, 25);
 });
 
 test('craters: round dip under the blast, nothing outside, never below the floor', { skip }, () => {

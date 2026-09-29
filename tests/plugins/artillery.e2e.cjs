@@ -74,7 +74,8 @@ const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ?
 		let world = null;
 		for (let i = 0; i < 60 && !(world && world.terrain); i++) { await wait(100); world = await st('world'); }
 		check('a map was generated', world && world.terrain.length === G.COLS, world ? `seed ${world.seed}` : 'none');
-		check('...the same one the plugin physics would make from its seed', JSON.stringify(world.terrain) === JSON.stringify(G.generateTerrain(world.seed)));
+		check('...the same one the plugin physics would make from its seed', JSON.stringify(world.terrain) === JSON.stringify(G.generateTerrain(world.seed, { maxHeight: world.maxHeight })));
+		check('...hills along the bottom (tallest 25% of the screen by default)', world.maxHeight === 25 && Math.max(...world.terrain) <= G.H * 0.25 + 1, `max ${Math.max(...world.terrain)}`);
 		await wait(500);
 		await shot('artillery-empty.png');
 
@@ -169,6 +170,15 @@ const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ?
 		check('!leave removes the tank', r.accepted && (await st('tanks')).length === 0);
 		await wait(4600);
 		check('an empty battlefield gets a fresh map', (await st('world')).seed !== seed);
+
+		// ---- the tallest-hills setting ----
+		await T(() => { window.__t.toys.artillery.settings.maxHeight.value = 55; });
+		await wait(800);
+		const tall = await st('world');
+		check('changing the hill height on an empty field redraws the map', tall.maxHeight === 55 && Math.max(...tall.terrain) > G.H * 0.5 && JSON.stringify(tall.terrain) === JSON.stringify(G.generateTerrain(tall.seed, { maxHeight: 55 })), `max ${Math.max(...tall.terrain)}`);
+		await shot('artillery-tall-hills.png');
+		await T(() => { window.__t.toys.artillery.settings.maxHeight.value = 25; });
+		await wait(800);
 
 		// ---- demo mode ----
 		put('demoMode', true);
