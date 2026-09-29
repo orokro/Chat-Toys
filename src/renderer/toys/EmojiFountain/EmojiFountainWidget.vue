@@ -12,6 +12,13 @@
 		:style="widgetStyle"
 	>
 
+		<!-- !dance crews: stick-figure dancers on their own canvas, behind
+			 the falling / tossed emoji -->
+		<DanceCanvas
+			:events="danceParticles"
+			:settings="socketSettingsRef || {}"
+		/>
+
 		<!-- Particles -->
 		<div
 			v-for="p in renderParticles"
@@ -73,6 +80,11 @@ import { getEmojiSource } from '../emojiCache.js';
 
 // firework (canvas) renderer
 import FireworkCanvas from './sub_components/FireworkCanvas.vue';
+
+// dance (canvas) renderer + crew planning for demo mode
+import DanceCanvas from './sub_components/DanceCanvas.vue';
+import danceMeta from './dances/danceMeta.json';
+import { planCrew } from './dances/danceCrew.js';
 
 const thisSlug = 'emojiFountain';
 const widgetSlug = 'emojiFountainWidget';
@@ -362,6 +374,73 @@ const fireworkParticles = computed(() => {
 	return (socketParticles.value || []).filter((p) => p && p.type === 'firework');
 });
 
+// ---------- Dance particles (canvas layer) ----------
+
+// Demo mode: a crew of two dances every dance in turn (only the allowed ones)
+const demoDancers = ref([]);
+let demoDanceTimer = null;
+let demoDanceSeq = 0;
+
+/**
+ * Queue the next demo crew and schedule the one after it.
+ * @returns {void}
+ */
+function emitDemoDance() {
+	const disabled = new Set(socketSettingsRef.value?.danceDisabled || []);
+	const allowed = danceMeta.order.filter((id) => !disabled.has(id));
+	if (!allowed.length) {
+		demoDanceTimer = window.setTimeout(emitDemoDance, 3000);
+		return;
+	}
+	const s = socketSettingsRef.value || {};
+	const plan = planCrew({
+		emojis: [{ char: '😎' }, { char: '🎃' }],
+		meta: danceMeta,
+		allowed,
+		sync: 'same',
+		danceSeconds: Math.min(Number(s.danceSeconds) || 8, 8),
+		height: (Number(s.danceHeight) || 35) / 100,
+		request: allowed[demoDanceSeq % allowed.length],
+	});
+	const now = Date.now();
+	const crew = `demo_crew_${demoDanceSeq++}`;
+	demoDancers.value = plan.dancers.map((d, i) => ({
+		id: `${crew}_${i}`,
+		type: 'dance',
+		url: null,
+		char: d.emoji.char,
+		dance: d.dance, x: d.x, flip: d.flip,
+		delay: d.delay, danceStart: d.danceStart, danceSecs: d.danceSecs, exitAt: d.exitAt, duration: d.duration,
+		createdAt: now,
+		crew,
+	}));
+	demoDanceTimer = window.setTimeout(emitDemoDance, (plan.crew.endsAt - 0.6) * 1000);
+}
+
+// Start/stop the demo crews with demo mode.
+watch(
+	() => demoMode.value,
+	(on) => {
+		if (on && !demoDanceTimer) {
+			emitDemoDance();
+		}
+		else if (!on && demoDanceTimer) {
+			window.clearTimeout(demoDanceTimer);
+			demoDanceTimer = null;
+			demoDancers.value = [];
+		}
+	},
+	{ immediate: true }
+);
+
+// Dancers handed to the canvas: live socket particles or demo ones.
+const danceParticles = computed(() => {
+	if (demoMode.value) {
+		return demoDancers.value || [];
+	}
+	return (socketParticles.value || []).filter((p) => p && p.type === 'dance');
+});
+
 // kick off emoji src resolution whenever particles or cache setting change
 watch(
 	() => ({
@@ -521,8 +600,8 @@ const renderParticles = computed(() => {
 	const isDemo = demoMode.value;
 
 	return items
-		// Fireworks are drawn by FireworkCanvas, not as DOM particles.
-		.filter((p) => !!p && p.type !== 'firework' && (!!p.url || !!p.char))
+		// Fireworks and dancers are drawn on their canvases, not as DOM particles.
+		.filter((p) => !!p && p.type !== 'firework' && p.type !== 'dance' && (!!p.url || !!p.char))
 		.map((p, idx) => {
 			const id = p.id || `ef_${idx}`;
 			const motionName = `ef_motion_${id}`;
@@ -605,6 +684,10 @@ onBeforeUnmount(() => {
 	if (demoFireworkTimer) {
 		window.clearInterval(demoFireworkTimer);
 		demoFireworkTimer = null;
+	}
+	if (demoDanceTimer) {
+		window.clearTimeout(demoDanceTimer);
+		demoDanceTimer = null;
 	}
 });
 

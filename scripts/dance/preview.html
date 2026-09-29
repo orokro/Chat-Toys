@@ -1,0 +1,96 @@
+<!doctype html>
+<!--
+	Dance preview: plays every loop in dances.json with the real renderer.
+	Serve the repo root (e.g. `npx http-server -p 8123` or `python -m http.server 8123`)
+	and open http://localhost:8123/scripts/dance/preview.html
+
+	?t=1.5        freeze at 1.5 s (for screenshots)
+	?id=floss     only that dance, bigger, plus a strip of its frames
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<title>Dance preview</title>
+<style>
+	body { margin: 0; background: #3a4a5a; font: 14px system-ui, sans-serif; color: #fff; }
+	#grid { display: grid; grid-template-columns: repeat(auto-fill, 220px); gap: 8px; padding: 12px; }
+	.cell { background: #52667a; border-radius: 8px; position: relative; }
+	.cell canvas { display: block; }
+	.cell b { position: absolute; left: 8px; top: 6px; }
+	.cell i { position: absolute; left: 8px; top: 24px; font-size: 11px; opacity: .7; font-style: normal; }
+</style>
+</head>
+<body>
+<div id="grid"></div>
+<script type="module">
+import { decodeDance, samplePose, drawDancer } from '../../src/renderer/toys/EmojiFountain/dances/danceDraw.js';
+
+const q = new URLSearchParams(location.search);
+const freeze = q.has('t') ? Number(q.get('t')) : null;
+const only = q.get('id');
+const doc = await (await fetch('../../src/renderer/toys/EmojiFountain/dances/dances.json')).json();
+
+const HEADS = ['😎', '🎃', '🐸', '🤖', '👽', '🦊', '🐼', '😈', '🍕', '🌞', '🐙', '💀', '🥑', '🐵', '🤠', '👻', '🍩', '🦄', '🐧'];
+const OUTFITS = [['#f4c430', '#3b5bdb'], ['#ff7518', '#5a2d0c'], ['#4caf50', '#1b5e20'], ['#90a4ae', '#455a64'],
+	['#7cb342', '#33691e'], ['#ff8a3d', '#fff3e0'], ['#f5f5f5', '#212121'], ['#8e24aa', '#4a148c'], ['#e53935', '#f9a825']];
+
+const ids = only ? [only] : doc.order;
+const W = only ? 360 : 220, H = only ? 380 : 230;
+const cells = [];
+ids.forEach((id, k) => {
+	const dance = decodeDance(doc, id);
+	const el = document.createElement('div');
+	el.className = 'cell';
+	const c = document.createElement('canvas');
+	c.width = W; c.height = H;
+	el.append(c);
+	el.insertAdjacentHTML('beforeend', `<b>${dance.name}</b><i>${id} · ${dance.frames}f · ${dance.duration.toFixed(2)}s · ${doc.dances[id].source}</i>`);
+	document.getElementById('grid').append(el);
+	cells.push({ dance, ctx: c.getContext('2d'), head: HEADS[k % HEADS.length], outfit: OUTFITS[k % OUTFITS.length] });
+});
+
+if (only) {
+	// strip of every other frame
+	const dance = cells[0].dance;
+	const strip = document.createElement('canvas');
+	const n = Math.ceil(dance.frames / 2);
+	strip.width = Math.min(n, 12) * 110; strip.height = Math.ceil(n / 12) * 130;
+	document.body.append(strip);
+	const sctx = strip.getContext('2d');
+	for (let i = 0; i < n; i++) {
+		const pose = samplePose(dance, (i * 2) / dance.fps);
+		drawDancer(sctx, pose, { x: (i % 12) * 110 + 55, y: Math.floor(i / 12) * 130 + 122, scale: 1.0, shirt: '#f4c430', pants: '#3b5bdb', outline: 2,
+			drawHead: head('😎') });
+		sctx.fillStyle = '#fff'; sctx.fillText(i * 2, (i % 12) * 110 + 4, Math.floor(i / 12) * 130 + 12);
+	}
+}
+
+function head(ch) {
+	return (ctx, x, y, size, ang) => {
+		ctx.save();
+		ctx.translate(x, y); ctx.rotate(ang);
+		ctx.font = `${size}px "Noto Color Emoji","Segoe UI Emoji",sans-serif`;
+		ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+		ctx.fillStyle = '#000';
+		ctx.fillText(ch, 0, 0);
+		ctx.restore();
+	};
+}
+
+function frame(now) {
+	const t = freeze != null ? freeze : now / 1000;
+	for (const c of cells) {
+		c.ctx.clearRect(0, 0, W, H);
+		c.ctx.fillStyle = 'rgba(0,0,0,.25)';
+		c.ctx.fillRect(0, H - 20, W, 20);
+		const pose = samplePose(c.dance, t);
+		drawDancer(c.ctx, pose, { x: W / 2, y: H - 20, scale: (H - 50) / 110, shirt: c.outfit[0], pants: c.outfit[1], outline: 3,
+			drawHead: head(c.head) });
+	}
+	if (freeze == null) requestAnimationFrame(frame);
+	else document.body.dataset.ready = '1';
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

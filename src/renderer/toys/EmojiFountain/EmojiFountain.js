@@ -13,6 +13,7 @@
 		- commandSlug === 'rain'     -> !rain <emoji(s)>
 		- commandSlug === 'fountain' -> !fountain <emoji(s)>
 		- commandSlug === 'firework' -> !firework <emoji(s)>
+		- commandSlug === 'dance'    -> !dance <emoji(s)> [dance name]
 		- Uses msg.emojis (must have at least one emoji).
 
 	- Exposes particles via socketShallowRef so the widget can render
@@ -26,13 +27,19 @@
 		  the emoji's pixels to rebuild it, enlarged, out of colored sparks).
 		  Firework particles therefore only carry launch/explosion geometry
 		  and ignore the DOM-only fields (endX/endY/bounces/spinSpeed).
+		- 'dance' particles are stick-figure dancers drawn on a <canvas> by
+		  DanceCanvas (behind the other emoji). One !dance makes a "crew", one
+		  dancer per emoji; planning (dance, spot, timing) is in
+		  dances/danceCrew.js and the particle carries its result:
+		  { dance, x, flip, delay, danceStart, danceSecs, exitAt, duration,
+		    crew, crewLeft, crewRight }
 
 	Each particle:
 	{
 		id: string,
 		url: string | null,
 		char: string | null,
-		type: 'rain' | 'toss' | 'fountain' | 'firework',
+		type: 'rain' | 'toss' | 'fountain' | 'firework' | 'dance',
 		createdAt: number,   // ms
 		duration: number,    // seconds (total animation duration)
 		delay: number,       // seconds (for CSS animation-delay if desired)
@@ -63,6 +70,10 @@ import EmojiFountainPage from './EmojiFountainPage.vue';
 
 // our app
 import Toy from '../Toy';
+
+// dances (names + lengths only; the loops themselves load in the widget)
+import danceMeta from './dances/danceMeta.json';
+import { planCrew, matchDance } from './dances/danceCrew.js';
 
 export default class EmojiFountain extends Toy {
 
@@ -161,6 +172,16 @@ export default class EmojiFountain extends Toy {
 			speed: ref(1.0),					// >1 faster, <1 slower
 			mode: ref('toss'),					// 'toss' | 'rain' for wild emojis
 
+			// !dance
+			danceHeight: ref(35),				// dancer height, % of the widget height
+			danceFloor: ref(3),					// floor line, % up from the bottom
+			danceOutline: ref(3),				// outline thickness (px)
+			danceSeconds: ref(8),				// about how long to dance (whole loops)
+			danceMaxPerCommand: ref(4),			// dancers from one !dance
+			danceMaxOnScreen: ref(12),			// dancers at once
+			danceSync: ref('same'),				// 'same' = a crew dances one dance in sync, 'mixed' = one each
+			danceDisabled: shallowRef([]),		// dance ids streamers turned off
+
 			// Widget placement box
 			emojiFountainBox: shallowRef({
 				x: 0,
@@ -204,6 +225,15 @@ export default class EmojiFountain extends Toy {
 				description: 'Chatter launches their emoji as a rocket that bursts into a giant version of itself made of colored sparks',
 				userDesc: 'Launch emoji fireworks!',
 				tipText: 'Use {cmd} with any emoji to launch it as a firework that explodes into a giant version of itself',
+			},
+			{
+				command: 'dance',
+				params: [
+					{ name: 'message', type: 'string', optional: false, desc: 'Emojis to dance (one dancer each), optionally a dance name' },
+				],
+				description: 'Chatter tosses in a crew of stick-figure dancers with their emojis as heads, who dance a famous dance and hop off',
+				userDesc: 'Start an emoji dance crew!',
+				tipText: 'Use {cmd} with some emojis (and a dance name if you like, e.g. floss) to start a dance crew',
 			}
 		]);
 	}
@@ -359,6 +389,24 @@ export default class EmojiFountain extends Toy {
 				// Spread over ~2.5 seconds
 				const finalCount = Math.max(count, emojis.length);
 				this.spawnBurst('fountain', emojis, finalCount, 2500);
+			}
+
+			handshake.accept();
+			return;
+		}
+
+		// !dance <emoji(s)> [dance name]
+		if (commandSlug === 'dance') {
+
+			if (!emojis.length) {
+				handshake.reject('Add an emoji to dance, like !dance 😎');
+				return;
+			}
+
+			const result = this.startDance(emojis, msg && msg.messageText);
+			if (result.error) {
+				handshake.reject(result.error);
+				return;
 			}
 
 			handshake.accept();
@@ -544,6 +592,78 @@ export default class EmojiFountain extends Toy {
 		}
 
 		this.particles.value = arr;
+	}
+
+
+	/**
+	 * Start a dance crew: one dancer per emoji (capped), a dance picked (or
+	 * named in the message), a free-ish spot on the floor. All the crew's
+	 * particles go out in one update so they share a clock.
+	 *
+	 * @param {Array<Object>} emojis - from extractEmojisFromMsg
+	 * @param {string} [text] - the chat message (may name a dance)
+	 * @returns {{error?: string, dancers?: number}}
+	 */
+	startDance(emojis, text) {
+
+		const s = this.settings;
+		const disabled = new Set(s.danceDisabled.value || []);
+		const allowed = danceMeta.order.filter((id) => !disabled.has(id));
+		if (!allowed.length)
+			return { error: 'Dancing is turned off right now' };
+
+		// who's on the floor already
+		const now = Date.now();
+		const live = (this.particles.value || []).filter((p) => p.type === 'dance' && (now - p.createdAt) < p.duration * 1000);
+		const crews = new Map();
+		for (const p of live) {
+			if (!crews.has(p.crew)) crews.set(p.crew, { left: p.crewLeft, right: p.crewRight, dances: [] });
+			crews.get(p.crew).dances.push(p.dance);
+		}
+
+		const maxOnScreen = Math.max(1, Number(s.danceMaxOnScreen.value) || 12);
+		const room = maxOnScreen - live.length;
+		if (room <= 0)
+			return { error: 'The dance floor is full, try again in a few seconds' };
+		const n = Math.min(emojis.length, Math.max(1, Number(s.danceMaxPerCommand.value) || 4), room);
+
+		const box = s.emojiFountainBox.value || {};
+		const plan = planCrew({
+			emojis: emojis.slice(0, n),
+			meta: danceMeta,
+			allowed,
+			active: Array.from(crews.values()),
+			sync: s.danceSync.value === 'mixed' ? 'mixed' : 'same',
+			danceSeconds: Number(s.danceSeconds.value) || 8,
+			height: (Number(s.danceHeight.value) || 35) / 100,
+			aspect: box.width > 0 && box.height > 0 ? box.width / box.height : 16 / 9,
+			request: matchDance(text, danceMeta, allowed),
+		});
+		if (plan.error)
+			return { error: plan.error };
+
+		const crew = `crew_${this.nextId++}`;
+		const scale = s.emojiSize.value || 1.0;
+		this.addParticles(plan.dancers.map((d) => ({
+			id: this.nextParticleId(),
+			url: d.emoji.url || null,
+			char: d.emoji.char || null,
+			type: 'dance',
+			dance: d.dance,
+			x: d.x,
+			flip: d.flip,
+			delay: d.delay,
+			danceStart: d.danceStart,
+			danceSecs: d.danceSecs,
+			exitAt: d.exitAt,
+			duration: d.duration,
+			crew,
+			crewLeft: plan.crew.left,
+			crewRight: plan.crew.right,
+			scale,
+		})));
+
+		return { dancers: n };
 	}
 
 

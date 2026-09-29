@@ -163,6 +163,16 @@
 		</div>
 		<div class="moveUp">Artillery plugin. Via <span class="fakeLink" @click="openLink(`https://www.flaticon.com/`)">Flaticon</span></div>
 
+		<SectionHeader title="Motion Capture"/>
+		<div
+			class="fakeLink"
+			@click="openLink(`http://mocap.cs.cmu.edu/`)">
+			<h3>CMU Graphics Lab Motion Capture Database</h3>
+		</div>
+		<div class="moveUp">Emoji Fountain dances (Macarena, The Twist, Charleston, Moonwalk, Cossack Kicks, Breakdance Toprock).
+			The data used in this project was obtained from mocap.cs.cmu.edu.
+			The database was created with funding from NSF EIA-0196217.</div>
+
 		<SectionHeader title="Tools"/>
 
 		<div

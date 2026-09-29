@@ -37,8 +37,8 @@
 // vue
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 
-// emoji cache helper (prefers CORS-clean blob URLs)
-import { getEmojiSource } from '../../emojiCache.js';
+// shared emoji loading / pixel reading (proxied + cached, CORS-clean)
+import { loadEmojiImage, rasterize, EMOJI_FONT } from './emojiSampler.js';
 
 const props = defineProps({
 	// Array of firework particles (type === 'firework') to animate.
@@ -81,40 +81,8 @@ const DEFAULT_GRID = 18;
 // after which the user-controlled fall duration takes over.
 const BLOOM_TIME = 0.45;
 
-// Emote-image hosts whose CDN doesn't send CORS headers. A plain <img> (used by
-// rain/toss/fountain) can display them fine, but drawing one into a canvas to
-// read its pixels taints the canvas and getImageData throws - so the firework
-// burst could never sample the emoji. For these we route the load through the
-// app's own /emote-proxy (same-origin, CORS-clean), exactly like the Tosser.
-// BetterTTV is the known offender; the list is easy to extend.
-const PROXY_EMOTE_HOSTS = ['betterttv.net'];
-
-/**
- * Rewrite an emote image URL to load through the local /emote-proxy when its
- * host is known to lack CORS headers; otherwise return it unchanged.
- *
- * @param {string} url - the original emote image URL
- * @returns {string}
- */
-function emoteLoadUrl(url) {
-	try {
-		const u = new URL(url, window.location.href);
-		const needsProxy = (u.protocol === 'http:' || u.protocol === 'https:') &&
-			PROXY_EMOTE_HOSTS.some((h) => u.hostname === h || u.hostname.endsWith('.' + h));
-		if (needsProxy)
-			return '/emote-proxy?url=' + encodeURIComponent(url);
-	} catch (e) {
-		/* not a parseable URL — fall through and use as-is */
-	}
-	return url;
-}
-
 // Resolution of the offscreen sampling canvas (downsampled into the grid).
 const SAMPLE_RES = 64;
-
-// Reusable offscreen canvas for pixel sampling.
-let sampleCanvas = null;
-let sampleCtx = null;
 
 // ---------- small math helpers ----------
 
@@ -151,18 +119,6 @@ function easeOut(t) {
 }
 
 // ---------- emoji pixel sampling ----------
-
-/**
- * Lazily create the shared offscreen sampling canvas.
- * @returns {void}
- */
-function ensureSampleCanvas() {
-	if (sampleCtx) return;
-	sampleCanvas = document.createElement('canvas');
-	sampleCanvas.width = SAMPLE_RES;
-	sampleCanvas.height = SAMPLE_RES;
-	sampleCtx = sampleCanvas.getContext('2d', { willReadFrequently: true });
-}
 
 /**
  * Reduce a SAMPLE_RES×SAMPLE_RES ImageData down to a grid×grid set of colored
@@ -297,30 +253,10 @@ function hslToRgb(h, s, l) {
  * @returns {Array<{nx:number, ny:number, r:number, g:number, b:number, a:number}>}
  */
 function samplePoints(anim, grid) {
-
-	ensureSampleCanvas();
-	sampleCtx.clearRect(0, 0, SAMPLE_RES, SAMPLE_RES);
-
-	try {
-		if (anim.kind === 'image' && anim.img) {
-			sampleCtx.drawImage(anim.img, 0, 0, SAMPLE_RES, SAMPLE_RES);
-		} else if (anim.char) {
-			sampleCtx.textAlign = 'center';
-			sampleCtx.textBaseline = 'middle';
-			sampleCtx.font = `${Math.floor(SAMPLE_RES * 0.82)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
-			sampleCtx.fillText(anim.char, SAMPLE_RES / 2, SAMPLE_RES / 2);
-		} else {
-			return fallbackPoints();
-		}
-
-		const data = sampleCtx.getImageData(0, 0, SAMPLE_RES, SAMPLE_RES);
-		const pts = binImageData(data, grid);
-		return pts.length ? pts : fallbackPoints();
-	}
-	catch (e) {
-		// tainted canvas (CORS) or read failure -> generic burst
-		return fallbackPoints();
-	}
+	const data = rasterize({ img: anim.kind === 'image' ? anim.img : null, char: anim.char }, SAMPLE_RES);
+	if (!data) return fallbackPoints();	// nothing loaded, or a tainted (CORS) read
+	const pts = binImageData(data, grid);
+	return pts.length ? pts : fallbackPoints();
 }
 
 // ---------- spawning animations from events ----------
@@ -360,37 +296,15 @@ function spawnFrom(event) {
 	};
 
 	if (anim.kind === 'image') {
-		// Route CORS-less CDNs (e.g. BetterTTV) through the same-origin proxy so
-		// the sampling canvas isn't tainted; then prefer a cached (blob) source
-		// for clean sampling, falling back to the (proxied) URL.
-		const loadUrl = emoteLoadUrl(event.url);
-		getEmojiSource(loadUrl)
-			.then(({ src }) => loadImage(src))
-			.catch(() => loadImage(loadUrl))
+		// proxied if the CDN lacks CORS, cached (blob) when possible; null
+		// img -> fallback burst + no rocket sprite
+		loadEmojiImage(event.url)
 			.then((img) => { anim.img = img; })
-			.catch(() => { /* keep img null -> fallback burst + no rocket sprite */ })
 			.finally(begin);
 	}
 	else {
 		begin();
 	}
-}
-
-/**
- * Promise wrapper around Image loading (CORS-anonymous so blob/CDN images can
- * be drawn into a readable canvas where the host allows it).
- *
- * @param {string} src - image source URL
- * @returns {Promise<HTMLImageElement>}
- */
-function loadImage(src) {
-	return new Promise((resolve, reject) => {
-		const img = new Image();
-		img.crossOrigin = 'anonymous';
-		img.onload = () => resolve(img);
-		img.onerror = reject;
-		img.src = src;
-	});
 }
 
 /**
@@ -563,7 +477,7 @@ function drawRocket(anim, p, sx, sy, bx, by, minWH, scale) {
 	ctx.rotate(-Math.PI / 4);
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
-	ctx.font = `${sz * 0.9}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
+	ctx.font = `${sz * 0.9}px ${EMOJI_FONT}`;
 	ctx.fillText('🚀', 0, 0);
 	ctx.restore();
 
@@ -593,7 +507,7 @@ function drawEmojiSprite(anim, x, y, sz) {
 		ctx.fillStyle = '#000';
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
-		ctx.font = `${sz}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`;
+		ctx.font = `${sz}px ${EMOJI_FONT}`;
 		ctx.fillText(anim.char, x, y);
 	}
 }

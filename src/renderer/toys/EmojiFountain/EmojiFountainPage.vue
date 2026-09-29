@@ -32,6 +32,9 @@
 			<li>The !fountain command let's user spawn a fountain of their chosen emojis from the bottom of the screen</li>
 			<li>The !firework command launches a chosen emoji as a rocket that bursts into a giant version of itself,
 				rebuilt out of colored sparks sampled from the emoji's own pixels</li>
+			<li>The !dance command tosses in a crew of stick-figure dancers, one per emoji, each with the emoji as
+				its head and clothes colored from it. They dance a famous dance (chat can name one, like
+				"!dance 😎 floss"), then hop off. Dancers appear behind the other emojis.</li>
 		</ul>
 		
 		<SectionHeader title="Command Triggers"/>
@@ -202,6 +205,105 @@
 			</SettingsInputRow>
 
 		</div>
+
+		</br></br>
+		<h2>Dance Settings</h2>
+		<div class="settingsBlock">
+
+			<SettingsInputRow
+				type="options"
+				:options="[
+					{ name: 'Same dance, in sync', value: 'same' },
+					{ name: 'A different dance each', value: 'mixed' },
+				]"
+				v-model="danceSync"
+			>
+				<template #title>Crew Dancing</template>
+				<p>Each !dance makes a crew of dancers (one per emoji). Should the crew all do the same dance in sync,
+					or each pick their own?</p>
+				<p>Different crews on screen at once usually get different dances either way.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				v-model="danceSeconds"
+				:min="2"
+				:max="60"
+				:step="1"
+			>
+				<template #title>Dance Time (seconds)</template>
+				<p>About how long the crew dances before hopping off (rounded to whole loops of the dance).</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				v-model="danceHeight"
+				:min="5"
+				:max="100"
+				:step="1"
+			>
+				<template #title>Dancer Height (%)</template>
+				<p>How tall each dancer is, as a percentage of the widget's height.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				v-model="danceFloor"
+				:min="0"
+				:max="80"
+				:step="1"
+			>
+				<template #title>Dance Floor Height (%)</template>
+				<p>How far up from the bottom of the widget the dancers stand.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				v-model="danceOutline"
+				:min="0"
+				:max="12"
+				:step="1"
+			>
+				<template #title>Outline Thickness (px)</template>
+				<p>The black outline around the dancers' limbs. 0 turns it off.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				v-model="danceMaxPerCommand"
+				:min="1"
+				:max="10"
+				:step="1"
+			>
+				<template #title>Most Dancers Per !dance</template>
+				<p>Extra emojis past this are ignored.</p>
+			</SettingsInputRow>
+
+			<SettingsInputRow
+				type="number"
+				v-model="danceMaxOnScreen"
+				:min="1"
+				:max="40"
+				:step="1"
+			>
+				<template #title>Most Dancers On Screen</template>
+				<p>When the floor is full, !dance is turned away until someone hops off.</p>
+			</SettingsInputRow>
+
+			<div class="danceList">
+				<h3>Dances</h3>
+				<p>Untick any dance you don't want picked.</p>
+				<label v-for="d in dances" :key="d.id" class="danceChip" :class="{ off: !isOn(d.id) }">
+					<input type="checkbox" :checked="isOn(d.id)" @change="toggleDance(d.id)" />
+					{{ d.name }}
+				</label>
+				<p class="danceCredit">
+					Some dances use motion capture from the CMU Graphics Lab Motion Capture Database
+					(mocap.cs.cmu.edu); the rest are hand-animated for Chat Toys.
+				</p>
+			</div>
+
+		</div>
 		
 		<!-- <SectionHeader title="Video Help"/>
 		<YTVideoBox 
@@ -230,6 +332,7 @@ import YTVideoBox from '@components/YTVideoBox.vue';
 
 // our app
 import EmojiFountain from './EmojiFountain.js';
+import danceMeta from './dances/danceMeta.json';
 
 // fetch the main app state context & our toy
 const ctApp = inject('ctApp');
@@ -251,11 +354,55 @@ const {
 	enableWildEmojis,
 	speed,
 	mode,
+	danceSync,
+	danceSeconds,
+	danceHeight,
+	danceFloor,
+	danceOutline,
+	danceMaxPerCommand,
+	danceMaxOnScreen,
+	danceDisabled,
 } = toy.settings;
+
+// the dance list (names from the small meta file)
+const dances = danceMeta.order.map((id) => ({ id, name: danceMeta.dances[id].name }));
+
+const isOn = (id) => !(danceDisabled.value || []).includes(id);
+
+function toggleDance(id) {
+	const off = new Set(danceDisabled.value || []);
+	if (off.has(id)) off.delete(id);
+	else off.add(id);
+	danceDisabled.value = Array.from(off);
+}
 
 
 </script>
 <style lang="scss" scoped>	
 
+	.danceList {
+		padding: 10px 0px;
+
+		.danceChip {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			margin: 4px 6px 4px 0px;
+			padding: 4px 10px;
+			border-radius: 14px;
+			background: rgba(80, 181, 209, 0.25);
+			cursor: pointer;
+			user-select: none;
+
+			&.off {
+				opacity: 0.5;
+			}
+		}
+
+		.danceCredit {
+			font-size: 12px;
+			opacity: 0.7;
+		}
+	}
 
 </style>

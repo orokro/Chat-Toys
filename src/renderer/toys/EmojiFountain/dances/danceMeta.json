@@ -1,0 +1,143 @@
+{
+	"order": [
+		"floss",
+		"twerk",
+		"thriller",
+		"hiphop",
+		"dab",
+		"macarena",
+		"gangnam",
+		"ymca",
+		"moonwalk",
+		"runningman",
+		"carlton",
+		"robot",
+		"sprinkler",
+		"disco",
+		"chicken",
+		"twist",
+		"charleston",
+		"toprock",
+		"cossack"
+	],
+	"dances": {
+		"macarena": {
+			"name": "Macarena",
+			"duration": 5.3333
+		},
+		"twist": {
+			"name": "The Twist",
+			"duration": 1.6667,
+			"aliases": [
+				"the twist"
+			]
+		},
+		"charleston": {
+			"name": "Charleston",
+			"duration": 2.3333
+		},
+		"moonwalk": {
+			"name": "Moonwalk",
+			"duration": 2.0667,
+			"aliases": [
+				"mj"
+			]
+		},
+		"cossack": {
+			"name": "Cossack Kicks",
+			"duration": 2.2,
+			"aliases": [
+				"russian",
+				"kazachok"
+			]
+		},
+		"toprock": {
+			"name": "Breakdance Toprock",
+			"duration": 2.7333,
+			"aliases": [
+				"breakdance",
+				"bboy",
+				"breaking"
+			]
+		},
+		"floss": {
+			"name": "Floss",
+			"duration": 0.9333
+		},
+		"thriller": {
+			"name": "Thriller",
+			"duration": 4.0667,
+			"aliases": [
+				"zombie"
+			]
+		},
+		"twerk": {
+			"name": "Twerk",
+			"duration": 1.2
+		},
+		"hiphop": {
+			"name": "Hip-Hop Bounce",
+			"duration": 2.5333,
+			"aliases": [
+				"hip hop",
+				"bounce"
+			]
+		},
+		"dab": {
+			"name": "Dab",
+			"duration": 2.4
+		},
+		"carlton": {
+			"name": "Carlton",
+			"duration": 4.1333,
+			"aliases": [
+				"carlton dance"
+			]
+		},
+		"runningman": {
+			"name": "Running Man",
+			"duration": 1.0,
+			"aliases": [
+				"running man"
+			]
+		},
+		"ymca": {
+			"name": "YMCA",
+			"duration": 3.7333
+		},
+		"gangnam": {
+			"name": "Gangnam Style",
+			"duration": 3.6667,
+			"aliases": [
+				"gangnam style",
+				"horse"
+			]
+		},
+		"sprinkler": {
+			"name": "Sprinkler",
+			"duration": 2.2
+		},
+		"robot": {
+			"name": "Robot",
+			"duration": 4.8,
+			"aliases": [
+				"the robot"
+			]
+		},
+		"disco": {
+			"name": "Disco Point",
+			"duration": 4.6,
+			"aliases": [
+				"saturday night fever",
+				"point"
+			]
+		},
+		"chicken": {
+			"name": "Chicken Dance",
+			"duration": 4.0,
+			"aliases": [
+				"chicken dance"
+			]
+		}
+	}
+}
