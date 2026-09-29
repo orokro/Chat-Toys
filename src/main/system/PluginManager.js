@@ -498,6 +498,9 @@ class PluginManager {
 
 		// the hosted SDK
 		expressApp.get('/plugins/_sdk/ct-api.js', (req, res) => {
+			// unpackaged (dev): re-read so SDK edits show up without a restart
+			if (!this.app.isPackaged)
+				this._sdkSource = this._loadSdkSource();
 			res.type('application/javascript').send(this._sdkSource);
 		});
 
@@ -559,15 +562,25 @@ class PluginManager {
 	/**
 	 * Locate + read the ct-api.js SDK from the renderer tree (dev or prod).
 	 *
+	 * Packaged, the copy next to the built renderer is the right one. Running
+	 * from the repo (dev), the SOURCE tree must win: build/renderer may hold
+	 * an old SDK from the last production build (that once served an SDK
+	 * without CT.omni, so Omni-aware plugins like the Fruit Machine never
+	 * got to play).
+	 *
 	 * @returns {string} the SDK source (or a stub that logs an error)
 	 */
 	_loadSdkSource() {
 
-		const candidates = [
+		const built = [
 			path.join(this.app.getAppPath(), 'renderer', 'plugins', 'ct-api.js'),
 			path.join(__dirname, '..', '..', 'renderer', 'plugins', 'ct-api.js'),
-			path.join(process.cwd(), 'src', 'renderer', 'plugins', 'ct-api.js'),
 		];
+		const source = [
+			path.join(process.cwd(), 'src', 'renderer', 'plugins', 'ct-api.js'),
+			path.join(__dirname, '..', '..', '..', 'src', 'renderer', 'plugins', 'ct-api.js'),
+		];
+		const candidates = this.app.isPackaged ? [...built, ...source] : [...source, ...built];
 
 		for (const c of candidates) {
 			try {

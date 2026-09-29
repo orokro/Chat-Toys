@@ -458,3 +458,31 @@ test('installRemotePlugin: checks the hash and the API level before replacing an
 	srv.close();
 	fs.rmSync(userData, { recursive: true, force: true });
 });
+
+
+test('PluginManager: running from the repo, the SDK comes from the source tree, not a stale build copy', async () => {
+
+	// an old SDK left next to a built renderer (what `node scripts/build.js`
+	// leaves in build/renderer) - it must not win over src/ in dev
+	const appPath = tmpDir('app');
+	fs.mkdirSync(path.join(appPath, 'renderer', 'plugins'), { recursive: true });
+	fs.writeFileSync(path.join(appPath, 'renderer', 'plugins', 'ct-api.js'), '/* STALE SDK */');
+	const userData = tmpDir('sdk');
+	const serve = async (isPackaged) => {
+		const pm = new PluginManager({ getPath: () => userData, getAppPath: () => appPath, isPackaged });
+		await pm.ready();
+		let handler = null;
+		pm.mountRoutes({ get: (route, fn) => { if (route === '/plugins/_sdk/ct-api.js') handler = fn; } });
+		let body = '';
+		handler({}, { type() { return this; }, send(b) { body = b; } });
+		return body;
+	};
+
+	const dev = await serve(false);
+	assert.ok(dev.includes("request('omni.turn'"), 'dev serves the current SDK (with CT.omni)');
+	assert.ok(!dev.includes('__CT_PLUGIN_API_VERSION__'), 'with the API level filled in');
+	assert.equal(await serve(true), '/* STALE SDK */', 'packaged serves the copy shipped with the app');
+
+	fs.rmSync(appPath, { recursive: true, force: true });
+	fs.rmSync(userData, { recursive: true, force: true });
+});
